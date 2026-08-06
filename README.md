@@ -36,3 +36,5 @@ Marmalatar is built and maintained by Maularnia. If you'd like to support develo
 ## License
 
 GPL-3.0 — see [LICENSE](LICENSE).
+
+<!-- verifying CI gate + ruleset bypass on owner PR -->
