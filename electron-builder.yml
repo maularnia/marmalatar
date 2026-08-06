@@ -14,11 +14,14 @@ win:
   target: nsis
   icon: electron/assets/icon.ico
 linux:
-  target: AppImage
+  target:
+    - AppImage
+    - deb
   icon: electron/assets/icon-256.png
 publish:
-  provider: generic
-  url: https://<your-domain>/updates/
+  provider: github
+  owner: maularnia
+  repo: marmalatar
 electronFuses:
   runAsNode: false
   enableCookieEncryption: true
