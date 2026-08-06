@@ -1,0 +1,14 @@
+{
+  "translationDirection": {
+    "title": "Translation direction",
+    "subtext": "Only glossaries, translation direction of which matches project translation direction will be shown in the glossary selector"
+  },
+  "entries": {
+    "title": "Entries",
+    "addButton": "Add"
+  },
+  "table": {
+    "originalHeader": "Original",
+    "translationHeader": "Translation"
+  }
+}

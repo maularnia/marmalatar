@@ -1,0 +1,4 @@
+{
+  "title": "Prompt template",
+  "subtext": "The template is used to format request to the AI mode, The glossary tag {GLOSSARY_TABLE} is resolved as CSV table of all the entries of all glossaries currently selected. The output format is resolved seprately, depending on integration and translation mode and settings and always porovided in english, so you'd betytter stick to english too editing the prompt."
+}

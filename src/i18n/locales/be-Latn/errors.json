@@ -1,0 +1,173 @@
+{
+  "shared": {
+    "nameEmpty": "Nielha pakinuć pustym",
+    "folderNotSelected": "Dyrektoryja nie abranaja",
+    "selectValueRequired": "Nielha pakinuć pustym",
+    "connectFailed": "Niama spłaučeńnia z [{{name}}]",
+    "serverAddressRequired": "Nielha pakinuć pustym",
+    "invalidUrl": "Niadziejsnaja spasyłka"
+  },
+  "settings": {
+    "autoMergeThresholdRequired": "Nielha pakinuć pustym",
+    "autoMergeThresholdMin": "Značeńnie maje być > 1",
+    "timeAdjustmentStepRequired": "Nielha pakinuć pustym",
+    "timeAdjustmentStepMin": "Značeńnie maje być > 1"
+  },
+  "glossaryPairForm": {
+    "originalRequired": "Nielha pakinuć pustym",
+    "translationRequired": "Nielha pakinuć pustym"
+  },
+  "videoSelect": {
+    "fileRequired": "Nielha pakinuć pustym"
+  },
+  "mainMenuListItem": {
+    "nameTooLong": "Značeńnie daŭžej za [{{maxLength}}]",
+    "nameAlreadyExists": "Taki fajł ujuo isnuje",
+    "unreachableCommitError": "Jak vy siudy trapili? [ŃIEDASIAHLNAJA 01]"
+  },
+  "subtitleFileSelect": {
+    "unsupportedFormat": "Farmat nie padtrylivajecca",
+    "parseFailedFallback": "Niemahčyma pračytać fajł",
+    "fileRequired": "Nielha pakinuć pustym",
+    "noValidLines": "Fajł paškodžany albo pusty, niama ž čym pracavać"
+  },
+  "videoFileSelect": {
+    "fileRequired": "Nielha pakinuć pustym",
+    "pathUnresolved": "Nie atrymłasia adšukać šlach da fajła",
+    "stillProcessing": "Aprcoŭka videa...",
+    "unsupportedPlayback": "Niemahčyma prajhrać videa. Niesumiaščalny kodek",
+    "processingFailed": "Pamyłka hienieracyi artefaktaŭ. Niesumiaščalny kodek"
+  },
+  "import": {
+    "projectTitleRequired": "Nielha pakinuć pustym",
+    "projectTitlePattern": "Dazvoleny tolki litary, propuski dy złučki (-)"
+  },
+  "deepL": {
+    "apiKeyRequired": "DeepL patrabuje kluča API",
+    "languageUnsupported": "{{language}} nie padtrymlivajecca DeepL",
+    "languagesRequired": "Abiarycie movu krynicy j pierakładu",
+    "noTranslationReturned": "DeepL nie adkazaŭ na zapyt"
+  },
+  "lmStudio": {
+    "modelRequired": "Abiarycie madel",
+    "noTranslationReturned": "LM Studio nie adkazała na zapyt"
+  },
+  "ollama": {
+    "modelRequired": "Abiarycie madel",
+    "noTranslationReturned": "Ollama nie adkazała na zapyt",
+    "noModelsFound": "Dastupnych madelaŭ niama.\nAbiarycie lubuju madel u čacie Ollama i napišycie luboje paviedamlejenie. Heta prymusć madel spampavacca, potym nacisnicie \"Adnavić\" tut",
+    "backendDown": "Ollama niedastupnaja.\nUpeŭniciesia, što zapuscili prahramu",
+    "modelsRequestFailed": "Zapyt da Ollama viarnuŭsia sa statusam [{{status}}]",
+    "pingFailed": "Nie mahu dahrukacca da Ollama.\n Zapyt viarnuŭsia sa statusam [{{status}}]",
+    "requestFailed": "Zapyt da Ollama viarnuŭsia sa statusam [{{status}}]"
+  },
+  "ai": {
+    "notConfigured": "[{{name}}] nie skanfihuravana"
+  },
+  "aiTranslation": {
+    "noIntegrationConfigured": "Abranaja intehracyja ŠI nie naładžana",
+    "noPromptTemplateSelected": "Šabłon zapytu nieabchodny kab dasłać zapyt da abranaj intehracyi"
+  },
+  "batching": {
+    "invalidJson": "Nieadpaviedny farmat adkazu (paškodžany JSON)",
+    "missingTranslationsArray": "Adkaz nie zmiaščaje čakanaje pole \"translations\""
+  },
+  "spellcheck": {
+    "missingDictionaryAsset": "Nie znojdzieny resurs [{{suffix}}]",
+    "dictionaryLoadFailed": "Nie atrymłasia zahruzić słoŭnik [{{url}}]"
+  },
+  "project": {
+    "corrupted": "Paškodžany fajł prajektu",
+    "invalidFile": "Nieadpavdnaje značeńnie pola [{{path}}]: {{message}}",
+    "incompatibleVersion": "Hety fajł prajektu stvorany novaj versijaj prahramy i nie moža być adkryty",
+    "cannotRead": "Nie atrymałasia pračytać fajł",
+    "cannotSaveWithoutName": "Nielha zachavać prajekt biez nazvy",
+    "nameRequired": "Nazvu nielha pakinuć pustoj",
+    "alreadyExists": "Taki fajł užo isnuje",
+    "folderNotTracked": "Abiarycie pracoŭnuju papku"
+  },
+  "promptTemplate": {
+    "alreadyExists": "Šabłon zapytu [{{title}}] užo isnuje",
+    "readFailed": "Nie atrymałasia pračytać šabłon zapytu"
+  },
+  "glossaryFile": {
+    "alreadyExists": "Głasaryj [{{title}}] užo isnuje",
+    "readFailed": "Nie atrymłasia pračytać głasaryj"
+  },
+  "fileList": {
+    "projectNotFound": "Prajekt nie znojdzieny"
+  },
+  "json": {
+    "fieldNamesEmpty": "Nielha pakinuć pustym",
+    "duplicateFieldName": "Pole [{{fieldName}}] užo isnuje"
+  },
+  "confirmationProvider": {
+    "confirmDestroyed": "Sproba zniščyć spasyłku na ŭžo zniščanaje paviedamlennie"
+  },
+  "videoPlaybackError": {
+    "title": "Niemahčyma prajhrać videa",
+    "message": "Fajł paškodžany, abo kodek niesumiaščalny"
+  },
+  "fileProcessingFailed": {
+    "title": "Niemahčyma apracavać fajł"
+  },
+  "autoMergeFailed": {
+    "title": "Pamyłka aŭta-abjadnańnia"
+  },
+  "spellcheckUnavailable": {
+    "title": "Pravierka pravapisu niedastupnaja"
+  },
+  "videoFileMissing": {
+    "title": "Videa było vydalena"
+  },
+  "videoProcessingFailed": {
+    "title": "Niemahčyma apracavać videa",
+    "message": "Nieprajhravalnaje videa. Niesumiaščalny aŭdyjo- ci videa- kodek"
+  },
+  "projectLoadFailed": {
+    "title": "Pasyłka ładavannia prajekta"
+  },
+  "noPromptTemplate": {
+    "title": "Brak šabłonu zapytu",
+    "message": "Kab dasłać zapyt da ŠI, prahramie treba šabłoje zapytu. Stvarycie šabłon u hałoŭnym mieniu i abiarycie jaho ŭ poli šabłonu"
+  },
+  "unableToTranslateLine": {
+    "title": "Nie atrymałasia pierakłaści radok"
+  },
+  "aiTranslationJobFailed": {
+    "title": "Pamyłka masavaha pierakładu"
+  },
+  "bulkTranslationFailed": {
+    "title": "Pamyłka pierakładu radka"
+  },
+  "noMatchingGlossaries": {
+    "title": "Pamłyka dadańnia pary ŭ głasaryj",
+    "message": "Niama nivodnaha, jaki adpaviadaje nakirunku pierakładu prakietu"
+  },
+  "glossaryEntrySaveFailed": {
+    "title": "Pamyłka zachavańnia głasaryja",
+    "message": "Niešta pajšło nie tak padčas zapisu fajła głasaryja"
+  },
+  "addGlossaryEntryError": {
+    "title": "Nie atrymłasia dadać paru ŭ głasaryj"
+  },
+  "copyOperationFailed": {
+    "title": "Pamyłka kapijavańnia tekstu"
+  },
+  "mergeLinesFailed": {
+    "title": "Nie atrymałasia abjadnać radki"
+  },
+  "deleteLineFailed": {
+    "title": "Nie atrymłasia vydlić radok"
+  },
+  "lineTooShortToSplit": {
+    "title": "Nadta karotki radok",
+    "message": "nie atrymałasia razrezać"
+  },
+  "cleanupFailed": {
+    "title": "Pamyłka ačystki"
+  },
+  "copyAllFailed": {
+    "title": "Pamyłka kapijavańnia"
+  }
+}

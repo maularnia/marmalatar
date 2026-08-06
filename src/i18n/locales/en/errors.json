@@ -1,0 +1,173 @@
+{
+  "shared": {
+    "nameEmpty": "Field can not be emty",
+    "folderNotSelected": "Folder is required",
+    "selectValueRequired": "This field is required",
+    "connectFailed": "Unable to connect to [{{name}}]",
+    "serverAddressRequired": "This field is required",
+    "invalidUrl": "Invalid URL"
+  },
+  "settings": {
+    "autoMergeThresholdRequired": "This field is required",
+    "autoMergeThresholdMin": "Value must be > 1",
+    "timeAdjustmentStepRequired": "This field is required",
+    "timeAdjustmentStepMin": "Value must be > 1"
+  },
+  "glossaryPairForm": {
+    "originalRequired": "This field is required",
+    "translationRequired": "This field is required"
+  },
+  "videoSelect": {
+    "fileRequired": "This field is required"
+  },
+  "mainMenuListItem": {
+    "nameTooLong": "Max length is [{{maxLength}}]",
+    "nameAlreadyExists": "File with this name already exists",
+    "unreachableCommitError": "How did you get that message? [UNREACHABLE 01]"
+  },
+  "subtitleFileSelect": {
+    "unsupportedFormat": "Format is not supported",
+    "parseFailedFallback": "Failed to parse the file",
+    "fileRequired": "This field is required",
+    "noValidLines": "Invalid or empty file, nothing to work with"
+  },
+  "videoFileSelect": {
+    "fileRequired": "This field is required",
+    "pathUnresolved": "Unable to resolve file path",
+    "stillProcessing": "Video processing in progress",
+    "unsupportedPlayback": "Video can not be played. Unsupported encoder.",
+    "processingFailed": "Video file processing failed."
+  },
+  "import": {
+    "projectTitleRequired": "This field is required",
+    "projectTitlePattern": "Please only use letters, spaces and hyphens"
+  },
+  "deepL": {
+    "apiKeyRequired": "API key is required be DeepL",
+    "languageUnsupported": "{{language}} is not supported be DeepL",
+    "languagesRequired": "Select source and target language",
+    "noTranslationReturned": "Unable to receive translation response from DeepL"
+  },
+  "lmStudio": {
+    "modelRequired": "Select a model",
+    "noTranslationReturned": "unable to receive translation response from LM Studio"
+  },
+  "ollama": {
+    "modelRequired": "Select a model",
+    "noTranslationReturned": "Unable to receive translation response from Ollama",
+    "noModelsFound": "No models available. Select a model in selection in UI and type any message. This should download selected model.",
+    "backendDown": "Ollama is unabvaliable. make sure you've lounched the app",
+    "modelsRequestFailed": "Reuqest to ollama failed with status [{{status}}]",
+    "pingFailed": "Failed to ping Ollama. The response was [{{status}}]",
+    "requestFailed": "Reuest to Ollama faild with status [{{status}}]"
+  },
+  "ai": {
+    "notConfigured": "[{{name}}] was not properly configured"
+  },
+  "aiTranslation": {
+    "noIntegrationConfigured": "AI integarion was not properly configured yet",
+    "noPromptTemplateSelected": "Select a prompt template before translating"
+  },
+  "batching": {
+    "invalidJson": "Model failed to format it's response properly (invalid JSON)",
+    "missingTranslationsArray": "Invalid model response shape (missing \"translations\" array)"
+  },
+  "spellcheck": {
+    "missingDictionaryAsset": "Missing dictionary [{{suffix}}]",
+    "dictionaryLoadFailed": "Unable to load dictionary [{{url}}]"
+  },
+  "project": {
+    "corrupted": "Corrupted project file",
+    "invalidFile": "Corrupted data at [{{path}}]: {{message}}",
+    "incompatibleVersion": "This project file was created by a newer version of the app and can't be opened here",
+    "cannotRead": "Unable to read project file",
+    "cannotSaveWithoutName": "Project name is required",
+    "nameRequired": "Project name is required",
+    "alreadyExists": "File with the same name already exists",
+    "folderNotTracked": "No working folder"
+  },
+  "promptTemplate": {
+    "alreadyExists": "Prompt template [{{title}}] already exists",
+    "readFailed": "Unable to read prompt file"
+  },
+  "glossaryFile": {
+    "alreadyExists": "Glossary [{{title}}] already exists",
+    "readFailed": "Unable to read glossary file"
+  },
+  "fileList": {
+    "projectNotFound": "Project was not found"
+  },
+  "json": {
+    "fieldNamesEmpty": "Field can not be empty",
+    "duplicateFieldName": "Field [{{fieldName}}] already exists"
+  },
+  "confirmationProvider": {
+    "confirmDestroyed": "The confirmation provider message has already been destroyed"
+  },
+  "videoPlaybackError": {
+    "title": "Can not play video",
+    "message": "Video may have been corrapted or deleted"
+  },
+  "fileProcessingFailed": {
+    "title": "File can not be processed"
+  },
+  "autoMergeFailed": {
+    "title": "Auto-merge failed"
+  },
+  "spellcheckUnavailable": {
+    "title": "Spellcheck unavailable"
+  },
+  "videoFileMissing": {
+    "title": "Video file was removed"
+  },
+  "videoProcessingFailed": {
+    "title": "Can not process video",
+    "message": "Video is unplayable. Unsupported video/audio codec"
+  },
+  "projectLoadFailed": {
+    "title": "Project can not be loaded"
+  },
+  "noPromptTemplate": {
+    "title": "No prompt template selected",
+    "message": "To send a request to the AI integration chosen, please select a prompt template to use for the request"
+  },
+  "unableToTranslateLine": {
+    "title": "Failed to translate the line"
+  },
+  "aiTranslationJobFailed": {
+    "title": "Bulk translation failed"
+  },
+  "bulkTranslationFailed": {
+    "title": "Line translation failed"
+  },
+  "noMatchingGlossaries": {
+    "title": "Failed to add glossary entry",
+    "message": "No glossaries matches the projects' translation direction"
+  },
+  "glossaryEntrySaveFailed": {
+    "title": "Failed to save glossary file",
+    "message": "Something went wrong saving glossary file"
+  },
+  "addGlossaryEntryError": {
+    "title": "Failed to add glossary entry"
+  },
+  "copyOperationFailed": {
+    "title": "Failed to copy text"
+  },
+  "mergeLinesFailed": {
+    "title": "Merge failed"
+  },
+  "deleteLineFailed": {
+    "title": "Unable to delete line"
+  },
+  "lineTooShortToSplit": {
+    "title": "Unable to split the line",
+    "message": "Line duration is too short"
+  },
+  "cleanupFailed": {
+    "title": "Cleanup failed"
+  },
+  "copyAllFailed": {
+    "title": "Copy all failed"
+  }
+}

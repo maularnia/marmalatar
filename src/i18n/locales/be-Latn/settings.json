@@ -1,0 +1,87 @@
+{
+  "sync": {
+    "title": "Sinchranizacyja",
+    "autoMergeThresholdLabel": "Adlehłaśc aŭta-abjadnańnia (ms)",
+    "timeAdjustmentStepLabel": "Krok karekcyi času (ms)"
+  },
+  "uxUi": {
+    "title": "UI/UX",
+    "scrollVideoIntoViewPrefix": "Padkručvać da videa pa naciskańni",
+    "scrollVideoIntoViewSuffix": "(tolki na małych ekranach)",
+    "askBeforeMerge": "Pytać pierad abjažnańniem",
+    "askBeforeDelete": "Pytać pierad vydaleńniem",
+    "askBeforeAITranslate": "Pytać pierad aŭta-pierakładam",
+    "askBeforeSplit": "Pytać pierad razrazańniem radka",
+    "autoMarkLinesCompleted": "Adzančać radki jak\"Hatovyja\" aŭtamatyčna",
+    "checkGrammar": "Praviarać pravapis",
+    "appLanguage": "Mova prahramy"
+  },
+  "aiSettings": {
+    "busyNotice": "Nałady zabłakavanyja, pakul vykonvajecca ŠI-pierakład",
+    "enableToggle": "Uklučyć ŠI-pierakład",
+    "providers": {
+      "title": "Pastaŭščyki",
+      "subtext": "Abiarycie ŠI pastaŭčyka sa spisu",
+      "noIntegrations": "Niama dastupnych intehracyj",
+      "placeholder": "Pastaŭščyk",
+      "useProvider": "skrystać {{name}}",
+      "finishConfiguring": "Danaładźcie pataŭščyka ŠI"
+    },
+    "common": {
+      "model": "Madel",
+      "nothingToSelect": "Tut ničoha niama",
+      "contextLength": "Kantekstnaje akno",
+      "linesPerRequest": "Radkoŭ na zapyt",
+      "connectionStatus": {
+        "connected": "Padłučana",
+        "connecting": "Padłučeńnie...",
+        "error": "Pamyłka padłučeńnia",
+        "idle": "Nie padłučana"
+      },
+      "linesPerRequestOptions": {
+        "recommended": "1 (rekamiendavana)",
+        "all": "Usio adrazu"
+      }
+    },
+    "ollama": {
+      "endpointAddress": "Adras sierviera"
+    },
+    "lmStudio": {
+      "endpointAddress": "Adras sierviera",
+      "reasoningStartTag": "Teg pačatku razvažańniaŭ",
+      "reasoningEndTag": "Teg kanca razvažańniaŭ"
+    },
+    "deepL": {
+      "apiKey": "API-kluč",
+      "formality": "Aficyjnaśc",
+      "modelType": "Typ madeli",
+      "glossary": "głasaryj",
+      "noGlossary": "Brak",
+      "keychainWarning": "Uvaha! Schovišča klučoŭ vašaj AS niedastupnaje, tamu API-kluč zachoŭvajecca biez šyfravannia na ŭzroŭni AS",
+      "glossaryUnsupported": "DeepL nie padtrymlivaje głasaryi dla [{{language}}]",
+      "formalityUnsupported": "DeepL nie padtrymlivaje naładu aficyjnaści dla [{{language}}]",
+      "glossaryInfo": "DeepL vykarystoŭvaje ŭłasnyja głasaryi — łakalnyja fajły głasaryjaŭ hetaj prahramy nie ŭžyvajucca. Stvarajcie i kirujcie głasaryjami niepasredna ŭ vašym akaŭncie DeepL, a potym vybierycie adzin z ich nižej"
+    },
+    "prompt": {
+      "title": "Zapyt",
+      "subtext": "Abiarycie šablon zapytu i dadajcie hlasaryi",
+      "promptTemplatePlaceholder": "Šablon zapytu",
+      "glossariesPlaceholder": "Glasaryi",
+      "unsupported": "{{name}} nie padtrymlivaje zapyty i łakalnyja głasaryi"
+    },
+    "contextWindow": {
+      "title": "Vykarystannie kantekstnaha akna",
+      "subtext": "Dapamahaje sačyć, kab ničoha nie vypadała z pamiaci ŠI padčas pierakładu",
+      "estimating": "Različvajecca",
+      "notAvailable": "Niedastupna",
+      "noPromptTemplateSelected": "Dla razliku nieabchodny šabłon zapytu"
+    }
+  },
+  "workingFolder": {
+    "title": "Rabočaja papka",
+    "subtext": "Papka z vašymi prajektami",
+    "selectButton": "Abrać papku",
+    "currentFolder": "Biahučaja papka: {{folder}}",
+    "rescanButton": "Skanavać nanova"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "fileList": {
+    "projectsHeader": "Праекты",
+    "promptTemplatesHeader": "Шаблоны запыту",
+    "glossariesHeader": "Гласарыі",
+    "createButton": "Стварыць"
+  },
+  "buttons": {
+    "settings": "Налады"
+  }
+}

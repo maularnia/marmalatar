@@ -1,0 +1,65 @@
+{
+  "editModeBanner": "У рэжыме рэдактара экспартуецца слупок \"Крыніца\".",
+  "characterFilter": {
+    "title": "Фільтр актора",
+    "subtext": "Пакуць радкі прызначаныя пэўным акторам. Пакіньце пустым, каб экспартаваць усё",
+    "checkboxLabel": "Абраць актора",
+    "selectPlaceholder": "Экспратаваць толькі радкі:"
+  },
+  "fpsCorrection": {
+    "title": "Караэкцыя FPS",
+    "subtext": "Карыгаваць выніковы FPS",
+    "checkboxLabel": "Карыгаваць FPS"
+  },
+  "outputFormat": {
+    "title": "Фармат"
+  },
+  "formats": {
+    "ass": "ASS (Advanced SubStation Alpha)",
+    "csv": "CSV (Comma-Separated Values)",
+    "json": "JSON (JavaScript Object Notation)",
+    "srt": "SRT (SubRip file)"
+  },
+  "srt": {
+    "exportButton": "Экспартаваць у SRT"
+  },
+  "ass": {
+    "exportButton": "Экспартаваць у ASS"
+  },
+  "csv": {
+    "sectionTitle": "Налады CSV",
+    "rowTemplateLabel": "Шаблон радка",
+    "timeFormatLabel": "Фармат часу",
+    "exportButton": "Экспартаваць у CSV",
+    "columnOptions": {
+      "lineNumber": "Нумар радка",
+      "start": "Час пачатку",
+      "end": "Час заканчэння",
+      "character": "Актор",
+      "text": "Тэкст",
+      "completed": "Статус гатоўнасці"
+    },
+    "timeFormatOptions": {
+      "hours": "Гадзіна",
+      "minutes": "Хвіліна",
+      "seconds": "Секунда",
+      "frames": "Кадр",
+      "milliseconds": "Мілісекунда",
+      "absoluteMs": "Абсалютная мілісекунда (Час эпохі)"
+    }
+  },
+  "json": {
+    "sectionTitle": "Налады JSON",
+    "objectStructureLabel": "Структура аб’екта",
+    "exportButton": "Экспартаваць у JSON",
+    "fieldOptions": {
+      "lineNumber": "Нумар радка",
+      "startTime": "Час пачатку",
+      "endTime": "Час заканчэння",
+      "sourceText": "Крыніца",
+      "translatedText": "Пераклад",
+      "character": "Актор",
+      "completed": "Статус гатоўнасці"
+    }
+  }
+}

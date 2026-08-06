@@ -1,0 +1,34 @@
+{
+  "editorControls": {
+    "undo": "Adrabić",
+    "redo": "Viarnuć",
+    "shiftLinesEarlier": "Pasunuć usie nadpisy\n na [{{step}}] ms raniej",
+    "shiftLinesLater": "Pasunuć usie nadpisy\nna [{{step}}] ms pazniej",
+    "autoMergeAdjacentLines": "Abjadnać blizkija\nradki adnaho aktora",
+    "insertLineBefore": "Dadać radok da abranaha",
+    "insertLineAfter": "Dadać radok pasla abranaha",
+    "addSelectedToGlossary": "Dadać vydzielenaje ŭ głasaryj",
+    "splitLineByCursor": "Razrezać radok pa karetcy",
+    "copySourceToOutput": "Skapijavać krynicu ŭ pierakład",
+    "editModeActive": "Režym redaktara",
+    "translationModeActive": "Režym pierakładčyka",
+    "pickVideoFile": "Abrać videa-fajł",
+    "export": "Ekspart",
+    "translateAll": "Pierakłaści ŭsio",
+    "translateFocusedLine": "Pierakłaści abrany radok",
+    "cleanup": "Ačystka",
+    "copyAllSourceToOutput": "Skapijavać usie radki krynicy\n ŭ pierakład",
+    "completeAllTranslated": "Paznačyć usie pierakładzienyja radki\n jak hatovyja"
+  },
+  "workTableLine": {
+    "markLineComplete": "Adznačyć radok jak \"Hatovy\"",
+    "deleteLine": "Vydalić radok"
+  },
+  "glossary": {
+    "insertBefore": "Dadać paru da",
+    "delete": "Vydalić"
+  },
+  "emoPicker": {
+    "ariaLabel": "Abrać emodzi"
+  }
+}

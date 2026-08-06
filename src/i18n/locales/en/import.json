@@ -1,0 +1,29 @@
+{
+  "shared": {
+    "selectFileButton": "Select file",
+    "noFileSelected": "No file selected"
+  },
+  "subtitles": {
+    "sectionTitle": "Subtitles",
+    "linesToProcessSubtext": "{{count}} lines to process",
+    "supportedFormats": "Supported file formats are: .srt/.ass",
+    "dropHtmlTags": "Drop html tags",
+    "dropExtendedFormattingPrefix": "Drop extended formatting",
+    "dropExtendedFormattingSuffix": "blocks and other ASS styles",
+    "removeAudioCuesPrefix": "Remove audio cues",
+    "removeAudioCuesSuffix": "like [music], [sigh] etc.",
+    "fixShortDashes": "Fix short dashes"
+  },
+  "video": {
+    "sectionTitle": "Video"
+  },
+  "projectTitle": {
+    "sectionTitle": "Title"
+  },
+  "translationDirection": {
+    "sectionTitle": "Translation direction",
+    "subtext": "Choose what languages you are translationg from and to"
+  },
+  "backButton": "Back",
+  "startButton": "Start"
+}

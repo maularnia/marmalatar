@@ -1,0 +1,87 @@
+{
+  "sync": {
+    "title": "Сінхранізацыя",
+    "autoMergeThresholdLabel": "Адлегласць аўта-аб’яднання (мс)",
+    "timeAdjustmentStepLabel": "Крок карэкцыі часу (мс)"
+  },
+  "uxUi": {
+    "title": "UI/UX",
+    "scrollVideoIntoViewPrefix": "Падкручваць да відэа па націсканні",
+    "scrollVideoIntoViewSuffix": "(толькі на малых экранах)",
+    "askBeforeMerge": "Пытаць перад аб’яднаннем",
+    "askBeforeDelete": "Пытаць перад выдаленнем",
+    "askBeforeAITranslate": "Пытаць перад аўта-перакладам",
+    "askBeforeSplit": "Пытаць перад разразаннем радка",
+    "autoMarkLinesCompleted": "Адзанчаць радкі як\"Гатовыя\" аўтаматычна",
+    "checkGrammar": "Правяраць правапіс",
+    "appLanguage": "Мова праграмы"
+  },
+  "aiSettings": {
+    "busyNotice": "Налады заблакаваныя, пакуль выконваецца ШІ-пераклад",
+    "enableToggle": "Уключыць ШІ-пераклад",
+    "providers": {
+      "title": "Пастаўшчыкі",
+      "subtext": "Абярыце ШІ пастаўчыка са спісу",
+      "noIntegrations": "Няма даступных інтэграцый",
+      "placeholder": "Пастаўшчык",
+      "useProvider": "скрыстаць {{name}}",
+      "finishConfiguring": "Даналадзьце патаўшчыка ШІ"
+    },
+    "common": {
+      "model": "Мадэль",
+      "nothingToSelect": "Тут нічога няма",
+      "contextLength": "Кантэкстнае акно",
+      "linesPerRequest": "Радкоў на запыт",
+      "connectionStatus": {
+        "connected": "Падлучана",
+        "connecting": "Падлучэнне...",
+        "error": "Памылка падлучэння",
+        "idle": "Не падлучана"
+      },
+      "linesPerRequestOptions": {
+        "recommended": "1 (рэкамендавана)",
+        "all": "Усё адразу"
+      }
+    },
+    "ollama": {
+      "endpointAddress": "Адрас сервера"
+    },
+    "lmStudio": {
+      "endpointAddress": "Адрас сервера",
+      "reasoningStartTag": "Тэг пачатку разважанняў",
+      "reasoningEndTag": "Тэг канца разважанняў"
+    },
+    "deepL": {
+      "apiKey": "API-ключ",
+      "formality": "Афіцыйнасць",
+      "modelType": "Тып мадэлі",
+      "glossary": "Гласарый",
+      "noGlossary": "Брак",
+      "keychainWarning": "Увага! Сховішча ключоў вашай АС недаступнае, таму API-ключ захоўваецца без шыфравання на ўзроўні АС",
+      "glossaryUnsupported": "DeepL не падтрымлівае гласарыі для [{{language}}]",
+      "formalityUnsupported": "DeepL не падтрымлівае наладу афіцыйнасці для {{language}}",
+      "glossaryInfo": "DeepL выкарыстоўвае ўласныя гласарыі — лакальныя файлы гласарыяў гэтай праграмы не ўжываюцца. Стварайце і кіруйце гласарыямі непасрэдна ў вашым акаўнце DeepL, а потым выберыце адзін з іх ніжэй"
+    },
+    "prompt": {
+      "title": "Запыт",
+      "subtext": "Абярыце шаблон запыту і дадайце гласарыі",
+      "promptTemplatePlaceholder": "Шаблон запыту",
+      "glossariesPlaceholder": "Гласарыі",
+      "unsupported": "{{name}} не падтрымлівае запыты і лакальныя гласарыі"
+    },
+    "contextWindow": {
+      "title": "Выкарыстанне кантэкстнага акна",
+      "subtext": "Дапамагае сачыць, каб нічога не выпадала з памяці ШІ падчас перакладу",
+      "estimating": "Разлічваецца",
+      "notAvailable": "Недаступна",
+      "noPromptTemplateSelected": "Для разліку неабходны шаблон запыту"
+    }
+  },
+  "workingFolder": {
+    "title": "Рабочая папка",
+    "subtext": "Папка з вашымі праектамі",
+    "selectButton": "Абраць папку",
+    "currentFolder": "Рабочая папка: {{folder}}",
+    "rescanButton": "Сканаваць нанова"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "shared": {
+    "yes": "Tak",
+    "no": "Nie",
+    "cancel": "Skasavać",
+    "continue": "Praciahnuć",
+    "actionCannotBeUndone": "Heta niezvarotnaje dziejańnie"
+  },
+  "addToGlossary": {
+    "title": "Stvaryć paru ŭ głasaryi",
+    "targetGlossaryPlaceholder": "Celevy głasaryj",
+    "originalLabel": "Krynica",
+    "translationLabel": "Pierakład",
+    "confirmButton": "Dadać",
+    "dismissButton": "Skasavać"
+  },
+  "autoMergeLines": {
+    "title": "Zapusctć aŭta-abjadnańnie?",
+    "bodyPrefix": "Skrypt znojdzie radki nie dalej ",
+    "bodyApart": "adzin ad adnaho",
+    "bodyAssigned": "pryznačynayja adnamu piersanažu",
+    "bodySuffix": "i abjadnaje ich",
+    "confirmButton": "Abjadnać"
+  },
+  "copyOverride": {
+    "title": "Skapijavać krynicu ŭ pierakład?"
+  },
+  "cleanup": {
+    "title": "Ačystka",
+    "columnOutput": "Pierakład",
+    "columnSource": "Krynica",
+    "cleanHtmlTags": "Prybrać html-tegi",
+    "cleanAssStyling": "Prybrać pašyranaje farmatavańnie (błoki {} i inšyja styli ASS)",
+    "cleanAudioCues": "Prybrać aŭdyjo-padkazki kštałtu [music], [sigh] i inš.",
+    "fixShortDashes": "Zamianić karotkija złučki na doŭhija",
+    "confirmButton": "Ačyścić"
+  },
+  "copyAllSourceToOutput": {
+    "title": "Skapijavać use radki krynicy ŭ pierakład?",
+    "overrideToggleLabel": "Pierazapisać ishujučyja pierakłady",
+    "confirmButton": "Skapijavać"
+  },
+  "deleteLine": {
+    "title": "Vydalić radok №{{lineNo}}?"
+  },
+  "deleteContext": {
+    "titlePrefix": "Vydalić kantekst",
+    "titleSuffix": "?"
+  },
+  "deleteGlossary": {
+    "titlePrefix": "Vydlić głasaryj",
+    "titleSuffix": "?"
+  },
+  "deleteGlossaryEntry": {
+    "title": "Vydalić radok głasaryja?"
+  },
+  "deleteProject": {
+    "titlePrefix": "Vydalić"
+  },
+  "lineMerge": {
+    "title": "Abjadnać hetyja radki?",
+    "bodyQuestion": "Abjadnać radki?",
+    "confirmButton": "Abjadnać"
+  },
+  "split": {
+    "title": "Razrezać radok?",
+    "body": "Razreža radok na miescy kretki",
+    "confirmButton": "Razrezać"
+  },
+  "translationOverride": {
+    "title": "Prekałaści praz ŠI?",
+    "confirmButton": "Tak",
+    "bodyHasContent": "Heta pierazapiša tekst pierakładu",
+    "bodyWillTranslate": "radok budzie pierakładzieny ŠI"
+  },
+  "videoSelect": {
+    "title": "Abiarycie videa-fajł",
+    "filePlaceholder": ".mp4, .mkv, .webm.",
+    "selectVideoButton": "Abrać videa",
+    "continueWithoutVideoButton": "Praciahnuć biaz videa",
+    "savedFileNotFoundBanner": "Nie atrymałasia adšukć videa, dapasavanaje da prajekta",
+    "processingFailedBanner": "Nie atrymałaja apracavać videa, niesumiaščalny kodek"
+  }
+}

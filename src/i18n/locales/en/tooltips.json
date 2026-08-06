@@ -1,0 +1,34 @@
+{
+  "editorControls": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "shiftLinesEarlier": "Shift all lines earlier by [{{step}}] ms",
+    "shiftLinesLater": "Shift all lines later by [{{step}}] ms",
+    "autoMergeAdjacentLines": "Auto-merge adjacent lines of same character",
+    "insertLineBefore": "Insert empty line before",
+    "insertLineAfter": "Insert emty line after",
+    "addSelectedToGlossary": "Add selection to glossary",
+    "splitLineByCursor": "Cut line at cursor position",
+    "copySourceToOutput": "Copy source text to output",
+    "editModeActive": "Currently in Edit mode",
+    "translationModeActive": "Translation mode",
+    "pickVideoFile": "Pick a video file",
+    "export": "Export",
+    "translateAll": "Translate all",
+    "translateFocusedLine": "Translate focused line",
+    "cleanup": "Cleanup",
+    "copyAllSourceToOutput": "Copy all source to output",
+    "completeAllTranslated": "Mark all translated lines as complete"
+  },
+  "workTableLine": {
+    "markLineComplete": "Toggle line complete",
+    "deleteLine": "Delete the line"
+  },
+  "glossary": {
+    "insertBefore": "Insert line before",
+    "delete": "Delete"
+  },
+  "emoPicker": {
+    "ariaLabel": "Emoji picker"
+  }
+}

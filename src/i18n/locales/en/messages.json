@@ -1,0 +1,89 @@
+{
+  "glossaryPairAdded": {
+    "title": "Added glossary entry",
+    "message": "Entry [{{original}}] -> [{{translation}}] has been added to [{{glossaryFileName}}]"
+  },
+  "glossaryPairDiscarded": {
+    "title": "Glossary entry discarded",
+    "message": "No glossaries has been changed"
+  },
+  "videoUpdated": {
+    "title": "New video has been asssigned"
+  },
+  "autoMergeCancelled": {
+    "title": "Auto-merged cancelled",
+    "message": "No lines has been changed"
+  },
+  "videoPathSaveFailed": {
+    "title": "Can not save video path"
+  },
+  "videoPathRemovalFailed": {
+    "title": "Can not remove video file path"
+  },
+  "projectLoaded": {
+    "title": "Project loaded",
+    "message": "Happy working!"
+  },
+  "translationCancelled": {
+    "title": "Translation cancelled"
+  },
+  "aiTranslationJobDone": {
+    "title": "Job complete",
+    "message": "AI succesfully complited your translation requeest"
+  },
+  "glossaryEntryAdded": {
+    "title": "New glossary entry has been added",
+    "suffix": "added to glossary"
+  },
+  "copyOperationCancelled": {
+    "title": "Copy operation cancelled",
+    "message": "No laines has been chaged.."
+  },
+  "textCopied": {
+    "title": "Copied",
+    "message": "Source text has been copied to output"
+  },
+  "lineSplit": {
+    "title": "Line has been split",
+    "message": "New line entry has been added"
+  },
+  "mergeOperationCancelled": {
+    "title": "Merge has been canceled",
+    "message": "No line has been modified"
+  },
+  "linesMerged": {
+    "title": "Merged succesfully"
+  },
+  "deleteLineCancelled": {
+    "title": "Line deletion discarded",
+    "message": "No line has been modified"
+  },
+  "lineDeleted": {
+    "title": "Line has been deleted",
+    "message": "One line entry has been removed"
+  },
+  "cleanupCancelled": {
+    "title": "Cleanup declined",
+    "message": "No lines were changed"
+  },
+  "copyAllCancelled": {
+    "title": "Copy all cancelled",
+    "message": "No lines were changed"
+  },
+  "mainMenuListItem": {
+    "creatingNewFile": "Creating new file",
+    "renamingFile": "Renaming file"
+  },
+  "projectLoader": {
+    "loadingVideo": "Video is loading..."
+  },
+  "submitNewProject": {
+    "creatingProject": "Project is being initialized..."
+  },
+  "glossary": {
+    "savingLabel": "Saving glossary [{{title}}]..."
+  },
+  "promptTemplate": {
+    "savingLabel": "Saving prompt template [{{title}}]"
+  }
+}

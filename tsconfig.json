@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@store/*": ["./src/store/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@ui-toolkit/*": ["./src/toolkit/*"],
+      "@providers/*": ["./src/providers/*"],
+      "@bridge/*": ["./bridge/*"]
+    },
+    "target": "ES2020",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "lib": ["ES2020", "ES2022.Intl", "DOM"]
+  },
+  "include": ["src", "bridge"]
+}

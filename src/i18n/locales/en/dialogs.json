@@ -1,0 +1,84 @@
+{
+  "shared": {
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "actionCannotBeUndone": "This action can not be undone"
+  },
+  "addToGlossary": {
+    "title": "Create new glossary pair",
+    "targetGlossaryPlaceholder": "Target glossary",
+    "originalLabel": "Original",
+    "translationLabel": "Translation",
+    "confirmButton": "Add",
+    "dismissButton": "Discard"
+  },
+  "autoMergeLines": {
+    "title": "Run auto-merge?",
+    "bodyPrefix": "The script will find all the adjscent lines that are up to",
+    "bodyApart": "apart",
+    "bodyAssigned": "assigned to the same charater",
+    "bodySuffix": "and merge them together",
+    "confirmButton": "Start auto-merge"
+  },
+  "copyOverride": {
+    "title": "Copy source to output?"
+  },
+  "cleanup": {
+    "title": "Cleanup",
+    "columnOutput": "Output",
+    "columnSource": "Source",
+    "cleanHtmlTags": "Drop html tags",
+    "cleanAssStyling": "Drop extended formatting {} blocks and other ASS styles",
+    "cleanAudioCues": "Remove audio cues like [music], [sigh] etc.",
+    "fixShortDashes": "Fix short dashes",
+    "confirmButton": "Run cleanup"
+  },
+  "copyAllSourceToOutput": {
+    "title": "Copy all source to output?",
+    "overrideToggleLabel": "Override output with source values",
+    "confirmButton": "Copy all"
+  },
+  "deleteLine": {
+    "title": "Delete line #{{lineNo}}?"
+  },
+  "deleteContext": {
+    "titlePrefix": "Delete",
+    "titleSuffix": "context?"
+  },
+  "deleteGlossary": {
+    "titlePrefix": "Delete",
+    "titleSuffix": "glossary?"
+  },
+  "deleteGlossaryEntry": {
+    "title": "Delete glossary entry?"
+  },
+  "deleteProject": {
+    "titlePrefix": "Delete"
+  },
+  "lineMerge": {
+    "title": "Merge these lines?",
+    "bodyQuestion": "Merge lines?",
+    "confirmButton": "Merge"
+  },
+  "split": {
+    "title": "Split the line?",
+    "body": "Split will accure at last carret position",
+    "confirmButton": "Split"
+  },
+  "translationOverride": {
+    "title": "Translate with AI?",
+    "confirmButton": "Override",
+    "bodyHasContent": "Output already has content",
+    "bodyWillTranslate": "The line will be translated with AI"
+  },
+  "videoSelect": {
+    "title": "Select a video file",
+    "filePlaceholder": ".mp4, .mkv, .webm.",
+    "selectVideoButton": "Select video",
+    "continueWithoutVideoButton": "Continue without video",
+    "savedFileNotFoundBanner": "Unable to find the video file assigned to this project. Please select another one",
+    "processingFailedBanner": "The video file can not be processed due to data corruption or unsupported audio/video codecs"
+  }
+}

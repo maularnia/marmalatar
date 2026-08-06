@@ -1,0 +1,173 @@
+{
+  "shared": {
+    "nameEmpty": "Нельга пакінуць пустым",
+    "folderNotSelected": "Дырэкторыя не абраная",
+    "selectValueRequired": "Нельга пакінуць пустым",
+    "connectFailed": "Няма сплаучэння з [{{name}}]",
+    "serverAddressRequired": "Нельга пакінуць пустым",
+    "invalidUrl": "Нядзейсная спасылка"
+  },
+  "settings": {
+    "autoMergeThresholdRequired": "Нельга пакінуць пустым",
+    "autoMergeThresholdMin": "Значэнне мае быць > 1",
+    "timeAdjustmentStepRequired": "Нельга пакінуць пустым",
+    "timeAdjustmentStepMin": "Значэнне мае быць > 1"
+  },
+  "glossaryPairForm": {
+    "originalRequired": "Нельга пакінуць пустым",
+    "translationRequired": "Нельга пакінуць пустым"
+  },
+  "videoSelect": {
+    "fileRequired": "Нельга пакінуць пустым"
+  },
+  "mainMenuListItem": {
+    "nameTooLong": "Значэнне даўжэй за [{{maxLength}}]",
+    "nameAlreadyExists": "Такі файл уюо існуе",
+    "unreachableCommitError": "Як вы сюды трапілі? [НЕДАСЯГЛЬНАЯ 01]"
+  },
+  "subtitleFileSelect": {
+    "unsupportedFormat": "Фармат не падтрыліваецца",
+    "parseFailedFallback": "Немагчыма прачытаць файл",
+    "fileRequired": "Нельга пакінуць пустым",
+    "noValidLines": "Файл пашкоджаны альбо пусты, няма з чым працаваць"
+  },
+  "videoFileSelect": {
+    "fileRequired": "Нельга пакінуць пустым",
+    "pathUnresolved": "Не атрымлася адшукаць шлях да файла",
+    "stillProcessing": "Апрцоўка відэа...",
+    "unsupportedPlayback": "Немагчыма прайграць відэа. Несумяшчальны кодэк",
+    "processingFailed": "Памылка генерацыі артэфактаў. Несумяшчальны кодэк"
+  },
+  "import": {
+    "projectTitleRequired": "Нельга пакінуць пустым",
+    "projectTitlePattern": "Дазволены толькі літары, пропускі ды злучкі (-)"
+  },
+  "deepL": {
+    "apiKeyRequired": "DeepL патрабуе ключа API",
+    "languageUnsupported": "[{{language}}] не падтрымліваецца DeepL",
+    "languagesRequired": "Абярыце мову крыніцы і перакладу",
+    "noTranslationReturned": "DeepL не адказаў на запыт"
+  },
+  "lmStudio": {
+    "modelRequired": "Абярыце мадэль",
+    "noTranslationReturned": "LM Studio не адказала на запыт"
+  },
+  "ollama": {
+    "modelRequired": "Абярыце мадэль",
+    "noTranslationReturned": "Ollama не адказала на запыт",
+    "noModelsFound": "Даступных мадэляў няма.\nАбярыце любую мадэль у чаце Ollama і напішыце любое паведамлеене. Гэта прымусць мадэль спампавацца, потым націсніце \"Аднавіць\" тут",
+    "backendDown": "Ollama недаступная.\nУпэўніцеся, што запусцілі праграму",
+    "modelsRequestFailed": "Запыт да Ollama вярнуўся са статусам [{{status}}]",
+    "pingFailed": "Не магу дагрукацца да Ollama.\n Запыт вярнуўся са статусам [{{status}}]",
+    "requestFailed": "Запыт да Ollama вярнуўся са статусам [{{status}}]"
+  },
+  "ai": {
+    "notConfigured": "[{{name}}] не сканфігуравана"
+  },
+  "aiTranslation": {
+    "noIntegrationConfigured": "Абраная інтэграцыя ШІ не наладжана",
+    "noPromptTemplateSelected": "Шаблон запыту неабходны каб даслаць запыт да абранай інтэграцыі"
+  },
+  "batching": {
+    "invalidJson": "Неадпаведны фармат адказу (пашкоджаны JSON)",
+    "missingTranslationsArray": "Адказ не змяшчае чаканае поле \"translations\""
+  },
+  "spellcheck": {
+    "missingDictionaryAsset": "Не знойдзены рэсурс [{{suffix}}]",
+    "dictionaryLoadFailed": "Не атрымлася загрузіць слоўнік [{{url}}]"
+  },
+  "project": {
+    "corrupted": "Пашкоджаны файл праекту",
+    "invalidFile": "Неадпавднае значэнне поля [{{path}}]: {{message}}",
+    "incompatibleVersion": "Ппаект быў створаны ў навейшай версіі праграмы. Аднавіце праграму каб адчыніцаь.",
+    "cannotRead": "Не атрымалася прачытаць файл",
+    "cannotSaveWithoutName": "Нельга захаваць праект без назвы",
+    "nameRequired": "Назву нельга пакінуць пустой",
+    "alreadyExists": "Такі файл ужо існуе",
+    "folderNotTracked": "Абярыце працоўную папку"
+  },
+  "promptTemplate": {
+    "alreadyExists": "Шаблон запыту [{{title}}] ужо існуе",
+    "readFailed": "Не атрымалася прачытаць шаблон запыту"
+  },
+  "glossaryFile": {
+    "alreadyExists": "Гласарый [{{title}}] ужо існуе",
+    "readFailed": "не атрымлася прачытаць гласарый"
+  },
+  "fileList": {
+    "projectNotFound": "Праект не знойдзены"
+  },
+  "json": {
+    "fieldNamesEmpty": "Нельга пакінуць пустым",
+    "duplicateFieldName": "Поле [{{fieldName}}] ужо існуе"
+  },
+  "confirmationProvider": {
+    "confirmDestroyed": "Спроба знішчыць спасылку на ўжо знішчанае паведамленне"
+  },
+  "videoPlaybackError": {
+    "title": "Немагчыма прайграць відэа",
+    "message": "Файл пашкоджаны, або кодэк несумяшчальны"
+  },
+  "fileProcessingFailed": {
+    "title": "Немагчыма апрацаваць файл"
+  },
+  "autoMergeFailed": {
+    "title": "Памылка аўта-аб’яднання"
+  },
+  "spellcheckUnavailable": {
+    "title": "Праверка правапісу недаступная"
+  },
+  "videoFileMissing": {
+    "title": "Відэа было выдалена"
+  },
+  "videoProcessingFailed": {
+    "title": "Немагчыма апрацаваць відэа",
+    "message": "Непрайгравальнае відэа. Несумяшчальны аўдыё- ці відэа- кодэк"
+  },
+  "projectLoadFailed": {
+    "title": "Памылка ладавання праекта"
+  },
+  "noPromptTemplate": {
+    "title": "Брак шаблону запыту",
+    "message": "Каб даслаць запыт да ШІ, праграме трэба шаблое запыту. Стварыце шаблон у галоўным меню і абярыце яго ў полі шаблону"
+  },
+  "unableToTranslateLine": {
+    "title": "Не атрымалася перакласці радок"
+  },
+  "aiTranslationJobFailed": {
+    "title": "Памылка масавага перакладу"
+  },
+  "bulkTranslationFailed": {
+    "title": "Памылка перакладу радка"
+  },
+  "noMatchingGlossaries": {
+    "title": "Памлыка дадання пары ў гласарый",
+    "message": "Няма ніводнага, які адпавядае накірунку перакладу пракету"
+  },
+  "glossaryEntrySaveFailed": {
+    "title": "Памылка захавання гласарыя",
+    "message": "Нешта пайшло не так падчас запісу файла гласарыя"
+  },
+  "addGlossaryEntryError": {
+    "title": "Не атрымлася дадаць пару ў гласарый"
+  },
+  "copyOperationFailed": {
+    "title": "Памылка капіявання тэксту"
+  },
+  "mergeLinesFailed": {
+    "title": "Не атрымалася аб’яднаць радкі"
+  },
+  "deleteLineFailed": {
+    "title": "Не атрымлася выдліць радок"
+  },
+  "lineTooShortToSplit": {
+    "title": "Надта кароткі радок",
+    "message": "Не атрымалася разрэзаць"
+  },
+  "cleanupFailed": {
+    "title": "Памылка ачысткі"
+  },
+  "copyAllFailed": {
+    "title": "Памылка капіявання"
+  }
+}

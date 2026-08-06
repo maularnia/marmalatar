@@ -1,0 +1,65 @@
+{
+  "editModeBanner": "U režymie redaktara ekspartujecca słupok \"Krynica\".",
+  "characterFilter": {
+    "title": "Filtr aktora",
+    "subtext": "Pakuć radki tolki peŭnaha aktora. Pakińcie pustym, kab ekspartavać usio",
+    "checkboxLabel": "Abrać aktora",
+    "selectPlaceholder": "Ekspratavać tolki radki:"
+  },
+  "fpsCorrection": {
+    "title": "Karaekcyja FPS",
+    "subtext": "Karyhavać FPS",
+    "checkboxLabel": "Skaryhavać FPS"
+  },
+  "outputFormat": {
+    "title": "Farmat"
+  },
+  "formats": {
+    "ass": "ASS (Advanced SubStation Alpha)",
+    "csv": "CSV (Comma-Separated Values)",
+    "json": "JSON (JavaScript Object Notation)",
+    "srt": "SRT (SubRip file)"
+  },
+  "srt": {
+    "exportButton": "Ekspartavać u SRT"
+  },
+  "ass": {
+    "exportButton": "Ekspartavać u ASS"
+  },
+  "csv": {
+    "sectionTitle": "Nałady CSV",
+    "rowTemplateLabel": "Šabłon radka",
+    "timeFormatLabel": "Farmat času",
+    "exportButton": "Ekspartavać u CSV",
+    "columnOptions": {
+      "lineNumber": "Numar radka",
+      "start": "Čas pačatku",
+      "end": "Čas zakančeńnia",
+      "character": "Aktor",
+      "text": "Tekst",
+      "completed": "Status hatoŭnaści"
+    },
+    "timeFormatOptions": {
+      "hours": "Hadzina",
+      "minutes": "Chvilina",
+      "seconds": "Sekunda",
+      "frames": "Kadr",
+      "milliseconds": "Milisekunda",
+      "absoluteMs": "Absalutnaja milisekunda (Čas epochi)"
+    }
+  },
+  "json": {
+    "sectionTitle": "Nałady JSON",
+    "objectStructureLabel": "Struktura abjekta",
+    "exportButton": "Ekspartavać u JSON",
+    "fieldOptions": {
+      "lineNumber": "Numar radka",
+      "startTime": "Čas pačatku",
+      "endTime": "Čas zakančeńnia",
+      "sourceText": "Krynica",
+      "translatedText": "Pierakład",
+      "character": "Aktor",
+      "completed": "Status hatoŭnaści"
+    }
+  }
+}

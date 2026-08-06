@@ -1,0 +1,89 @@
+{
+  "glossaryPairAdded": {
+    "title": "Запіс даданы ў гласарый",
+    "message": "Пара [{{original}}] -> [{{translation}}] даданая ў гласарый [{{glossaryFileName}}]"
+  },
+  "glossaryPairDiscarded": {
+    "title": "Даданне пары ў гласарый скасаванае",
+    "message": "Ніводнага гласарыя не зменена"
+  },
+  "videoUpdated": {
+    "title": "Дапасавана новае відэа праекту"
+  },
+  "autoMergeCancelled": {
+    "title": "Аўта-аб’яднанне скасаванае",
+    "message": "Ніводнага радку не зменена"
+  },
+  "videoPathSaveFailed": {
+    "title": "Не атрымалася захаваць шлях да відэа"
+  },
+  "videoPathRemovalFailed": {
+    "title": "Не атрымалася выдаліць шлях да відэа"
+  },
+  "projectLoaded": {
+    "title": "Праект заладаваны",
+    "message": "Прыемнай працы!"
+  },
+  "translationCancelled": {
+    "title": "Пераклад праз ШІ скасаваны"
+  },
+  "aiTranslationJobDone": {
+    "title": "Заданне выкананае",
+    "message": "ШІ паспяхова выканаў задачу перакладу"
+  },
+  "glossaryEntryAdded": {
+    "title": "Новая пара",
+    "suffix": "даданая ў гласарый"
+  },
+  "copyOperationCancelled": {
+    "title": "Капіяванне скасаванае",
+    "message": "Ніводнага радку не зменена"
+  },
+  "textCopied": {
+    "title": "Скапіявана",
+    "message": "Тэкст крыніцы скапіяваны ў пераклад"
+  },
+  "lineSplit": {
+    "title": "Радок быў падзелены",
+    "message": "Новы радок даданы да спісу. Нумарацыя радкоў выпраўлена"
+  },
+  "mergeOperationCancelled": {
+    "title": "Аб’яднанне радкоў скасавана",
+    "message": "Ніводнага радку не зменена"
+  },
+  "linesMerged": {
+    "title": "Радкі былі аб’яднаныя"
+  },
+  "deleteLineCancelled": {
+    "title": "Выдаленне радка скасаванае",
+    "message": "Ніводнага радку не зменена"
+  },
+  "lineDeleted": {
+    "title": "Радок быў выдалены",
+    "message": "нумарацыя радкоў адноўленая"
+  },
+  "cleanupCancelled": {
+    "title": "Ачыстка скасаваная",
+    "message": "Ніводнага радку не зменена"
+  },
+  "copyAllCancelled": {
+    "title": "Капіяванне скасаванае",
+    "message": "Ніводнага радку не зменена"
+  },
+  "mainMenuListItem": {
+    "creatingNewFile": "Стварэнне новага файла",
+    "renamingFile": "Перайменаванне файла"
+  },
+  "projectLoader": {
+    "loadingVideo": "Відэа загружаецца"
+  },
+  "submitNewProject": {
+    "creatingProject": "Ініцыялізацыя"
+  },
+  "glossary": {
+    "savingLabel": "Захаванне гласарыя [{{title}}]"
+  },
+  "promptTemplate": {
+    "savingLabel": "Захаванне шаблону запыту [{{title}}]"
+  }
+}

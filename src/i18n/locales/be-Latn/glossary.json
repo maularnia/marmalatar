@@ -1,0 +1,14 @@
+{
+  "translationDirection": {
+    "title": "Kirunak pierakładu",
+    "subtext": "Vybar głasaryja zaŭždy abmiežavany tymi, kirunak pierakładu jakich supadaje z kirunkam pierakładu prajekta"
+  },
+  "entries": {
+    "title": "Zapisy",
+    "addButton": "Dadać"
+  },
+  "table": {
+    "originalHeader": "Krynica",
+    "translationHeader": "Pierakład"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "tableHeader": {
+    "character": "Актор"
+  },
+  "tableLine": {
+    "aiThinking": "ШТ працуе..."
+  },
+  "videoPlayer": {
+    "noCharacter": "Без персанажу"
+  }
+}

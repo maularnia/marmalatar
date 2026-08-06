@@ -1,0 +1,11 @@
+{
+  "tableHeader": {
+    "character": "Character"
+  },
+  "tableLine": {
+    "aiThinking": "Model is thinking..."
+  },
+  "videoPlayer": {
+    "noCharacter": "No character"
+  }
+}

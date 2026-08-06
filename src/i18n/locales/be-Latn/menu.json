@@ -1,0 +1,11 @@
+{
+  "fileList": {
+    "projectsHeader": "Prajekty",
+    "promptTemplatesHeader": "Šabłony zapytu",
+    "glossariesHeader": "głasaryi",
+    "createButton": "Stvaryć"
+  },
+  "buttons": {
+    "settings": "Nałady"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "shared": {
+    "selectFileButton": "Abrać fajł",
+    "noFileSelected": "Treba niešta abarć"
+  },
+  "subtitles": {
+    "sectionTitle": "Nadpisy",
+    "linesToProcessSubtext": "{{count}} radkoŭ da apracoŭki",
+    "supportedFormats": "Pradtrymlivajucca fajły .srt/.ass",
+    "dropHtmlTags": "Prybrać html",
+    "dropExtendedFormattingPrefix": "Prybrać pašyranaje farmatavańnie",
+    "dropExtendedFormattingSuffix": "błoki stylaŭ ASS",
+    "removeAudioCuesPrefix": "Prbrać aŭdyjo-padkazki",
+    "removeAudioCuesSuffix": "kštałtu [music], [sigh] i t.p.",
+    "fixShortDashes": "Vypravić karotkija złučki na doŭhija"
+  },
+  "video": {
+    "sectionTitle": "Videa"
+  },
+  "projectTitle": {
+    "sectionTitle": "Nazva"
+  },
+  "translationDirection": {
+    "sectionTitle": "Kirunak pierakładu",
+    "subtext": "Abiarycie movu krynicy i pierakładu"
+  },
+  "backButton": "Nazad",
+  "startButton": "Pačać"
+}

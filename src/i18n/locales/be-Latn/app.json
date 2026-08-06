@@ -1,0 +1,31 @@
+{
+  "title": {
+    "name": "Marmalatar",
+    "subtitle": "Pamahaty pierakladčyka­­"
+  },
+  "video": {
+    "supportedFormats": "Prahrama padtrymlivaje: .mp4, .m4v, .mkv, .webm, .mov, .avi, .wmv, .flv, .mpg, .mpeg, .m2ts, .mts, .ts, .3gp, .3g2, .ogv,.asf",
+    "supportedCodecs": "Sumiaščalnia kodeki: H.264, VP8, VP9, AV1"
+  },
+  "videoFileStatus": {
+    "idle": "Abiarycie fajł dla apracoŭki",
+    "loading": "Apracoŭka fajła...",
+    "success": "Fajł apracavany",
+    "error": "Niemahčyma apracavać fajł",
+    "unsupported": "Niemahčyma prajhrać videa. Niesumiaščalny kodek"
+  },
+  "errorBoundary": {
+    "title": "Niešta pajšło nie tak",
+    "message": "U prahramie adbyłasia niečakanaja pamyłka. Pasprabujcie pierazapuścić prahramu, vaš prajekt zachavany na dysku i nie budzie stračany.",
+    "restartButton": "Pierazapuścić prahramu"
+  },
+  "languages": {
+    "EN_en": "Anhlijskaja",
+    "DE_de": "Niamieckaja",
+    "ES_es": "Ispanskaja",
+    "IT_it": "Italjanskaja",
+    "BE_be": "Bielaruskaja",
+    "UK_uk": "Ukrainskaja",
+    "PL_pl": "Polskaja"
+  }
+}

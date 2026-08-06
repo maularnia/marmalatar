@@ -1,0 +1,87 @@
+{
+  "sync": {
+    "title": "Sync",
+    "autoMergeThresholdLabel": "Auto-merge threshold (ms)",
+    "timeAdjustmentStepLabel": "Time adjustment step (ms)"
+  },
+  "uxUi": {
+    "title": "UI/UX",
+    "scrollVideoIntoViewPrefix": "Scroll the video to view on",
+    "scrollVideoIntoViewSuffix": "hit (small screens only)",
+    "askBeforeMerge": "Confirm merging lines",
+    "askBeforeDelete": "Confirm deleting a line",
+    "askBeforeAITranslate": "Confirm AI translation",
+    "askBeforeSplit": "Confirm splitting a line",
+    "autoMarkLinesCompleted": "Mark lines as completed automatically",
+    "checkGrammar": "Allow spellcheck",
+    "appLanguage": "Interface language"
+  },
+  "aiSettings": {
+    "busyNotice": "Settings are blocked while AI translation is running",
+    "enableToggle": "Enable AI translation",
+    "providers": {
+      "title": "Providers",
+      "subtext": "Who should generate those precious tokens?",
+      "noIntegrations": "No translation integrations available.",
+      "placeholder": "Integration",
+      "useProvider": "use {{name}}",
+      "finishConfiguring": "Finish configuring the integration above to enable AI translation."
+    },
+    "common": {
+      "model": "Model",
+      "nothingToSelect": "Nothing to select",
+      "contextLength": "Context length",
+      "linesPerRequest": "Lines per request",
+      "connectionStatus": {
+        "connected": "Successfully connected",
+        "connecting": "Connecting...",
+        "error": "Unable to connect",
+        "idle": "Not connected"
+      },
+      "linesPerRequestOptions": {
+        "recommended": "1 (recommended)",
+        "all": "All at once"
+      }
+    },
+    "ollama": {
+      "endpointAddress": "Endpoint address"
+    },
+    "lmStudio": {
+      "endpointAddress": "Endpoint address",
+      "reasoningStartTag": "Reasoning start tag",
+      "reasoningEndTag": "Reasoning end tag"
+    },
+    "deepL": {
+      "apiKey": "API key",
+      "formality": "Formality",
+      "modelType": "Model type",
+      "glossary": "Glossary",
+      "noGlossary": "None",
+      "keychainWarning": "Your OS keychain isn't available on this system, so the API key is stored without OS-level encryption.",
+      "glossaryUnsupported": "DeepL does not support glossaries for {{language}}.",
+      "formalityUnsupported": "DeepL does not support formality setup for {{language}}.",
+      "glossaryInfo": "DeepL uses its own glossaries — this app's local glossary files are not applied. Create and manage glossaries directly in your DeepL account, then select one below."
+    },
+    "prompt": {
+      "title": "Prompt",
+      "subtext": "Choose prompt template to use and add glossaries",
+      "promptTemplatePlaceholder": "Prompt template",
+      "glossariesPlaceholder": "Glossaries",
+      "unsupported": "{{name}} does not support prompting and local glossaries."
+    },
+    "contextWindow": {
+      "title": "Context window utilization",
+      "subtext": "Measures utilization of the context window",
+      "estimating": "Estimating",
+      "notAvailable": "N/A",
+      "noPromptTemplateSelected": "No prompt template selected"
+    }
+  },
+  "workingFolder": {
+    "title": "Working folder",
+    "subtext": "A folder with your projects",
+    "selectButton": "Select folder",
+    "currentFolder": "Current folder: {{folder}}",
+    "rescanButton": "Rescan"
+  }
+}

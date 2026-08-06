@@ -1,0 +1,11 @@
+{
+  "fileList": {
+    "projectsHeader": "Projects",
+    "promptTemplatesHeader": "Prompt Templates",
+    "glossariesHeader": "Glossaries",
+    "createButton": "Create"
+  },
+  "buttons": {
+    "settings": "Settings"
+  }
+}

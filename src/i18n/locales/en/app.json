@@ -1,0 +1,31 @@
+{
+  "title": {
+    "name": "Marmalatar",
+    "subtitle": "Your personal translation assistant"
+  },
+  "video": {
+    "supportedFormats": "Supported file formats are: .mp4, .m4v, .mkv, .webm, .mov, .avi, .wmv, .flv, .mpg, .mpeg, .m2ts, .mts, .ts, .3gp, .3g2, .ogv,.asf",
+    "supportedCodecs": "Supported codecs: H.264, VP8, VP9, AV1"
+  },
+  "videoFileStatus": {
+    "idle": "No file to process",
+    "loading": "Preparing the file...",
+    "success": "Selected file is valid and ready",
+    "error": "Error processing the file",
+    "unsupported": "unplayable video. Most probably unknown audio/video codec"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "The app has run into an unexpected error. Try restarting the app; your project is saved on disk and won't be lost.",
+    "restartButton": "Restart the app"
+  },
+  "languages": {
+    "EN_en": "English",
+    "DE_de": "German",
+    "ES_es": "Spanish",
+    "IT_it": "Italian",
+    "BE_be": "Belarusian",
+    "UK_uk": "Ukrainian",
+    "PL_pl": "Polish"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "editorControls": {
+    "undo": "Адрабіць",
+    "redo": "Вярнуць",
+    "shiftLinesEarlier": "Пасунуць усе надпісы\nна [{{step}}] мс раней",
+    "shiftLinesLater": "Пасунуць усе надпісы\nна [{{step}}] мс пазней",
+    "autoMergeAdjacentLines": "Аб’яднаць блізкія радкі\nаднаго актора",
+    "insertLineBefore": "Дадаць радок да абранага",
+    "insertLineAfter": "Дадаць радок пасля абранага",
+    "addSelectedToGlossary": "Дадаць выдзеленае ў гласарый",
+    "splitLineByCursor": "Разрэзаць радок па карэтцы",
+    "copySourceToOutput": "Скапіяваць крыніцу ў пераклад",
+    "editModeActive": "Рэжым рэдактара",
+    "translationModeActive": "Рэжым перакладчыка",
+    "pickVideoFile": "Абраць відэа-файл",
+    "export": "Экспарт",
+    "translateAll": "Перакласці ўсё",
+    "translateFocusedLine": "Перакласці абраны радок",
+    "cleanup": "Ачыстка",
+    "copyAllSourceToOutput": "Скапіяваць усе радкі крыніцы\nу пераклад",
+    "completeAllTranslated": "Пазначыць усе\nперакладзеныя радкі як гатовыя"
+  },
+  "workTableLine": {
+    "markLineComplete": "Адзначыць радок як \"Гатовы\"",
+    "deleteLine": "Выдаліць радок"
+  },
+  "glossary": {
+    "insertBefore": "Дадаць пару да",
+    "delete": "Выдаліць"
+  },
+  "emoPicker": {
+    "ariaLabel": "Абраць эмодзі"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "editModeBanner": "In edit mode, source lines are exported.",
+  "characterFilter": {
+    "title": "Character filter",
+    "subtext": "Filers lines of specific characters. Leave empty to export everything",
+    "checkboxLabel": "Select characters",
+    "selectPlaceholder": "Only export lines for"
+  },
+  "fpsCorrection": {
+    "title": "FPS correction",
+    "subtext": "Adjust the FPS for output file",
+    "checkboxLabel": "Adjust FPS"
+  },
+  "outputFormat": {
+    "title": "Format"
+  },
+  "formats": {
+    "ass": "ASS (Advanced SubStation Alpha)",
+    "csv": "CSV (Comma-Separated Values)",
+    "json": "JSON (JavaScript Object Notation)",
+    "srt": "SRT (SubRip file)"
+  },
+  "srt": {
+    "exportButton": "Export as SRT"
+  },
+  "ass": {
+    "exportButton": "Export as ASS"
+  },
+  "csv": {
+    "sectionTitle": "CSV parameters",
+    "rowTemplateLabel": "Row template",
+    "timeFormatLabel": "Time format",
+    "exportButton": "Export CSV",
+    "columnOptions": {
+      "lineNumber": "Line #",
+      "start": "Start",
+      "end": "End",
+      "character": "Character",
+      "text": "Text",
+      "completed": "Completed"
+    },
+    "timeFormatOptions": {
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "seconds": "Seconds",
+      "frames": "Frames",
+      "milliseconds": "Milliseconds",
+      "absoluteMs": "Absolute ms"
+    }
+  },
+  "json": {
+    "sectionTitle": "JSON parameters",
+    "objectStructureLabel": "Object structure",
+    "exportButton": "Export JSON",
+    "fieldOptions": {
+      "lineNumber": "Line #",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "sourceText": "Source Text",
+      "translatedText": "Translated Text",
+      "character": "Character",
+      "completed": "Completed"
+    }
+  }
+}

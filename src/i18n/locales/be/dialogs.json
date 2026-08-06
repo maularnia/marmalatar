@@ -1,0 +1,84 @@
+{
+  "shared": {
+    "yes": "Так",
+    "no": "Не",
+    "cancel": "Скасаваць",
+    "continue": "Працягнуць",
+    "actionCannotBeUndone": "Гэта незваротнае дзеянне"
+  },
+  "addToGlossary": {
+    "title": "Стварыць пару ў гласарыі",
+    "targetGlossaryPlaceholder": "Цэлевы гласарый",
+    "originalLabel": "Крыніца",
+    "translationLabel": "Пераклад",
+    "confirmButton": "Дадаць",
+    "dismissButton": "Скасаваць"
+  },
+  "autoMergeLines": {
+    "title": "Запусцтць аўта-аб’яднанне?",
+    "bodyPrefix": "Скрыпт знойдзе радкі не далей ",
+    "bodyApart": "адзін ад аднаго",
+    "bodyAssigned": "прызначынаыя аднаму персанажу",
+    "bodySuffix": "і аб’яднае іх",
+    "confirmButton": "Аб’яднаць"
+  },
+  "copyOverride": {
+    "title": "Скапіяваць крыніцу ў пераклад?"
+  },
+  "cleanup": {
+    "title": "Ачыстка",
+    "columnOutput": "Пераклад",
+    "columnSource": "Крыніца",
+    "cleanHtmlTags": "Прыбраць html-тэгі",
+    "cleanAssStyling": "Прыбраць пашыранае фарматаванне (блокі {} і іншыя стылі ASS)",
+    "cleanAudioCues": "Прыбраць аўдыё-падказкі кшталту [music], [sigh] і інш.",
+    "fixShortDashes": "Замяніць кароткія злучкі на доўгія",
+    "confirmButton": "Ачысціць"
+  },
+  "copyAllSourceToOutput": {
+    "title": "Скапіяваць усе радкі крыніцы ў пераклад?",
+    "overrideToggleLabel": "Перазапісаць ісгуючыя пераклады",
+    "confirmButton": "Скапіяваць"
+  },
+  "deleteLine": {
+    "title": "Выдаліць радок №{{lineNo}}?"
+  },
+  "deleteContext": {
+    "titlePrefix": "Выдаліць кантэкст",
+    "titleSuffix": "?"
+  },
+  "deleteGlossary": {
+    "titlePrefix": "Выдліць гласарый",
+    "titleSuffix": "?"
+  },
+  "deleteGlossaryEntry": {
+    "title": "Выдаліць радок гласарыя?"
+  },
+  "deleteProject": {
+    "titlePrefix": "Выдаліць"
+  },
+  "lineMerge": {
+    "title": "Аб’яднаць гэтыя радкі?",
+    "bodyQuestion": "Аб’яднаць радкі?",
+    "confirmButton": "Аб’яднаць"
+  },
+  "split": {
+    "title": "Разрэзаць радок?",
+    "body": "Разрэжа радок на месцы крэткі",
+    "confirmButton": "Разрэзаць"
+  },
+  "translationOverride": {
+    "title": "Прекаласці праз ШІ?",
+    "confirmButton": "Так",
+    "bodyHasContent": "Гэта перазапіша тэкст перакладу",
+    "bodyWillTranslate": "радок будзе перакладзены ШІ"
+  },
+  "videoSelect": {
+    "title": "Абярыце відэа-файл",
+    "filePlaceholder": ".mp4, .mkv, .webm.",
+    "selectVideoButton": "Абраць відэа",
+    "continueWithoutVideoButton": "Працягнуць без відэа",
+    "savedFileNotFoundBanner": "Не атрымалася адшукць відэа, дапасаванае да праекта",
+    "processingFailedBanner": "Не атрымалая апрацаваць відэа, несумяшчальны кодэк"
+  }
+}

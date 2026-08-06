@@ -1,0 +1,89 @@
+{
+  "glossaryPairAdded": {
+    "title": "Zapis dadany ŭ głasaryj",
+    "message": "Para [{{original}}] -> [{{translation}}] dadanaja ŭ głasaryj [{{glossaryFileName}}]"
+  },
+  "glossaryPairDiscarded": {
+    "title": "Dadańnie pary ŭ głasaryj skasavanaje",
+    "message": "Nivodnaha głasaryja nie zmieniena"
+  },
+  "videoUpdated": {
+    "title": "Dapasavana novaje videa prajektu"
+  },
+  "autoMergeCancelled": {
+    "title": "Aŭta-abjadnannie skasavanaje",
+    "message": "Nivodnaha radku nie zmieniena"
+  },
+  "videoPathSaveFailed": {
+    "title": "Nie atrymałasia zachavać šlach da videa"
+  },
+  "videoPathRemovalFailed": {
+    "title": "Nie atrymałasia vydalić šlach da videa"
+  },
+  "projectLoaded": {
+    "title": "Prajekt załadavany",
+    "message": "Pryjemnaj pracy!"
+  },
+  "translationCancelled": {
+    "title": "Pierakład praz ŠI skasavany"
+  },
+  "aiTranslationJobDone": {
+    "title": "Zadańnie vykananaje",
+    "message": "ŠI paspiachova vykanaŭ zadaču pierakładu"
+  },
+  "glossaryEntryAdded": {
+    "title": "Novaja para",
+    "suffix": "dadanaja ŭ głasaryj"
+  },
+  "copyOperationCancelled": {
+    "title": "Kapijavannie skasavanaje",
+    "message": "Nivodnaha radku nie zmieniena"
+  },
+  "textCopied": {
+    "title": "Skapijavana",
+    "message": "Tekst krynicy skapijavany ŭ pierakład"
+  },
+  "lineSplit": {
+    "title": "Radok byŭ padzieleny",
+    "message": "Novy radok dadany da spisu. Numaracyja radkoŭ vypraŭlena"
+  },
+  "mergeOperationCancelled": {
+    "title": "Abjadnańnie radkoŭ skasavana",
+    "message": "Nivodnaha radku nie zmieniena"
+  },
+  "linesMerged": {
+    "title": "Radki byli abjadnanyja"
+  },
+  "deleteLineCancelled": {
+    "title": "Vydalennie radka skasavanaje",
+    "message": "Nivodnaha radku nie zmieniena"
+  },
+  "lineDeleted": {
+    "title": "Radok byŭ vydaleny",
+    "message": "numaracyja radkoŭ adnoŭlenaja"
+  },
+  "cleanupCancelled": {
+    "title": "Ačystka skasavanaja",
+    "message": "Nivodnaha radku nie zmieniena"
+  },
+  "copyAllCancelled": {
+    "title": "Kapijavańnie skasavanaje",
+    "message": "Nivodnaha radku nie zmieniena"
+  },
+  "mainMenuListItem": {
+    "creatingNewFile": "Stvareńnie novaha fajła",
+    "renamingFile": "Pierajmienavańnie fajła"
+  },
+  "projectLoader": {
+    "loadingVideo": "Videa zahružajecca"
+  },
+  "submitNewProject": {
+    "creatingProject": "Inicyjalizacyja"
+  },
+  "glossary": {
+    "savingLabel": "Zachavańnie głasaryja [{{title}}]"
+  },
+  "promptTemplate": {
+    "savingLabel": "Zachavańnie šabłonu zapytu [{{title}}]"
+  }
+}
