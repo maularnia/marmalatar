@@ -30,8 +30,8 @@ Marmalatar is built and maintained by Maularnia. If you'd like to support develo
 | --- | --- | --- |
 | SubRip (`.srt`) | ✅ | ✅ |
 | Advanced SubStation Alpha (`.ass`) | ✅ | ✅ |
-| CSV | ✅ | ✅ |
-| JSON | ✅ | ✅ |
+| CSV | ❌ | ✅ |
+| JSON | ❌ | ✅ |
 
 ## License
 
