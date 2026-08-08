@@ -17,8 +17,12 @@ linux:
   target:
     - AppImage
     - deb
+    - pacman
+    - rpm
   icon: electron/assets/icon-256.png
   maintainer: Maularnia <mauliarnia.by@gmail.com>
+  category: TextEditor
+  syncDesktopName: true
 publish:
   provider: github
   owner: maularnia
