@@ -197,7 +197,7 @@ export const upsertProjectInCache =
     await upsertProjectCacheEntry(entry);
   };
 
-export const removeProjectFromCache =
+const removeProjectFromCache =
   (filePath: string) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     dispatch(setProjects(selectProjects(getState()).filter((p) => p.filePath !== filePath)));

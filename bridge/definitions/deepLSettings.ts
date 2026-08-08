@@ -16,7 +16,6 @@ export const DeepLSettingsV1Schema = VersionedSchema.extend({
   lines_per_request: z.string().catch(''),
   glossary_id: z.string().catch(''),
 });
-export type DeepLSettings = z.infer<typeof DeepLSettingsV1Schema>;
 
 // Version config (defineVersionedContract) and the reader built from it live in
 // contracts.ts, alongside every other contract's.

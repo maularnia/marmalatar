@@ -3,7 +3,7 @@ import { PropsWithChildren, RefObject } from 'react';
 
 export type KeystrokeZoneHintCorner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
-export type KeystrokeZoneHint = {
+type KeystrokeZoneHint = {
   corner?: KeystrokeZoneHintCorner;
 };
 

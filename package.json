@@ -52,12 +52,6 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.3.0",
-    "dictionary-de": "^3.0.0",
-    "dictionary-en": "^4.0.0",
-    "dictionary-es": "^4.0.0",
-    "dictionary-it": "^2.0.0",
-    "dictionary-pl": "^2.0.0",
-    "dictionary-uk": "^4.0.0",
     "electron": "^42.3.3",
     "electron-builder": "^26.15.3",
     "electron-vite": "^6.0.0-beta.1",
@@ -71,7 +65,6 @@
     "husky": "^9.1.7",
     "knip": "^6.29.0",
     "lint-staged": "^16.4.0",
-    "playwright-core": "^1.62.1",
     "png-to-ico": "^3.0.1",
     "prettier": "^3.8.3",
     "typescript": "^5.5.3",
@@ -80,6 +73,10 @@
     "vite-plugin-svgr": "^4.5.0"
   },
   "private": true,
+  "overrides": {
+    "adm-zip": "^0.6.0",
+    "nanoid": "^3.3.18"
+  },
   "lint-staged": {
     "*.ts,*.tsx": "eslint --cache --fix"
   },

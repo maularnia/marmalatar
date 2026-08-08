@@ -9,7 +9,7 @@ import { GlossaryCacheEntryContractV1Schema } from '@bridge/definitions/glossary
 
 const LanguageCodeSchema = z.enum(Object.values(TLanguage) as [TLanguage, ...TLanguage[]]);
 
-export const PromptTemplateFileV1Schema = z.object({
+const PromptTemplateFileV1Schema = z.object({
   version: z.literal(1).default(1),
   title: z.string(),
   emoji: z.string(),
@@ -17,7 +17,7 @@ export const PromptTemplateFileV1Schema = z.object({
 });
 export type PromptTemplateFileDataType = z.infer<typeof PromptTemplateFileV1Schema>;
 
-export const PromptTemplateFileVersioning = defineVersionedContract({
+const PromptTemplateFileVersioning = defineVersionedContract({
   name: 'PromptTemplateFile',
   minSupportedVersion: 1,
   currentVersion: 1,
@@ -32,7 +32,7 @@ const AIGlossaryEntrySchema = z.object({
   translation: z.string(),
 });
 
-export const AIGlossaryFileV1Schema = z.object({
+const AIGlossaryFileV1Schema = z.object({
   version: z.literal(1).default(1),
   title: z.string(),
   emoji: z.string(),
@@ -42,7 +42,7 @@ export const AIGlossaryFileV1Schema = z.object({
 });
 export type AIGlossaryFileDataType = z.infer<typeof AIGlossaryFileV1Schema>;
 
-export const AIGlossaryFileVersioning = defineVersionedContract({
+const AIGlossaryFileVersioning = defineVersionedContract({
   name: 'AIGlossaryFile',
   minSupportedVersion: 1,
   currentVersion: 1,
@@ -87,7 +87,7 @@ export const ProjectSaveV1Schema = z.object({
 
 export type TProjectFileData = z.infer<typeof ProjectSaveV1Schema>;
 
-export const ProjectSaveVersioning = defineVersionedContract({
+const ProjectSaveVersioning = defineVersionedContract({
   name: 'ProjectSave',
   minSupportedVersion: 1,
   currentVersion: 1,
@@ -112,16 +112,16 @@ export type TProjectEditorState = z.infer<typeof ProjectEditorStateSchema>;
 // off the list entry (only the live `project` redux slice, populated on project open,
 // is ever consulted), so caching them would just be dead weight kept in sync for nothing.
 // Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-export const ProjectCacheEntrySchema = ProjectCacheEntryContractSchema;
+const ProjectCacheEntrySchema = ProjectCacheEntryContractSchema;
 export type TProjectCacheEntry = z.infer<typeof ProjectCacheEntrySchema>;
 
 // Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-export const PromptTemplateCacheEntrySchema = PromptTemplateCacheEntryContractSchema;
+const PromptTemplateCacheEntrySchema = PromptTemplateCacheEntryContractSchema;
 export type TPromptTemplateCacheEntry = z.infer<typeof PromptTemplateCacheEntrySchema>;
 
 // Narrows the bridge contract's loose sourceLanguage/targetLanguage (plain strings) to this
 // app's TLanguage enum.
-export const GlossaryCacheEntrySchema = GlossaryCacheEntryContractV1Schema.extend({
+const GlossaryCacheEntrySchema = GlossaryCacheEntryContractV1Schema.extend({
   sourceLanguage: LanguageCodeSchema,
   targetLanguage: LanguageCodeSchema,
 });

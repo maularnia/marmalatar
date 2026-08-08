@@ -18,7 +18,7 @@ export type DeepLTranslationParams = z.infer<typeof DeepLTranslationParamsSchema
 export const DeepLTranslationResultSchema = z.array(BatchLineSchema);
 export type DeepLTranslationResult = z.infer<typeof DeepLTranslationResultSchema>;
 
-export const DeepLGlossaryOptionSchema = z.object({
+const DeepLGlossaryOptionSchema = z.object({
   value: z.string(),
   label: z.string(),
 });
