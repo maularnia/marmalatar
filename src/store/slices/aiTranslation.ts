@@ -146,7 +146,6 @@ const aiTranslationSlice = createSlice({
   selectors: {
     selectCurrentBulkJob: (state) => state.currentBulkJob,
     selectTranslationIsBusy: (state) => state.isBusy,
-    selectSelectedPromptTemplateData: (state) => state.selectedPromptTemplateData,
     selectIntegrationConnected: (state) => state.integrationConnected,
     selectIntegrationPingError: (state) => state.integrationPingError,
     selectContextWindowEstimate: (state) => state.contextWindowEstimate,
@@ -166,7 +165,6 @@ export const {
 export const {
   selectCurrentBulkJob,
   selectTranslationIsBusy,
-  selectSelectedPromptTemplateData,
   selectIntegrationConnected,
   selectIntegrationPingError,
   selectContextWindowEstimate,

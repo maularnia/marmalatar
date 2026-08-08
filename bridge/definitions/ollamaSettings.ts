@@ -14,7 +14,6 @@ export const OllamaSettingsV1Schema = VersionedSchema.extend({
   context_length: z.string().catch(''),
   lines_per_request: z.string().catch(''),
 });
-export type OllamaSettings = z.infer<typeof OllamaSettingsV1Schema>;
 
 // Version config (defineVersionedContract) and the reader built from it live in
 // contracts.ts, alongside every other contract's.

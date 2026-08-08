@@ -38,7 +38,7 @@ function toFileName(filePath: string): string {
   return filePath.split(/[/\\]/).pop() ?? filePath;
 }
 
-export function toProjectCacheEntry(
+function toProjectCacheEntry(
   full: TScannedProjectEntry,
   translationProgress: number
 ): TProjectCacheEntry {

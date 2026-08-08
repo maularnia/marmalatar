@@ -16,7 +16,6 @@ export const LMStudioSettingsV1Schema = VersionedSchema.extend({
   reasoning_end_tag: z.string().catch(''),
   lines_per_request: z.string().catch(''),
 });
-export type LMStudioSettings = z.infer<typeof LMStudioSettingsV1Schema>;
 
 // Version config (defineVersionedContract) and the reader built from it live in
 // contracts.ts, alongside every other contract's.

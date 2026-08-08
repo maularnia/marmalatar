@@ -5,7 +5,6 @@ export const BatchLineSchema = z.object({
   line: z.number(),
   text: z.string(),
 });
-export type BatchLine = z.infer<typeof BatchLineSchema>;
 
 // Base for every persisted contract schema (electron-store entries, folder-scan-cache entries) --
 // concrete schemas extend this with `version: z.literal(N).default(N)` and are named e.g.

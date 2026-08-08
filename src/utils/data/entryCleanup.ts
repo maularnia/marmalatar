@@ -5,17 +5,17 @@ const LONG_DASH = '—';
 const hasVisibleWordContent = (text: string): boolean => /[\p{L}\p{N}]/u.test(text);
 
 /** Replaces `<br/>` (and variants) with a newline, then strips any remaining HTML tags. */
-export function cleanHtmlTags(text: string): string {
+function cleanHtmlTags(text: string): string {
   return text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, ' ');
 }
 
 /** Strips ASS override blocks, e.g. `{\an8\fad(200,200)}`. */
-export function cleanAssStyling(text: string): string {
+function cleanAssStyling(text: string): string {
   return text.replace(/\{[^}]*}/g, ' ');
 }
 
 /** Strips audio-cue annotations, e.g. `[music]`, `[sigh]`. */
-export function cleanAudioCues(text: string): string {
+function cleanAudioCues(text: string): string {
   return text.replace(/\[[^\]]*]/g, ' ');
 }
 
@@ -29,7 +29,7 @@ export function cleanAudioCues(text: string): string {
  * on a single-line entry it's just noise (e.g. a leftover list marker), so it's dropped entirely
  * rather than promoted to a long dash.
  */
-export function fixShortDashes(text: string): string {
+function fixShortDashes(text: string): string {
   const lines = text.split('\n');
   const isSingleLine = lines.length === 1;
   return lines
@@ -50,7 +50,7 @@ export type TEntryCleanupOptions = {
 };
 
 /** Runs the enabled cleanups, in this fixed order, against a single block of text. */
-export function cleanupText(text: string, options: TEntryCleanupOptions): string {
+function cleanupText(text: string, options: TEntryCleanupOptions): string {
   let result = text;
   if (options.cleanHtmlTags) result = cleanHtmlTags(result);
   if (options.cleanAssStyling) result = cleanAssStyling(result);
@@ -60,7 +60,7 @@ export function cleanupText(text: string, options: TEntryCleanupOptions): string
 }
 
 /** Postcheck step 2: drops lines within an entry's text that carry no visible word content. */
-export function dropBlankLinesWithinEntry(text: string): string {
+function dropBlankLinesWithinEntry(text: string): string {
   return text.split('\n').filter(hasVisibleWordContent).join('\n');
 }
 
