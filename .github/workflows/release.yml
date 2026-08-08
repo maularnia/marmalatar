@@ -38,3 +38,25 @@ jobs:
             release/*.deb
             release/*.blockmap
             release/latest*.yml
+
+  notify-distributor:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify distributor of new release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ASSETS=$(gh release view "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --json assets --jq '[.assets[] | {name: .name, url: .url}]')
+          PAYLOAD=$(jq -n \
+            --arg version "${{ github.event.release.tag_name }}" \
+            --arg notes "${{ github.event.release.body }}" \
+            --arg publishedAt "${{ github.event.release.published_at }}" \
+            --argjson assets "$ASSETS" \
+            '{version: $version, notes: $notes, publishedAt: $publishedAt, assets: $assets}')
+          curl -sf -X POST "${{ secrets.DISTRIBUTOR_API_URL }}/releases" \
+            -H "Authorization: ReleaseKey ${{ secrets.DISTRIBUTOR_RELEASE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
