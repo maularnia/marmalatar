@@ -1,5 +1,5 @@
 /.vite
-/.husky
+/.husky/_
 /out
 /tmp
 /out-tsc

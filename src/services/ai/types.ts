@@ -1,8 +1,7 @@
-import { TLanguage, TSubtitleLine } from '@src/types';
 import i18n from '@src/i18n';
-import type { ComponentType } from 'react';
-import type { RegisterOptions } from 'react-hook-form';
+import { TLanguage, TSubtitleLine } from '@src/types';
 import type { TOptionSelect } from '@ui-toolkit/Select/Select';
+import type { ComponentType } from 'react';
 
 const t = i18n.getFixedT(null, 'errors');
 
