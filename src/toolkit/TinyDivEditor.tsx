@@ -4,10 +4,7 @@ import { contentEditableHtmlToText, textToContentEditableHtml } from '@utils/str
 import { getMarkCss, type SpellCheckMark } from '@ui-toolkit/Mark';
 import { emitSpellcheckUnavailableMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import {
-  createSpellCheckClient,
-  type SpellCheckClient,
-} from '@src/services/spellcheck/hunspellClient';
+import { createSpellCheckClient, type SpellCheckClient } from '@src/services/spellcheck/typoClient';
 import {
   useCallback,
   useEffect,

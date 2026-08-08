@@ -72,6 +72,10 @@ jobs:
 
       - run: npm ci
 
+      - name: Install rpmbuild
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
       - run: npm run make -- --${{ matrix.platform }} --publish never
 
       - name: Upload release assets
@@ -82,6 +86,8 @@ jobs:
             release/*.exe
             release/*.AppImage
             release/*.deb
+            release/*.pacman
+            release/*.rpm
             release/*.blockmap
             release/latest*.yml
 

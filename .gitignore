@@ -8,7 +8,6 @@
 /build
 /node_modules
 /src/assets/variables.css
-/electron/assets/icon.ico
 
 npm-debug.log*
 yarn-debug.log*

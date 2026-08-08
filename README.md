@@ -8,6 +8,40 @@ Marmalatar exists to strip the extra functionality out of existing subtitle tool
 
 The editor is built keystroke-first: creating, deleting, and exporting a translation is a workflow you can drive entirely from the keyboard, without ever having to reach for the mouse.
 
+## Installation
+
+Download the latest build for your platform from the 
+[Releases page](https://github.com/maularnia/marmalatar/releases):
+[Maularnia website](https://maularnia.com)
+
+- **Windows** — download the `.exe` installer and run it.
+- **Linux (AppImage)** — download the `.AppImage`, make it executable, and run it directly (no install needed):
+
+  ```sh
+  chmod +x ./Marmalatar-*.AppImage
+  ./Marmalatar-*.AppImage
+  ```
+
+- **Debian/Ubuntu** — download the `.deb` package from the Releases page and install it:
+
+  ```sh
+  sudo apt install ./Marmalatar_*.deb
+  ```
+
+- **Arch Linux** — download the `.pacman` package from the Releases page and install it with `pacman`:
+
+  ```sh
+  sudo pacman -U ./Marmalatar-*.pacman
+  ```
+
+- **Fedora/RHEL/openSUSE** — download the `.rpm` package from the Releases page and install it:
+
+  ```sh
+  sudo rpm -i ./Marmalatar-*.rpm
+  ```
+
+Marmalatar checks for updates on launch and installs them automatically in the background, notifying you once a new version is ready (applied the next time you restart the app).
+
 ## Support the project
 
 Marmalatar is built and maintained by Maularnia. If you'd like to support development, visit the [Patreon page](https://www.patreon.com/maularnia).
@@ -32,6 +66,28 @@ Marmalatar is built and maintained by Maularnia. If you'd like to support develo
 | Advanced SubStation Alpha (`.ass`) | ✅ | ✅ |
 | CSV | ❌ | ✅ |
 | JSON | ❌ | ✅ |
+
+## Building from source
+
+Requires [Node.js](https://nodejs.org/) 22+ and npm.
+
+```sh
+git clone https://github.com/maularnia/marmalatar.git
+cd marmalatar
+npm install
+```
+
+**Run in development** (hot-reloading dev server + Electron):
+
+```sh
+npm start
+```
+
+**Build an installable package** for your current platform (output lands in `release/`):
+
+```sh
+npm run make
+```
 
 ## License
 
