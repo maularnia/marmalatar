@@ -18,6 +18,7 @@ linux:
     - AppImage
     - deb
   icon: electron/assets/icon-256.png
+  maintainer: Maularnia <mauliarnia.by@gmail.com>
 publish:
   provider: github
   owner: maularnia
