@@ -28,7 +28,8 @@ jobs:
             exit 1
           fi
 
-          LATEST_TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName' || true)
+          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          LATEST_TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 10 --json tagName --jq --arg current "$CURRENT_TAG" '[.[] | select(.tagName != $current)][0].tagName // empty' || true)
 
           if [ -z "$LATEST_TAG" ]; then
             echo "No prior published release found; allowing first release ($PKG_VERSION)."
