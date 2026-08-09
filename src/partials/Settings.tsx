@@ -102,7 +102,7 @@ export default function Settings() {
               </Tag>{' '}
               +{' '}
               <Tag size={TTagSize.SMALL} variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT}>
-                Space
+                Enter
               </Tag>{' '}
               {t('uxUi.scrollVideoIntoViewSuffix')}
             </Toggle>

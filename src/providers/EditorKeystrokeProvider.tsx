@@ -208,7 +208,7 @@ const myShortcuts = {
     type: ShortcutType.REGULAR,
   },
   playbackToggle: {
-    keyCombo: 'ctrl+space',
+    keyCombo: 'ctrl+enter',
     name: 'Pause/Resume playback',
     description: 'Pauses ore resumes video',
     scope: ShortcutScope.GLOBAL,

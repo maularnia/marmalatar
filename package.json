@@ -10,11 +10,8 @@
     "tsc": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json",
     "knip": "knip",
     "test": "echo 'not there yet'",
-    "generate:icon": "node scripts/generate-icon.mjs",
     "start": "electron-vite dev",
-    "prepackage": "npm run generate:icon",
     "package": "electron-vite build",
-    "premake": "npm run generate:icon",
     "make": "electron-vite build && electron-builder",
     "postinstall": "install-electron",
     "prepare": "husky"
