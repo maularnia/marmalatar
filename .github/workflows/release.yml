@@ -73,9 +73,9 @@ jobs:
 
       - run: npm ci
 
-      - name: Install rpmbuild
+      - name: Install rpmbuild and bsdtar
         if: matrix.platform == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y rpm
+        run: sudo apt-get update && sudo apt-get install -y rpm libarchive-tools
 
       - run: npm run make -- --${{ matrix.platform }} --publish never
 
