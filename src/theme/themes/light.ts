@@ -33,18 +33,18 @@ const TRANSPARENT: TColorDefinition = {
 
 const ACCENT1: TColorDefinition = {
   [TShade.DEFAULT]: 'hsl(177, 90%, 30%)',
-  [TShade.BRIGHT]: 'hsl(177, 100%, 30%)',
-  [TShade.DIMM]: 'hsl(177, 80%, 60%)',
-  [TShade.PALE]: 'hsl(177, 30%, 60%)',
+  [TShade.BRIGHT]: 'hsl(177, 100%, 40%)',
+  [TShade.DIMM]: 'hsl(177, 80%, 50%)',
+  [TShade.PALE]: 'hsl(177, 60%, 30%)',
   [TShade.DARK]: 'hsl(177, 80%, 80%)',
   text: TColorSystem.WHITE,
 };
 const ACCENT2: TColorDefinition = {
-  [TShade.DEFAULT]: 'hsl(248, 90%, 40%)',
-  [TShade.BRIGHT]: 'hsl(248, 100%, 40%)',
-  [TShade.DIMM]: 'hsl(248, 80%, 60%)',
-  [TShade.PALE]: 'hsl(248, 60%, 40%)',
-  [TShade.DARK]: 'hsl(248, 80%, 80%)',
+  [TShade.DEFAULT]: 'hsl(278, 90%, 40%)',
+  [TShade.BRIGHT]: 'hsl(278, 100%, 40%)',
+  [TShade.DIMM]: 'hsl(278, 80%, 60%)',
+  [TShade.PALE]: 'hsl(278, 60%, 40%)',
+  [TShade.DARK]: 'hsl(278, 80%, 80%)',
   text: TColorSystem.WHITE,
 };
 
