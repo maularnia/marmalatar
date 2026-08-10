@@ -3,7 +3,9 @@
     "character": "Character"
   },
   "tableLine": {
-    "aiThinking": "Model is thinking..."
+    "aiThinking": "Model is thinking...",
+    "mergeUp": "Merge Up",
+    "mergeDown": "Merge Down"
   },
   "videoPlayer": {
     "noCharacter": "No character"

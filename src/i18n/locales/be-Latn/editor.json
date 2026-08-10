@@ -3,7 +3,9 @@
     "character": "Aktor"
   },
   "tableLine": {
-    "aiThinking": "ŠI pracuje..."
+    "aiThinking": "ŠI pracuje...",
+    "mergeUp": "Abjadnać z vierchnim",
+    "mergeDown": "Abjadnać z nižnim"
   },
   "videoPlayer": {
     "noCharacter": "Biez piersanažu"

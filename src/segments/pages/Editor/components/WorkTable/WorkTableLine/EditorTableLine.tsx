@@ -1,6 +1,6 @@
 import { useEditorRefs } from '@providers/EditorRefsProvider';
-import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { useVideo } from '@providers/VideoProvider';
+import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { selectFocusedColumn, setFocusedColumn, setTextSelection } from '@src/store/slices/editor';
 import {
   selectIsEditMode,
@@ -9,11 +9,12 @@ import {
 } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import Tooltip, { TooltipComplex } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
 import { useAppDispatch } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
-import { selectCheckGrammar } from '@store/slices/app';
 import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import { selectCheckGrammar } from '@store/slices/app';
+import { fromCurrentStore } from '@store/store';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import Icon from '@ui-toolkit/Icon/Icon';
@@ -49,6 +50,8 @@ type EditorTableLineProps = {
   onCharacterChange: (character: string) => void;
   onOutputTextChange: (text: string) => void;
   onSourceTextChange: (text: string) => void;
+  onMergeUpClick: () => void;
+  onMergeDownClick: () => void;
   panelNode?: ReactNode;
 };
 
@@ -386,6 +389,8 @@ export default function EditorTableLine({
   onCharacterChange,
   onOutputTextChange,
   onSourceTextChange,
+  onMergeUpClick,
+  onMergeDownClick,
   panelNode,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
@@ -624,21 +629,84 @@ export default function EditorTableLine({
         )}
       </LineContent>
       {!isFrozen && !isTranslationBusy && <LinePanelSlot>{panelNode}</LinePanelSlot>}
-      {isMergeMaster && (
+      {isFocused && (
         <>
           <MergeSlotUp>
-            <Button
-              variant={TButtonVariant.TRANSPARENT}
-              size={TButtonSize.SMALL}
-              icon={TIcon.MERGE_UP}
-            />
+            <Tooltip
+              label={
+                <TooltipComplex style={{ textAlign: 'center' }} title={t('tableLine.mergeUp')}>
+                  <Tag
+                    variant={TTagVariant.SECONDARY}
+                    color={ThemeColors.TEXT}
+                    size={TTagSize.NANO}
+                  >
+                    Alt
+                  </Tag>
+                  {' + '}
+                  <Tag
+                    variant={TTagVariant.SECONDARY}
+                    color={ThemeColors.TEXT}
+                    size={TTagSize.NANO}
+                  >
+                    Shift
+                  </Tag>
+                  {' + '}
+                  <Tag
+                    variant={TTagVariant.SECONDARY}
+                    color={ThemeColors.TEXT}
+                    size={TTagSize.NANO}
+                  >
+                    ⭡
+                  </Tag>
+                </TooltipComplex>
+              }
+            >
+              <Button
+                variant={TButtonVariant.TRANSPARENT}
+                size={TButtonSize.SMALL}
+                icon={TIcon.MERGE_UP}
+                onClick={onMergeUpClick}
+              />
+            </Tooltip>
           </MergeSlotUp>
           <MergeSlotDown>
-            <Button
-              variant={TButtonVariant.TRANSPARENT}
-              size={TButtonSize.SMALL}
-              icon={TIcon.MERGE_DOWN}
-            />
+            <Tooltip
+              side="bottom"
+              label={
+                <TooltipComplex style={{ textAlign: 'center' }} title={t('tableLine.mergeDown')}>
+                  <Tag
+                    variant={TTagVariant.SECONDARY}
+                    color={ThemeColors.TEXT}
+                    size={TTagSize.NANO}
+                  >
+                    Alt
+                  </Tag>
+                  {' + '}
+                  <Tag
+                    variant={TTagVariant.SECONDARY}
+                    color={ThemeColors.TEXT}
+                    size={TTagSize.NANO}
+                  >
+                    Shift
+                  </Tag>
+                  {' + '}
+                  <Tag
+                    variant={TTagVariant.SECONDARY}
+                    color={ThemeColors.TEXT}
+                    size={TTagSize.NANO}
+                  >
+                    🠧
+                  </Tag>
+                </TooltipComplex>
+              }
+            >
+              <Button
+                variant={TButtonVariant.TRANSPARENT}
+                size={TButtonSize.SMALL}
+                icon={TIcon.MERGE_DOWN}
+                onClick={onMergeDownClick}
+              />
+            </Tooltip>
           </MergeSlotDown>
         </>
       )}

@@ -3,7 +3,9 @@
     "character": "Актор"
   },
   "tableLine": {
-    "aiThinking": "ШТ працуе..."
+    "aiThinking": "ШТ працуе...",
+    "mergeUp": "Аб'яднаць з верхнім",
+    "mergeDown": "Аб'яднаць з ніжнім"
   },
   "videoPlayer": {
     "noCharacter": "Без персанажу"

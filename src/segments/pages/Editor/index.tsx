@@ -73,7 +73,7 @@ export default function Editor() {
   const dispatch = useAppDispatch();
   const activeLineIndex = useAppSelector(selectActiveLineIndex);
   const focusedLineIndex = useAppSelector(selectFocusedLineIndex);
-  const { handleChangeFocusedLine, handleFocusEditor } = useEditorActions();
+  const { handleChangeFocusedLine, handleFocusEditor, handleMergeLines } = useEditorActions();
   const { seekToLine, handlePause } = useVideo();
   const isSmallScreen = useAppSelector(selectIsSmallScreen);
   const focusedItemIndex = focusedLineIndex ?? -1;
@@ -173,6 +173,8 @@ export default function Editor() {
             dispatch(setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true }));
         }}
         onSourceTextChange={(text) => dispatch(updateSourceText({ lineIndex, text }))}
+        onMergeUpClick={() => handleMergeLines(lineIndex, 'up')}
+        onMergeDownClick={() => handleMergeLines(lineIndex, 'down')}
       />
     );
 
