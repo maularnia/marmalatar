@@ -9,7 +9,7 @@ import {
 } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import Tooltip, { TooltipComplex } from '@src/toolkit/Tooltip';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
 import { useAppDispatch } from '@store/hooks';
 import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
@@ -634,30 +634,8 @@ export default function EditorTableLine({
           <MergeSlotUp>
             <Tooltip
               label={
-                <TooltipComplex style={{ textAlign: 'center' }} title={t('tableLine.mergeUp')}>
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    Alt
-                  </Tag>
-                  {' + '}
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    Shift
-                  </Tag>
-                  {' + '}
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    ⭡
-                  </Tag>
+                <TooltipComplex title={t('tableLine.mergeUp')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', '⭡']} />
                 </TooltipComplex>
               }
             >
@@ -673,30 +651,8 @@ export default function EditorTableLine({
             <Tooltip
               side="bottom"
               label={
-                <TooltipComplex style={{ textAlign: 'center' }} title={t('tableLine.mergeDown')}>
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    Alt
-                  </Tag>
-                  {' + '}
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    Shift
-                  </Tag>
-                  {' + '}
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    🠧
-                  </Tag>
+                <TooltipComplex title={t('tableLine.mergeDown')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', '🠧']} />
                 </TooltipComplex>
               }
             >

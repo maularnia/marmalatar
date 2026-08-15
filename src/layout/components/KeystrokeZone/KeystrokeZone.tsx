@@ -4,7 +4,6 @@ import ScopedKeyHubProvider from '@providers/ScopedKeyHubProvider';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
-import { useShortcutPause } from 'react-keyhub';
 import {
   createContext,
   FocusEvent,
@@ -16,6 +15,8 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useShortcutPause } from 'react-keyhub';
 import styled, { css } from 'styled-components';
 import { KeystrokeZoneContextType, KeystrokeZoneHintCorner, KeystrokeZoneProps } from './types';
 
@@ -102,6 +103,7 @@ export default function KeystrokeZone({
   fit = 'fill',
   children,
 }: KeystrokeZoneProps) {
+  const { t } = useTranslation('tooltips');
   const containerRef = useRef<HTMLDivElement>(null);
   const zoneRef = useRef<HTMLElement | null>(null);
   const focusOverrideRef = useRef<(() => void) | undefined>(undefined);
@@ -173,8 +175,8 @@ export default function KeystrokeZone({
       {hint && slot !== null && (
         <Tooltip
           label={
-            <TooltipComplex title={`Area ${slot}`}>
-              Hit{' '}
+            <TooltipComplex title={t('keystrokeZone.areaTitle', { slot })}>
+              {t('keystrokeZone.hintPrefix')}{' '}
               <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.TEXT}>
                 Ctrl
               </Tag>
@@ -183,7 +185,7 @@ export default function KeystrokeZone({
                 {slot}
               </Tag>
               <br />
-              to force-shift keyboard focus here
+              {t('keystrokeZone.hintSuffix')}
             </TooltipComplex>
           }
           side={HINT_TOOLTIP_SIDE[hint.corner ?? 'top-right']}

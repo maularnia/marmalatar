@@ -15,8 +15,7 @@ import { ListItem } from '@ui-toolkit/ListItem';
 import { toSlug } from '@utils/string';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader } from '../dialogs/Loader';
-import Tooltip, { TooltipComplex } from '@src/toolkit/Tooltip';
-import Tag, { TTagSize, TTagVariant } from '@src/toolkit/Tag';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 
 const MAX_NAME_LENGTH = 64;
 const t = i18n.getFixedT(null, 'errors');
@@ -189,21 +188,7 @@ export function MainMenuListItem({
             <Tooltip
               label={
                 <TooltipComplex title={'Rename'}>
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    Ctrl
-                  </Tag>
-                  {' + '}
-                  <Tag
-                    variant={TTagVariant.SECONDARY}
-                    color={ThemeColors.TEXT}
-                    size={TTagSize.NANO}
-                  >
-                    R
-                  </Tag>
+                  <TooltipKeystrokeHint keys={['Ctrl', 'R']} />
                 </TooltipComplex>
               }
             >
@@ -222,13 +207,7 @@ export function MainMenuListItem({
               <Tooltip
                 label={
                   <TooltipComplex title={'Delete'}>
-                    <Tag
-                      variant={TTagVariant.SECONDARY}
-                      color={ThemeColors.TEXT}
-                      size={TTagSize.NANO}
-                    >
-                      Del / ⌫
-                    </Tag>
+                    <TooltipKeystrokeHint keys={['Del / ⌫']} />
                   </TooltipComplex>
                 }
               >

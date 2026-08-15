@@ -1,6 +1,11 @@
 import { useVideo } from '@providers/VideoProvider';
 import GeneralSettings from '@src/partials/Settings';
-import { selectActiveLineIndex, selectLines, updateLineTiming } from '@src/store/slices/editor';
+import {
+  selectActiveLineIndex,
+  selectFocusedLineIndex,
+  selectLines,
+  updateLineTiming,
+} from '@src/store/slices/editor';
 import { selectIsEditMode, selectVideoFilePath } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
@@ -48,19 +53,22 @@ const Aside = styled.div`
   }
 `;
 
-const AsideVideoContainer = styled.div``;
-const AsideVideoWrapper = styled.div`
-  margin-bottom: calc(${CSSVar('waveformSpacingY')} * -1);
+const AsideVideoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${CSSVar('size6')};
 `;
+const AsideVideoWrapper = styled.div``;
 
 export default function EditorAside() {
   const { t } = useTranslation(['editorAside', 'app']);
   const dispatch = useAppDispatch();
   const isEditMode = useAppSelector(selectIsEditMode);
-  const { translationLines, activeLineIndex } = useAppSelector(
+  const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
     (state) => ({
       translationLines: selectLines(state),
       activeLineIndex: selectActiveLineIndex(state),
+      focusedLineIndex: selectFocusedLineIndex(state),
     }),
     shallowEqual
   );
@@ -78,6 +86,7 @@ export default function EditorAside() {
             peaks={waveformPeaks}
             videoDurationMs={videoDurationMs}
             activeLineIndex={activeLineIndex}
+            focusedLineIndex={focusedLineIndex}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
               dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
