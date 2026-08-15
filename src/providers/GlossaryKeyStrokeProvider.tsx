@@ -62,6 +62,26 @@ const myShortcuts = {
     group: 'Glossary',
     type: ShortcutType.REGULAR,
   },
+  insertPairBefore: {
+    keyCombo: 'alt+,',
+    name: 'Insert pair before',
+    description: 'Inserts a new empty pair before the focused glossary pair',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Glossary',
+    type: ShortcutType.REGULAR,
+  },
+  insertPairAfter: {
+    keyCombo: 'alt+.',
+    name: 'Insert pair after',
+    description: 'Inserts a new empty pair after the focused glossary pair',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Glossary',
+    type: ShortcutType.REGULAR,
+  },
 } satisfies ShortcutSettings;
 
 const useAppGlossaryKeyStroke = (
@@ -91,8 +111,13 @@ export default function GlossaryKeyStrokeProvider({ children }: PropsWithChildre
 // Registers useShortcut handlers -- must render as KeystrokeZone's child so these hooks run inside
 // the KeyHubProvider context KeystrokeZone creates for `shortcuts`.
 function GlossaryShortcuts() {
-  const { focusedPairIndex, focusedColumn, handleFocusPairInput, handleDeletePair } =
-    useGlossaryActions();
+  const {
+    focusedPairIndex,
+    focusedColumn,
+    handleFocusPairInput,
+    handleDeletePair,
+    handleInsertPair,
+  } = useGlossaryActions();
 
   const navigatePair = (direction: 'up' | 'down') => {
     const pairCount = fromCurrentStore(selectGlossaryData)?.list.length ?? 0;
@@ -124,6 +149,18 @@ function GlossaryShortcuts() {
     if (focusedPairIndex == null) return;
     event.preventDefault();
     handleDeletePair(focusedPairIndex);
+  });
+
+  useAppGlossaryKeyStroke('insertPairBefore', (event) => {
+    if (focusedPairIndex == null) return;
+    event.preventDefault();
+    handleInsertPair(focusedPairIndex, 'before');
+  });
+
+  useAppGlossaryKeyStroke('insertPairAfter', (event) => {
+    if (focusedPairIndex == null) return;
+    event.preventDefault();
+    handleInsertPair(focusedPairIndex, 'after');
   });
 
   return null;

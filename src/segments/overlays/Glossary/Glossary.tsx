@@ -3,7 +3,6 @@ import GlossaryKeyStrokeProvider from '@providers/GlossaryKeyStrokeProvider';
 import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
 import { Loader } from '@src/segments/dialogs/Loader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
-import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
@@ -15,7 +14,7 @@ import {
 import { closeOverlays } from '@store/slices/overlays';
 import { saveGlossary } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
-import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
+import { TButtonVariant } from '@ui-toolkit/Button/types';
 import {
   FormsContent,
   FormsRow,
@@ -26,13 +25,12 @@ import {
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Select from '@ui-toolkit/Select/Select';
-import Tooltip from '@ui-toolkit/Tooltip';
 import { FALLBACK_EMOJI } from '@utils/emoji';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import GlossaryTableHeader from './GlossaryTable/GlossaryTableHeader';
 import GlossaryTableLine from './GlossaryTable/GlossaryTableLine';
-import { EGlossaryPanel, EGlossaryTable } from './GlossaryTable/partials';
+import { EGlossaryTable } from './GlossaryTable/partials';
 import Overlay from '../Overlay';
 
 const emptyFormData: AIGlossaryFileDataType = {
@@ -51,8 +49,7 @@ export default function GlossaryOverlay() {
   const currentGlossary = useAppSelector(selectCurrentGlossary);
   const glossaryData = useAppSelector(selectGlossaryData);
   const { show: showLoading } = useInfoWindow(Loader);
-  const { focusedPairIndex, handleSetFocusedPair, handleInsertPair, handleDeletePair } =
-    useGlossaryActions();
+  const { handleSetFocusedPair, handleInsertPair, handleDeletePair } = useGlossaryActions();
 
   const formData = glossaryData ?? emptyFormData;
 
@@ -86,31 +83,6 @@ export default function GlossaryOverlay() {
     );
     dispatch(closeOverlays());
   };
-  const panel = useMemo(() => {
-    return (
-      <EGlossaryPanel>
-        <Tooltip label={t('tooltips:glossary.insertBefore')} side="right">
-          <Button
-            color={ThemeColors.TEXT}
-            variant={TButtonVariant.TRANSPARENT}
-            icon={TIcon.INSERT_BEFORE}
-            size={TButtonSize.SMALL}
-            onClick={() => handleInsertPair(focusedPairIndex ?? 0, 'before')}
-          />
-        </Tooltip>
-        <Tooltip label={t('tooltips:glossary.delete')} side="right">
-          <Button
-            color={ThemeColors.RED}
-            variant={TButtonVariant.TRANSPARENT}
-            icon={TIcon.BIN}
-            size={TButtonSize.SMALL}
-            onClick={() => handleDeletePair(focusedPairIndex ?? 0)}
-          />
-        </Tooltip>
-      </EGlossaryPanel>
-    );
-  }, [handleInsertPair, handleDeletePair, focusedPairIndex, t]);
-
   if (!currentGlossary) return null;
 
   return (
@@ -152,7 +124,6 @@ export default function GlossaryOverlay() {
                     <GlossaryTableLine
                       key={index}
                       pairIndex={index}
-                      panel={panel}
                       original={entry.original}
                       translation={entry.translation}
                       sourceLanguage={formData.sourceLanguage}
@@ -160,20 +131,25 @@ export default function GlossaryOverlay() {
                       onFocus={(column) => handleSetFocusedPair(index, column)}
                       onOriginalChange={(v) => handleRowChange(index, 'original', v)}
                       onTranslationChange={(v) => handleRowChange(index, 'translation', v)}
+                      onDelete={() => handleDeletePair(index)}
+                      onInsertBefore={() => handleInsertPair(index, 'before')}
+                      onInsertAfter={() => handleInsertPair(index, 'after')}
                     />
                   ))}
                 </EGlossaryTable>
               </FormsSectionContent>
-              <FormsSectionContent>
-                <Button
-                  style={{ justifySelf: 'center' }}
-                  variant={TButtonVariant.TRANSPARENT}
-                  icon={TIcon.PLUS}
-                  onClick={handleAddRow}
-                >
-                  {t('entries.addButton')}
-                </Button>
-              </FormsSectionContent>
+              {formData.list.length === 0 && (
+                <FormsSectionContent>
+                  <Button
+                    style={{ justifySelf: 'center' }}
+                    variant={TButtonVariant.TRANSPARENT}
+                    icon={TIcon.PLUS}
+                    onClick={handleAddRow}
+                  >
+                    {t('entries.addButton')}
+                  </Button>
+                </FormsSectionContent>
+              )}
             </FormsSection>
           </FormsRow>
         </FormsContent>
