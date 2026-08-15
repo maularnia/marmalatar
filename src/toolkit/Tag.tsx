@@ -1,12 +1,12 @@
+import { TColor, TShade } from '@src/theme/definitions';
+import { TTheme } from '@src/theme/types';
+import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
 import { selectCurrentThemeData } from '@store/slices/app';
-import { TColor, TShade } from '@src/theme/definitions';
-import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
-import { TTheme } from '@src/theme/types';
 import { CSSProperties, HTMLProps, MouseEvent, Ref } from 'react';
 import styled from 'styled-components';
 import Icon from './Icon/Icon';
-import { TIconSize, TIcon } from './Icon/icons';
+import { TIcon, TIconSize } from './Icon/icons';
 
 export enum TTagSize {
   NANO = 'nano',
@@ -89,9 +89,11 @@ const TagBrick = styled.div.attrs<{
   $removable: boolean;
   $size: TTagSize;
   $variant: TTagVariant;
-}>(({ $theme, $color, $size, $iconic, $removable, $variant }) => {
+  style: CSSProperties;
+}>(({ $theme, $color, $size, $iconic, $removable, $variant, style }) => {
   return {
     style: {
+      ...style,
       '--tag-color': CSSColor($color, TShade.DEFAULT, 95),
       '--tag-border-color': CSSColor($color, TShade.DEFAULT, 20),
       '--tag-color-dimmed': CSSColor($color, TShade.DIMM, 100),
