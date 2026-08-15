@@ -26,6 +26,7 @@
   },
   "glossary": {
     "insertBefore": "Дадаць пару да",
+    "insertAfter": "Дадаць пару пасля",
     "delete": "Выдаліць"
   },
   "emoPicker": {

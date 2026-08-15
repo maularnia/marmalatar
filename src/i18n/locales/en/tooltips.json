@@ -26,6 +26,7 @@
   },
   "glossary": {
     "insertBefore": "Insert line before",
+    "insertAfter": "Insert line after",
     "delete": "Delete"
   },
   "emoPicker": {

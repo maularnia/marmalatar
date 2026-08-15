@@ -1,5 +1,5 @@
-import TinyDivEditor from '@ui-toolkit/TinyDivEditor';
 import { CSSVar } from '@src/theme/utils';
+import TinyDivEditor from '@ui-toolkit/TinyDivEditor';
 import styled from 'styled-components';
 
 export const EGlossaryTable = styled.div`
@@ -42,7 +42,28 @@ export const EGlossaryPanel = styled.div`
   right: 0;
   z-index: 5;
   padding: 0 ${CSSVar('size10')}${CSSVar('size18')};
-  transform: translate3d(0, calc(${CSSVar('inputHeightSmall')} * -0.8), 0);
+  transform: translate3d(
+    ${CSSVar('inputHeightSmall')},
+    calc(${CSSVar('inputHeightSmall')} * -0.8),
+    0
+  );
+`;
+
+const EGlossaryInsertSlot = styled.div`
+  position: absolute;
+  left: 50%;
+  z-index: 5;
+  backdrop-filter: blur(${CSSVar('blurHeavy')});
+`;
+
+export const EGlossaryInsertSlotTop = styled(EGlossaryInsertSlot)`
+  top: 0;
+  transform: translate3d(-50%, calc(${CSSVar('inputHeightSmall')} * -1), 0);
+`;
+
+export const EGlossaryInsertSlotBottom = styled(EGlossaryInsertSlot)`
+  bottom: 0;
+  transform: translate3d(-50%, calc(${CSSVar('inputHeightSmall')} * 1), 0);
 `;
 
 export const EGlossaryTableLine = styled.div`
