@@ -80,7 +80,7 @@ export default function GlossaryTableLine({
                 <TooltipKeystrokeHint keys={['Alt', ',']} />
               </TooltipComplex>
             }
-            side="right"
+            side="top"
           >
             <Button
               color={ThemeColors.TEXT}
@@ -102,7 +102,7 @@ export default function GlossaryTableLine({
                 <TooltipKeystrokeHint keys={['Alt', '.']} />
               </TooltipComplex>
             }
-            side="right"
+            side="bottom"
           >
             <Button
               color={ThemeColors.TEXT}
@@ -121,7 +121,7 @@ export default function GlossaryTableLine({
           <Tooltip
             label={
               <TooltipComplex title={t('glossary.delete')}>
-                <TooltipKeystrokeHint keys={['Alt', 'Del']} />
+                <TooltipKeystrokeHint keys={['Alt', 'Del / ⌫']} />
               </TooltipComplex>
             }
             side="right"

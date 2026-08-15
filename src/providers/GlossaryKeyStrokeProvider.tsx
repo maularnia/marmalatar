@@ -53,6 +53,16 @@ const myShortcuts = {
     type: ShortcutType.REGULAR,
   },
   deletePair: {
+    keyCombo: 'alt+backspace',
+    name: 'Remove focused pair',
+    description: 'Removes the currently focused glossary pair',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Glossary',
+    type: ShortcutType.REGULAR,
+  },
+  deletePairDelete: {
     keyCombo: 'alt+delete',
     name: 'Remove focused pair',
     description: 'Removes the currently focused glossary pair',
@@ -145,11 +155,14 @@ function GlossaryShortcuts() {
     handleFocusPairInput(focusedPairIndex ?? 0, 'translation');
   });
 
-  useAppGlossaryKeyStroke('deletePair', (event) => {
+  const handleDeletePairKeyStroke = (event: KeyboardEvent) => {
     if (focusedPairIndex == null) return;
     event.preventDefault();
     handleDeletePair(focusedPairIndex);
-  });
+  };
+
+  useAppGlossaryKeyStroke('deletePair', handleDeletePairKeyStroke);
+  useAppGlossaryKeyStroke('deletePairDelete', handleDeletePairKeyStroke);
 
   useAppGlossaryKeyStroke('insertPairBefore', (event) => {
     if (focusedPairIndex == null) return;
