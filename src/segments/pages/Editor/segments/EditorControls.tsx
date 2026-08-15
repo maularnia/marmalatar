@@ -31,8 +31,7 @@ import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import Tooltip, { TooltipComplex, TooltipSimple } from '@ui-toolkit/Tooltip';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@ui-toolkit/Tooltip';
 import { type CSSProperties, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -56,10 +55,6 @@ const AutomatedTranslationRunner = styled.div`
   position: absolute;
   height: 100%;
   background: ${CSSVar('controlPanelBg')};
-`;
-
-const TooltipShortcutText = styled.div`
-  text-align: center;
 `;
 
 const AiTranslationProgressBar = styled.div`
@@ -153,15 +148,7 @@ export function EditorControls() {
         <Tooltip
           label={
             <TooltipComplex title={t('editorControls.undo')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Ctrl
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Z
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Ctrl', 'Z']} />
             </TooltipComplex>
           }
           side="right"
@@ -175,19 +162,7 @@ export function EditorControls() {
         <Tooltip
           label={
             <TooltipComplex title={t('editorControls.redo')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Ctrl
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Shift
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Z
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Ctrl', 'Shift', 'Z']} />
             </TooltipComplex>
           }
           side="right"
@@ -239,15 +214,7 @@ export function EditorControls() {
           side="right"
           label={
             <TooltipComplex title={t('editorControls.addSelectedToGlossary')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  G
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'G']} />
             </TooltipComplex>
           }
         >
@@ -263,19 +230,7 @@ export function EditorControls() {
             <TooltipComplex
               title={t('editorControls.shiftLinesEarlier', { step: timeAdjustmentStep })}
             >
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Shift
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  A
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'A']} />
             </TooltipComplex>
           }
           side="right"
@@ -291,19 +246,7 @@ export function EditorControls() {
             <TooltipComplex
               title={t('editorControls.shiftLinesLater', { step: timeAdjustmentStep })}
             >
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Shift
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  D
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'D']} />
             </TooltipComplex>
           }
           side="right"
@@ -318,19 +261,7 @@ export function EditorControls() {
         <Tooltip
           label={
             <TooltipComplex title={t('editorControls.autoMergeAdjacentLines')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Shift
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  M
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'M']} />
             </TooltipComplex>
           }
           side="right"
@@ -345,15 +276,7 @@ export function EditorControls() {
           side="right"
           label={
             <TooltipComplex title={t('editorControls.cleanup')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  H
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'H']} />
             </TooltipComplex>
           }
         >
@@ -367,19 +290,7 @@ export function EditorControls() {
           side="right"
           label={
             <TooltipComplex title={t('editorControls.copyAllSourceToOutput')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Shift
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  C
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'C']} />
             </TooltipComplex>
           }
         >
@@ -393,19 +304,7 @@ export function EditorControls() {
           side="right"
           label={
             <TooltipComplex title={t('editorControls.completeAllTranslated')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Shift
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Enter
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'Enter']} />
             </TooltipComplex>
           }
         >
@@ -418,15 +317,7 @@ export function EditorControls() {
         <Tooltip
           label={
             <TooltipComplex title={t('editorControls.insertLineBefore')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  ,
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', ',']} />
             </TooltipComplex>
           }
           side="right"
@@ -442,15 +333,7 @@ export function EditorControls() {
         <Tooltip
           label={
             <TooltipComplex title={t('editorControls.insertLineAfter')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  .
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', '.']} />
             </TooltipComplex>
           }
           side="right"
@@ -468,15 +351,7 @@ export function EditorControls() {
           side="right"
           label={
             <TooltipComplex title={t('editorControls.splitLineByCursor')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  R
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'R']} />
             </TooltipComplex>
           }
         >
@@ -498,15 +373,7 @@ export function EditorControls() {
           side="right"
           label={
             <TooltipComplex title={t('editorControls.copySourceToOutput')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  C
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Alt', 'C']} />
             </TooltipComplex>
           }
           delay={0}
@@ -531,15 +398,7 @@ export function EditorControls() {
                   : t('editorControls.translationModeActive')
               }
             >
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Ctrl
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  M
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Ctrl', 'M']} />
             </TooltipComplex>
           }
           side="right"
@@ -570,15 +429,7 @@ export function EditorControls() {
           side="right"
           label={
             <TooltipComplex title={t('editorControls.export')}>
-              <TooltipShortcutText>
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Ctrl
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  E
-                </Tag>
-              </TooltipShortcutText>
+              <TooltipKeystrokeHint keys={['Ctrl', 'E']} />
             </TooltipComplex>
           }
         >
@@ -606,31 +457,7 @@ export function EditorControls() {
               side="top"
               label={
                 <TooltipComplex title={t('editorControls.translateAll')}>
-                  <TooltipShortcutText>
-                    <Tag
-                      variant={TTagVariant.SECONDARY}
-                      color={ThemeColors.TEXT}
-                      size={TTagSize.NANO}
-                    >
-                      Alt
-                    </Tag>
-                    {' + '}
-                    <Tag
-                      variant={TTagVariant.SECONDARY}
-                      color={ThemeColors.TEXT}
-                      size={TTagSize.NANO}
-                    >
-                      Shift
-                    </Tag>
-                    {' + '}
-                    <Tag
-                      variant={TTagVariant.SECONDARY}
-                      color={ThemeColors.TEXT}
-                      size={TTagSize.NANO}
-                    >
-                      T
-                    </Tag>
-                  </TooltipShortcutText>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', 'T']} />
                 </TooltipComplex>
               }
             >
@@ -645,23 +472,7 @@ export function EditorControls() {
               side="top"
               label={
                 <TooltipComplex title={t('editorControls.translateFocusedLine')}>
-                  <TooltipShortcutText>
-                    <Tag
-                      variant={TTagVariant.SECONDARY}
-                      color={ThemeColors.TEXT}
-                      size={TTagSize.NANO}
-                    >
-                      Alt
-                    </Tag>
-                    {' + '}
-                    <Tag
-                      variant={TTagVariant.SECONDARY}
-                      color={ThemeColors.TEXT}
-                      size={TTagSize.NANO}
-                    >
-                      T
-                    </Tag>
-                  </TooltipShortcutText>
+                  <TooltipKeystrokeHint keys={['Alt', 'T']} />
                 </TooltipComplex>
               }
             >

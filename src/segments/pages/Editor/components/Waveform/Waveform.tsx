@@ -1,19 +1,21 @@
-import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
 import { useEditorActions } from '@providers/EditorActionsProvider';
 import { useVideo } from '@providers/VideoProvider';
-import { TShade } from '@src/theme/definitions';
-import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
+import { TScreenSize } from '@src/theme/types';
+import { CSSVar } from '@src/theme/utils';
 import { TSubtitleLine } from '@src/types';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import classNames from 'classnames';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAppSelector } from '@store/hooks';
+import { selectCurrentThemeData, selectScreenSize } from '@store/slices/app';
+import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { useRenderCache } from '../../hooks/useRenderCache';
+import WaveformEntry from './WaveformEntry';
+import { getWaveformEntryFingerprint } from './useWaveformEntryFingerprint';
 
 type WaveformProps = {
   peaks: number[];
   videoDurationMs: number | null;
   activeLineIndex: number | null;
+  focusedLineIndex: number | null;
   translationLines: TSubtitleLine[];
   onLineTimingChange: (lineIndex: number, startTime: number, endTime: number) => void;
 };
@@ -22,13 +24,12 @@ const PX_PER_SECOND = 30;
 const CURSOR_OFFSET_RATIO = 0.3;
 const PEAK_HEIGHT_COEFFICIENT = 0.9;
 const MIN_GAP_MS = 50;
-const EDGE_HITBOX_PX = 10;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-type DragMode = 'move' | 'resize-left' | 'resize-right';
+export type DragMode = 'move' | 'resize-left' | 'resize-right';
 
 type DragState = {
   lineIndex: number;
@@ -38,87 +39,6 @@ type DragState = {
   end_time: number;
   hasMoved: boolean;
 };
-const EntryBorderHandle = styled.div`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 10px;
-  height: 100%;
-  z-index: 2;
-  cursor: ew-resize;
-  filter: brightness(200%);
-  border-radius: ${CSSVar('size10')};
-  &.left {
-    left: -2px;
-    border-left: 2px solid ${CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 50)};
-  }
-
-  &.right {
-    right: -2px;
-    border-right: 2px solid ${CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 50)};
-  }
-`;
-const EntryBlock = styled.div`
-  --inner-spacing: calc(${CSSVar('waveformSpacingY')} * 0.5);
-  position: absolute;
-  top: 0;
-  border-radius: ${CSSVar('waveformSpacingY')};
-  height: ${CSSVar('waveformHeight')};
-  border: 1px solid ${CSSVar('waveformBlockBorderColor')};
-  background-color: ${CSSVar('waveformBlockBg')};
-  background: radial-gradient(
-    circle at center bottom,
-    ${CSSVar('waveformBlockBg')} 0%,
-    transparent 90%
-  );
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  transition:
-    background-color 0.3s ease-in-out,
-    border-color 0.3s ease-in-out,
-    top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  ${EntryBorderHandle} {
-    border-color: ${CSSVar('waveformBlockBorderColor')};
-  }
-  &:hover {
-    border-color: ${CSSVar('waveformBlockBorderColorHover')};
-    background: radial-gradient(
-      circle at center bottom,
-      ${CSSVar('waveformBlockBgHover')} 0%,
-      transparent 90%
-    );
-    bacgr ${EntryBorderHandle} {
-      border-color: ${CSSVar('waveformBlockBorderColorHover')};
-    }
-  }
-
-  &.isActive {
-    height: calc(${CSSVar('waveformHeight')} + (${CSSVar('waveformSpacingY')} * 2));
-    border-color: ${CSSVar('waveformBlockBorderColorActive')};
-    background: radial-gradient(
-      circle at center bottom,
-      ${CSSVar('waveformBlockBgActive')} 0%,
-      transparent 90%
-    );
-    top: calc(${CSSVar('waveformSpacingY')} * -1);
-    ${EntryBorderHandle} {
-      border-color: ${CSSVar('waveformBlockBorderColorActive')};
-    }
-    &:hover {
-      border-color: ${CSSVar('waveformBlockBorderColorActiveHover')};
-      background: radial-gradient(
-        circle at center bottom,
-        ${CSSVar('waveformBlockBgActiveHover')} 0%,
-        transparent 90%
-      );
-      ${EntryBorderHandle} {
-        border-color: ${CSSVar('waveformBlockBorderColorActiveHover')};
-      }
-    }
-  }
-`;
 
 const Entries = styled.div`
   position: relative;
@@ -160,38 +80,38 @@ const Canvas = styled.canvas`
   height: 100%;
 `;
 
-const EntryNumber = styled.div`
-  position: absolute;
-  left: ${CSSVar('size4')};
-  top: ${CSSVar('size2')};
-`;
-
 const Container = styled.div`
   position: relative;
   bottom: 0;
   z-index: 20;
   width: 100%;
-  backdrop-filter: blur(${CSSVar('blurHeavy')});
   padding: ${CSSVar('waveformSpacingY')} 0;
-  mask-image: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 1) 10%,
-    rgba(0, 0, 0, 1) 90%,
-    rgba(0, 0, 0, 0) 100%
-  );
-  mask-size: 100% 100%;
+  &.${TScreenSize.SMALL} {
+    backdrop-filter: blur(${CSSVar('blurHeavy')});
+    mask-image: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) 5%,
+      rgba(0, 0, 0, 1) 20%,
+      rgba(0, 0, 0, 1) 80%,
+      rgba(0, 0, 0, 0) 95%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    mask-size: 100% 100%;
+  }
 `;
 
 export default function Waveform({
   peaks,
   videoDurationMs,
   activeLineIndex,
+  focusedLineIndex,
   translationLines,
   onLineTimingChange,
 }: WaveformProps) {
   const { currentTimeRef, seekVideoToMs } = useVideo();
   const { handleChangeFocusedLine, handleChangeFocusedColumn } = useEditorActions();
+  const size = useAppSelector(selectScreenSize);
   const theme = useAppSelector(selectCurrentThemeData);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const waveformViewportRef = useRef<HTMLDivElement | null>(null);
@@ -205,6 +125,26 @@ export default function Waveform({
   const cursorRef = useRef<HTMLDivElement | null>(null);
   const [dragLineIndex, setDragLineIndex] = useState<number | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState<number>(0);
+
+  const { getCached, setCached } = useRenderCache<TSubtitleLine, number, ReactElement>(
+    translationLines,
+    (line) => line.line_no
+  );
+
+  function handleEntryPointerDown(lineIndex: number, mode: DragMode, clientX: number) {
+    const line = translationLines[lineIndex];
+
+    dragStateRef.current = {
+      lineIndex,
+      mode,
+      pointer_start_x: clientX,
+      start_time: line.start_time,
+      end_time: line.end_time,
+      hasMoved: false,
+    };
+
+    setDragLineIndex(lineIndex);
+  }
 
   const canvasWidth = useMemo(() => {
     const durationSeconds = videoDurationMs ? videoDurationMs / 1000 : 0;
@@ -376,71 +316,62 @@ export default function Waveform({
     };
   });
 
+  function renderWaveformEntry(line: TSubtitleLine, lineIndex: number) {
+    const startPx = timeToPx(line.start_time);
+    const endPx = timeToPx(line.end_time);
+    const viewportWidth = waveformViewportRef.current?.offsetWidth ?? 0;
+    const targetOffset = cursorX - viewportWidth * CURSOR_OFFSET_RATIO;
+    const maxOffset = Math.max(0, canvasWidth - viewportWidth);
+    const timelineOffset = clamp(targetOffset, 0, maxOffset);
+    const visibleStartPx = timelineOffset;
+    const visibleEndPx = timelineOffset + viewportWidth;
+    if (startPx >= visibleEndPx || endPx <= visibleStartPx) return null;
+    if (!videoDurationMs || videoDurationMs <= 0) return null;
+
+    const startRatio = line.start_time / videoDurationMs;
+    const endRatio = line.end_time / videoDurationMs;
+    const left = startRatio * canvasWidth;
+    const width = Math.max(2, (endRatio - startRatio) * canvasWidth);
+    const isActive = activeLineIndex === lineIndex;
+    const isFocused = focusedLineIndex === lineIndex;
+    const isDragging = dragLineIndex === lineIndex;
+
+    const fingerprint = getWaveformEntryFingerprint({
+      lineNo: line.line_no,
+      left,
+      width,
+      isActive,
+      isFocused,
+      isDragging,
+    });
+
+    const cached = getCached(line.line_no, fingerprint);
+    if (cached) {
+      return cached;
+    }
+
+    const node = (
+      <WaveformEntry
+        key={lineIndex}
+        lineIndex={lineIndex}
+        lineNo={line.line_no}
+        left={left}
+        width={width}
+        isActive={isActive}
+        isFocused={isFocused}
+        isDragging={isDragging}
+        onEntryPointerDown={handleEntryPointerDown}
+      />
+    );
+
+    setCached(line.line_no, fingerprint, node);
+    return node;
+  }
+
   return (
-    <Container tabIndex={1}>
+    <Container tabIndex={1} className={size}>
       <Entries ref={entriesContainerRef}>
-        {translationLines.map((line, lineIndex) => {
-          const startPx = timeToPx(line.start_time);
-          const endPx = timeToPx(line.end_time);
-          const viewportWidth = waveformViewportRef.current?.offsetWidth ?? 0;
-          const targetOffset = cursorX - viewportWidth * CURSOR_OFFSET_RATIO;
-          const maxOffset = Math.max(0, canvasWidth - viewportWidth);
-          const timelineOffset = clamp(targetOffset, 0, maxOffset);
-          const visibleStartPx = timelineOffset;
-          const visibleEndPx = timelineOffset + viewportWidth;
-          if (startPx >= visibleEndPx || endPx <= visibleStartPx) return null;
-          if (!videoDurationMs || videoDurationMs <= 0) return null;
-
-          const startRatio = line.start_time / videoDurationMs;
-          const endRatio = line.end_time / videoDurationMs;
-          const left = startRatio * canvasWidth;
-          const width = Math.max(2, (endRatio - startRatio) * canvasWidth);
-          const isActive = activeLineIndex === lineIndex;
-          const isDragging = dragLineIndex === lineIndex;
-
-          return (
-            <EntryBlock
-              key={lineIndex}
-              className={classNames({
-                isActive: isActive,
-                isDragging: isDragging,
-              })}
-              style={{
-                left: `${left}px`,
-                width: `${width}px`,
-              }}
-              onPointerDown={(event) => {
-                const rect = event.currentTarget.getBoundingClientRect();
-                const offsetX = event.clientX - rect.left;
-
-                let mode: DragMode = 'move';
-                if (offsetX <= EDGE_HITBOX_PX) mode = 'resize-left';
-                else if (offsetX >= rect.width - EDGE_HITBOX_PX) mode = 'resize-right';
-
-                dragStateRef.current = {
-                  lineIndex,
-                  mode,
-                  pointer_start_x: event.clientX,
-                  start_time: line.start_time,
-                  end_time: line.end_time,
-                  hasMoved: false,
-                };
-
-                setDragLineIndex(lineIndex);
-                event.currentTarget.setPointerCapture(event.pointerId);
-                event.preventDefault();
-              }}
-            >
-              <EntryBorderHandle className="left" />
-              <EntryNumber>
-                <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.TEXT}>
-                  {line.line_no}
-                </Tag>
-              </EntryNumber>
-              <EntryBorderHandle className="right" />
-            </EntryBlock>
-          );
-        })}
+        {translationLines.map((line, lineIndex) => renderWaveformEntry(line, lineIndex))}
       </Entries>
       <WaveFormViewport
         ref={waveformViewportRef}

@@ -3,8 +3,7 @@ import { CSSVar, ThemeColors } from '@src/theme/utils';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -57,17 +56,8 @@ export function EditorTableLinePanel({
         {!isCompletedToggleHidden && (
           <Tooltip
             label={
-              <TooltipComplex
-                style={{ textAlign: 'center' }}
-                title={t('workTableLine.markLineComplete')}
-              >
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  Alt
-                </Tag>
-                {' + '}
-                <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                  ↵
-                </Tag>
+              <TooltipComplex title={t('workTableLine.markLineComplete')}>
+                <TooltipKeystrokeHint keys={['Alt', '↵']} />
               </TooltipComplex>
             }
           >
@@ -83,14 +73,8 @@ export function EditorTableLinePanel({
         )}
         <Tooltip
           label={
-            <TooltipComplex style={{ textAlign: 'center' }} title={t('workTableLine.deleteLine')}>
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                Alt
-              </Tag>
-              {' + '}
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                Del / ⌫
-              </Tag>
+            <TooltipComplex title={t('workTableLine.deleteLine')}>
+              <TooltipKeystrokeHint keys={['Alt', 'Del / ⌫']} />
             </TooltipComplex>
           }
         >

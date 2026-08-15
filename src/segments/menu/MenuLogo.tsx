@@ -11,8 +11,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import { useMainMenuState } from '../../providers/MenuStateProvider';
 import ThemeSelector from './ThemeSelector';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
@@ -79,13 +78,7 @@ export default function MenuLogo() {
           side={dynamic ? 'right' : 'bottom'}
           label={
             <TooltipComplex title={t('buttons.settings')}>
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                Ctrl
-              </Tag>
-              {' + '}
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                S
-              </Tag>
+              <TooltipKeystrokeHint keys={['Ctrl', 'S']} />
             </TooltipComplex>
           }
         >
