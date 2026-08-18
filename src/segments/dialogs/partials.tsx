@@ -1,7 +1,7 @@
 import { CSSVar } from '@src/theme/utils';
+import Message from '@src/toolkit/Message';
 import H from '@ui-toolkit/H';
 import { IconSize, TIconSize } from '@ui-toolkit/Icon/icons';
-import Message from '@ui-toolkit/Message';
 import Span from '@ui-toolkit/Span';
 import styled from 'styled-components';
 
