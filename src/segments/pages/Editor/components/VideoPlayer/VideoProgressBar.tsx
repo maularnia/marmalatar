@@ -24,6 +24,7 @@ const SeekTooltip = styled.div<{ $left: number }>`
   z-index: 1000;
   font-family: ${CSSVar('fontTextSansSerif')};
   font-size: ${CSSVar('tooltipFontSize')};
+  font-weight: ${CSSVar('bold')};
   line-height: 1.2;
   border-radius: ${CSSVar('tooltipBorderRadius')};
   background: ${CSSVar('tooltipBg')};
