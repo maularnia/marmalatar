@@ -1,21 +1,21 @@
-import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { SETTINGS_KEY } from '@providers/MenuActionsProvider';
 import { useMenuRefs } from '@providers/MenuRefsProvider';
+import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
+import { selectCurrentOverlay } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { openSettingsOverlay } from '@store/thunks';
+import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
+import { TIcon } from '@ui-toolkit/Icon/icons';
+import { ListItem } from '@ui-toolkit/ListItem';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { TIcon } from '@ui-toolkit/Icon/icons';
-import { ListItem } from '@ui-toolkit/ListItem';
-import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import { useMainMenuState } from '../../providers/MenuStateProvider';
 import ThemeSelector from './ThemeSelector';
-import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
-import { selectCurrentOverlay } from '@src/store/slices/overlays';
 
 const PanelSwitch = styled.div`
   display: flex;
@@ -66,8 +66,10 @@ export default function MenuLogo() {
         <ListItem
           compact={dynamic ? compact : false}
           tabIndex={-1}
-          color={ThemeColors.ACCENT1}
+          isDisabled
+          color={ThemeColors.ACCENT2}
           icon={TIcon.LOGO}
+          style={{ fontSize: CSSVar('tagTextSizeNano') }}
         >
           {`v${__APP_VERSION__}`}
         </ListItem>
