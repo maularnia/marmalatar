@@ -1,7 +1,7 @@
 import { TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { normalizeText, pad } from '@utils/string';
-import { convertTimeByFps } from '@utils/time';
+import { breakDownMs, convertTimeByFps } from '@utils/time';
 
 function parseAssTimeToMilliseconds(timecode: string): number | null {
   const match = timecode.trim().match(/^(\d+):(\d{2}):(\d{2})[.,](\d{1,2})$/);
@@ -147,11 +147,8 @@ export function parseAss(text: string): TSubtitleLine[] {
 }
 
 function formatAssTimestamp(ms: number): string {
-  const safeMs = Math.max(0, ms);
-  const hours = Math.floor(safeMs / 3_600_000);
-  const minutes = Math.floor((safeMs % 3_600_000) / 60_000);
-  const seconds = Math.floor((safeMs % 60_000) / 1000);
-  const centiseconds = Math.floor((safeMs % 1000) / 10);
+  const { hours, minutes, seconds, remainderMs } = breakDownMs(ms);
+  const centiseconds = Math.floor(remainderMs / 10);
 
   return `${hours}:${pad(minutes, 2)}:${pad(seconds, 2)}.${pad(centiseconds, 2)}`;
 }

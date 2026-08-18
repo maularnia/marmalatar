@@ -3,9 +3,10 @@ import { useVideo } from '@providers/VideoProvider';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import { TSubtitleLine } from '@src/types';
+import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
 import { selectCurrentThemeData, selectScreenSize } from '@store/slices/app';
-import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactElement, type WheelEvent, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useRenderCache } from '../../hooks/useRenderCache';
 import WaveformEntry from './WaveformEntry';
@@ -24,10 +25,7 @@ const PX_PER_SECOND = 30;
 const CURSOR_OFFSET_RATIO = 0.3;
 const PEAK_HEIGHT_COEFFICIENT = 0.9;
 const MIN_GAP_MS = 50;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
+const WHEEL_SEEK_STEP_RATIO = 0.0005;
 
 export type DragMode = 'move' | 'resize-left' | 'resize-right';
 
@@ -130,6 +128,19 @@ export default function Waveform({
     translationLines,
     (line) => line.line_no
   );
+
+  function handleWheel(event: WheelEvent<HTMLDivElement>) {
+    if (!videoDurationMs) return;
+    event.preventDefault();
+
+    const direction = Math.sign(event.deltaY);
+    if (direction === 0) return;
+
+    const step = videoDurationMs * WHEEL_SEEK_STEP_RATIO;
+    const newTime = clamp(currentTimeRef.current + direction * step, 0, videoDurationMs);
+    setCurrentTimeMs(newTime);
+    seekVideoToMs(newTime);
+  }
 
   function handleEntryPointerDown(lineIndex: number, mode: DragMode, clientX: number) {
     const line = translationLines[lineIndex];
@@ -369,7 +380,7 @@ export default function Waveform({
   }
 
   return (
-    <Container tabIndex={1} className={size}>
+    <Container tabIndex={1} className={size} onWheel={handleWheel}>
       <Entries ref={entriesContainerRef}>
         {translationLines.map((line, lineIndex) => renderWaveformEntry(line, lineIndex))}
       </Entries>

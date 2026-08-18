@@ -1,6 +1,7 @@
 import { TColor, TOpacity, TShade } from '@src/theme/definitions';
 import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import { TTheme } from '@src/theme/types';
+import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
 import { selectCurrentThemeData } from '@store/slices/app';
 import Icon from '@ui-toolkit/Icon/Icon';
@@ -288,7 +289,7 @@ export const ListItem = ({
         <ProgressLayer
           $theme={theme}
           $color={isError ? ThemeColors.RED : color}
-          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+          style={{ width: `${clamp(progress, 0, 100)}%` }}
         />
       )}
       {icon && (

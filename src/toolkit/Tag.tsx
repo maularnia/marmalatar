@@ -74,11 +74,14 @@ const SIZE_STYLES: Record<
 const getSizes = (
   size: TTagSize,
   hasLeadingIcon: boolean,
-  hasTrailingIcon: boolean
+  hasTrailingIcon: boolean,
+  hasChildren: boolean
 ): CSSProperties => {
   const { x, y, ...rest } = SIZE_STYLES[size];
-  const left = hasLeadingIcon ? `calc(${x} / 2)` : x;
-  const right = hasTrailingIcon ? `calc(${x} / 2)` : x;
+  const left =
+    hasLeadingIcon || (!hasChildren && (hasLeadingIcon || hasTrailingIcon)) ? `calc(${x} / 2)` : x;
+  const right =
+    hasTrailingIcon || (!hasChildren && (hasLeadingIcon || hasTrailingIcon)) ? `calc(${x} / 2)` : x;
   return { ...rest, padding: `${y} ${right} ${y} ${left}`, gap: x };
 };
 
@@ -89,8 +92,9 @@ const TagBrick = styled.div.attrs<{
   $removable: boolean;
   $size: TTagSize;
   $variant: TTagVariant;
+  $hasChildren: boolean;
   style: CSSProperties;
-}>(({ $theme, $color, $size, $iconic, $removable, $variant, style }) => {
+}>(({ $theme, $color, $size, $iconic, $removable, $variant, $hasChildren, style }) => {
   return {
     style: {
       ...style,
@@ -99,7 +103,7 @@ const TagBrick = styled.div.attrs<{
       '--tag-color-dimmed': CSSColor($color, TShade.DIMM, 100),
       '--tag-color-hover': CSSColor($color, TShade.BRIGHT, 100),
       ...getVariantCSS($theme, $variant, $color),
-      ...getSizes($size, $iconic, $removable),
+      ...getSizes($size, $iconic, $removable, $hasChildren),
     },
   };
 })`
@@ -170,13 +174,14 @@ export default function Tag({
       $size={size}
       $color={color}
       $variant={variant}
+      $hasChildren={!!children}
     >
       {!!icon && (
         <TagIcon>
-          <Icon icon={icon} />
+          <Icon size={TIconSize.S} icon={icon} />
         </TagIcon>
       )}
-      <TagContent>{children}</TagContent>
+      {children ? <TagContent>{children}</TagContent> : null}
       {onRemove && (
         <TagRemoveButton
           type="button"

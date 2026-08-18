@@ -10,20 +10,19 @@ import {
 import { selectVideoFilePath } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import ProgressBar, { TProgressBarSize } from '@src/toolkit/ProgressBar';
 import { TCharacter } from '@src/types';
 import { msToHunanTime } from '@src/utils/time';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
-import Icon from '@ui-toolkit/Icon/Icon';
-import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
+import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import classNames from 'classnames';
 import { Fragment, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useVideoFileSwap } from './useVideoFileSwap';
+import VideoProgressBar from './VideoProgressBar';
 
 const TopBar = styled.div`
   position: absolute;
@@ -34,11 +33,6 @@ const TopBar = styled.div`
   align-content: stretch;
   align-items: stretch;
   color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 100)};
-  background: linear-gradient(
-    180deg,
-    ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 80)} 0%,
-    ${CSSColor(ThemeColors.TRANSPARENT, TShade.DEFAULT, 0)} 100%
-  );
 
   &.isCollapsed {
     position: relative;
@@ -47,11 +41,11 @@ const TopBar = styled.div`
 
 const TopBarCharacterBar = styled.div`
   position: absolute;
-  display: flex;
-  justify-content: center;
-  z-index: 2;
-  width: 100%;
-
+  height: 0;
+  left: 50%;
+  top: 0;
+  transform: translate3d(-50%, 0, 0);
+  z-index: 3;
   &.isCollapsed {
     position: relative;
   }
@@ -62,12 +56,11 @@ const TopBarPanel = styled.div`
   gap: ${CSSVar('videoPlayerSpacingInnerX')};
   align-items: center;
   padding: ${CSSVar('size4')};
+  color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 80)};
 `;
 
-const TopBarBlurWrapper = styled.div`
-  backdrop-filter: blur(${CSSVar('blurExtreme')});
-  border-radius: ${CSSVar('inputBorderRadius')};
-`;
+const TopBarTag = styled(Tag)``;
+const TopBarBlurWrapper = styled.div``;
 
 const VideoStage = styled.div`
   position: relative;
@@ -100,7 +93,7 @@ const Video = styled.video`
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 100)};
 `;
 
-const VideoProgress = styled.div`
+const BottomPanel = styled.div`
   width: 100%;
   position: absolute;
   bottom: 0;
@@ -142,14 +135,8 @@ type VideoPlayerProps = {
 export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: VideoPlayerProps) {
   const { t } = useTranslation('editor');
   const dispatch = useAppDispatch();
-  const {
-    videoElementRef,
-    registerVideoElementRef,
-    videoDurationMs,
-    currentTimeRef,
-    setCurrentTimeMs,
-    reportVideoUnplayable,
-  } = useVideo();
+  const { videoElementRef, registerVideoElementRef, setCurrentTimeMs, reportVideoUnplayable } =
+    useVideo();
   const lines = useAppSelector(selectLines);
   const activeLineIndex = useAppSelector(selectActiveLineIndex);
   const videoFilePath = useAppSelector(selectVideoFilePath);
@@ -241,14 +228,23 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
           <TopBarPanel>
             {activeLineCharacters && activeLineCharacters.length ? (
               activeLineCharacters.map(({ name, color }) => (
-                <Tag key={name} variant={TTagVariant.PRIMARY} color={color} size={TTagSize.SMALL}>
+                <TopBarTag
+                  key={name}
+                  variant={TTagVariant.PRIMARY}
+                  color={color}
+                  size={TTagSize.SMALL}
+                >
                   {name}
-                </Tag>
+                </TopBarTag>
               ))
             ) : activeLine ? (
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.SMALL}>
+              <TopBarTag
+                variant={TTagVariant.PRIMARY}
+                color={ThemeColors.TEXT}
+                size={TTagSize.SMALL}
+              >
                 {t('videoPlayer.noCharacter')}
-              </Tag>
+              </TopBarTag>
             ) : null}
           </TopBarPanel>
         </TopBarCharacterBar>
@@ -257,20 +253,33 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
         <TopBarPanel>
           {activeLine ? (
             <>
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.SMALL}>
+              <TopBarTag
+                variant={TTagVariant.PRIMARY}
+                color={ThemeColors.TEXT}
+                size={TTagSize.SMALL}
+              >
                 {msToHunanTime(activeLine.start_time)}
-              </Tag>
-              <Icon size={TIconSize.S} icon={TIcon.ARROW_RIGHT} />
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.SMALL}>
+              </TopBarTag>
+              <TopBarTag
+                variant={TTagVariant.PRIMARY}
+                color={ThemeColors.TEXT}
+                size={TTagSize.SMALL}
+                icon={TIcon.ARROW_RIGHT}
+              />
+              <TopBarTag
+                variant={TTagVariant.PRIMARY}
+                color={ThemeColors.TEXT}
+                size={TTagSize.SMALL}
+              >
                 {msToHunanTime(activeLine.end_time)}
-              </Tag>
+              </TopBarTag>
             </>
           ) : null}
         </TopBarPanel>
         <TopBarPanel>
           <TopBarBlurWrapper>
             <Button
-              variant={TButtonVariant.SECONDARY}
+              variant={TButtonVariant.PRIMARY}
               color={ThemeColors.TEXT}
               size={TButtonSize.SMALL}
               icon={TIcon.VIDEO}
@@ -280,8 +289,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
           {isSmallScreen && (
             <TopBarBlurWrapper>
               <Button
-                color={ThemeColors.TEXT}
-                variant={TButtonVariant.SECONDARY}
+                color={ThemeColors.BG}
+                variant={TButtonVariant.PRIMARY}
                 size={TButtonSize.SMALL}
                 icon={isVideoCollapsed ? TIcon.ARROW_TOGGLE_DOWN : TIcon.ARROW_TOGGLE_UP}
                 onClick={() => dispatch(setVideoCollapsed(!isVideoCollapsed))}
@@ -293,16 +302,9 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       {videoFilePath ? (
         <VideoPlayerShell $hidden={effectiveCollapsed}>
           <Video ref={registerVideoElementRef} playsInline />
-          <VideoProgress>
-            <ProgressBar
-              value={currentTimeRef.current}
-              total={videoDurationMs ?? 0}
-              precise={true}
-              size={TProgressBarSize.MEDIUM}
-              allowTransition={false}
-              color={ThemeColors.ACCENT1}
-            />
-          </VideoProgress>
+          <BottomPanel>
+            <VideoProgressBar />
+          </BottomPanel>
 
           {activeLine ? (
             <VideoSubtitleOverlay>
