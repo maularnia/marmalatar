@@ -6,7 +6,7 @@ import { TSubtitleLine } from '@src/types';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
 import { selectCurrentThemeData, selectScreenSize } from '@store/slices/app';
-import { type ReactElement, type WheelEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useRenderCache } from '../../hooks/useRenderCache';
 import WaveformEntry from './WaveformEntry';
@@ -111,6 +111,7 @@ export default function Waveform({
   const { handleChangeFocusedLine, handleChangeFocusedColumn } = useEditorActions();
   const size = useAppSelector(selectScreenSize);
   const theme = useAppSelector(selectCurrentThemeData);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const waveformViewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -129,18 +130,29 @@ export default function Waveform({
     (line) => line.line_no
   );
 
-  function handleWheel(event: WheelEvent<HTMLDivElement>) {
-    if (!videoDurationMs) return;
-    event.preventDefault();
+  // React attaches its root wheel listener as passive, so preventDefault() inside a JSX onWheel
+  // handler is a silent no-op (and logs a warning) -- a native, non-passive listener is required
+  // to actually stop the page from scrolling while seeking.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    const direction = Math.sign(event.deltaY);
-    if (direction === 0) return;
+    const handleWheel = (event: globalThis.WheelEvent) => {
+      if (!videoDurationMs) return;
+      event.preventDefault();
 
-    const step = videoDurationMs * WHEEL_SEEK_STEP_RATIO;
-    const newTime = clamp(currentTimeRef.current + direction * step, 0, videoDurationMs);
-    setCurrentTimeMs(newTime);
-    seekVideoToMs(newTime);
-  }
+      const direction = Math.sign(event.deltaY);
+      if (direction === 0) return;
+
+      const step = videoDurationMs * WHEEL_SEEK_STEP_RATIO;
+      const newTime = clamp(currentTimeRef.current + direction * step, 0, videoDurationMs);
+      setCurrentTimeMs(newTime);
+      seekVideoToMs(newTime);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [videoDurationMs, currentTimeRef, seekVideoToMs]);
 
   function handleEntryPointerDown(lineIndex: number, mode: DragMode, clientX: number) {
     const line = translationLines[lineIndex];
@@ -380,7 +392,7 @@ export default function Waveform({
   }
 
   return (
-    <Container tabIndex={1} className={size} onWheel={handleWheel}>
+    <Container ref={containerRef} tabIndex={1} className={size}>
       <Entries ref={entriesContainerRef}>
         {translationLines.map((line, lineIndex) => renderWaveformEntry(line, lineIndex))}
       </Entries>
