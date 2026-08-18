@@ -1,5 +1,4 @@
-import { TShade } from '@src/theme/definitions';
-import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import { CSSVar, ThemeColors } from '@src/theme/utils';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import classNames from 'classnames';
@@ -32,12 +31,12 @@ const EntryBorderHandle = styled.div`
   border-radius: ${CSSVar('size10')};
   &.left {
     left: -2px;
-    border-left: 2px solid ${CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 50)};
+    border-left: 2px solid ${CSSVar('waveformBlockHandleColor')};
   }
 
   &.right {
     right: -2px;
-    border-right: 2px solid ${CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 50)};
+    border-right: 2px solid ${CSSVar('waveformBlockHandleColor')};
   }
 `;
 
@@ -72,20 +71,20 @@ const EntryBlock = styled.div`
       ${CSSVar('waveformBlockBgHover')} 0%,
       transparent 90%
     );
-    bacgr ${EntryBorderHandle} {
+    ${EntryBorderHandle} {
       border-color: ${CSSVar('waveformBlockBorderColorHover')};
     }
   }
 
+  /* Active (currently playing under the video playhead): color-only, no size change, so it can't
+     be confused with the focused (selected-for-editing) block below. */
   &.isActive {
-    height: calc(${CSSVar('waveformHeight')} + (${CSSVar('waveformSpacingY')} * 2));
     border-color: ${CSSVar('waveformBlockBorderColorActive')};
     background: radial-gradient(
       circle at center bottom,
       ${CSSVar('waveformBlockBgActive')} 0%,
       transparent 90%
     );
-    top: calc(${CSSVar('waveformSpacingY')} * -1);
     ${EntryBorderHandle} {
       border-color: ${CSSVar('waveformBlockBorderColorActive')};
     }
@@ -98,6 +97,34 @@ const EntryBlock = styled.div`
       );
       ${EntryBorderHandle} {
         border-color: ${CSSVar('waveformBlockBorderColorActiveHover')};
+      }
+    }
+  }
+
+  /* Focused (selected for editing): the prominent, expanded treatment -- takes precedence over
+     .isActive above when a line is both playing and focused, since same-specificity rules cascade
+     by source order. */
+  &.isFocused {
+    height: calc(${CSSVar('waveformHeight')} + (${CSSVar('waveformSpacingY')} * 2));
+    border-color: ${CSSVar('waveformBlockBorderColorFocused')};
+    background: radial-gradient(
+      circle at center bottom,
+      ${CSSVar('waveformBlockBgFocused')} 0%,
+      transparent 90%
+    );
+    top: calc(${CSSVar('waveformSpacingY')} * -1);
+    ${EntryBorderHandle} {
+      border-color: ${CSSVar('waveformBlockBorderColorFocused')};
+    }
+    &:hover {
+      border-color: ${CSSVar('waveformBlockBorderColorFocusedHover')};
+      background: radial-gradient(
+        circle at center bottom,
+        ${CSSVar('waveformBlockBgFocusedHover')} 0%,
+        transparent 90%
+      );
+      ${EntryBorderHandle} {
+        border-color: ${CSSVar('waveformBlockBorderColorFocusedHover')};
       }
     }
   }
@@ -128,6 +155,7 @@ export default function WaveformEntry({
     <EntryBlock
       className={classNames({
         isActive: isActive,
+        isFocused: isFocused,
         isDragging: isDragging,
       })}
       style={{
@@ -148,6 +176,7 @@ export default function WaveformEntry({
       }}
     >
       <Tooltip
+        delay={400}
         label={
           <TooltipComplex title={t('waveform.startTime')}>
             {isFocused ? startTimeKeystrokeHint : null}
@@ -162,6 +191,7 @@ export default function WaveformEntry({
         </Tag>
       </EntryNumber>
       <Tooltip
+        delay={400}
         label={
           <TooltipComplex title={t('waveform.endTime')}>
             {isFocused ? endTimeKeystrokeHint : null}

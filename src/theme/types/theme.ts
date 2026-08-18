@@ -249,10 +249,15 @@ export type TThemeWaveformsChapter = TThemeVarsChapter<{
   waveformBlockBgHover: string;
   waveformBlockBgActive: string;
   waveformBlockBgActiveHover: string;
+  waveformBlockBgFocused: string;
+  waveformBlockBgFocusedHover: string;
   waveformBlockBorderColor: string;
   waveformBlockBorderColorHover: string;
   waveformBlockBorderColorActive: string;
   waveformBlockBorderColorActiveHover: string;
+  waveformBlockBorderColorFocused: string;
+  waveformBlockBorderColorFocusedHover: string;
+  waveformBlockHandleColor: string;
   waveformCursorColor: string;
   waveformColor: [string, false];
 }>;
