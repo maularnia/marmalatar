@@ -17,14 +17,30 @@ export function timecodeToMilliseconds(timecode: string): number {
   );
 }
 
-export function msToHunanTime(milliseconds: number): string {
-  const totalMilliseconds = Math.max(0, milliseconds);
-  const hours = Math.floor(totalMilliseconds / 3_600_000);
-  const minutes = Math.floor((totalMilliseconds % 3_600_000) / 60_000);
-  const seconds = Math.floor((totalMilliseconds % 60_000) / 1_000);
-  const ms = totalMilliseconds % 1_000;
+export type TMsBreakdown = {
+  hours: number;
+  minutes: number;
+  seconds: number;
+  remainderMs: number;
+};
 
-  return [pad(hours, 2), pad(minutes, 2), pad(seconds, 2)].join(':') + `,${pad(ms, 3)}`;
+/** Decomposes a (possibly negative/fractional) millisecond duration into whole hours/minutes/seconds
+ * plus the sub-second remainder -- callers derive their own sub-second unit (ms, centiseconds,
+ * frame number, ...) from `remainderMs`. */
+export function breakDownMs(ms: number): TMsBreakdown {
+  const safeMs = Math.max(0, ms);
+  const hours = Math.floor(safeMs / 3_600_000);
+  const minutes = Math.floor((safeMs % 3_600_000) / 60_000);
+  const seconds = Math.floor((safeMs % 60_000) / 1_000);
+  const remainderMs = safeMs % 1_000;
+
+  return { hours, minutes, seconds, remainderMs };
+}
+
+export function msToHunanTime(milliseconds: number): string {
+  const { hours, minutes, seconds, remainderMs } = breakDownMs(milliseconds);
+
+  return [pad(hours, 2), pad(minutes, 2), pad(seconds, 2)].join(':') + `,${pad(remainderMs, 3)}`;
 }
 
 function msFromFrameCount(frameCount: number, fps: number): number {

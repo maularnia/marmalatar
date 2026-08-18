@@ -1,6 +1,6 @@
 import { TSubtitleLine } from '@src/types';
 import { normalizeText, pad } from '@utils/string';
-import { convertTimeByFps } from '@utils/time';
+import { breakDownMs, convertTimeByFps } from '@utils/time';
 
 export const DEFAULT_CSV_COLUMN_FORMULA =
   '{line_number},{start_time},{end_time},{character},{text}';
@@ -16,12 +16,9 @@ function escapeCsvValue(value: string): string {
 
 function formatCsvTime(ms: number, fps: number, format: string): string {
   const safeMs = Math.max(0, Math.round(ms));
-  const hours = Math.floor(safeMs / 3_600_000);
-  const minutes = Math.floor((safeMs % 3_600_000) / 60_000);
-  const seconds = Math.floor((safeMs % 60_000) / 1000);
-  const milliseconds = safeMs % 1000;
+  const { hours, minutes, seconds, remainderMs } = breakDownMs(safeMs);
   const framesInSecond = Math.max(1, Math.round(fps));
-  const frame = Math.min(framesInSecond - 1, Math.floor(((safeMs % 1000) / 1000) * fps));
+  const frame = Math.min(framesInSecond - 1, Math.floor((remainderMs / 1000) * fps));
 
   return (
     format
@@ -30,8 +27,8 @@ function formatCsvTime(ms: number, fps: number, format: string): string {
       .replace(/\{ss\}/g, pad(seconds, 2))
       .replace(/\{ff\}/g, pad(frame, 2))
       // Optional alias because users may type either token for milliseconds.
-      .replace(/\{mmm\}/g, pad(milliseconds, 3))
-      .replace(/\{ms\}/g, pad(milliseconds, 3))
+      .replace(/\{mmm\}/g, pad(remainderMs, 3))
+      .replace(/\{ms\}/g, pad(remainderMs, 3))
       .replace(/\{abs_ms\}/g, String(safeMs))
   );
 }

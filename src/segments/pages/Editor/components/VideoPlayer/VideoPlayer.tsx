@@ -12,6 +12,7 @@ import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import ProgressBar, { TProgressBarSize } from '@src/toolkit/ProgressBar';
 import { TCharacter } from '@src/types';
+import { clamp } from '@src/utils/numbers';
 import { msToHunanTime } from '@src/utils/time';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
@@ -19,7 +20,7 @@ import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import classNames from 'classnames';
-import { Fragment, useEffect } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useVideoFileSwap } from './useVideoFileSwap';
@@ -97,6 +98,8 @@ const VideoProgress = styled.div`
   width: 100%;
   position: absolute;
   bottom: 0;
+  cursor: pointer;
+  touch-action: none;
 `;
 const VideoSubtitleOverlay = styled.div`
   position: absolute;
@@ -141,8 +144,11 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     videoDurationMs,
     currentTimeRef,
     setCurrentTimeMs,
+    seekVideoToMs,
     reportVideoUnplayable,
   } = useVideo();
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
+  const isSeekingProgressRef = useRef(false);
   const lines = useAppSelector(selectLines);
   const activeLineIndex = useAppSelector(selectActiveLineIndex);
   const videoFilePath = useAppSelector(selectVideoFilePath);
@@ -227,6 +233,34 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     };
   }, [setCurrentTimeMs, videoElementRef, onPlaybackPause, onPlaybackResume, reportVideoUnplayable]);
 
+  const seekToPointerX = (clientX: number) => {
+    const bar = progressBarRef.current;
+    if (!bar || !videoDurationMs) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
+    const time = ratio * videoDurationMs;
+    setCurrentTimeMs(time);
+    seekVideoToMs(time);
+  };
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!isSeekingProgressRef.current) return;
+      seekToPointerX(event.clientX);
+    };
+    const handlePointerUp = () => {
+      isSeekingProgressRef.current = false;
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  });
+
   return (
     <VideoStage className={classNames({ isCollapsed: effectiveCollapsed })} tabIndex={1}>
       {!effectiveCollapsed && (
@@ -308,7 +342,14 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       {videoFilePath ? (
         <VideoPlayerShell $hidden={effectiveCollapsed}>
           <Video ref={registerVideoElementRef} playsInline />
-          <VideoProgress>
+          <VideoProgress
+            ref={progressBarRef}
+            onPointerDown={(event) => {
+              isSeekingProgressRef.current = true;
+              seekToPointerX(event.clientX);
+              event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+          >
             <ProgressBar
               value={currentTimeRef.current}
               total={videoDurationMs ?? 0}

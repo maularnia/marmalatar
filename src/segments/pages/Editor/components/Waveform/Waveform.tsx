@@ -3,6 +3,7 @@ import { useVideo } from '@providers/VideoProvider';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import { TSubtitleLine } from '@src/types';
+import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
 import { selectCurrentThemeData, selectScreenSize } from '@store/slices/app';
 import { type ReactElement, type WheelEvent, useEffect, useMemo, useRef, useState } from 'react';
@@ -25,10 +26,6 @@ const CURSOR_OFFSET_RATIO = 0.3;
 const PEAK_HEIGHT_COEFFICIENT = 0.9;
 const MIN_GAP_MS = 50;
 const WHEEL_SEEK_STEP_RATIO = 0.0005;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export type DragMode = 'move' | 'resize-left' | 'resize-right';
 
