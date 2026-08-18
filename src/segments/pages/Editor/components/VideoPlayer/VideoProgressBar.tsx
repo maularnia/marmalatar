@@ -3,7 +3,6 @@ import { CSSVar, ThemeColors } from '@src/theme/utils';
 import ProgressBar, { TProgressBarSize } from '@src/toolkit/ProgressBar';
 import { clamp } from '@src/utils/numbers';
 import { msToShortTime } from '@src/utils/time';
-import classNames from 'classnames';
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
@@ -17,10 +16,9 @@ const Root = styled.div`
 // Mirrors Tooltip.tsx's Content/TooltipRoot box styling (background, blur, radius, padding, text)
 // without going through the Radix-based Tooltip component -- this needs to track the pointer's
 // x-position continuously while dragging, which doesn't fit Radix's hover/focus-driven trigger model.
-const SeekTooltip = styled.div<{ $left: number }>`
+const SeekTooltip = styled.div`
   position: absolute;
   bottom: calc(100% + ${CSSVar('size6')});
-  left: ${({ $left }) => $left}px;
   z-index: 1000;
   font-family: ${CSSVar('fontTextSansSerif')};
   font-size: ${CSSVar('tooltipFontSize')};
@@ -47,11 +45,6 @@ export default function VideoProgressBar() {
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const isSeekingRef = useRef(false);
   const [currentTimeMs, setLocalCurrentTimeMs] = useState(0);
-  const [tooltip, setTooltip] = useState<{ left: number; timeMs: number; visible: boolean }>({
-    left: 0,
-    timeMs: 0,
-    visible: false,
-  });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -70,13 +63,17 @@ export default function VideoProgressBar() {
 
   function updateTooltip(clientX: number, visible: boolean) {
     const bar = barRef.current;
+    const tooltip = tooltipRef.current;
     const time = timeFromClientX(clientX);
-    if (!bar || time == null) return;
+    if (!bar || !tooltip || time == null) return;
     const rect = bar.getBoundingClientRect();
-    const tooltipWidth = tooltipRef.current?.offsetWidth ?? 0;
+    const tooltipWidth = tooltip.offsetWidth;
     const centeredLeft = clientX - rect.left - tooltipWidth / 2;
     const left = clamp(centeredLeft, 0, rect.width - tooltipWidth);
-    setTooltip({ left, timeMs: time, visible });
+
+    tooltip.style.left = `${left}px`;
+    tooltip.textContent = msToShortTime(time);
+    tooltip.classList.toggle('visible', visible);
   }
 
   function seekToClientX(clientX: number) {
@@ -116,7 +113,7 @@ export default function VideoProgressBar() {
         event.currentTarget.setPointerCapture(event.pointerId);
       }}
       onPointerMove={(event) => updateTooltip(event.clientX, true)}
-      onPointerLeave={() => setTooltip((prev) => ({ ...prev, visible: false }))}
+      onPointerLeave={() => tooltipRef.current?.classList.remove('visible')}
     >
       <ProgressBar
         value={currentTimeMs}
@@ -126,13 +123,7 @@ export default function VideoProgressBar() {
         allowTransition={false}
         color={ThemeColors.ACCENT1}
       />
-      <SeekTooltip
-        ref={tooltipRef}
-        $left={tooltip.left}
-        className={classNames({ visible: tooltip.visible })}
-      >
-        {msToShortTime(tooltip.timeMs)}
-      </SeekTooltip>
+      <SeekTooltip ref={tooltipRef} />
     </Root>
   );
 }
