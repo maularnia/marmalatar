@@ -86,6 +86,15 @@
     "alreadyExists": "Taki fajł užo isnuje",
     "folderNotTracked": "Abiarycie pracoŭnuju papku"
   },
+  "createNewProject": {
+    "emojiSelectionFailed": "Nie atrymałasia padabrać emodzi dla prajekta",
+    "fileSaveFailed": "Nie atrymałasia zachavać fajł prajekta na dysk",
+    "editorStateSaveFailed": "Nie atrymałasia zachavać stan redaktara prajekta",
+    "cacheUpdateFailed": "Nie atrymałasia dadać prajekt u keš"
+  },
+  "projectCreationAborted": {
+    "title": "Stvareńnie prajekta było spyniena"
+  },
   "promptTemplate": {
     "alreadyExists": "Šabłon zapytu [{{title}}] užo isnuje",
     "readFailed": "Nie atrymałasia pračytać šabłon zapytu"

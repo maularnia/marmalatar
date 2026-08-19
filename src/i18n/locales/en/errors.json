@@ -86,6 +86,15 @@
     "alreadyExists": "File with the same name already exists",
     "folderNotTracked": "No working folder"
   },
+  "createNewProject": {
+    "emojiSelectionFailed": "Failed to pick a random project emoji",
+    "fileSaveFailed": "Failed to save the project file to disk",
+    "editorStateSaveFailed": "Failed to save the project editor state",
+    "cacheUpdateFailed": "Failed to add the project to the project cache"
+  },
+  "projectCreationAborted": {
+    "title": "Project creation was aborted"
+  },
   "promptTemplate": {
     "alreadyExists": "Prompt template [{{title}}] already exists",
     "readFailed": "Unable to read prompt file"

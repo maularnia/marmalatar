@@ -106,6 +106,19 @@ export function emitVideoPathRemovalFailedMessage(pushMessage: PushMessage, mess
   });
 }
 
+// useSubmitNewProject
+
+export function emitProjectCreationAbortedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('projectCreationAborted.title'),
+    message,
+  });
+}
+
 // useProjectLoader
 
 export function emitVideoFileMissingMessage(pushMessage: PushMessage): void {
