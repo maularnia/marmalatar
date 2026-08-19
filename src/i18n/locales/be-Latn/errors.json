@@ -22,11 +22,11 @@
   },
   "mainMenuListItem": {
     "nameTooLong": "Značeńnie daŭžej za [{{maxLength}}]",
-    "nameAlreadyExists": "Taki fajł ujuo isnuje",
-    "unreachableCommitError": "Jak vy siudy trapili? [ŃIEDASIAHLNAJA 01]"
+    "nameAlreadyExists": "Taki fajł užo isnuje",
+    "unreachableCommitError": "Jak vy siudy trapili? [NIEDASIAŽNAJA 01]"
   },
   "subtitleFileSelect": {
-    "unsupportedFormat": "Farmat nie padtrylivajecca",
+    "unsupportedFormat": "Farmat nie padtrymlivajecca",
     "parseFailedFallback": "Niemahčyma pračytać fajł",
     "fileRequired": "Nielha pakinuć pustym",
     "noValidLines": "Fajł paškodžany albo pusty, niama ž čym pracavać"
@@ -34,7 +34,7 @@
   "videoFileSelect": {
     "fileRequired": "Nielha pakinuć pustym",
     "pathUnresolved": "Nie atrymłasia adšukać šlach da fajła",
-    "stillProcessing": "Aprcoŭka videa...",
+    "stillProcessing": "Apracoŭka videa...",
     "unsupportedPlayback": "Niemahčyma prajhrać videa. Niesumiaščalny kodek",
     "processingFailed": "Pamyłka hienieracyi artefaktaŭ. Niesumiaščalny kodek"
   },
@@ -78,7 +78,7 @@
   },
   "project": {
     "corrupted": "Paškodžany fajł prajektu",
-    "invalidFile": "Nieadpavdnaje značeńnie pola [{{path}}]: {{message}}",
+    "invalidFile": "Nieadpaviednaje značeńnie pola [{{path}}]: {{message}}",
     "incompatibleVersion": "Hety fajł prajektu stvorany novaj versijaj prahramy i nie moža być adkryty",
     "cannotRead": "Nie atrymałasia pračytać fajł",
     "cannotSaveWithoutName": "Nielha zachavać prajekt biez nazvy",
@@ -92,7 +92,7 @@
   },
   "glossaryFile": {
     "alreadyExists": "Głasaryj [{{title}}] užo isnuje",
-    "readFailed": "Nie atrymłasia pračytać głasaryj"
+    "readFailed": "Nie atrymałasia pračytać głasaryj"
   },
   "fileList": {
     "projectNotFound": "Prajekt nie znojdzieny"
@@ -141,7 +141,7 @@
     "title": "Pamyłka pierakładu radka"
   },
   "noMatchingGlossaries": {
-    "title": "Pamłyka dadańnia pary ŭ głasaryj",
+    "title": "Pamyłka dadańnia pary ŭ głasaryj",
     "message": "Niama nivodnaha, jaki adpaviadaje nakirunku pierakładu prakietu"
   },
   "glossaryEntrySaveFailed": {
@@ -158,7 +158,7 @@
     "title": "Nie atrymałasia abjadnać radki"
   },
   "deleteLineFailed": {
-    "title": "Nie atrymłasia vydlić radok"
+    "title": "Nie atrymałasia vydalić radok"
   },
   "lineTooShortToSplit": {
     "title": "Nadta karotki radok",

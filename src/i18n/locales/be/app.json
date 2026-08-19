@@ -1,11 +1,11 @@
 {
   "title": {
     "name": "Marmalatar",
-    "subtitle": "Памагаты перакладчыка"
+    "subtitle": "Памочнік перакладчыка"
   },
   "video": {
     "supportedFormats": "Праграма падтрымлівае: .mp4, .m4v, .mkv, .webm, .mov, .avi, .wmv, .flv, .mpg, .mpeg, .m2ts, .mts, .ts, .3gp, .3g2, .ogv,.asf",
-    "supportedCodecs": "Сумяшчальня кодэкі: H.264, VP8, VP9, AV1"
+    "supportedCodecs": "Сумяшчальныя кодэкі: H.264, VP8, VP9, AV1"
   },
   "videoFileStatus": {
     "idle": "Абярыце файл для апрацоўкі",
