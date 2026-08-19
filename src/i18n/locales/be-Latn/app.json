@@ -13,7 +13,7 @@
     "success": "Fajł apracavany",
     "error": "Niemahčyma apracavać fajł",
     "unsupportedVideo": "Nieprajhravalnaje videa. Niesumiaščalny kodek videa",
-    "unsupportedAudio": "Nieprajhravalnaje videa. Niesumiaščalny kodek aŭdyjo"
+    "unsupportedAudio": "Nieprajhravalnaje videa. Niesumiaščalny kodek aŭdyjo. Padtrymlivajucca: AAC, MP3, Opus, Vorbis, FLAC"
   },
   "errorBoundary": {
     "title": "Niešta pajšło nie tak",

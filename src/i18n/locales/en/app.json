@@ -13,7 +13,7 @@
     "success": "Selected file is valid and ready",
     "error": "Error processing the file",
     "unsupportedVideo": "Unplayable video. Unsupported video codec",
-    "unsupportedAudio": "Unplayable video. Unsupported audio codec"
+    "unsupportedAudio": "Unplayable video. Unsupported audio codec. Supported: AAC, MP3, Opus, Vorbis, FLAC"
   },
   "errorBoundary": {
     "title": "Something went wrong",

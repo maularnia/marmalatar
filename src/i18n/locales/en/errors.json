@@ -36,7 +36,7 @@
     "pathUnresolved": "Unable to resolve file path",
     "stillProcessing": "Video processing in progress",
     "unsupportedVideoCodec": "Video can not be played. Unsupported video codec.",
-    "unsupportedAudioCodec": "Video can not be played. Unsupported audio codec.",
+    "unsupportedAudioCodec": "Video can not be played. Unsupported audio codec. Supported: AAC, MP3, Opus, Vorbis, FLAC.",
     "processingFailed": "Video file processing failed."
   },
   "import": {
