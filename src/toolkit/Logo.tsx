@@ -106,7 +106,11 @@ const eyeGroupAnimation: MotionProps = {
 
 export function Logo({ size = 64, variant = TLogoVariant.DEFAULT }: LogoProps) {
   const isError = variant === TLogoVariant.ERROR;
-  const eyeColor = CSSColor(isError ? ThemeColors.RED : ThemeColors.ACCENT1, TShade.DEFAULT, 100);
+  // Non-error eyes sit at the gradient's midpoint rather than pure ACCENT1, so they blend with the
+  // logo-body gradient instead of reading as a flat dot dropped on top of it.
+  const eyeColor = isError
+    ? CSSColor(ThemeColors.RED, TShade.DEFAULT, 100)
+    : `color-mix(in srgb, ${CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 100)} 50%, ${CSSColor(ThemeColors.ACCENT2, TShade.DEFAULT, 100)} 50%)`;
 
   return (
     <motion.svg
@@ -123,7 +127,7 @@ export function Logo({ size = 64, variant = TLogoVariant.DEFAULT }: LogoProps) {
         <motion.path
           className="logo-body"
           d="M22.9932 359.983L336.942 359.916L337.008 -0.000183105H290.789L180.038 158.912L69.6021 0.0182017H22.9932V359.983Z"
-          fill={CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 100)}
+          fill="url(#logo-body-gradient)"
           mask="url(#sneaky-cat)"
           {...appearUpSpringSlow}
         />
@@ -143,6 +147,13 @@ export function Logo({ size = 64, variant = TLogoVariant.DEFAULT }: LogoProps) {
         </motion.g>
       </g>
       <defs>
+        {/* Same diagonal ACCENT1 -> ACCENT2 gradient as the "special" icon variant in Icon.tsx --
+            applied directly here via fill, since this path (unlike arbitrary icon SVGs) is fully
+            under our control and doesn't need the feImage/feComposite filter trick. */}
+        <linearGradient id="logo-body-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 100)} />
+          <stop offset="100%" stopColor={CSSColor(ThemeColors.ACCENT2, TShade.DEFAULT, 100)} />
+        </linearGradient>
         <mask id="sneaky-cat">
           <rect className="mask-overlay" x={0} y={0} width="100%" height="100%" fill="white" />
           <motion.path
