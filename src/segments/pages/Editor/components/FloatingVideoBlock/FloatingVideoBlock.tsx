@@ -204,6 +204,7 @@ export default function FloatingVideoBlock({
             peaks={waveformPeaks}
             videoDurationMs={videoDurationMs}
             activeLineIndex={activeLineIndex}
+            focusedLineIndex={focusedItemIndex >= 0 ? focusedItemIndex : null}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
               dispatch(updateLineTiming({ lineIndex, startTime, endTime }));

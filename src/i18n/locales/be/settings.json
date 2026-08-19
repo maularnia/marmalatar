@@ -12,7 +12,7 @@
     "askBeforeDelete": "Пытаць перад выдаленнем",
     "askBeforeAITranslate": "Пытаць перад аўта-перакладам",
     "askBeforeSplit": "Пытаць перад разразаннем радка",
-    "autoMarkLinesCompleted": "Адзанчаць радкі як\"Гатовыя\" аўтаматычна",
+    "autoMarkLinesCompleted": "Адзначаць радкі як \"Гатовыя\" аўтаматычна",
     "checkGrammar": "Правяраць правапіс",
     "appLanguage": "Мова праграмы"
   },
@@ -21,11 +21,11 @@
     "enableToggle": "Уключыць ШІ-пераклад",
     "providers": {
       "title": "Пастаўшчыкі",
-      "subtext": "Абярыце ШІ пастаўчыка са спісу",
+      "subtext": "Абярыце ШІ пастаўшчыка са спісу",
       "noIntegrations": "Няма даступных інтэграцый",
       "placeholder": "Пастаўшчык",
-      "useProvider": "скрыстаць {{name}}",
-      "finishConfiguring": "Даналадзьце патаўшчыка ШІ"
+      "useProvider": "скарыстаць {{name}}",
+      "finishConfiguring": "Даналадзьце пастаўшчыка ШІ"
     },
     "common": {
       "model": "Мадэль",

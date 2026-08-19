@@ -2,13 +2,13 @@
   "editorControls": {
     "undo": "Undo",
     "redo": "Redo",
-    "shiftLinesEarlier": "Shift all lines earlier by [{{step}}] ms",
-    "shiftLinesLater": "Shift all lines later by [{{step}}] ms",
-    "autoMergeAdjacentLines": "Auto-merge adjacent lines of same character",
-    "insertLineBefore": "Insert empty line before",
-    "insertLineAfter": "Insert emty line after",
-    "addSelectedToGlossary": "Add selection to glossary",
-    "splitLineByCursor": "Cut line at cursor position",
+    "shiftLinesEarlier": "Shift all lines\nearlier by [{{step}}] ms",
+    "shiftLinesLater": "Shift all lines\nlater by [{{step}}] ms",
+    "autoMergeAdjacentLines": "Auto-merge\nadjacent lines\nof same character",
+    "insertLineBefore": "Insert\nempty line\nbefore",
+    "insertLineAfter": "Insert\nemty line\nafter",
+    "addSelectedToGlossary": "Add selection\nto glossary",
+    "splitLineByCursor": "Cut line\nat cursor position",
     "copySourceToOutput": "Copy source text to output",
     "editModeActive": "Currently in Edit mode",
     "translationModeActive": "Translation mode",
@@ -17,8 +17,8 @@
     "translateAll": "Translate all",
     "translateFocusedLine": "Translate focused line",
     "cleanup": "Cleanup",
-    "copyAllSourceToOutput": "Copy all source to output",
-    "completeAllTranslated": "Mark all translated lines as complete"
+    "copyAllSourceToOutput": "Copy all\nsource to output",
+    "completeAllTranslated": "Mark all\ntranslated lines\nas complete"
   },
   "workTableLine": {
     "markLineComplete": "Toggle line complete",
@@ -26,9 +26,19 @@
   },
   "glossary": {
     "insertBefore": "Insert line before",
+    "insertAfter": "Insert line after",
     "delete": "Delete"
   },
   "emoPicker": {
     "ariaLabel": "Emoji picker"
+  },
+  "waveform": {
+    "startTime": "Start time",
+    "endTime": "End time"
+  },
+  "keystrokeZone": {
+    "areaTitle": "Area {{slot}}",
+    "hintPrefix": "Hit",
+    "hintSuffix": "to force-shift\nkeyboard focus here"
   }
 }

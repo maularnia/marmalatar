@@ -10,6 +10,15 @@ type FocusTrapProps = PropsWithChildren<{
   onUnmount?: () => void;
 }>;
 
+// Module-level stack of currently-active trap instances (most-recently-activated last). A
+// Confirmation dialog opened from within an Overlay ends up with two FocusTraps active at once --
+// the dialog is rendered through a portal, so it lives outside the Overlay's own container and
+// looks "outside" to the Overlay's trap. Without this stack, both traps fight over Tab: the
+// Overlay's trap sees focus leave its container and yanks it back, undoing whatever the dialog's
+// own trap just did. Only the topmost (last-activated) trap gets to act on Tab; the rest sit out
+// until it deactivates, at which point the next one down resumes.
+const activeTrapStack: symbol[] = [];
+
 // Hand-rolled, minimal Tab-trap -- used only where real Tab-containment is actually needed
 // (Confirmation dialogs, Overlay panels). Deliberately does NOT use focus-trap-react: that library
 // shares one activation stack across every instance by default, so mounting one trap auto-pauses
@@ -30,6 +39,19 @@ export default function FocusTrap({
   // closure every render doesn't matter and this never re-fires early.
   const onUnmountRef = useRef(onUnmount);
   onUnmountRef.current = onUnmount;
+  // React only honors this initial value on the very first render, so this doesn't allocate a new
+  // Symbol on every re-render despite looking like it would.
+  const trapIdRef = useRef<symbol>(Symbol('focus-trap'));
+
+  useEffect(() => {
+    if (!active) return;
+    const id = trapIdRef.current;
+    activeTrapStack.push(id);
+    return () => {
+      const index = activeTrapStack.indexOf(id);
+      if (index !== -1) activeTrapStack.splice(index, 1);
+    };
+  }, [active]);
 
   useEffect(() => {
     if (!active) return;
@@ -61,6 +83,7 @@ export default function FocusTrap({
     if (!active) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return;
+      if (activeTrapStack[activeTrapStack.length - 1] !== trapIdRef.current) return;
       const container = containerRef.current;
       if (!container) return;
       const focusable = getFocusableElements(container);

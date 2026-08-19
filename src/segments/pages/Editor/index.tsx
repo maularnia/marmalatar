@@ -22,7 +22,7 @@ import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import classNames from 'classnames';
-import { CSSProperties, type ReactElement, useContext, useEffect, useMemo, useRef } from 'react';
+import { CSSProperties, type ReactElement, useContext, useMemo, useRef } from 'react';
 import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
 import FloatingVideoBlock from './components/FloatingVideoBlock/FloatingVideoBlock';
@@ -31,6 +31,7 @@ import VirtualizedList, {
 } from './components/VirtualizedList/VirtualizedList';
 import EditorTableLine from './components/WorkTable/WorkTableLine/EditorTableLine';
 import { useLineFingerprint } from './hooks/useLineFingerprint';
+import { useRenderCache } from './hooks/useRenderCache';
 import { useLinePanel } from './components/WorkTable/useLinePanel';
 
 const EditorArea = styled.main`
@@ -73,7 +74,7 @@ export default function Editor() {
   const dispatch = useAppDispatch();
   const activeLineIndex = useAppSelector(selectActiveLineIndex);
   const focusedLineIndex = useAppSelector(selectFocusedLineIndex);
-  const { handleChangeFocusedLine, handleFocusEditor } = useEditorActions();
+  const { handleChangeFocusedLine, handleFocusEditor, handleMergeLines } = useEditorActions();
   const { seekToLine, handlePause } = useVideo();
   const isSmallScreen = useAppSelector(selectIsSmallScreen);
   const focusedItemIndex = focusedLineIndex ?? -1;
@@ -109,19 +110,11 @@ export default function Editor() {
   const columnTemplate = isEditMode ? '2fr 200px' : '2fr 200px 2fr';
 
   /** Virtualization **/
-  const renderedLineCacheRef = useRef<Map<number, { cacheKey: string; node: ReactElement }>>(
-    new Map()
-  );
   const virtualizedListRef = useRef<VirtualizedListHandle>(null);
-
-  useEffect(() => {
-    const existingLineNumbers = new Set(translationLines.map((line) => line.line_no));
-    for (const lineNo of renderedLineCacheRef.current.keys()) {
-      if (!existingLineNumbers.has(lineNo)) {
-        renderedLineCacheRef.current.delete(lineNo);
-      }
-    }
-  }, [translationLines]);
+  const { getCached, setCached } = useRenderCache<TSubtitleLine, number, ReactElement>(
+    translationLines,
+    (line) => line.line_no
+  );
 
   /** Hooks **/
   const { getLineFingerprint, mergeCandidateLineIndices } = useLineFingerprint();
@@ -136,9 +129,9 @@ export default function Editor() {
     const isFrozen = frozenLineNumbers.includes(line.line_no);
     const fingerprint = getLineFingerprint(line, lineIndex);
 
-    const cached = renderedLineCacheRef.current.get(line.line_no);
-    if (cached && cached.cacheKey === fingerprint) {
-      return isFocused ? injectPanel(cached.node) : cached.node;
+    const cached = getCached(line.line_no, fingerprint);
+    if (cached) {
+      return isFocused ? injectPanel(cached) : cached;
     }
 
     const node = (
@@ -173,13 +166,12 @@ export default function Editor() {
             dispatch(setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true }));
         }}
         onSourceTextChange={(text) => dispatch(updateSourceText({ lineIndex, text }))}
+        onMergeUpClick={() => handleMergeLines(lineIndex, 'up')}
+        onMergeDownClick={() => handleMergeLines(lineIndex, 'down')}
       />
     );
 
-    renderedLineCacheRef.current.set(line.line_no, {
-      cacheKey: fingerprint,
-      node,
-    });
+    setCached(line.line_no, fingerprint, node);
     return isFocused ? injectPanel(node) : node;
   };
 

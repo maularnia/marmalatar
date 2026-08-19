@@ -1,7 +1,8 @@
-import { HTMLAttributes, PropsWithChildren, ReactNode } from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { CSSVar, ThemeColors } from '@src/theme/utils';
+import { Fragment, HTMLAttributes, PropsWithChildren, ReactNode } from 'react';
 import styled from 'styled-components';
-import { CSSVar } from '@src/theme/utils';
+import Tag, { TTagSize, TTagVariant } from './Tag';
 
 type TooltipProps = PropsWithChildren<{
   label?: ReactNode | string;
@@ -51,6 +52,7 @@ const TooltipTitle = styled.div`
 const TooltipContent = styled.div`
   font-size: ${CSSVar('tooltipFontSize')};
   line-height: 1.2;
+  white-space: pre-line;
 `;
 
 type ComplexTooltipContentProps = {
@@ -70,6 +72,29 @@ export const TooltipSimple = ({ children }: PropsWithChildren) => {
     <TooltipRoot>
       <TooltipContent>{children}</TooltipContent>
     </TooltipRoot>
+  );
+};
+
+const KeystrokeHint = styled.div`
+  text-align: center;
+`;
+
+type TooltipKeystrokeHintProps = {
+  keys: ReactNode[];
+};
+
+export const TooltipKeystrokeHint = ({ keys }: TooltipKeystrokeHintProps) => {
+  return (
+    <KeystrokeHint>
+      {keys.map((key, index) => (
+        <Fragment key={index}>
+          {index > 0 && ' + '}
+          <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
+            {key}
+          </Tag>
+        </Fragment>
+      ))}
+    </KeystrokeHint>
   );
 };
 

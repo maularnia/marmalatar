@@ -15,10 +15,10 @@
     "dismissButton": "Скасаваць"
   },
   "autoMergeLines": {
-    "title": "Запусцтць аўта-аб’яднанне?",
+    "title": "Запусціць аўта-аб’яднанне?",
     "bodyPrefix": "Скрыпт знойдзе радкі не далей ",
     "bodyApart": "адзін ад аднаго",
-    "bodyAssigned": "прызначынаыя аднаму персанажу",
+    "bodyAssigned": "прызначаныя аднаму персанажу",
     "bodySuffix": "і аб’яднае іх",
     "confirmButton": "Аб’яднаць"
   },
@@ -37,25 +37,23 @@
   },
   "copyAllSourceToOutput": {
     "title": "Скапіяваць усе радкі крыніцы ў пераклад?",
-    "overrideToggleLabel": "Перазапісаць ісгуючыя пераклады",
+    "overrideToggleLabel": "Перазапісаць існуючыя пераклады",
     "confirmButton": "Скапіяваць"
   },
   "deleteLine": {
-    "title": "Выдаліць радок №{{lineNo}}?"
+    "title": "Выдаліць радок?"
   },
   "deleteContext": {
-    "titlePrefix": "Выдаліць кантэкст",
-    "titleSuffix": "?"
+    "title": "Выдаліць кантэкст?"
   },
   "deleteGlossary": {
-    "titlePrefix": "Выдліць гласарый",
-    "titleSuffix": "?"
+    "title": "Выдаліць гласарый?"
   },
   "deleteGlossaryEntry": {
     "title": "Выдаліць радок гласарыя?"
   },
   "deleteProject": {
-    "titlePrefix": "Выдаліць"
+    "title": "Выдаліць праект?"
   },
   "lineMerge": {
     "title": "Аб’яднаць гэтыя радкі?",
@@ -68,7 +66,7 @@
     "confirmButton": "Разрэзаць"
   },
   "translationOverride": {
-    "title": "Прекаласці праз ШІ?",
+    "title": "Перакласці праз ШІ?",
     "confirmButton": "Так",
     "bodyHasContent": "Гэта перазапіша тэкст перакладу",
     "bodyWillTranslate": "радок будзе перакладзены ШІ"
@@ -78,7 +76,7 @@
     "filePlaceholder": ".mp4, .mkv, .webm.",
     "selectVideoButton": "Абраць відэа",
     "continueWithoutVideoButton": "Працягнуць без відэа",
-    "savedFileNotFoundBanner": "Не атрымалася адшукць відэа, дапасаванае да праекта",
-    "processingFailedBanner": "Не атрымалая апрацаваць відэа, несумяшчальны кодэк"
+    "savedFileNotFoundBanner": "Не атрымалася адшукаць відэа, дапасаванае да праекта",
+    "processingFailedBanner": "Не атрымалася апрацаваць відэа, несумяшчальны кодэк"
   }
 }

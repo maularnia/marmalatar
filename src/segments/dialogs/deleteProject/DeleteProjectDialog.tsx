@@ -1,9 +1,11 @@
 import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
 import { ThemeColors } from '@src/theme/utils';
+import H from '@ui-toolkit/H';
 import { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
+import Span from '@ui-toolkit/Span';
 import { useTranslation } from 'react-i18next';
 import {
-  DialogBodySmall,
+  DialogBodyStandard,
   DialogContent,
   DialogNameSpan,
   DialogTitle,
@@ -18,25 +20,22 @@ type DeleteProjectProps = TConfirmationWindowProps & {
 export function DeleteProjectDialog({ projectName }: DeleteProjectProps) {
   const { t } = useTranslation('dialogs');
   return (
-    <DialogBodySmall>
+    <DialogBodyStandard>
       <DialogTitle>
-        <DialogTitleContent>
-          {t('deleteProject.titlePrefix')}{' '}
-          <DialogNameSpan bold color={ThemeColors.ACCENT2}>
-            {projectName}
-          </DialogNameSpan>
-          ?
-        </DialogTitleContent>
+        <DialogTitleContent>{t('deleteProject.title')}</DialogTitleContent>
       </DialogTitle>
       <DialogContent>
+        <H level={3} style={{ textAlign: 'center' }}>
+          <DialogNameSpan color={ThemeColors.ACCENT2}>{projectName}</DialogNameSpan>
+        </H>
         <DialogWarningMessage
           type={TMessageVariant.SECONDARY}
           size={TMessageSize.S}
           color={ThemeColors.RED}
         >
-          {t('shared.actionCannotBeUndone')}
+          <Span bold>{t('shared.actionCannotBeUndone')}</Span>
         </DialogWarningMessage>
       </DialogContent>
-    </DialogBodySmall>
+    </DialogBodyStandard>
   );
 }

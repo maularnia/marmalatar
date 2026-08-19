@@ -2,14 +2,14 @@
   "editorControls": {
     "undo": "Адрабіць",
     "redo": "Вярнуць",
-    "shiftLinesEarlier": "Пасунуць усе надпісы\nна [{{step}}] мс раней",
-    "shiftLinesLater": "Пасунуць усе надпісы\nна [{{step}}] мс пазней",
-    "autoMergeAdjacentLines": "Аб’яднаць блізкія радкі\nаднаго актора",
-    "insertLineBefore": "Дадаць радок да абранага",
-    "insertLineAfter": "Дадаць радок пасля абранага",
-    "addSelectedToGlossary": "Дадаць выдзеленае ў гласарый",
-    "splitLineByCursor": "Разрэзаць радок па карэтцы",
-    "copySourceToOutput": "Скапіяваць крыніцу ў пераклад",
+    "shiftLinesEarlier": "Пасунуць усе\nнадпісы\nна [{{step}}] мс раней",
+    "shiftLinesLater": "Пасунуць усе\nнадпісы\nна [{{step}}] мс пазней",
+    "autoMergeAdjacentLines": "Аб’яднаць\nблізкія радкі\nаднаго актора",
+    "insertLineBefore": "Дадаць радок\nда абранага",
+    "insertLineAfter": "Дадаць радок\nпасля абранага",
+    "addSelectedToGlossary": "Дадаць\nвыдзеленае ў гласарый",
+    "splitLineByCursor": "Разрэзаць\nрадок па карэтцы",
+    "copySourceToOutput": "Скапіяваць\nкрыніцу ў пераклад",
     "editModeActive": "Рэжым рэдактара",
     "translationModeActive": "Рэжым перакладчыка",
     "pickVideoFile": "Абраць відэа-файл",
@@ -17,18 +17,28 @@
     "translateAll": "Перакласці ўсё",
     "translateFocusedLine": "Перакласці абраны радок",
     "cleanup": "Ачыстка",
-    "copyAllSourceToOutput": "Скапіяваць усе радкі крыніцы\nу пераклад",
-    "completeAllTranslated": "Пазначыць усе\nперакладзеныя радкі як гатовыя"
+    "copyAllSourceToOutput": "Скапіяваць\n усе радкі крыніцы\nў пераклад",
+    "completeAllTranslated": "Пазначыць усе\nрадкі з перакладам\nяк гатовыя"
   },
   "workTableLine": {
-    "markLineComplete": "Адзначыць радок як \"Гатовы\"",
+    "markLineComplete": "Адзначыць\nрадок як \"Гатовы\"",
     "deleteLine": "Выдаліць радок"
   },
   "glossary": {
     "insertBefore": "Дадаць пару да",
+    "insertAfter": "Дадаць пару пасля",
     "delete": "Выдаліць"
   },
   "emoPicker": {
     "ariaLabel": "Абраць эмодзі"
+  },
+  "waveform": {
+    "startTime": "Час пачатку",
+    "endTime": "Час заканчэння"
+  },
+  "keystrokeZone": {
+    "areaTitle": "Зона {{slot}}",
+    "hintPrefix": "Націсніце",
+    "hintSuffix": "каб прымусова перавесці\nсюды фокус клавіятуры"
   }
 }

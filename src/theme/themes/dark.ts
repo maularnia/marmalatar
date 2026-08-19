@@ -323,7 +323,9 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('mainTableLineBackdropBg', CSSColor(TColorSystem.TRANSPARENT, TShade.DEFAULT, 0)).register(),
     ...new ThemeVariable('mainTableLineBackdropBgFrozen', CSSColor(TColorCustom.ALICEBLUE, TShade.DARK, 20)).register(),
     ...new ThemeVariable('mainTableLineBackdropBgHover', CSSColor(TColorSystem.TRANSPARENT, TShade.DEFAULT, 5)).register(),
-    ...new ThemeVariable('mainTableLineBackdropBgActive', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 5)).register(),
+    // Active (currently playing) uses ACCENT2 -- ACCENT1 is reserved for focus (selected-for-editing)
+    // so the two states can't be confused, matching the waveform's active/focus color split.
+    ...new ThemeVariable('mainTableLineBackdropBgActive', CSSColor(TColorAccent.ACCENT2, TShade.DEFAULT, 5)).register(),
     ...new ThemeVariable('mainTableLineBackdropBgCompleted', CSSColor(TColorCustom.GREEN, TShade.DEFAULT, 5)).register(),
     ...new ThemeVariable('mainTableLineBackdropBgFocus', CSSColor(TColorSystem.BG, TShade.DEFAULT, 20)).register(),
     ...new ThemeVariable('mainTableLineBackdropBgMergeCandidate', CSSColor(TColorAccent.ACCENT2, TShade.DEFAULT, 20)).register(),
@@ -544,12 +546,19 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('waveformBackdropFilter', `blur(${CSSVar('blurExtreme')})`).register(),
     ...new ThemeVariable('waveformBlockBg', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 5)).register(),
     ...new ThemeVariable('waveformBlockBgHover', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 10)).register(),
-    ...new ThemeVariable('waveformBlockBgActive', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 20)).register(),
-    ...new ThemeVariable('waveformBlockBgActiveHover', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 30)).register(),
+    // Active (currently playing under the video playhead) is color-only -- no size change -- so it
+    // isn't confused with the focused (selected-for-editing) block, which is the one that expands.
+    ...new ThemeVariable('waveformBlockBgActive', CSSColor(TColorAccent.ACCENT2, TShade.DEFAULT, 20)).register(),
+    ...new ThemeVariable('waveformBlockBgActiveHover', CSSColor(TColorAccent.ACCENT2, TShade.DEFAULT, 30)).register(),
+    ...new ThemeVariable('waveformBlockBgFocused', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 20)).register(),
+    ...new ThemeVariable('waveformBlockBgFocusedHover', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 30)).register(),
     ...new ThemeVariable('waveformBlockBorderColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 20)).register(),
     ...new ThemeVariable('waveformBlockBorderColorHover', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 30)).register(),
-    ...new ThemeVariable('waveformBlockBorderColorActive', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 30)).register(),
-    ...new ThemeVariable('waveformBlockBorderColorActiveHover', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 40)).register(),
+    ...new ThemeVariable('waveformBlockBorderColorActive', CSSColor(TColorAccent.ACCENT2, TShade.DEFAULT, 30)).register(),
+    ...new ThemeVariable('waveformBlockBorderColorActiveHover', CSSColor(TColorAccent.ACCENT2, TShade.DEFAULT, 40)).register(),
+    ...new ThemeVariable('waveformBlockBorderColorFocused', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 30)).register(),
+    ...new ThemeVariable('waveformBlockBorderColorFocusedHover', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 40)).register(),
+    ...new ThemeVariable('waveformBlockHandleColor', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 50)).register(),
     ...new ThemeVariable('waveformCursorColor', CSSColor(TColorCustom.RED, TShade.DEFAULT, 100)).register(),
     ...new ThemeVariable('waveformColor', WHITE[TShade.DEFAULT], false).register(),
   };

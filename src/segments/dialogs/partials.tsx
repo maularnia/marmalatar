@@ -1,7 +1,7 @@
 import { CSSVar } from '@src/theme/utils';
+import Message from '@src/toolkit/Message';
 import H from '@ui-toolkit/H';
 import { IconSize, TIconSize } from '@ui-toolkit/Icon/icons';
-import Message from '@ui-toolkit/Message';
 import Span from '@ui-toolkit/Span';
 import styled from 'styled-components';
 
@@ -24,6 +24,7 @@ export const DialogContent = styled.div`
   flex-direction: column;
   padding: 0 ${CSSVar('windowSpacingX')} ${CSSVar('windowSpacingY')};
   gap: ${CSSVar('windowSpacingInnerY')};
+  max-width: 100%;
 `;
 
 const DialogBody = styled.div`
@@ -45,7 +46,8 @@ export const DialogBodySmall = styled(DialogBody)`
 export const DialogNameSpan = styled(Span)`
   display: inline-block;
   vertical-align: bottom;
-  max-width: 180px;
+  max-width: 100%;
+  text-align: center;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;

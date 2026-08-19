@@ -1,22 +1,22 @@
-import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { SETTINGS_KEY } from '@providers/MenuActionsProvider';
 import { useMenuRefs } from '@providers/MenuRefsProvider';
+import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
+import { selectCurrentOverlay } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { openSettingsOverlay } from '@store/thunks';
+import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
+import { TIcon } from '@ui-toolkit/Icon/icons';
+import { ListItem } from '@ui-toolkit/ListItem';
+import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { TIcon } from '@ui-toolkit/Icon/icons';
-import { ListItem } from '@ui-toolkit/ListItem';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
 import { useMainMenuState } from '../../providers/MenuStateProvider';
 import ThemeSelector from './ThemeSelector';
-import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
-import { selectCurrentOverlay } from '@src/store/slices/overlays';
 
 const PanelSwitch = styled.div`
   display: flex;
@@ -64,14 +64,12 @@ export default function MenuLogo() {
   return (
     <Root className={classNames({ dynamic })}>
       <VanityContainer>
-        <ListItem
-          compact={dynamic ? compact : false}
-          tabIndex={-1}
-          color={ThemeColors.ACCENT1}
-          icon={TIcon.LOGO}
-        >
-          {`v${__APP_VERSION__}`}
-        </ListItem>
+        <ListItem tabIndex={-1} isDisabled color={ThemeColors.ACCENT2} icon={TIcon.LOGO} />
+        {!(dynamic && compact) && (
+          <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.ACCENT2}>
+            {`v${__APP_VERSION__}`}
+          </Tag>
+        )}
       </VanityContainer>
       <Hr variant={THrVariant.DIMMED} />
       <PanelSwitch>
@@ -79,13 +77,7 @@ export default function MenuLogo() {
           side={dynamic ? 'right' : 'bottom'}
           label={
             <TooltipComplex title={t('buttons.settings')}>
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                Ctrl
-              </Tag>
-              {' + '}
-              <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
-                S
-              </Tag>
+              <TooltipKeystrokeHint keys={['Ctrl', 'S']} />
             </TooltipComplex>
           }
         >

@@ -1,16 +1,19 @@
-import { useEffect, useMemo } from 'react';
-import { shallowEqual } from 'react-redux';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  selectSelectedPromptTemplateFileName,
-  selectSelectedGlossaryFileNames,
-  setSelectedGlossaryFileNames,
-} from '@src/store/slices/prompt';
+import { aiClients } from '@src/services/ai/clients';
+import type { AiClient } from '@src/services/ai/types';
+import { selectAIintegrationEnabled, selectSelectedIntegrationId } from '@src/store/slices/app';
 import {
   selectProjectSourceLanguage,
   selectProjectTargetLanguage,
 } from '@src/store/slices/project';
-import { selectAIintegrationEnabled, selectSelectedIntegrationId } from '@src/store/slices/app';
+import {
+  selectSelectedGlossaryFileNames,
+  selectSelectedPromptTemplateFileName,
+  setSelectedGlossaryFileNames,
+} from '@src/store/slices/prompt';
+import { ThemeColors } from '@src/theme/utils';
+import ProgressBar from '@src/toolkit/ProgressBar';
+import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { selectResolvedGlossaryEntries } from '@store/slices/aiPromptEditor';
 import {
   applySelectedPromptTemplateFileName,
   estimateContextWindowUsage,
@@ -22,12 +25,8 @@ import {
   setContextWindowEstimate,
   setContextWindowEstimateStatus,
 } from '@store/slices/aiTranslation';
-import { selectPromptTemplateItems, selectGlossaryItems } from '@store/slices/disc';
-import { selectResolvedGlossaryEntries } from '@store/slices/aiPromptEditor';
+import { selectGlossaryItems, selectPromptTemplateItems } from '@store/slices/disc';
 import { refreshResolvedGlossaryEntries } from '@store/thunks';
-import { aiClients } from '@src/services/ai/clients';
-import type { AiClient } from '@src/services/ai/types';
-import { ThemeColors } from '@src/theme/utils';
 import {
   FormSectionEntry,
   FormsRow,
@@ -37,10 +36,11 @@ import {
 } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import ProgressBar from '@ui-toolkit/ProgressBar/ProgressBar';
 import Select from '@ui-toolkit/Select/Select';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { shallowEqual } from 'react-redux';
 
 const ESTIMATE_DEBOUNCE_MS = 500;
 

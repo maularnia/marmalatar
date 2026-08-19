@@ -1,6 +1,6 @@
 {
   "name": "Marmalatar",
-  "version": "0.0.10-alpha.3",
+  "version": "0.0.11",
   "description": "Subtitle editor",
   "main": "out/main/main.js",
   "author": "Marmol",

@@ -2,23 +2,23 @@
   "editorControls": {
     "undo": "Adrabić",
     "redo": "Viarnuć",
-    "shiftLinesEarlier": "Pasunuć usie nadpisy\n na [{{step}}] ms raniej",
-    "shiftLinesLater": "Pasunuć usie nadpisy\nna [{{step}}] ms pazniej",
-    "autoMergeAdjacentLines": "Abjadnać blizkija\nradki adnaho aktora",
-    "insertLineBefore": "Dadać radok da abranaha",
-    "insertLineAfter": "Dadać radok pasla abranaha",
-    "addSelectedToGlossary": "Dadać vydzielenaje ŭ głasaryj",
-    "splitLineByCursor": "Razrezać radok pa karetcy",
-    "copySourceToOutput": "Skapijavać krynicu ŭ pierakład",
+    "shiftLinesEarlier": "Pasunuć usie\nnadpisy\nna [{{step}}] ms raniej",
+    "shiftLinesLater": "Pasunuć usie\nnadpisy\nna [{{step}}] ms pazniej",
+    "autoMergeAdjacentLines": "Abjadnać\nblizkija\nradki adnaho aktora",
+    "insertLineBefore": "Dadać radok\nda abranaha",
+    "insertLineAfter": "Dadać radok\npasla abranaha",
+    "addSelectedToGlossary": "Dadać\nvydzielenaje ŭ głasaryj",
+    "splitLineByCursor": "Razrezać\nradok pa karetcy",
+    "copySourceToOutput": "Skapijavać\n krynicu ŭ pierakład",
     "editModeActive": "Režym redaktara",
     "translationModeActive": "Režym pierakładčyka",
     "pickVideoFile": "Abrać videa-fajł",
     "export": "Ekspart",
     "translateAll": "Pierakłaści ŭsio",
-    "translateFocusedLine": "Pierakłaści abrany radok",
+    "translateFocusedLine": "Pierakłaści\nabrany radok",
     "cleanup": "Ačystka",
-    "copyAllSourceToOutput": "Skapijavać usie radki krynicy\n ŭ pierakład",
-    "completeAllTranslated": "Paznačyć usie pierakładzienyja radki\n jak hatovyja"
+    "copyAllSourceToOutput": "Skapijavać\n usie radki krynicy\nŭ pierakład",
+    "completeAllTranslated": "Paznačyć usie\n radki z pierakładam\njak hatovyja"
   },
   "workTableLine": {
     "markLineComplete": "Adznačyć radok jak \"Hatovy\"",
@@ -26,9 +26,19 @@
   },
   "glossary": {
     "insertBefore": "Dadać paru da",
+    "insertAfter": "Dadać paru paśla",
     "delete": "Vydalić"
   },
   "emoPicker": {
     "ariaLabel": "Abrać emodzi"
+  },
+  "waveform": {
+    "startTime": "Čas pačatku",
+    "endTime": "Čas zakančennia"
+  },
+  "keystrokeZone": {
+    "areaTitle": "Zona {{slot}}",
+    "hintPrefix": "Nacisnicie",
+    "hintSuffix": "kab prymusova pieraviesci\nsiudy fokus klavijatury"
   }
 }
