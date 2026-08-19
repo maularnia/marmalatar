@@ -12,7 +12,8 @@
     "loading": "Apracoŭka fajła...",
     "success": "Fajł apracavany",
     "error": "Niemahčyma apracavać fajł",
-    "unsupported": "Niemahčyma prajhrać videa. Niesumiaščalny kodek"
+    "unsupportedVideo": "Nieprajhravalnaje videa. Niesumiaščalny kodek videa",
+    "unsupportedAudio": "Nieprajhravalnaje videa. Niesumiaščalny kodek aŭdyjo"
   },
   "errorBoundary": {
     "title": "Niešta pajšło nie tak",

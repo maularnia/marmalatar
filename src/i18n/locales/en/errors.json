@@ -35,7 +35,8 @@
     "fileRequired": "This field is required",
     "pathUnresolved": "Unable to resolve file path",
     "stillProcessing": "Video processing in progress",
-    "unsupportedPlayback": "Video can not be played. Unsupported encoder.",
+    "unsupportedVideoCodec": "Video can not be played. Unsupported video codec.",
+    "unsupportedAudioCodec": "Video can not be played. Unsupported audio codec.",
     "processingFailed": "Video file processing failed."
   },
   "import": {

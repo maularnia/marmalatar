@@ -81,10 +81,14 @@ export default function VideoSelectDialog({
     onValidChange(false);
 
     void (async () => {
-      const isPlayable = await checkVideoPlayability(videoPath);
+      const playability = await checkVideoPlayability(videoPath);
       if (cancelled) return;
-      if (!isPlayable) {
-        setWaveformStatus(TWaveformStatus.UNSUPPORTED);
+      if (playability !== 'ok') {
+        setWaveformStatus(
+          playability === 'unsupportedVideo'
+            ? TWaveformStatus.UNSUPPORTED_VIDEO
+            : TWaveformStatus.UNSUPPORTED_AUDIO
+        );
         onValidChange(false);
         return;
       }

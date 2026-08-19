@@ -12,7 +12,8 @@
     "loading": "Preparing the file...",
     "success": "Selected file is valid and ready",
     "error": "Error processing the file",
-    "unsupported": "unplayable video. Most probably unknown audio/video codec"
+    "unsupportedVideo": "Unplayable video. Unsupported video codec",
+    "unsupportedAudio": "Unplayable video. Unsupported audio codec"
   },
   "errorBoundary": {
     "title": "Something went wrong",
