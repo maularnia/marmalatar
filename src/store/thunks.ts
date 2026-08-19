@@ -105,7 +105,12 @@ export const createNewProject =
     dispatch(resetEditorMemoryState());
     dispatch(setVideoCollapsed(false));
 
-    const emoji = await pickRandomCreationEmoji();
+    let emoji: string;
+    try {
+      emoji = await pickRandomCreationEmoji();
+    } catch {
+      throw new Error(t('createNewProject.emojiSelectionFailed'));
+    }
     const projectId = crypto.randomUUID();
 
     applyProjectData(dispatch, {
@@ -125,25 +130,37 @@ export const createNewProject =
     dispatch(setEditorMode('translate'));
 
     dispatch(setCurrentProjectFilePath(params.filePath));
-    await dispatch(saveProjectToDisk(params.filePath));
+    try {
+      await dispatch(saveProjectToDisk(params.filePath));
+    } catch {
+      throw new Error(t('createNewProject.fileSaveFailed'));
+    }
 
     const state = getState();
     if (state.project.projectId) {
-      await writeProjectEditorState(
-        state.project.projectId,
-        buildProjectEditorStateSaveData(state)
-      );
+      try {
+        await writeProjectEditorState(
+          state.project.projectId,
+          buildProjectEditorStateSaveData(state)
+        );
+      } catch {
+        throw new Error(t('createNewProject.editorStateSaveFailed'));
+      }
     }
 
-    await dispatch(
-      upsertProjectInCache({
-        version: 1,
-        filePath: params.filePath,
-        fileName: params.filePath.split(/[/\\]/).pop()!,
-        translationProgress: 0,
-        project: { projectId, projectName, emoji },
-      })
-    );
+    try {
+      await dispatch(
+        upsertProjectInCache({
+          version: 1,
+          filePath: params.filePath,
+          fileName: params.filePath.split(/[/\\]/).pop()!,
+          translationProgress: 0,
+          project: { projectId, projectName, emoji },
+        })
+      );
+    } catch {
+      throw new Error(t('createNewProject.cacheUpdateFailed'));
+    }
   };
 
 export const saveProjectToDisk =

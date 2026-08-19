@@ -86,6 +86,15 @@
     "alreadyExists": "Такі файл ужо існуе",
     "folderNotTracked": "Абярыце працоўную папку"
   },
+  "createNewProject": {
+    "emojiSelectionFailed": "Не атрымалася падабраць эмодзі для праекта",
+    "fileSaveFailed": "Не атрымалася захаваць файл праекта на дыск",
+    "editorStateSaveFailed": "Не атрымалася захаваць стан рэдактара праекта",
+    "cacheUpdateFailed": "Не атрымалася дадаць праект у кэш"
+  },
+  "projectCreationAborted": {
+    "title": "Стварэнне праекта было спынена"
+  },
   "promptTemplate": {
     "alreadyExists": "Шаблон запыту [{{title}}] ужо існуе",
     "readFailed": "Не атрымалася прачытаць шаблон запыту"
