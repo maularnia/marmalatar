@@ -41,21 +41,19 @@
     "confirmButton": "Skapijavać"
   },
   "deleteLine": {
-    "title": "Vydalić radok №{{lineNo}}?"
+    "title": "Vydalić radok?"
   },
   "deleteContext": {
-    "titlePrefix": "Vydalić kantekst",
-    "titleSuffix": "?"
+    "title": "Vydalić kantekst?"
   },
   "deleteGlossary": {
-    "titlePrefix": "Vydlić głasaryj",
-    "titleSuffix": "?"
+    "title": "Vydalić głasaryj?"
   },
   "deleteGlossaryEntry": {
     "title": "Vydalić radok głasaryja?"
   },
   "deleteProject": {
-    "titlePrefix": "Vydalić"
+    "title": "Vydalić prajekt?"
   },
   "lineMerge": {
     "title": "Abjadnać hetyja radki?",

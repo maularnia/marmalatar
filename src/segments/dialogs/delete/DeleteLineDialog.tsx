@@ -33,7 +33,7 @@ export function DeleteLineDialog({ lineNo }: DeleteLineProps) {
   return (
     <Body>
       <DialogTitle>
-        <DialogTitleContent>{t('deleteLine.title', { lineNo })}</DialogTitleContent>
+        <DialogTitleContent>{t('deleteLine.title')}</DialogTitleContent>
       </DialogTitle>
       {text.length ? (
         <DialogContent>

@@ -41,21 +41,19 @@
     "confirmButton": "Скапіяваць"
   },
   "deleteLine": {
-    "title": "Выдаліць радок №{{lineNo}}?"
+    "title": "Выдаліць радок?"
   },
   "deleteContext": {
-    "titlePrefix": "Выдаліць кантэкст",
-    "titleSuffix": "?"
+    "title": "Выдаліць кантэкст?"
   },
   "deleteGlossary": {
-    "titlePrefix": "Выдліць гласарый",
-    "titleSuffix": "?"
+    "title": "Выдаліць гласарый?"
   },
   "deleteGlossaryEntry": {
     "title": "Выдаліць радок гласарыя?"
   },
   "deleteProject": {
-    "titlePrefix": "Выдаліць"
+    "title": "Выдаліць праект?"
   },
   "lineMerge": {
     "title": "Аб’яднаць гэтыя радкі?",
