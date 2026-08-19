@@ -1,16 +1,16 @@
 {
   "shared": {
     "selectFileButton": "Abrać fajł",
-    "noFileSelected": "Treba niešta abarć"
+    "noFileSelected": "Treba niešta abrać"
   },
   "subtitles": {
     "sectionTitle": "Nadpisy",
     "linesToProcessSubtext": "{{count}} radkoŭ da apracoŭki",
-    "supportedFormats": "Pradtrymlivajucca fajły .srt/.ass",
+    "supportedFormats": "Padtrymlivajucca fajły .srt/.ass",
     "dropHtmlTags": "Prybrać html",
     "dropExtendedFormattingPrefix": "Prybrać pašyranaje farmatavańnie",
     "dropExtendedFormattingSuffix": "błoki stylaŭ ASS",
-    "removeAudioCuesPrefix": "Prbrać aŭdyjo-padkazki",
+    "removeAudioCuesPrefix": "Prybrać aŭdyjo-padkazki",
     "removeAudioCuesSuffix": "kštałtu [music], [sigh] i t.p.",
     "fixShortDashes": "Vypravić karotkija złučki na doŭhija"
   },

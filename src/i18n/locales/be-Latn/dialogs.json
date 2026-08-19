@@ -15,10 +15,10 @@
     "dismissButton": "Skasavać"
   },
   "autoMergeLines": {
-    "title": "Zapusctć aŭta-abjadnańnie?",
+    "title": "Zapuścić aŭta-abjadnańnie?",
     "bodyPrefix": "Skrypt znojdzie radki nie dalej ",
     "bodyApart": "adzin ad adnaho",
-    "bodyAssigned": "pryznačynayja adnamu piersanažu",
+    "bodyAssigned": "pryznačanyja adnamu piersanažu",
     "bodySuffix": "i abjadnaje ich",
     "confirmButton": "Abjadnać"
   },
@@ -37,7 +37,7 @@
   },
   "copyAllSourceToOutput": {
     "title": "Skapijavać use radki krynicy ŭ pierakład?",
-    "overrideToggleLabel": "Pierazapisać ishujučyja pierakłady",
+    "overrideToggleLabel": "Pierazapisać isnujučyja pierakłady",
     "confirmButton": "Skapijavać"
   },
   "deleteLine": {
@@ -66,7 +66,7 @@
     "confirmButton": "Razrezać"
   },
   "translationOverride": {
-    "title": "Prekałaści praz ŠI?",
+    "title": "Pierakłaści praz ŠI?",
     "confirmButton": "Tak",
     "bodyHasContent": "Heta pierazapiša tekst pierakładu",
     "bodyWillTranslate": "radok budzie pierakładzieny ŠI"
@@ -76,7 +76,7 @@
     "filePlaceholder": ".mp4, .mkv, .webm.",
     "selectVideoButton": "Abrać videa",
     "continueWithoutVideoButton": "Praciahnuć biaz videa",
-    "savedFileNotFoundBanner": "Nie atrymałasia adšukć videa, dapasavanaje da prajekta",
-    "processingFailedBanner": "Nie atrymałaja apracavać videa, niesumiaščalny kodek"
+    "savedFileNotFoundBanner": "Nie atrymałasia adšukać videa, dapasavanaje da prajekta",
+    "processingFailedBanner": "Nie atrymałasia apracavać videa, niesumiaščalny kodek"
   }
 }

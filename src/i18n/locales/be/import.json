@@ -1,16 +1,16 @@
 {
   "shared": {
     "selectFileButton": "Абраць файл",
-    "noFileSelected": "Трэба нешта абарць"
+    "noFileSelected": "Трэба нешта абраць"
   },
   "subtitles": {
     "sectionTitle": "Надпісы",
     "linesToProcessSubtext": "{{count}} радкоў да апрацоўкі",
-    "supportedFormats": "Прадтрымліваюцца файлы .srt/.ass",
+    "supportedFormats": "Падтрымліваюцца файлы .srt/.ass",
     "dropHtmlTags": "Прыбраць html",
     "dropExtendedFormattingPrefix": "Прыбраць пашыранае фарматаванне",
     "dropExtendedFormattingSuffix": "блокі стыляў ASS",
-    "removeAudioCuesPrefix": "Прбраць аўдыё-падказкі",
+    "removeAudioCuesPrefix": "Прыбраць аўдыё-падказкі",
     "removeAudioCuesSuffix": "кшталту [music], [sigh] і т.п.",
     "fixShortDashes": "Выправіць кароткія злучкі на доўгія"
   },

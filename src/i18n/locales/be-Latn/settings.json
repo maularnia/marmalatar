@@ -12,7 +12,7 @@
     "askBeforeDelete": "Pytać pierad vydaleńniem",
     "askBeforeAITranslate": "Pytać pierad aŭta-pierakładam",
     "askBeforeSplit": "Pytać pierad razrazańniem radka",
-    "autoMarkLinesCompleted": "Adzančać radki jak\"Hatovyja\" aŭtamatyčna",
+    "autoMarkLinesCompleted": "Adzančać radki jak \"Hatovyja\" aŭtamatyčna",
     "checkGrammar": "Praviarać pravapis",
     "appLanguage": "Mova prahramy"
   },
@@ -21,11 +21,11 @@
     "enableToggle": "Uklučyć ŠI-pierakład",
     "providers": {
       "title": "Pastaŭščyki",
-      "subtext": "Abiarycie ŠI pastaŭčyka sa spisu",
+      "subtext": "Abiarycie ŠI pastaŭščyka sa spisu",
       "noIntegrations": "Niama dastupnych intehracyj",
       "placeholder": "Pastaŭščyk",
-      "useProvider": "skrystać {{name}}",
-      "finishConfiguring": "Danaładźcie pataŭščyka ŠI"
+      "useProvider": "skarystać {{name}}",
+      "finishConfiguring": "Danaładźcie pastaŭščyka ŠI"
     },
     "common": {
       "model": "Madel",

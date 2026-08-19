@@ -2,12 +2,12 @@
   "editModeBanner": "U režymie redaktara ekspartujecca słupok \"Krynica\".",
   "characterFilter": {
     "title": "Filtr aktora",
-    "subtext": "Pakuć radki tolki peŭnaha aktora. Pakińcie pustym, kab ekspartavać usio",
+    "subtext": "Pakinuć radki tolki peŭnaha aktora. Pakińcie pustym, kab ekspartavać usio",
     "checkboxLabel": "Abrać aktora",
-    "selectPlaceholder": "Ekspratavać tolki radki:"
+    "selectPlaceholder": "Ekspartavać tolki radki:"
   },
   "fpsCorrection": {
-    "title": "Karaekcyja FPS",
+    "title": "Karekcyja FPS",
     "subtext": "Karyhavać FPS",
     "checkboxLabel": "Skaryhavać FPS"
   },
