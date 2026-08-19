@@ -9,6 +9,7 @@ import { openSettingsOverlay } from '@store/thunks';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
+import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
 import { useCallback } from 'react';
@@ -63,16 +64,12 @@ export default function MenuLogo() {
   return (
     <Root className={classNames({ dynamic })}>
       <VanityContainer>
-        <ListItem
-          compact={dynamic ? compact : false}
-          tabIndex={-1}
-          isDisabled
-          color={ThemeColors.ACCENT2}
-          icon={TIcon.LOGO}
-          style={{ fontSize: CSSVar('tagTextSizeNano') }}
-        >
-          {`v${__APP_VERSION__}`}
-        </ListItem>
+        <ListItem tabIndex={-1} isDisabled color={ThemeColors.ACCENT2} icon={TIcon.LOGO} />
+        {!(dynamic && compact) && (
+          <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.ACCENT2}>
+            {`v${__APP_VERSION__}`}
+          </Tag>
+        )}
       </VanityContainer>
       <Hr variant={THrVariant.DIMMED} />
       <PanelSwitch>
