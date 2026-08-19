@@ -1,8 +1,10 @@
 # Marmalatar
 
-Marmalatar is a .srt/.ass subtitles editor with subtitle synchronization and AI automated translation functionality.
+Marmalatar is a .srt/.ass subtitles editor with subtitle synchronization and automated AI-translation functionality.
 
 Marmalatar is built and maintained by Maularnia project. If you'd like to support development, visit the [Patreon page](https://www.patreon.com/maularnia).
+
+Please, feel free to create a GitHub issue here, if something is not right.
 
 ## General information
 
