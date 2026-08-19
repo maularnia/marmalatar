@@ -10,7 +10,9 @@ type VideoElementWithLegacyProps = HTMLVideoElement & {
   audioTracks?: { length: number };
 };
 
-export function checkVideoPlayability(filePath: string): Promise<boolean> {
+export type VideoPlayabilityResult = 'ok' | 'unsupportedVideo' | 'unsupportedAudio';
+
+export function checkVideoPlayability(filePath: string): Promise<VideoPlayabilityResult> {
   return new Promise((resolve) => {
     const el = document.createElement('video') as VideoElementWithLegacyProps;
     el.preload = 'auto';
@@ -22,7 +24,7 @@ export function checkVideoPlayability(filePath: string): Promise<boolean> {
     let pollInterval: ReturnType<typeof setInterval> | undefined;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    const finish = (result: boolean) => {
+    const finish = (result: VideoPlayabilityResult) => {
       if (settled) return;
       settled = true;
       if (pollInterval !== undefined) clearInterval(pollInterval);
@@ -32,11 +34,13 @@ export function checkVideoPlayability(filePath: string): Promise<boolean> {
       resolve(result);
     };
 
-    el.onerror = () => finish(false);
+    // Fires on a container/video-decode failure, before metadata (and therefore
+    // any audio track info) is even available -- this is a video-side failure.
+    el.onerror = () => finish('unsupportedVideo');
 
     el.onloadedmetadata = () => {
       if (el.audioTracks && el.audioTracks.length === 0) {
-        finish(true);
+        finish('ok');
         return;
       }
 
@@ -44,12 +48,15 @@ export function checkVideoPlayability(filePath: string): Promise<boolean> {
         el.webkitAudioDecodedByteCount === undefined || el.webkitAudioDecodedByteCount > 0;
 
       pollInterval = setInterval(() => {
-        if (hasDecodedAudio()) finish(true);
+        if (hasDecodedAudio()) finish('ok');
       }, AUDIO_DECODE_POLL_MS);
 
-      timeoutId = setTimeout(() => finish(hasDecodedAudio()), AUDIO_DECODE_TIMEOUT_MS);
+      timeoutId = setTimeout(
+        () => finish(hasDecodedAudio() ? 'ok' : 'unsupportedAudio'),
+        AUDIO_DECODE_TIMEOUT_MS
+      );
 
-      void el.play().catch(() => finish(false));
+      void el.play().catch(() => finish('unsupportedVideo'));
     };
 
     el.src = pathToFileUrl(filePath);

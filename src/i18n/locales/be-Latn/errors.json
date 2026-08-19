@@ -35,7 +35,8 @@
     "fileRequired": "Nielha pakinuć pustym",
     "pathUnresolved": "Nie atrymłasia adšukać šlach da fajła",
     "stillProcessing": "Apracoŭka videa...",
-    "unsupportedPlayback": "Niemahčyma prajhrać videa. Niesumiaščalny kodek",
+    "unsupportedVideoCodec": "Niemahčyma prajhrać videa. Niesumiaščalny kodek videa",
+    "unsupportedAudioCodec": "Niemahčyma prajhrać videa. Niesumiaščalny kodek aŭdyjo. Padtrymlivajucca: AAC, MP3, Opus, Vorbis, FLAC",
     "processingFailed": "Pamyłka hienieracyi artefaktaŭ. Niesumiaščalny kodek"
   },
   "import": {

@@ -80,12 +80,20 @@ export default function VideoFileSelect({
     onError(t('videoFileSelect.stillProcessing'));
 
     void (async () => {
-      const isPlayable = await checkVideoPlayability(videoPath);
+      const playability = await checkVideoPlayability(videoPath);
       if (isCancelled) return;
-      if (!isPlayable) {
-        setWaveformStatus(TWaveformStatus.UNSUPPORTED);
+      if (playability !== 'ok') {
+        setWaveformStatus(
+          playability === 'unsupportedVideo'
+            ? TWaveformStatus.UNSUPPORTED_VIDEO
+            : TWaveformStatus.UNSUPPORTED_AUDIO
+        );
         setVideoFilePath(null);
-        onError(t('videoFileSelect.unsupportedPlayback'));
+        onError(
+          playability === 'unsupportedVideo'
+            ? t('videoFileSelect.unsupportedVideoCodec')
+            : t('videoFileSelect.unsupportedAudioCodec')
+        );
         return;
       }
 
