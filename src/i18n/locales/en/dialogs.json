@@ -41,21 +41,19 @@
     "confirmButton": "Copy all"
   },
   "deleteLine": {
-    "title": "Delete line #{{lineNo}}?"
+    "title": "Delete line?"
   },
   "deleteContext": {
-    "titlePrefix": "Delete",
-    "titleSuffix": "context?"
+    "title": "Delete context?"
   },
   "deleteGlossary": {
-    "titlePrefix": "Delete",
-    "titleSuffix": "glossary?"
+    "title": "Delete glossary?"
   },
   "deleteGlossaryEntry": {
     "title": "Delete glossary entry?"
   },
   "deleteProject": {
-    "titlePrefix": "Delete"
+    "title": "Delete project?"
   },
   "lineMerge": {
     "title": "Merge these lines?",
