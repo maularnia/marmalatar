@@ -86,7 +86,9 @@
     "cannotSaveWithoutName": "Nielha zachavać prajekt biez nazvy",
     "nameRequired": "Nazvu nielha pakinuć pustoj",
     "alreadyExists": "Taki fajł užo isnuje",
-    "folderNotTracked": "Abiarycie pracoŭnuju papku"
+    "folderNotTracked": "Abiarycie pracoŭnuju papku",
+    "editorStateReadFailed": "Nie atrymałasia pračytać stan redaktara",
+    "progressPersistFailed": "Nie atrymałasia zachavać prahres pierakładu"
   },
   "createNewProject": {
     "emojiSelectionFailed": "Nie atrymałasia padabrać emodzi dla prajekta",
@@ -134,9 +136,17 @@
   "videoFileMissing": {
     "title": "Videa było vydalena"
   },
-  "videoProcessingFailed": {
-    "title": "Niemahčyma apracavać videa",
-    "message": "Nieprajhravalnaje videa. Niesumiaščalny aŭdyjo- ci videa- kodek"
+  "projectStateReadFailed": {
+    "title": "Nie atrymałasia pračytać stan prajekta"
+  },
+  "videoFileCheckFailed": {
+    "title": "Nie atrymałasia pravieryć videafajł"
+  },
+  "waveformExtractionFailed": {
+    "title": "Nie atrymałasia stvaryć chvalevuju formu aŭdyjo"
+  },
+  "thumbnailGenerationFailed": {
+    "title": "Nie atrymałasia stvaryć zdymak videa"
   },
   "projectLoadFailed": {
     "title": "Pasyłka ładavannia prajekta"

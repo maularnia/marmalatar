@@ -10,8 +10,11 @@ import {
   emitAudioExtractionFailedMessage,
   emitProjectLoadedMessage,
   emitProjectLoadFailedMessage,
+  emitProjectStateReadFailedMessage,
+  emitThumbnailGenerationFailedMessage,
+  emitVideoFileCheckFailedMessage,
   emitVideoFileMissingMessage,
-  emitVideoProcessingFailedMessage,
+  emitWaveformExtractionFailedMessage,
 } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
@@ -35,79 +38,6 @@ export function useProjectLoader() {
 
   const loadProject = useCallback(
     async (project: TProjectCacheEntry) => {
-      const editorState = await getProjectEditorState(project.project.projectId);
-      const savedPath = editorState.videoPath;
-
-      // ── No video was ever selected for this device: load without one ───────
-      if (!savedPath) {
-        await applyAndNavigate(project, null, null, [], null);
-        return;
-      }
-
-      // ── Saved path: verify existence, then process via backend ─────────────
-      const fileExists = await checkExternalPathExists(savedPath);
-      if (!fileExists) {
-        emitVideoFileMissingMessage(pushMessage);
-        const result = await selectVideo(
-          t('videoSelect.savedFileNotFoundBanner'),
-          t('videoSelect.continueWithoutVideoButton')
-        );
-        if (!result) {
-          await removeVideoPath(project.project.projectId);
-          await applyAndNavigate(project, null, null, [], null);
-          return;
-        }
-        await persistVideoPath(project.project.projectId, result.videoPath);
-        await applyAndNavigate(
-          project,
-          result.videoPath,
-          result.audioPath,
-          result.waveformPeaks,
-          result.previewImage
-        );
-        return;
-      }
-
-      let audioPath: string;
-      let waveformPeaks: number[];
-      let previewImage: string | null;
-      try {
-        ({ audioPath, waveformPeaks, previewImage } = await showInfo(
-          { message: t('messages:projectLoader.loadingVideo'), animate: false },
-          (async () => {
-            const resolvedAudioPath = await window.electronAPI.extractOrConvertAudio(savedPath);
-            const [peaks, preview] = await Promise.all([
-              window.electronAPI.extractWaveformPeaks(resolvedAudioPath),
-              window.electronAPI.generateThumbnail(savedPath).catch(() => null),
-            ]);
-            return { audioPath: resolvedAudioPath, waveformPeaks: peaks, previewImage: preview };
-          })()
-        ));
-      } catch (error) {
-        emitVideoProcessingFailedMessage(pushMessage);
-        emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
-        const result = await selectVideo(
-          t('videoSelect.processingFailedBanner'),
-          t('videoSelect.continueWithoutVideoButton')
-        );
-        if (!result) {
-          await removeVideoPath(project.project.projectId);
-          await applyAndNavigate(project, null, null, [], null);
-          return;
-        }
-        await persistVideoPath(project.project.projectId, result.videoPath);
-        await applyAndNavigate(
-          project,
-          result.videoPath,
-          result.audioPath,
-          result.waveformPeaks,
-          result.previewImage
-        );
-        return;
-      }
-
-      await applyAndNavigate(project, savedPath, audioPath, waveformPeaks, previewImage);
-
       async function applyAndNavigate(
         proj: TProjectCacheEntry,
         videoPath: string | null,
@@ -115,9 +45,10 @@ export function useProjectLoader() {
         peaks: number[],
         preview: string | null
       ) {
-        const loadError = (await dispatch(loadProjectFromDisk(proj.filePath))) as string | null;
-        if (loadError) {
-          emitProjectLoadFailedMessage(pushMessage, loadError);
+        try {
+          await dispatch(loadProjectFromDisk(proj.filePath));
+        } catch (error) {
+          emitProjectLoadFailedMessage(pushMessage, toErrorMessage(error));
           return;
         }
 
@@ -128,6 +59,102 @@ export function useProjectLoader() {
         emitProjectLoadedMessage(pushMessage);
         navigate('/workspace');
       }
+
+      // Prompts the user to reselect the video (used whenever a step below fails) and either
+      // continues without video or re-runs the full validation/conversion flow on the new pick.
+      async function offerReselect(bannerKey: string) {
+        const result = await selectVideo(t(bannerKey), t('videoSelect.continueWithoutVideoButton'));
+        if (!result) {
+          await removeVideoPath(project.project.projectId);
+          await applyAndNavigate(project, null, null, [], null);
+          return;
+        }
+        await persistVideoPath(project.project.projectId, result.videoPath);
+        await applyAndNavigate(
+          project,
+          result.videoPath,
+          result.audioPath,
+          result.waveformPeaks,
+          result.previewImage
+        );
+      }
+
+      let editorState: Awaited<ReturnType<typeof getProjectEditorState>>;
+      try {
+        editorState = await getProjectEditorState(project.project.projectId);
+      } catch (error) {
+        emitProjectStateReadFailedMessage(pushMessage, toErrorMessage(error));
+        return;
+      }
+      const savedPath = editorState.videoPath;
+
+      // ── No video was ever selected for this device: load without one ───────
+      if (!savedPath) {
+        await applyAndNavigate(project, null, null, [], null);
+        return;
+      }
+
+      // ── Saved path: verify existence, then process via backend ─────────────
+      let fileExists: boolean;
+      try {
+        fileExists = await checkExternalPathExists(savedPath);
+      } catch (error) {
+        emitVideoFileCheckFailedMessage(pushMessage, toErrorMessage(error));
+        fileExists = false;
+      }
+      if (!fileExists) {
+        emitVideoFileMissingMessage(pushMessage);
+        await offerReselect('videoSelect.savedFileNotFoundBanner');
+        return;
+      }
+
+      const result = await showInfo(
+        { message: t('messages:projectLoader.loadingVideo'), animate: false },
+        (async (): Promise<{
+          audioPath: string;
+          waveformPeaks: number[];
+          previewImage: string | null;
+        } | null> => {
+          let audioPath: string;
+          try {
+            audioPath = await window.electronAPI.extractOrConvertAudio(savedPath);
+          } catch (error) {
+            emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
+            return null;
+          }
+
+          let waveformPeaks: number[];
+          try {
+            waveformPeaks = await window.electronAPI.extractWaveformPeaks(audioPath);
+          } catch (error) {
+            emitWaveformExtractionFailedMessage(pushMessage, toErrorMessage(error));
+            return null;
+          }
+
+          let previewImage: string | null;
+          try {
+            previewImage = await window.electronAPI.generateThumbnail(savedPath);
+          } catch (error) {
+            emitThumbnailGenerationFailedMessage(pushMessage, toErrorMessage(error));
+            return null;
+          }
+
+          return { audioPath, waveformPeaks, previewImage };
+        })()
+      );
+
+      if (!result) {
+        await offerReselect('videoSelect.processingFailedBanner');
+        return;
+      }
+
+      await applyAndNavigate(
+        project,
+        savedPath,
+        result.audioPath,
+        result.waveformPeaks,
+        result.previewImage
+      );
     },
     [
       dispatch,

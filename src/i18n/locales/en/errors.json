@@ -86,7 +86,9 @@
     "cannotSaveWithoutName": "Project name is required",
     "nameRequired": "Project name is required",
     "alreadyExists": "File with the same name already exists",
-    "folderNotTracked": "No working folder"
+    "folderNotTracked": "No working folder",
+    "editorStateReadFailed": "Unable to read editor state",
+    "progressPersistFailed": "Unable to save translation progress"
   },
   "createNewProject": {
     "emojiSelectionFailed": "Failed to pick a random project emoji",
@@ -134,9 +136,17 @@
   "videoFileMissing": {
     "title": "Video file was removed"
   },
-  "videoProcessingFailed": {
-    "title": "Can not process video",
-    "message": "Video is unplayable. Unsupported video/audio codec"
+  "projectStateReadFailed": {
+    "title": "Unable to read project state"
+  },
+  "videoFileCheckFailed": {
+    "title": "Unable to check the video file"
+  },
+  "waveformExtractionFailed": {
+    "title": "Unable to extract audio waveform"
+  },
+  "thumbnailGenerationFailed": {
+    "title": "Unable to generate video thumbnail"
   },
   "projectLoadFailed": {
     "title": "Project can not be loaded"
