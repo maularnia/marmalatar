@@ -36,7 +36,8 @@
     "pathUnresolved": "Не атрымлася адшукаць шлях да файла",
     "stillProcessing": "Апрацоўка відэа...",
     "unsupportedVideoCodec": "Немагчыма прайграць відэа. Несумяшчальны кодэк відэа",
-    "unsupportedAudioCodec": "Немагчыма прайграць відэа. Несумяшчальны кодэк аўдыё. Падтрымліваюцца: AAC, MP3, Opus, Vorbis, FLAC",
+    "audioExtractionFailed": "Не атрымалася апрацаваць аўдыё",
+    "unplayableConvertedAudio": "Не атрымалася пераўтварыць аўдыё ў прайгравальны фармат",
     "processingFailed": "Памылка генерацыі артэфактаў. Несумяшчальны кодэк"
   },
   "import": {
@@ -120,6 +121,9 @@
   },
   "fileProcessingFailed": {
     "title": "Немагчыма апрацаваць файл"
+  },
+  "audioExtractionFailed": {
+    "title": "Немагчыма апрацаваць аўдыё. Файл пашкоджаны, або карыстае невядомы навуцы кодэк аўдыё"
   },
   "autoMergeFailed": {
     "title": "Памылка аўта-аб’яднання"

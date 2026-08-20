@@ -7,6 +7,7 @@ import {
 } from '@src/utils/data/discIO';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
 import {
+  emitAudioExtractionFailedMessage,
   emitProjectLoadedMessage,
   emitProjectLoadFailedMessage,
   emitVideoFileMissingMessage,
@@ -14,9 +15,9 @@ import {
 } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
+import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { useAppDispatch } from '@store/hooks';
 import { loadProjectFromDisk } from '@store/thunks';
-import { processVideoPath } from '@utils/processVideoPath';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +40,7 @@ export function useProjectLoader() {
 
       // ── No video was ever selected for this device: load without one ───────
       if (!savedPath) {
-        await applyAndNavigate(project, null, [], null);
+        await applyAndNavigate(project, null, null, [], null);
         return;
       }
 
@@ -53,52 +54,64 @@ export function useProjectLoader() {
         );
         if (!result) {
           await removeVideoPath(project.project.projectId);
-          await applyAndNavigate(project, null, [], null);
+          await applyAndNavigate(project, null, null, [], null);
           return;
         }
         await persistVideoPath(project.project.projectId, result.videoPath);
         await applyAndNavigate(
           project,
           result.videoPath,
+          result.audioPath,
           result.waveformPeaks,
           result.previewImage
         );
         return;
       }
 
+      let audioPath: string;
       let waveformPeaks: number[];
       let previewImage: string | null;
       try {
-        ({ waveformPeaks, previewImage } = await showInfo(
+        ({ audioPath, waveformPeaks, previewImage } = await showInfo(
           { message: t('messages:projectLoader.loadingVideo'), animate: false },
-          processVideoPath(savedPath)
+          (async () => {
+            const resolvedAudioPath = await window.electronAPI.extractOrConvertAudio(savedPath);
+            const [peaks, preview] = await Promise.all([
+              window.electronAPI.extractWaveformPeaks(resolvedAudioPath),
+              window.electronAPI.generateThumbnail(savedPath).catch(() => null),
+            ]);
+            return { audioPath: resolvedAudioPath, waveformPeaks: peaks, previewImage: preview };
+          })()
         ));
-      } catch {
+      } catch (error) {
         emitVideoProcessingFailedMessage(pushMessage);
+        emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
         const result = await selectVideo(
           t('videoSelect.processingFailedBanner'),
           t('videoSelect.continueWithoutVideoButton')
         );
         if (!result) {
           await removeVideoPath(project.project.projectId);
-          await applyAndNavigate(project, null, [], null);
+          await applyAndNavigate(project, null, null, [], null);
           return;
         }
         await persistVideoPath(project.project.projectId, result.videoPath);
         await applyAndNavigate(
           project,
           result.videoPath,
+          result.audioPath,
           result.waveformPeaks,
           result.previewImage
         );
         return;
       }
 
-      await applyAndNavigate(project, savedPath, waveformPeaks, previewImage);
+      await applyAndNavigate(project, savedPath, audioPath, waveformPeaks, previewImage);
 
       async function applyAndNavigate(
         proj: TProjectCacheEntry,
         videoPath: string | null,
+        audioPath: string | null,
         peaks: number[],
         preview: string | null
       ) {
@@ -108,7 +121,7 @@ export function useProjectLoader() {
           return;
         }
 
-        setVideoFilePath(videoPath);
+        setVideoFilePath(videoPath, audioPath ?? undefined);
         setVideoData(preview, peaks);
         resetCurrentTime();
 

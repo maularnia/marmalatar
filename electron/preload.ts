@@ -56,6 +56,7 @@ const api: ElectronAPI = {
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
   extractWaveformPeaks: invoke<[string]>('extract-waveform-peaks'),
   generateThumbnail: invoke<[string]>('generate-thumbnail'),
+  extractOrConvertAudio: invoke<[string]>('extract-or-convert-audio'),
   lmStudioPing: invoke<[string]>('lmstudio-ping'),
   lmStudioListModels: invoke<[string]>('lmstudio-list-models'),
   lmStudioTranslate: invoke<[LMStudioTranslationParams]>('lmstudio-translate'),

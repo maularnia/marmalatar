@@ -13,7 +13,9 @@
     "success": "Selected file is valid and ready",
     "error": "Error processing the file",
     "unsupportedVideo": "Unplayable video. Unsupported video codec",
-    "unsupportedAudio": "Unplayable video. Unsupported audio codec. Supported: AAC, MP3, Opus, Vorbis, FLAC"
+    "extractingAudio": "Extracting audio track...",
+    "audioExtractionFailed": "Unable to extract or convert audio",
+    "unplayableConvertedAudio": "Unable to convert audio to playable format"
   },
   "errorBoundary": {
     "title": "Something went wrong",

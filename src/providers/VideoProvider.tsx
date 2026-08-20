@@ -1,4 +1,4 @@
-import { emitVideoPlaybackErrorMessage } from '@src/messages';
+import { emitAudioExtractionFailedMessage, emitVideoPlaybackErrorMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { selectActiveLineIndex, selectLines, setActiveLineIndex } from '@src/store/slices/editor';
 import {
@@ -7,6 +7,7 @@ import {
   setVideoFilePath as setVideoFilePathAction,
 } from '@src/store/slices/project';
 import { providerNoop } from '@src/utils/noop';
+import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { pathToFileUrl } from '@utils/checkVideoPlayability';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
@@ -26,10 +27,12 @@ type VideoContextType = {
   videoDurationMs: number | null;
   thumbnail: string | null;
   waveformPeaks: number[];
-  setVideoFilePath: (path: string | null) => void;
+  setVideoFilePath: (path: string | null, audioPath?: string) => void;
   setVideoData: (thumbnail: string | null, waveformPeaks: number[]) => void;
   videoElementRef: RefObject<HTMLVideoElement | null>;
   registerVideoElementRef: (e: HTMLVideoElement | null) => void;
+  audioElementRef: RefObject<HTMLAudioElement | null>;
+  registerAudioElementRef: (e: HTMLAudioElement | null) => void;
   currentTimeRef: RefObject<number>;
   setCurrentTimeMs: (ms: number) => void;
   seekVideoToMs: (ms: number) => void;
@@ -51,6 +54,8 @@ const VideoContext = createContext<VideoContextType>({
   setVideoData: noop,
   videoElementRef: { current: null },
   registerVideoElementRef: noop,
+  audioElementRef: { current: null },
+  registerAudioElementRef: noop,
   currentTimeRef: { current: 0 },
   setCurrentTimeMs: noop,
   seekVideoToMs: noop,
@@ -85,6 +90,7 @@ export default function VideoProvider({ children }: PropsWithChildren) {
   const { pushMessage } = useMessageHelmet();
 
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const currentTimeRef = useRef(0);
 
   const [videoDurationMs, setVideoDurationMs] = useState<number | null>(null);
@@ -92,20 +98,42 @@ export default function VideoProvider({ children }: PropsWithChildren) {
   const [waveformPeaks, setWaveformPeaks] = useState<number[]>([]);
 
   const setVideoFilePath = useCallback(
-    (path: string | null) => {
+    (path: string | null, audioPath?: string) => {
       dispatch(setVideoFilePathAction(path));
       setVideoDurationMs(null);
       setThumbnail(null);
       setWaveformPeaks([]);
       const url = path ? pathToFileUrl(path) : '';
-      if (videoElementRef.current) videoElementRef.current.src = url;
+      if (videoElementRef.current) {
+        videoElementRef.current.src = url;
+        videoElementRef.current.muted = true;
+      }
+      if (audioElementRef.current) {
+        audioElementRef.current.src = audioPath ? pathToFileUrl(audioPath) : '';
+      }
       if (!path) return;
 
       loadVideoDuration(url)
         .then((ms) => setVideoDurationMs(ms))
         .catch(() => setVideoDurationMs(null));
+
+      // Audio path wasn't already known (e.g. project reload, only videoPath is persisted) --
+      // re-derive it via the same content-addressed cache the import flow already populated.
+      if (!audioPath && audioElementRef.current) {
+        const audioElement = audioElementRef.current;
+        window.electronAPI
+          .extractOrConvertAudio(path)
+          .then((resolvedAudioPath) => {
+            if (audioElementRef.current === audioElement) {
+              audioElement.src = pathToFileUrl(resolvedAudioPath);
+            }
+          })
+          .catch((error) => {
+            emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
+          });
+      }
     },
-    [dispatch]
+    [dispatch, pushMessage]
   );
 
   const registerVideoElementRef = useCallback((e: HTMLVideoElement | null) => {
@@ -113,8 +141,29 @@ export default function VideoProvider({ children }: PropsWithChildren) {
     const videoFilePath = fromCurrentStore(selectVideoFilePath);
     if (e && videoFilePath) {
       e.src = pathToFileUrl(videoFilePath);
+      e.muted = true;
     }
   }, []);
+
+  const registerAudioElementRef = useCallback(
+    (e: HTMLAudioElement | null) => {
+      audioElementRef.current = e;
+      const videoFilePath = fromCurrentStore(selectVideoFilePath);
+      if (e && videoFilePath) {
+        window.electronAPI
+          .extractOrConvertAudio(videoFilePath)
+          .then((resolvedAudioPath) => {
+            if (audioElementRef.current === e) {
+              e.src = pathToFileUrl(resolvedAudioPath);
+            }
+          })
+          .catch((error) => {
+            emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
+          });
+      }
+    },
+    [pushMessage]
+  );
 
   const setVideoData = useCallback((nextThumbnail: string | null, nextPeaks: number[]) => {
     setThumbnail(nextThumbnail);
@@ -139,29 +188,39 @@ export default function VideoProvider({ children }: PropsWithChildren) {
   const seekVideoToMs = useCallback(
     (ms: number) => {
       setCurrentTimeMs(ms);
-      const video = videoElementRef.current;
-      if (video) video.currentTime = ms / 1000;
+      const seconds = ms / 1000;
+      if (videoElementRef.current) videoElementRef.current.currentTime = seconds;
+      if (audioElementRef.current) audioElementRef.current.currentTime = seconds;
     },
     [setCurrentTimeMs]
   );
 
   const resetCurrentTime = useCallback(() => {
     currentTimeRef.current = 0;
-    const video = videoElementRef.current;
-    if (video) video.currentTime = 0;
+    if (videoElementRef.current) videoElementRef.current.currentTime = 0;
+    if (audioElementRef.current) audioElementRef.current.currentTime = 0;
   }, []);
 
   const handlePlay = useCallback(() => {
-    if (videoElementRef.current) videoElementRef.current.play();
+    videoElementRef.current?.play().catch(() => {});
+    audioElementRef.current?.play().catch(() => {});
   }, []);
 
   const handlePause = useCallback(() => {
-    if (videoElementRef.current) videoElementRef.current.pause();
+    videoElementRef.current?.pause();
+    audioElementRef.current?.pause();
   }, []);
 
   const handlePlayPause = useCallback(() => {
     if (!videoElementRef.current) return;
-    videoElementRef.current[videoElementRef.current.paused ? 'play' : 'pause']();
+    const action = videoElementRef.current.paused ? 'play' : 'pause';
+    if (action === 'play') {
+      videoElementRef.current.play().catch(() => {});
+      audioElementRef.current?.play().catch(() => {});
+    } else {
+      videoElementRef.current.pause();
+      audioElementRef.current?.pause();
+    }
   }, []);
 
   const seekToLine = useCallback(
@@ -189,6 +248,8 @@ export default function VideoProvider({ children }: PropsWithChildren) {
       setVideoData,
       videoElementRef,
       registerVideoElementRef,
+      audioElementRef,
+      registerAudioElementRef,
       currentTimeRef,
       setCurrentTimeMs,
       seekVideoToMs,
@@ -206,6 +267,7 @@ export default function VideoProvider({ children }: PropsWithChildren) {
       setVideoFilePath,
       setVideoData,
       registerVideoElementRef,
+      registerAudioElementRef,
       setCurrentTimeMs,
       seekVideoToMs,
       resetCurrentTime,

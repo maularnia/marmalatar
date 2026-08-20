@@ -32,7 +32,9 @@ export const VideoFilesProcessingStatusToColor: { [key in TWaveformStatus]: TCol
   [TWaveformStatus.SUCCESS]: ThemeColors.GREEN,
   [TWaveformStatus.ERROR]: ThemeColors.RED,
   [TWaveformStatus.UNSUPPORTED_VIDEO]: ThemeColors.RED,
-  [TWaveformStatus.UNSUPPORTED_AUDIO]: ThemeColors.RED,
+  [TWaveformStatus.EXTRACTING_AUDIO]: ThemeColors.GOLD,
+  [TWaveformStatus.AUDIO_EXTRACTION_FAILED]: ThemeColors.RED,
+  [TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO]: ThemeColors.RED,
 };
 
 // Getters, not plain values -- evaluated lazily at property-access (render) time rather than at
@@ -54,8 +56,14 @@ export const VideoFileProcessingStatusToMessage: { [key in TWaveformStatus]: str
   get [TWaveformStatus.UNSUPPORTED_VIDEO]() {
     return t('videoFileStatus.unsupportedVideo');
   },
-  get [TWaveformStatus.UNSUPPORTED_AUDIO]() {
-    return t('videoFileStatus.unsupportedAudio');
+  get [TWaveformStatus.EXTRACTING_AUDIO]() {
+    return t('videoFileStatus.extractingAudio');
+  },
+  get [TWaveformStatus.AUDIO_EXTRACTION_FAILED]() {
+    return t('videoFileStatus.audioExtractionFailed');
+  },
+  get [TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO]() {
+    return t('videoFileStatus.unplayableConvertedAudio');
   },
 };
 

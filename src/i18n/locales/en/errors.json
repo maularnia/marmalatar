@@ -36,7 +36,8 @@
     "pathUnresolved": "Unable to resolve file path",
     "stillProcessing": "Video processing in progress",
     "unsupportedVideoCodec": "Video can not be played. Unsupported video codec.",
-    "unsupportedAudioCodec": "Video can not be played. Unsupported audio codec. Supported: AAC, MP3, Opus, Vorbis, FLAC.",
+    "audioExtractionFailed": "Unable to extract or convert the audio track.",
+    "unplayableConvertedAudio": "Unable to convert audio to a playable format.",
     "processingFailed": "Video file processing failed."
   },
   "import": {
@@ -120,6 +121,9 @@
   },
   "fileProcessingFailed": {
     "title": "File can not be processed"
+  },
+  "audioExtractionFailed": {
+    "title": "Can not process audio. File may be corrupted, or uses an audio codec unknown to science"
   },
   "autoMergeFailed": {
     "title": "Auto-merge failed"
