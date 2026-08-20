@@ -26,7 +26,7 @@ export function ExportASS({
         onClick={() => {
           const result: string = exportAsAss(lines, parseFloat(sourceFPS), parseFloat(targetFPS));
           handleDownload({
-            format: ExportFormats.JSON,
+            format: ExportFormats.ASS,
             suggestedFileName: `${createExportFileName(showName, characters)}`,
             exportText: result,
             targetLanguage: targetLanguage,
