@@ -86,7 +86,9 @@
     "cannotSaveWithoutName": "Нельга захаваць праект без назвы",
     "nameRequired": "Назву нельга пакінуць пустой",
     "alreadyExists": "Такі файл ужо існуе",
-    "folderNotTracked": "Абярыце працоўную папку"
+    "folderNotTracked": "Абярыце працоўную папку",
+    "editorStateReadFailed": "Не атрымалася прачытаць стан рэдактара",
+    "progressPersistFailed": "Не атрымалася захаваць прагрэс перакладу"
   },
   "createNewProject": {
     "emojiSelectionFailed": "Не атрымалася падабраць эмодзі для праекта",
@@ -134,9 +136,17 @@
   "videoFileMissing": {
     "title": "Відэа было выдалена"
   },
-  "videoProcessingFailed": {
-    "title": "Немагчыма апрацаваць відэа",
-    "message": "Непрайгравальнае відэа. Несумяшчальны аўдыё- ці відэа- кодэк"
+  "projectStateReadFailed": {
+    "title": "Не атрымалася прачытаць стан праекта"
+  },
+  "videoFileCheckFailed": {
+    "title": "Не атрымалася праверыць відэафайл"
+  },
+  "waveformExtractionFailed": {
+    "title": "Не атрымалася стварыць хвалевую форму аўдыё"
+  },
+  "thumbnailGenerationFailed": {
+    "title": "Не атрымалася стварыць здымак відэа"
   },
   "projectLoadFailed": {
     "title": "Памылка ладавання праекта"

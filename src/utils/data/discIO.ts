@@ -19,7 +19,7 @@ import { parseProjectFile } from './parsers/project';
 import { computeTranslationProgress } from '@utils/translationProgress';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 
-export type { TProjectCacheEntry, TFolderScanCache };
+export type { TProjectCacheEntry, TFolderScanCache, TProjectEditorState };
 export type TPromptTemplateEntry = TPromptTemplateCacheEntry;
 export type TGlossaryFileEntry = TGlossaryCacheEntry;
 

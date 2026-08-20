@@ -15,6 +15,7 @@ import {
   writeProjectEditorState,
   writeProjectSaveData,
   writePromptTemplateFile,
+  type TProjectEditorState,
   type TScannedProjectEntry,
 } from '@src/utils/data/discIO';
 import type { AIGlossaryFileDataType, PromptTemplateFileDataType } from '@src/utils/data/schemas';
@@ -186,12 +187,12 @@ export const startNewProject =
 
 export const loadProjectFromDisk =
   (filePath: string) =>
-  async (dispatch: AppDispatch): Promise<string | null> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     let data: TScannedProjectEntry;
     try {
       data = await readProjectFile(filePath);
     } catch (err) {
-      return err instanceof Error ? err.message : t('project.cannotRead');
+      throw new Error(err instanceof Error ? err.message : t('project.cannotRead'));
     }
 
     dispatch(setCurrentProjectFilePath(null));
@@ -199,7 +200,12 @@ export const loadProjectFromDisk =
 
     applyProjectData(dispatch, data);
 
-    const editorState = await getProjectEditorState(data.project.projectId);
+    let editorState: TProjectEditorState;
+    try {
+      editorState = await getProjectEditorState(data.project.projectId);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
+    }
     dispatch(setEditorMode(editorState.editorMode));
     dispatch(setVideoCollapsed(editorState.isVideoCollapsed));
     // Restore the video that was attached when the project was last saved/closed.
@@ -209,9 +215,11 @@ export const loadProjectFromDisk =
 
     // Self-heals the cached progress the moment a project is opened (e.g. if the file
     // was edited outside the app since the cache was last written).
-    await dispatch(persistProjectProgress(data.filePath, data.translationProgress));
-
-    return null;
+    try {
+      await dispatch(persistProjectProgress(data.filePath, data.translationProgress));
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : t('project.progressPersistFailed'));
+    }
   };
 
 function applyProjectData(

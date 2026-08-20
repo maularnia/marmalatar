@@ -138,11 +138,44 @@ export function emitVideoFileMissingMessage(pushMessage: PushMessage): void {
   });
 }
 
-export function emitVideoProcessingFailedMessage(pushMessage: PushMessage): void {
+export function emitProjectStateReadFailedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
   pushMessage({
     type: TMessageType.ERROR,
-    title: tErrors('videoProcessingFailed.title'),
-    message: tErrors('videoProcessingFailed.message'),
+    title: tErrors('projectStateReadFailed.title'),
+    message,
+  });
+}
+
+export function emitVideoFileCheckFailedMessage(pushMessage: PushMessage, message?: string): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('videoFileCheckFailed.title'),
+    message,
+  });
+}
+
+export function emitWaveformExtractionFailedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('waveformExtractionFailed.title'),
+    message,
+  });
+}
+
+export function emitThumbnailGenerationFailedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('thumbnailGenerationFailed.title'),
+    message,
   });
 }
 
