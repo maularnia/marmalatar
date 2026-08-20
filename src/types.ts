@@ -65,7 +65,9 @@ export enum TWaveformStatus {
   SUCCESS = 'success',
   ERROR = 'error',
   UNSUPPORTED_VIDEO = 'unsupported_video',
-  UNSUPPORTED_AUDIO = 'unsupported_audio',
+  EXTRACTING_AUDIO = 'extracting_audio',
+  AUDIO_EXTRACTION_FAILED = 'audio_extraction_failed',
+  UNPLAYABLE_CONVERTED_AUDIO = 'unplayable_converted_audio',
 }
 
 export enum TMessageType {

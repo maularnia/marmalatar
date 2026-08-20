@@ -10,10 +10,31 @@ type VideoElementWithLegacyProps = HTMLVideoElement & {
   audioTracks?: { length: number };
 };
 
-export type VideoPlayabilityResult = 'ok' | 'unsupportedVideo' | 'unsupportedAudio';
+// Container/video-decode check only -- resolves on loadedmetadata, rejects on a decode/container
+// error. Does not touch audio at all; see checkAudioPlayability for that.
+export function checkVideoDecodable(filePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement('video');
+    el.preload = 'metadata';
 
-export function checkVideoPlayability(filePath: string): Promise<VideoPlayabilityResult> {
-  return new Promise((resolve) => {
+    el.onerror = () => {
+      el.src = '';
+      reject(new Error('Video is not decodable'));
+    };
+    el.onloadedmetadata = () => {
+      el.src = '';
+      resolve();
+    };
+
+    el.src = pathToFileUrl(filePath);
+  });
+}
+
+// Audio-decode-byte-count check, generic over any media file -- works against a video file's
+// embedded audio track (original-file check) or a bare audio file (post-conversion recheck).
+// Resolves if audio decodes, rejects otherwise.
+export function checkAudioPlayability(filePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
     const el = document.createElement('video') as VideoElementWithLegacyProps;
     el.preload = 'auto';
     // volume = 0 (rather than muted) keeps Chromium's audio decode pipeline active
@@ -24,23 +45,25 @@ export function checkVideoPlayability(filePath: string): Promise<VideoPlayabilit
     let pollInterval: ReturnType<typeof setInterval> | undefined;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    const finish = (result: VideoPlayabilityResult) => {
+    const finish = (playable: boolean) => {
       if (settled) return;
       settled = true;
       if (pollInterval !== undefined) clearInterval(pollInterval);
       if (timeoutId !== undefined) clearTimeout(timeoutId);
       el.pause();
       el.src = '';
-      resolve(result);
+      if (playable) {
+        resolve();
+      } else {
+        reject(new Error('Audio is not playable'));
+      }
     };
 
-    // Fires on a container/video-decode failure, before metadata (and therefore
-    // any audio track info) is even available -- this is a video-side failure.
-    el.onerror = () => finish('unsupportedVideo');
+    el.onerror = () => finish(false);
 
     el.onloadedmetadata = () => {
       if (el.audioTracks && el.audioTracks.length === 0) {
-        finish('ok');
+        finish(true);
         return;
       }
 
@@ -48,15 +71,12 @@ export function checkVideoPlayability(filePath: string): Promise<VideoPlayabilit
         el.webkitAudioDecodedByteCount === undefined || el.webkitAudioDecodedByteCount > 0;
 
       pollInterval = setInterval(() => {
-        if (hasDecodedAudio()) finish('ok');
+        if (hasDecodedAudio()) finish(true);
       }, AUDIO_DECODE_POLL_MS);
 
-      timeoutId = setTimeout(
-        () => finish(hasDecodedAudio() ? 'ok' : 'unsupportedAudio'),
-        AUDIO_DECODE_TIMEOUT_MS
-      );
+      timeoutId = setTimeout(() => finish(hasDecodedAudio()), AUDIO_DECODE_TIMEOUT_MS);
 
-      void el.play().catch(() => finish('unsupportedVideo'));
+      void el.play().catch(() => finish(false));
     };
 
     el.src = pathToFileUrl(filePath);

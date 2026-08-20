@@ -18,6 +18,16 @@ export function emitVideoPlaybackErrorMessage(pushMessage: PushMessage): void {
   });
 }
 
+// VideoProvider / VideoFileSelect / VideoSelectDialog / useProjectLoader
+
+export function emitAudioExtractionFailedMessage(pushMessage: PushMessage, message?: string): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('audioExtractionFailed.title'),
+    message,
+  });
+}
+
 // useAddToGlossaryDialog
 
 export function emitGlossaryPairAddedMessage(

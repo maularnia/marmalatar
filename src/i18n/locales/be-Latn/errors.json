@@ -36,7 +36,8 @@
     "pathUnresolved": "Nie atrymłasia adšukać šlach da fajła",
     "stillProcessing": "Apracoŭka videa...",
     "unsupportedVideoCodec": "Niemahčyma prajhrać videa. Niesumiaščalny kodek videa",
-    "unsupportedAudioCodec": "Niemahčyma prajhrać videa. Niesumiaščalny kodek aŭdyjo. Padtrymlivajucca: AAC, MP3, Opus, Vorbis, FLAC",
+    "audioExtractionFailed": "Nie atrymałasia apracavać aŭdyjo",
+    "unplayableConvertedAudio": "Nie atrymałasia pieraŭtvaryć aŭdyjo ŭ prajhravalny farmat",
     "processingFailed": "Pamyłka hienieracyi artefaktaŭ. Niesumiaščalny kodek"
   },
   "import": {
@@ -120,6 +121,9 @@
   },
   "fileProcessingFailed": {
     "title": "Niemahčyma apracavać fajł"
+  },
+  "audioExtractionFailed": {
+    "title": "Niemahčyma apracavać aŭdyjo. Fajł paškodžany, abo karystaje nieviadomy navucy kodek aŭdyjo"
   },
   "autoMergeFailed": {
     "title": "Pamyłka aŭta-abjadnańnia"
