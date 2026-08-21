@@ -1,19 +1,11 @@
-import {
-  ShortcutScope,
-  ShortcutSettings,
-  ShortcutStatus,
-  ShortcutType,
-  useShortcut,
-} from 'react-keyhub';
+import { useEditorActions } from '@providers/EditorActionsProvider';
+import { useEditorAIActions } from '@providers/EditorAIActionsProvider';
+import { InputColumnType, useEditorRefs } from '@providers/EditorRefsProvider';
+import { useVideo } from '@providers/VideoProvider';
 import KeystrokeZone, {
   useKeystrokeZone,
 } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { useEditorRefs, InputColumnType } from '@providers/EditorRefsProvider';
-import { useEditorActions } from '@providers/EditorActionsProvider';
-import { useVideo } from '@providers/VideoProvider';
-import { useEditorAIActions } from '@providers/EditorAIActionsProvider';
-import { useAppDispatch } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
+import { selectTimeAdjustmentStep } from '@src/store/slices/app';
 import {
   selectFocusedColumn,
   selectFocusedLineIndex,
@@ -21,10 +13,18 @@ import {
   shiftAllLinesEarlier,
   shiftAllLinesLater,
 } from '@src/store/slices/editor';
-import { selectTimeAdjustmentStep } from '@src/store/slices/app';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
+import { useAppDispatch } from '@store/hooks';
+import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import { fromCurrentStore } from '@store/store';
 import { createContext, PropsWithChildren, useEffect, useReducer } from 'react';
+import {
+  ShortcutScope,
+  ShortcutSettings,
+  ShortcutStatus,
+  ShortcutType,
+  useShortcut,
+} from 'react-keyhub';
 
 const myShortcuts = {
   copySourceToOutput: {
@@ -69,7 +69,7 @@ const myShortcuts = {
   },
   adjustEndTimeLeft: {
     keyCombo: 'alt+a',
-    name: 'Start time<-',
+    name: 'Start time <-',
     description: 'Adjust end time to left',
     scope: ShortcutScope.GLOBAL,
     priority: 100,
@@ -79,7 +79,7 @@ const myShortcuts = {
   },
   adjustEndTimeRight: {
     keyCombo: 'alt+d',
-    name: 'Start time<-',
+    name: 'Start time <-',
     description: 'Adjust end time to right',
     scope: ShortcutScope.GLOBAL,
     priority: 100,

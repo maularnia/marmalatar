@@ -34,7 +34,11 @@
   },
   "waveform": {
     "startTime": "Čas pačatku",
-    "endTime": "Čas zakančennia"
+    "endTime": "Čas zakančennia",
+    "adjustTime": "Karekcyja času:",
+    "orMouseDrag": "abo pieraciahnicie myššu",
+    "focusThisLine": "Pstryknicie kab abrać",
+    "orDragToAdjustTiming": "abo paciahnicie kab pasunuć"
   },
   "keystrokeZone": {
     "areaTitle": "Zona {{slot}}",

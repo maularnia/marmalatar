@@ -34,7 +34,11 @@
   },
   "waveform": {
     "startTime": "Start time",
-    "endTime": "End time"
+    "endTime": "End time",
+    "adjustTime": "Adjust time:",
+    "orMouseDrag": "or mouse drag",
+    "focusThisLine": "Focus this line",
+    "orDragToAdjustTiming": "or drag to adjust timing"
   },
   "keystrokeZone": {
     "areaTitle": "Area {{slot}}",
