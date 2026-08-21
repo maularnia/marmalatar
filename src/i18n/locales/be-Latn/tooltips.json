@@ -44,5 +44,9 @@
     "areaTitle": "Zona {{slot}}",
     "hintPrefix": "Nacisnicie",
     "hintSuffix": "kab prymusova pieraviesci\nsiudy fokus klavijatury"
+  },
+  "editorTable": {
+    "navigationHintPrefix": "",
+    "navigationHintPostfix": "kab skakać pa słupkach i radkach"
   }
 }
