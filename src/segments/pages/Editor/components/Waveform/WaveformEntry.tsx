@@ -138,6 +138,7 @@ const EntryNumber = styled.div`
 
 const startTimeKeystrokeHint = <TooltipKeystrokeHint keys={['Alt', 'Q / E']} />;
 const endTimeKeystrokeHint = <TooltipKeystrokeHint keys={['Alt', 'A / D']} />;
+const entryTimeKeystrokeHint = <TooltipKeystrokeHint keys={['Ctrl', 'Alt', 'A / D']} />;
 
 export default function WaveformEntry({
   lineIndex,
@@ -152,54 +153,70 @@ export default function WaveformEntry({
   const { t } = useTranslation('tooltips');
 
   return (
-    <EntryBlock
-      className={classNames({
-        isActive: isActive,
-        isFocused: isFocused,
-        isDragging: isDragging,
-      })}
-      style={{
-        left: `${left}px`,
-        width: `${width}px`,
-      }}
-      onPointerDown={(event) => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const offsetX = event.clientX - rect.left;
-
-        let mode: DragMode = 'move';
-        if (offsetX <= EDGE_HITBOX_PX) mode = 'resize-left';
-        else if (offsetX >= rect.width - EDGE_HITBOX_PX) mode = 'resize-right';
-
-        event.currentTarget.setPointerCapture(event.pointerId);
-        event.preventDefault();
-        onEntryPointerDown(lineIndex, mode, event.clientX);
-      }}
+    <Tooltip
+      delay={400}
+      label={
+        isFocused ? (
+          <TooltipComplex title={t('waveform.adjustTime')}>
+            {entryTimeKeystrokeHint}
+            {t('waveform.orMouseDrag')}
+          </TooltipComplex>
+        ) : (
+          <TooltipComplex title={t('waveform.focusThisLine')}>
+            {t('waveform.orDragToAdjustTiming')}
+          </TooltipComplex>
+        )
+      }
     >
-      <Tooltip
-        delay={400}
-        label={
-          <TooltipComplex title={t('waveform.startTime')}>
-            {isFocused ? startTimeKeystrokeHint : null}
-          </TooltipComplex>
-        }
+      <EntryBlock
+        className={classNames({
+          isActive: isActive,
+          isFocused: isFocused,
+          isDragging: isDragging,
+        })}
+        style={{
+          left: `${left}px`,
+          width: `${width}px`,
+        }}
+        onPointerDown={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const offsetX = event.clientX - rect.left;
+
+          let mode: DragMode = 'move';
+          if (offsetX <= EDGE_HITBOX_PX) mode = 'resize-left';
+          else if (offsetX >= rect.width - EDGE_HITBOX_PX) mode = 'resize-right';
+
+          event.currentTarget.setPointerCapture(event.pointerId);
+          event.preventDefault();
+          onEntryPointerDown(lineIndex, mode, event.clientX);
+        }}
       >
-        <EntryBorderHandle className="left" />
-      </Tooltip>
-      <EntryNumber>
-        <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.TEXT}>
-          {lineNo}
-        </Tag>
-      </EntryNumber>
-      <Tooltip
-        delay={400}
-        label={
-          <TooltipComplex title={t('waveform.endTime')}>
-            {isFocused ? endTimeKeystrokeHint : null}
-          </TooltipComplex>
-        }
-      >
-        <EntryBorderHandle className="right" />
-      </Tooltip>
-    </EntryBlock>
+        <Tooltip
+          delay={400}
+          label={
+            <TooltipComplex title={t('waveform.startTime')}>
+              {isFocused ? startTimeKeystrokeHint : null}
+            </TooltipComplex>
+          }
+        >
+          <EntryBorderHandle className="left" />
+        </Tooltip>
+        <EntryNumber>
+          <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.TEXT}>
+            {lineNo}
+          </Tag>
+        </EntryNumber>
+        <Tooltip
+          delay={400}
+          label={
+            <TooltipComplex title={t('waveform.endTime')}>
+              {isFocused ? endTimeKeystrokeHint : null}
+            </TooltipComplex>
+          }
+        >
+          <EntryBorderHandle className="right" />
+        </Tooltip>
+      </EntryBlock>
+    </Tooltip>
   );
 }

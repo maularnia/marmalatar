@@ -188,6 +188,10 @@
     "title": "Unable to split the line",
     "message": "Line duration is too short"
   },
+  "entryTimeShiftBlocked": {
+    "title": "Can not shift line.",
+    "message": "Lines can not overlap in time"
+  },
   "cleanupFailed": {
     "title": "Cleanup failed"
   },

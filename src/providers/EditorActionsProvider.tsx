@@ -10,6 +10,7 @@ import {
   emitCopyOperationFailedMessage,
   emitDeleteLineCancelledMessage,
   emitDeleteLineFailedMessage,
+  emitEntryTimeShiftBlockedMessage,
   emitLineDeletedMessage,
   emitLinesMergedMessage,
   emitLineSplitMessage,
@@ -85,6 +86,7 @@ type EditorActionsContextType = {
   handleToggleCompleted: (lineIndex: number) => void;
   handleAdjustStartTime: (lineIndex: number, direction: 'earlier' | 'later') => void;
   handleAdjustEndTime: (lineIndex: number, direction: 'earlier' | 'later') => void;
+  handleAdjustEntryTime: (lineIndex: number, direction: 'earlier' | 'later') => void;
   handleUndoRedo: (direction: 'backward' | 'forward') => void;
   handleAutoMerge: () => void;
   handleCleanup: () => void;
@@ -108,6 +110,7 @@ const EditorActionsContext = createContext<EditorActionsContextType>({
   handleToggleCompleted: noop,
   handleAdjustStartTime: noop,
   handleAdjustEndTime: noop,
+  handleAdjustEntryTime: noop,
   handleUndoRedo: noop,
   handleAutoMerge: noop,
   handleCleanup: noop,
@@ -362,7 +365,10 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
         const prev = lineIndex > 0 ? translationLines[lineIndex - 1] : null;
         const next = line.start_time - timeAdjustmentStep;
         const min = prev ? prev.end_time : Number.NEGATIVE_INFINITY;
-        if (next < min || next >= line.end_time) return;
+        if (next < min || next >= line.end_time) {
+          emitEntryTimeShiftBlockedMessage(pushMessage);
+          return;
+        }
         dispatch(
           updateLineTiming({
             lineIndex,
@@ -374,7 +380,10 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
         const nextL = translationLines[lineIndex + 1] ?? null;
         const next = line.start_time + timeAdjustmentStep;
         const max = nextL ? nextL.start_time : Number.POSITIVE_INFINITY;
-        if (next >= line.end_time || next > max) return;
+        if (next >= line.end_time || next > max) {
+          emitEntryTimeShiftBlockedMessage(pushMessage);
+          return;
+        }
         dispatch(
           updateLineTiming({
             lineIndex,
@@ -384,7 +393,7 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
         );
       }
     },
-    [dispatch]
+    [dispatch, pushMessage]
   );
 
   const handleAdjustEndTime = useCallback(
@@ -397,7 +406,10 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
         const prev = lineIndex > 0 ? translationLines[lineIndex - 1] : null;
         const next = line.end_time - timeAdjustmentStep;
         const min = prev ? prev.end_time : Number.NEGATIVE_INFINITY;
-        if (next <= line.start_time || next < min) return;
+        if (next <= line.start_time || next < min) {
+          emitEntryTimeShiftBlockedMessage(pushMessage);
+          return;
+        }
         dispatch(
           updateLineTiming({
             lineIndex,
@@ -409,7 +421,10 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
         const nextL = translationLines[lineIndex + 1] ?? null;
         const next = line.end_time + timeAdjustmentStep;
         const max = nextL ? nextL.start_time : Number.POSITIVE_INFINITY;
-        if (next <= line.start_time || next > max) return;
+        if (next <= line.start_time || next > max) {
+          emitEntryTimeShiftBlockedMessage(pushMessage);
+          return;
+        }
         dispatch(
           updateLineTiming({
             lineIndex,
@@ -419,7 +434,39 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
         );
       }
     },
-    [dispatch]
+    [dispatch, pushMessage]
+  );
+
+  const handleAdjustEntryTime = useCallback(
+    (lineIndex: number, direction: 'earlier' | 'later') => {
+      const translationLines = fromCurrentStore(selectLines);
+      const timeAdjustmentStep = fromCurrentStore(selectTimeAdjustmentStep);
+      const line = translationLines[lineIndex];
+      if (!line) return;
+      if (direction === 'earlier') {
+        const prev = lineIndex > 0 ? translationLines[lineIndex - 1] : null;
+        const nextStart = line.start_time - timeAdjustmentStep;
+        const nextEnd = line.end_time - timeAdjustmentStep;
+        const min = prev ? prev.end_time : 0;
+        if (nextStart < min) {
+          emitEntryTimeShiftBlockedMessage(pushMessage);
+          return;
+        }
+        dispatch(updateLineTiming({ lineIndex, startTime: nextStart, endTime: nextEnd }));
+      } else {
+        const nextL =
+          lineIndex + 1 < translationLines.length ? translationLines[lineIndex + 1] : null;
+        const nextStart = line.start_time + timeAdjustmentStep;
+        const nextEnd = line.end_time + timeAdjustmentStep;
+        const max = nextL ? nextL.start_time : Number.POSITIVE_INFINITY;
+        if (nextEnd > max) {
+          emitEntryTimeShiftBlockedMessage(pushMessage);
+          return;
+        }
+        dispatch(updateLineTiming({ lineIndex, startTime: nextStart, endTime: nextEnd }));
+      }
+    },
+    [dispatch, pushMessage]
   );
 
   const handleUndoRedo = useCallback(
@@ -551,6 +598,7 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
       handleToggleCompleted,
       handleAdjustStartTime,
       handleAdjustEndTime,
+      handleAdjustEntryTime,
       handleUndoRedo,
       handleAutoMerge,
       handleCleanup,
@@ -571,6 +619,7 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
       handleToggleCompleted,
       handleAdjustStartTime,
       handleAdjustEndTime,
+      handleAdjustEntryTime,
       handleUndoRedo,
       handleAutoMerge,
       handleCleanup,
