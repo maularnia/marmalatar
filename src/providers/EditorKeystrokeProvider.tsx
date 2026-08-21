@@ -87,6 +87,26 @@ const myShortcuts = {
     group: 'Workspace',
     type: ShortcutType.REGULAR,
   },
+  adjustEntryTimeLeft: {
+    keyCombo: 'ctrl+alt+a',
+    name: 'Entry time <-',
+    description: 'Shift the whole focused entry earlier',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Workspace',
+    type: ShortcutType.REGULAR,
+  },
+  adjustEntryTimeRight: {
+    keyCombo: 'ctrl+alt+d',
+    name: 'Entry time ->',
+    description: 'Shift the whole focused entry later',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Workspace',
+    type: ShortcutType.REGULAR,
+  },
   focusTranslationInput: {
     keyCombo: 'alt+right',
     name: 'Go to translation input',
@@ -470,6 +490,7 @@ function EditorShortcuts() {
     handleSplitLine,
     handleAdjustStartTime,
     handleAdjustEndTime,
+    handleAdjustEntryTime,
     handleMergeLines,
     handleToggleCompleted,
     handleRemoveLine,
@@ -596,6 +617,20 @@ function EditorShortcuts() {
     if (lineIndex == null) return;
     event.preventDefault();
     handleAdjustEndTime(lineIndex, 'later');
+  });
+
+  useGuardedKeyStroke('adjustEntryTimeLeft', (event) => {
+    const { lineIndex } = getKeystrokeLineData();
+    if (lineIndex == null) return;
+    event.preventDefault();
+    handleAdjustEntryTime(lineIndex, 'earlier');
+  });
+
+  useGuardedKeyStroke('adjustEntryTimeRight', (event) => {
+    const { lineIndex } = getKeystrokeLineData();
+    if (lineIndex == null) return;
+    event.preventDefault();
+    handleAdjustEntryTime(lineIndex, 'later');
   });
 
   useGuardedKeyStroke('mergeToTop', (event) => {

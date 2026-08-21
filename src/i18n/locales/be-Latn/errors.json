@@ -188,6 +188,10 @@
     "title": "Nadta karotki radok",
     "message": "nie atrymałasia razrezać"
   },
+  "entryTimeShiftBlocked": {
+    "title": "Niemahčyma pasunuć radok.",
+    "message": "Radki nie mohuć pierakryvacca ŭ časie"
+  },
   "cleanupFailed": {
     "title": "Pamyłka ačystki"
   },

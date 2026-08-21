@@ -358,6 +358,14 @@ export function emitLineTooShortToSplitMessage(pushMessage: PushMessage): void {
   });
 }
 
+export function emitEntryTimeShiftBlockedMessage(pushMessage: PushMessage): void {
+  pushMessage({
+    type: TMessageType.WARNING,
+    title: tErrors('entryTimeShiftBlocked.title'),
+    message: tErrors('entryTimeShiftBlocked.message'),
+  });
+}
+
 export function emitCleanupCancelledMessage(pushMessage: PushMessage): void {
   pushMessage({
     type: TMessageType.MESSAGE,
