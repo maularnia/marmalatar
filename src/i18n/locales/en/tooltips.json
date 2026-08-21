@@ -34,11 +34,19 @@
   },
   "waveform": {
     "startTime": "Start time",
-    "endTime": "End time"
+    "endTime": "End time",
+    "adjustTime": "Adjust time:",
+    "orMouseDrag": "or mouse drag",
+    "focusThisLine": "Focus this line",
+    "orDragToAdjustTiming": "or drag to adjust timing"
   },
   "keystrokeZone": {
     "areaTitle": "Area {{slot}}",
     "hintPrefix": "Hit",
     "hintSuffix": "to force-shift\nkeyboard focus here"
+  },
+  "editorTable": {
+    "navigationHintPrefix": "Use",
+    "navigationHintPostfix": "to navigate columns and lines"
   }
 }

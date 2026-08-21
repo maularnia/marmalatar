@@ -81,15 +81,16 @@ const KeystrokeHint = styled.div`
 
 type TooltipKeystrokeHintProps = {
   keys: ReactNode[];
+  size?: TTagSize;
 };
 
-export const TooltipKeystrokeHint = ({ keys }: TooltipKeystrokeHintProps) => {
+export const TooltipKeystrokeHint = ({ keys, size = TTagSize.NANO }: TooltipKeystrokeHintProps) => {
   return (
     <KeystrokeHint>
       {keys.map((key, index) => (
         <Fragment key={index}>
           {index > 0 && ' + '}
-          <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
+          <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={size}>
             {key}
           </Tag>
         </Fragment>

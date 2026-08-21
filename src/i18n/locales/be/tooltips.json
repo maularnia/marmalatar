@@ -34,11 +34,19 @@
   },
   "waveform": {
     "startTime": "Час пачатку",
-    "endTime": "Час заканчэння"
+    "endTime": "Час заканчэння",
+    "adjustTime": "Карэкцыя часу:",
+    "orMouseDrag": "або пацягніце",
+    "focusThisLine": "Пстрыкніце каб абраць",
+    "orDragToAdjustTiming": "або пацягніце каб пасунуць"
   },
   "keystrokeZone": {
     "areaTitle": "Зона {{slot}}",
     "hintPrefix": "Націсніце",
     "hintSuffix": "каб прымусова перавесці\nсюды фокус клавіятуры"
+  },
+  "editorTable": {
+    "navigationHintPrefix": "",
+    "navigationHintPostfix": "каб скакаць па слупках і радках"
   }
 }

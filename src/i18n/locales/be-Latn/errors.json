@@ -35,7 +35,9 @@
     "fileRequired": "Nielha pakinuć pustym",
     "pathUnresolved": "Nie atrymłasia adšukać šlach da fajła",
     "stillProcessing": "Apracoŭka videa...",
-    "unsupportedPlayback": "Niemahčyma prajhrać videa. Niesumiaščalny kodek",
+    "unsupportedVideoCodec": "Niemahčyma prajhrać videa. Niesumiaščalny kodek videa",
+    "audioExtractionFailed": "Nie atrymałasia apracavać aŭdyjo",
+    "unplayableConvertedAudio": "Nie atrymałasia pieraŭtvaryć aŭdyjo ŭ prajhravalny farmat",
     "processingFailed": "Pamyłka hienieracyi artefaktaŭ. Niesumiaščalny kodek"
   },
   "import": {
@@ -84,7 +86,18 @@
     "cannotSaveWithoutName": "Nielha zachavać prajekt biez nazvy",
     "nameRequired": "Nazvu nielha pakinuć pustoj",
     "alreadyExists": "Taki fajł užo isnuje",
-    "folderNotTracked": "Abiarycie pracoŭnuju papku"
+    "folderNotTracked": "Abiarycie pracoŭnuju papku",
+    "editorStateReadFailed": "Nie atrymałasia pračytać stan redaktara",
+    "progressPersistFailed": "Nie atrymałasia zachavać prahres pierakładu"
+  },
+  "createNewProject": {
+    "emojiSelectionFailed": "Nie atrymałasia padabrać emodzi dla prajekta",
+    "fileSaveFailed": "Nie atrymałasia zachavać fajł prajekta na dysk",
+    "editorStateSaveFailed": "Nie atrymałasia zachavać stan redaktara prajekta",
+    "cacheUpdateFailed": "Nie atrymałasia dadać prajekt u keš"
+  },
+  "projectCreationAborted": {
+    "title": "Stvareńnie prajekta było spyniena"
   },
   "promptTemplate": {
     "alreadyExists": "Šabłon zapytu [{{title}}] užo isnuje",
@@ -111,6 +124,9 @@
   "fileProcessingFailed": {
     "title": "Niemahčyma apracavać fajł"
   },
+  "audioExtractionFailed": {
+    "title": "Niemahčyma apracavać aŭdyjo. Fajł paškodžany, abo karystaje nieviadomy navucy kodek aŭdyjo"
+  },
   "autoMergeFailed": {
     "title": "Pamyłka aŭta-abjadnańnia"
   },
@@ -120,9 +136,17 @@
   "videoFileMissing": {
     "title": "Videa było vydalena"
   },
-  "videoProcessingFailed": {
-    "title": "Niemahčyma apracavać videa",
-    "message": "Nieprajhravalnaje videa. Niesumiaščalny aŭdyjo- ci videa- kodek"
+  "projectStateReadFailed": {
+    "title": "Nie atrymałasia pračytać stan prajekta"
+  },
+  "videoFileCheckFailed": {
+    "title": "Nie atrymałasia pravieryć videafajł"
+  },
+  "waveformExtractionFailed": {
+    "title": "Nie atrymałasia stvaryć chvalevuju formu aŭdyjo"
+  },
+  "thumbnailGenerationFailed": {
+    "title": "Nie atrymałasia stvaryć zdymak videa"
   },
   "projectLoadFailed": {
     "title": "Pasyłka ładavannia prajekta"
@@ -163,6 +187,10 @@
   "lineTooShortToSplit": {
     "title": "Nadta karotki radok",
     "message": "nie atrymałasia razrezać"
+  },
+  "entryTimeShiftBlocked": {
+    "title": "Niemahčyma pasunuć radok.",
+    "message": "Radki nie mohuć pierakryvacca ŭ časie"
   },
   "cleanupFailed": {
     "title": "Pamyłka ačystki"

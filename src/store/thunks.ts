@@ -15,6 +15,7 @@ import {
   writeProjectEditorState,
   writeProjectSaveData,
   writePromptTemplateFile,
+  type TProjectEditorState,
   type TScannedProjectEntry,
 } from '@src/utils/data/discIO';
 import type { AIGlossaryFileDataType, PromptTemplateFileDataType } from '@src/utils/data/schemas';
@@ -105,7 +106,12 @@ export const createNewProject =
     dispatch(resetEditorMemoryState());
     dispatch(setVideoCollapsed(false));
 
-    const emoji = await pickRandomCreationEmoji();
+    let emoji: string;
+    try {
+      emoji = await pickRandomCreationEmoji();
+    } catch {
+      throw new Error(t('createNewProject.emojiSelectionFailed'));
+    }
     const projectId = crypto.randomUUID();
 
     applyProjectData(dispatch, {
@@ -125,25 +131,37 @@ export const createNewProject =
     dispatch(setEditorMode('translate'));
 
     dispatch(setCurrentProjectFilePath(params.filePath));
-    await dispatch(saveProjectToDisk(params.filePath));
+    try {
+      await dispatch(saveProjectToDisk(params.filePath));
+    } catch {
+      throw new Error(t('createNewProject.fileSaveFailed'));
+    }
 
     const state = getState();
     if (state.project.projectId) {
-      await writeProjectEditorState(
-        state.project.projectId,
-        buildProjectEditorStateSaveData(state)
-      );
+      try {
+        await writeProjectEditorState(
+          state.project.projectId,
+          buildProjectEditorStateSaveData(state)
+        );
+      } catch {
+        throw new Error(t('createNewProject.editorStateSaveFailed'));
+      }
     }
 
-    await dispatch(
-      upsertProjectInCache({
-        version: 1,
-        filePath: params.filePath,
-        fileName: params.filePath.split(/[/\\]/).pop()!,
-        translationProgress: 0,
-        project: { projectId, projectName, emoji },
-      })
-    );
+    try {
+      await dispatch(
+        upsertProjectInCache({
+          version: 1,
+          filePath: params.filePath,
+          fileName: params.filePath.split(/[/\\]/).pop()!,
+          translationProgress: 0,
+          project: { projectId, projectName, emoji },
+        })
+      );
+    } catch {
+      throw new Error(t('createNewProject.cacheUpdateFailed'));
+    }
   };
 
 export const saveProjectToDisk =
@@ -169,12 +187,12 @@ export const startNewProject =
 
 export const loadProjectFromDisk =
   (filePath: string) =>
-  async (dispatch: AppDispatch): Promise<string | null> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     let data: TScannedProjectEntry;
     try {
       data = await readProjectFile(filePath);
     } catch (err) {
-      return err instanceof Error ? err.message : t('project.cannotRead');
+      throw new Error(err instanceof Error ? err.message : t('project.cannotRead'));
     }
 
     dispatch(setCurrentProjectFilePath(null));
@@ -182,7 +200,12 @@ export const loadProjectFromDisk =
 
     applyProjectData(dispatch, data);
 
-    const editorState = await getProjectEditorState(data.project.projectId);
+    let editorState: TProjectEditorState;
+    try {
+      editorState = await getProjectEditorState(data.project.projectId);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
+    }
     dispatch(setEditorMode(editorState.editorMode));
     dispatch(setVideoCollapsed(editorState.isVideoCollapsed));
     // Restore the video that was attached when the project was last saved/closed.
@@ -192,9 +215,11 @@ export const loadProjectFromDisk =
 
     // Self-heals the cached progress the moment a project is opened (e.g. if the file
     // was edited outside the app since the cache was last written).
-    await dispatch(persistProjectProgress(data.filePath, data.translationProgress));
-
-    return null;
+    try {
+      await dispatch(persistProjectProgress(data.filePath, data.translationProgress));
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : t('project.progressPersistFailed'));
+    }
   };
 
 function applyProjectData(

@@ -1,12 +1,14 @@
 import { VideoFileProcessingStatusToMessage, VideoFilesProcessingStatusToColor } from '@src/consts';
+import { emitAudioExtractionFailedMessage } from '@src/messages';
+import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { CSSVar } from '@src/theme/utils';
 import { TWaveformStatus } from '@src/types';
+import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import FileSelectButton from '@ui-toolkit/FileSelectButton/FileSelectButton';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import { checkVideoPlayability } from '@utils/checkVideoPlayability';
-import { processVideoPath } from '@utils/processVideoPath';
+import { checkAudioPlayability, checkVideoDecodable } from '@utils/checkVideoPlayability';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +17,7 @@ import { DialogBodyStandard, DialogContent, DialogTitle, DialogTitleContent } fr
 
 export type VideoSelectResult = {
   videoPath: string;
+  audioPath: string;
   fileName: string;
   waveformPeaks: number[];
   previewImage: string | null;
@@ -49,6 +52,7 @@ export default function VideoSelectDialog({
   errorMessage,
 }: VideoSelectDialogProps) {
   const { t } = useTranslation(['errors', 'dialogs']);
+  const { pushMessage } = useMessageHelmet();
   const [waveformStatus, setWaveformStatus] = useState<TWaveformStatus>(TWaveformStatus.IDLE);
 
   const {
@@ -81,29 +85,63 @@ export default function VideoSelectDialog({
     onValidChange(false);
 
     void (async () => {
-      const isPlayable = await checkVideoPlayability(videoPath);
-      if (cancelled) return;
-      if (!isPlayable) {
-        setWaveformStatus(TWaveformStatus.UNSUPPORTED);
+      // Step 1: video container/codec decodable
+      try {
+        await checkVideoDecodable(videoPath);
+      } catch {
+        if (cancelled) return;
+        setWaveformStatus(TWaveformStatus.UNSUPPORTED_VIDEO);
         onValidChange(false);
         return;
       }
+      if (cancelled) return;
+
+      // Step 2: thumbnail (best-effort, non-fatal on failure)
+      const previewImage = await window.electronAPI.generateThumbnail(videoPath).catch(() => null);
+      if (cancelled) return;
+
+      // Step 3: extract/convert audio to AAC.
+      setWaveformStatus(TWaveformStatus.EXTRACTING_AUDIO);
+      let audioPath: string;
+      try {
+        audioPath = await window.electronAPI.extractOrConvertAudio(videoPath);
+      } catch (error) {
+        if (cancelled) return;
+        setWaveformStatus(TWaveformStatus.AUDIO_EXTRACTION_FAILED);
+        onValidChange(false);
+        emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
+        return;
+      }
+      if (cancelled) return;
+
+      // Step 4: converted audio playable
+      try {
+        await checkAudioPlayability(audioPath);
+      } catch {
+        if (cancelled) return;
+        setWaveformStatus(TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO);
+        onValidChange(false);
+        return;
+      }
+      if (cancelled) return;
 
       try {
-        const { waveformPeaks, previewImage } = await processVideoPath(videoPath);
+        const waveformPeaks = await window.electronAPI.extractWaveformPeaks(audioPath);
         if (cancelled) return;
         setWaveformStatus(TWaveformStatus.SUCCESS);
         onValidChange(true);
         onResultReady({
           videoPath,
+          audioPath,
           fileName: videoFile.name,
           waveformPeaks,
           previewImage,
         });
-      } catch {
+      } catch (error) {
         if (cancelled) return;
         setWaveformStatus(TWaveformStatus.ERROR);
         onValidChange(false);
+        emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
       }
     })();
 

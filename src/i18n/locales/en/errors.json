@@ -35,7 +35,9 @@
     "fileRequired": "This field is required",
     "pathUnresolved": "Unable to resolve file path",
     "stillProcessing": "Video processing in progress",
-    "unsupportedPlayback": "Video can not be played. Unsupported encoder.",
+    "unsupportedVideoCodec": "Video can not be played. Unsupported video codec.",
+    "audioExtractionFailed": "Unable to extract or convert the audio track.",
+    "unplayableConvertedAudio": "Unable to convert audio to a playable format.",
     "processingFailed": "Video file processing failed."
   },
   "import": {
@@ -84,7 +86,18 @@
     "cannotSaveWithoutName": "Project name is required",
     "nameRequired": "Project name is required",
     "alreadyExists": "File with the same name already exists",
-    "folderNotTracked": "No working folder"
+    "folderNotTracked": "No working folder",
+    "editorStateReadFailed": "Unable to read editor state",
+    "progressPersistFailed": "Unable to save translation progress"
+  },
+  "createNewProject": {
+    "emojiSelectionFailed": "Failed to pick a random project emoji",
+    "fileSaveFailed": "Failed to save the project file to disk",
+    "editorStateSaveFailed": "Failed to save the project editor state",
+    "cacheUpdateFailed": "Failed to add the project to the project cache"
+  },
+  "projectCreationAborted": {
+    "title": "Project creation was aborted"
   },
   "promptTemplate": {
     "alreadyExists": "Prompt template [{{title}}] already exists",
@@ -111,6 +124,9 @@
   "fileProcessingFailed": {
     "title": "File can not be processed"
   },
+  "audioExtractionFailed": {
+    "title": "Can not process audio. File may be corrupted, or uses an audio codec unknown to science"
+  },
   "autoMergeFailed": {
     "title": "Auto-merge failed"
   },
@@ -120,9 +136,17 @@
   "videoFileMissing": {
     "title": "Video file was removed"
   },
-  "videoProcessingFailed": {
-    "title": "Can not process video",
-    "message": "Video is unplayable. Unsupported video/audio codec"
+  "projectStateReadFailed": {
+    "title": "Unable to read project state"
+  },
+  "videoFileCheckFailed": {
+    "title": "Unable to check the video file"
+  },
+  "waveformExtractionFailed": {
+    "title": "Unable to extract audio waveform"
+  },
+  "thumbnailGenerationFailed": {
+    "title": "Unable to generate video thumbnail"
   },
   "projectLoadFailed": {
     "title": "Project can not be loaded"
@@ -163,6 +187,10 @@
   "lineTooShortToSplit": {
     "title": "Unable to split the line",
     "message": "Line duration is too short"
+  },
+  "entryTimeShiftBlocked": {
+    "title": "Can not shift line.",
+    "message": "Lines can not overlap in time"
   },
   "cleanupFailed": {
     "title": "Cleanup failed"

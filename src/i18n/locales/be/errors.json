@@ -35,7 +35,9 @@
     "fileRequired": "Нельга пакінуць пустым",
     "pathUnresolved": "Не атрымлася адшукаць шлях да файла",
     "stillProcessing": "Апрацоўка відэа...",
-    "unsupportedPlayback": "Немагчыма прайграць відэа. Несумяшчальны кодэк",
+    "unsupportedVideoCodec": "Немагчыма прайграць відэа. Несумяшчальны кодэк відэа",
+    "audioExtractionFailed": "Не атрымалася апрацаваць аўдыё",
+    "unplayableConvertedAudio": "Не атрымалася пераўтварыць аўдыё ў прайгравальны фармат",
     "processingFailed": "Памылка генерацыі артэфактаў. Несумяшчальны кодэк"
   },
   "import": {
@@ -84,7 +86,18 @@
     "cannotSaveWithoutName": "Нельга захаваць праект без назвы",
     "nameRequired": "Назву нельга пакінуць пустой",
     "alreadyExists": "Такі файл ужо існуе",
-    "folderNotTracked": "Абярыце працоўную папку"
+    "folderNotTracked": "Абярыце працоўную папку",
+    "editorStateReadFailed": "Не атрымалася прачытаць стан рэдактара",
+    "progressPersistFailed": "Не атрымалася захаваць прагрэс перакладу"
+  },
+  "createNewProject": {
+    "emojiSelectionFailed": "Не атрымалася падабраць эмодзі для праекта",
+    "fileSaveFailed": "Не атрымалася захаваць файл праекта на дыск",
+    "editorStateSaveFailed": "Не атрымалася захаваць стан рэдактара праекта",
+    "cacheUpdateFailed": "Не атрымалася дадаць праект у кэш"
+  },
+  "projectCreationAborted": {
+    "title": "Стварэнне праекта было спынена"
   },
   "promptTemplate": {
     "alreadyExists": "Шаблон запыту [{{title}}] ужо існуе",
@@ -111,6 +124,9 @@
   "fileProcessingFailed": {
     "title": "Немагчыма апрацаваць файл"
   },
+  "audioExtractionFailed": {
+    "title": "Немагчыма апрацаваць аўдыё. Файл пашкоджаны, або карыстае невядомы навуцы кодэк аўдыё"
+  },
   "autoMergeFailed": {
     "title": "Памылка аўта-аб’яднання"
   },
@@ -120,9 +136,17 @@
   "videoFileMissing": {
     "title": "Відэа было выдалена"
   },
-  "videoProcessingFailed": {
-    "title": "Немагчыма апрацаваць відэа",
-    "message": "Непрайгравальнае відэа. Несумяшчальны аўдыё- ці відэа- кодэк"
+  "projectStateReadFailed": {
+    "title": "Не атрымалася прачытаць стан праекта"
+  },
+  "videoFileCheckFailed": {
+    "title": "Не атрымалася праверыць відэафайл"
+  },
+  "waveformExtractionFailed": {
+    "title": "Не атрымалася стварыць хвалевую форму аўдыё"
+  },
+  "thumbnailGenerationFailed": {
+    "title": "Не атрымалася стварыць здымак відэа"
   },
   "projectLoadFailed": {
     "title": "Памылка ладавання праекта"
@@ -163,6 +187,10 @@
   "lineTooShortToSplit": {
     "title": "Надта кароткі радок",
     "message": "Не атрымалася разрэзаць"
+  },
+  "entryTimeShiftBlocked": {
+    "title": "Немагчыма пасунуць радок",
+    "message": "Радкі не могуць перакрывацца ў часе"
   },
   "cleanupFailed": {
     "title": "Памылка ачысткі"
