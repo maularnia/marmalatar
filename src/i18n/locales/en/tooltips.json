@@ -44,5 +44,9 @@
     "areaTitle": "Area {{slot}}",
     "hintPrefix": "Hit",
     "hintSuffix": "to force-shift\nkeyboard focus here"
+  },
+  "editorTable": {
+    "navigationHintPrefix": "Use",
+    "navigationHintPostfix": "to navigate columns and lines"
   }
 }

@@ -44,5 +44,9 @@
     "areaTitle": "Зона {{slot}}",
     "hintPrefix": "Націсніце",
     "hintSuffix": "каб прымусова перавесці\nсюды фокус клавіятуры"
+  },
+  "editorTable": {
+    "navigationHintPrefix": "",
+    "navigationHintPostfix": "каб скакаць па слупках і радках"
   }
 }
