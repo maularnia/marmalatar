@@ -38,7 +38,8 @@
     "adjustTime": "Adjust time:",
     "orMouseDrag": "or mouse drag",
     "focusThisLine": "Focus this line",
-    "orDragToAdjustTiming": "or drag to adjust timing"
+    "orDragToAdjustTiming": "or drag to adjust timing",
+    "freeSpaceHint": "Use mouse scroll or drag free space to navigate timeline"
   },
   "keystrokeZone": {
     "areaTitle": "Area {{slot}}",

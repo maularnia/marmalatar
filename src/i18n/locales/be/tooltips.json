@@ -38,7 +38,8 @@
     "adjustTime": "Карэкцыя часу:",
     "orMouseDrag": "або пацягніце",
     "focusThisLine": "Пстрыкніце каб абраць",
-    "orDragToAdjustTiming": "або пацягніце каб пасунуць"
+    "orDragToAdjustTiming": "або пацягніце каб пасунуць",
+    "freeSpaceHint": "Пракруціце кола мышы або пацягніце вольную прастору, каб рухацца па шкале часу"
   },
   "keystrokeZone": {
     "areaTitle": "Зона {{slot}}",
