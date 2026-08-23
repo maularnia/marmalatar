@@ -99,14 +99,18 @@ jobs:
       - name: Notify distributor of new release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_NOTES: ${{ github.event.release.body }}
+          RELEASE_PUBLISHED_AT: ${{ github.event.release.published_at }}
         run: |
-          ASSETS=$(gh release view "${{ github.event.release.tag_name }}" \
-            --repo "${{ github.repository }}" \
+          ASSETS=$(gh release view "$RELEASE_TAG" \
+            --repo "$RELEASE_REPO" \
             --json assets --jq '[.assets[] | {name: .name, url: .url}]')
           PAYLOAD=$(jq -n \
-            --arg version "${{ github.event.release.tag_name }}" \
-            --arg notes "${{ github.event.release.body }}" \
-            --arg publishedAt "${{ github.event.release.published_at }}" \
+            --arg version "$RELEASE_TAG" \
+            --arg notes "$RELEASE_NOTES" \
+            --arg publishedAt "$RELEASE_PUBLISHED_AT" \
             --argjson assets "$ASSETS" \
             '{version: $version, notes: $notes, publishedAt: $publishedAt, assets: $assets}')
           curl -sf -X POST "${{ secrets.DISTRIBUTOR_API_URL }}/releases" \
