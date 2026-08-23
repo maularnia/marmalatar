@@ -83,5 +83,10 @@
     "selectButton": "Абраць папку",
     "currentFolder": "Рабочая папка: {{folder}}",
     "rescanButton": "Сканаваць нанова"
+  },
+  "mediaCache": {
+    "title": "Кэш медыя",
+    "subtext": "Кэшаваныя аўдыяфайлы і мініяцюры, створаныя з вашых відэа",
+    "cleanButton": "Ачысціць кэш"
   }
 }

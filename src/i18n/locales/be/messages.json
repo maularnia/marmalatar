@@ -85,5 +85,8 @@
   },
   "promptTemplate": {
     "savingLabel": "Захаванне шаблону запыту [{{title}}]"
+  },
+  "cacheCleanupSuccess": {
+    "title": "Кэш быў ачышчаны"
   }
 }

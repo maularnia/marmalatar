@@ -85,5 +85,8 @@
   },
   "promptTemplate": {
     "savingLabel": "Zachavańnie šabłonu zapytu [{{title}}]"
+  },
+  "cacheCleanupSuccess": {
+    "title": "Keš byŭ ačyščany"
   }
 }

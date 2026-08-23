@@ -83,5 +83,10 @@
     "selectButton": "Select folder",
     "currentFolder": "Current folder: {{folder}}",
     "rescanButton": "Rescan"
+  },
+  "mediaCache": {
+    "title": "Media cache",
+    "subtext": "Cached audio and thumbnail files generated from your videos",
+    "cleanButton": "Clean cache"
   }
 }

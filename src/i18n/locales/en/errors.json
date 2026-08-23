@@ -197,5 +197,9 @@
   },
   "copyAllFailed": {
     "title": "Copy all failed"
+  },
+  "cacheCleanupFailed": {
+    "title": "Cache cleaning error",
+    "message": "Unable to clean up the cache"
   }
 }
