@@ -86,7 +86,7 @@
   },
   "mediaCache": {
     "title": "Media cache",
-    "subtext": "Cached audio and thumbnail files generated from your videos",
+    "subtext": "Auto-clean .mrmlcache folder",
     "cleanButton": "Clean cache"
   }
 }

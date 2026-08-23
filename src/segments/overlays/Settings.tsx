@@ -23,10 +23,12 @@ export default function SettingsOverlay() {
           <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
           <FormsRow $columns={2}>
             <SelectFolder />
-            <SelectLanguage />
+            <CleanCache />
           </FormsRow>
           <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-          <CleanCache />
+          <FormsRow $columns={2}>
+            <SelectLanguage />
+          </FormsRow>
         </FormsContent>
       </FormRoot>
     </Overlay>
