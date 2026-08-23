@@ -57,6 +57,9 @@ export interface ElectronAPI {
   extractWaveformPeaks: (filePath: string) => Promise<number[]>;
   generateThumbnail: (filePath: string) => Promise<string>;
   extractOrConvertAudio: (filePath: string) => Promise<string>;
+  // Resolves in-use video paths from the tracked folder's .mrml files + projectStates itself --
+  // no arguments needed, see electron/modules/mediaIpc.ts's cleanupOrphanedMediaCache.
+  cleanupMediaCache: () => Promise<void>;
   lmStudioPing: (host: string) => Promise<boolean>;
   lmStudioListModels: (host: string) => Promise<Array<{ value: string; label: string }>>;
   lmStudioTranslate: (params: LMStudioTranslationParams) => Promise<LMStudioTranslationResult>;

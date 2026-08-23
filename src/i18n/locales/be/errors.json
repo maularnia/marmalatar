@@ -197,5 +197,9 @@
   },
   "copyAllFailed": {
     "title": "Памылка капіявання"
+  },
+  "cacheCleanupFailed": {
+    "title": "Памылка ачысткі кэша",
+    "message": "Не атрымалася ачысціць кэш"
   }
 }

@@ -57,6 +57,7 @@ const api: ElectronAPI = {
   extractWaveformPeaks: invoke<[string]>('extract-waveform-peaks'),
   generateThumbnail: invoke<[string]>('generate-thumbnail'),
   extractOrConvertAudio: invoke<[string]>('extract-or-convert-audio'),
+  cleanupMediaCache: invoke('cleanup-media-cache'),
   lmStudioPing: invoke<[string]>('lmstudio-ping'),
   lmStudioListModels: invoke<[string]>('lmstudio-list-models'),
   lmStudioTranslate: invoke<[LMStudioTranslationParams]>('lmstudio-translate'),

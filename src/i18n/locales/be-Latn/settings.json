@@ -83,5 +83,10 @@
     "selectButton": "Abrać papku",
     "currentFolder": "Biahučaja papka: {{folder}}",
     "rescanButton": "Skanavać nanova"
+  },
+  "mediaCache": {
+    "title": "Keš miedyja",
+    "subtext": "Aŭta-ačystka papki .mrmlcache",
+    "cleanButton": "Ačyscić keš"
   }
 }

@@ -83,5 +83,10 @@
     "selectButton": "Select folder",
     "currentFolder": "Current folder: {{folder}}",
     "rescanButton": "Rescan"
+  },
+  "mediaCache": {
+    "title": "Media cache",
+    "subtext": "Auto-clean .mrmlcache folder",
+    "cleanButton": "Clean cache"
   }
 }

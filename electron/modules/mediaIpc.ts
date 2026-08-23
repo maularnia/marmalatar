@@ -1,9 +1,13 @@
 import { app, ipcMain, type IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import crypto from 'crypto';
 import { spawn } from 'child_process';
 import type Store from 'electron-store';
+import { createNamespacedRecordStore } from '../utils/namespacedRecordStore';
+import { listFilesByExtension } from '../utils/listFilesByExtension';
+import { runWithFallback } from '../utils/runWithFallback';
+import { getFileCacheKey } from '../utils/fileCacheKey';
+import type { ProjectState } from '../../bridge/definitions/projectState';
 
 // Forge's Vite plugin strips node_modules from the packaged app, so ffmpeg-static's
 // JS (and its own __dirname-based path lookup) isn't available at runtime. The binary
@@ -13,12 +17,7 @@ const ffmpegPath = app.isPackaged
   ? path.join(process.resourcesPath, 'ffmpeg-static', ffmpegBinaryName)
   : path.join(__dirname, '../../node_modules/ffmpeg-static', ffmpegBinaryName);
 
-// Derives a cache key from path + size + mtime, avoiding a full file read/hash.
-// Trade-off: a file replaced in-place with identical path/size/mtime would hit a stale cache.
-function getFileCacheKey(filePath: string): string {
-  const stat = fs.statSync(filePath);
-  return crypto.createHash('sha1').update(`${filePath}:${stat.size}:${stat.mtimeMs}`).digest('hex');
-}
+const MEDIA_CACHE_SUBDIRS = ['audio', 'previews', 'waveforms'] as const;
 
 function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -89,6 +88,43 @@ function getAudioCodecViaFfmpeg(filePath: string): Promise<string | null> {
     });
     proc.on('error', () => resolve(null));
   });
+}
+
+function readProjectId(mrmlFilePath: string): string | null {
+  return runWithFallback(() => {
+    const raw = JSON.parse(fs.readFileSync(mrmlFilePath, 'utf8')) as {
+      project?: { projectId?: string };
+    };
+    return raw.project?.projectId ?? null;
+  }, null);
+}
+
+// Deletes cached audio/preview/waveform files whose source video isn't referenced by any
+// project's editor state -- resolves projectId -> videoPath entirely from disk/electron-store
+// (not the renderer) so it's correct even if the renderer's in-memory project list is stale.
+function cleanupOrphanedMediaCache(appStore: Store, trackedFolder: string): void {
+  const projectStateStore = createNamespacedRecordStore<ProjectState>(appStore, 'projectStates');
+  const inUseVideoPaths = listFilesByExtension(trackedFolder, '.mrml')
+    .map(readProjectId)
+    .filter((id): id is string => id !== null)
+    .map((id) => projectStateStore.get(id)?.videoPath)
+    .filter((p): p is string => Boolean(p));
+
+  const keepKeys = new Set<string>();
+  for (const videoPath of inUseVideoPaths) {
+    const key = runWithFallback(() => getFileCacheKey(videoPath), null);
+    if (key) keepKeys.add(key);
+  }
+
+  for (const subdir of MEDIA_CACHE_SUBDIRS) {
+    const cacheDir = path.join(trackedFolder, '.mrmlcache', subdir);
+    const fileNames = runWithFallback(() => fs.readdirSync(cacheDir), []);
+    for (const fileName of fileNames) {
+      if (!keepKeys.has(path.parse(fileName).name)) {
+        fs.unlinkSync(path.join(cacheDir, fileName));
+      }
+    }
+  }
 }
 
 export function registerMediaIpc(appStore: Store): void {
@@ -312,5 +348,12 @@ export function registerMediaIpc(appStore: Store): void {
       });
       proc.on('error', reject);
     });
+  });
+
+  // Prunes orphaned cache entries -- see cleanupOrphanedMediaCache above for the resolution logic.
+  ipcMain.handle('cleanup-media-cache', () => {
+    const trackedFolder = appStore.get('trackedFolder') as string | undefined;
+    if (!trackedFolder) return;
+    cleanupOrphanedMediaCache(appStore, trackedFolder);
   });
 }

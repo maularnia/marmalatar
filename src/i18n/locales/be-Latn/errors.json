@@ -197,5 +197,9 @@
   },
   "copyAllFailed": {
     "title": "Pamyłka kapijavańnia"
+  },
+  "cacheCleanupFailed": {
+    "title": "Pamyłka ačystki keša",
+    "message": "Nie atrymałasia ačyscić keš"
   }
 }

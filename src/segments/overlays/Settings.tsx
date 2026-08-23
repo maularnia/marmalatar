@@ -1,4 +1,5 @@
 import AiSettings from '@src/partials/AiSettings';
+import CleanCache from '@src/partials/CleanCache';
 import SelectFolder from '@src/partials/SelectFolder';
 import SelectLanguage from '@src/partials/SelectLanguage';
 import Settings from '@src/partials/Settings';
@@ -22,6 +23,10 @@ export default function SettingsOverlay() {
           <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
           <FormsRow $columns={2}>
             <SelectFolder />
+            <CleanCache />
+          </FormsRow>
+          <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+          <FormsRow $columns={2}>
             <SelectLanguage />
           </FormsRow>
         </FormsContent>

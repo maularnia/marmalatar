@@ -195,6 +195,20 @@ export function emitProjectLoadedMessage(pushMessage: PushMessage): void {
   });
 }
 
+// CleanCache
+
+export function emitCacheCleanupSuccessMessage(pushMessage: PushMessage): void {
+  pushMessage({ type: TMessageType.MESSAGE, title: t('cacheCleanupSuccess.title') });
+}
+
+export function emitCacheCleanupFailedMessage(pushMessage: PushMessage): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('cacheCleanupFailed.title'),
+    message: tErrors('cacheCleanupFailed.message'),
+  });
+}
+
 // EditorAIActionsProvider
 
 export function emitNoPromptTemplateMessage(pushMessage: PushMessage): void {
