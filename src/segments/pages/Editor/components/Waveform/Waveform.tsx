@@ -2,11 +2,13 @@ import { useEditorActions } from '@providers/EditorActionsProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
+import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
 import { selectCurrentThemeData, selectScreenSize } from '@store/slices/app';
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useRenderCache } from '../../hooks/useRenderCache';
 import WaveformEntry from './WaveformEntry';
@@ -107,6 +109,7 @@ export default function Waveform({
   translationLines,
   onLineTimingChange,
 }: WaveformProps) {
+  const { t } = useTranslation('tooltips');
   const { currentTimeRef, seekVideoToMs } = useVideo();
   const { handleChangeFocusedLine, handleChangeFocusedColumn } = useEditorActions();
   const size = useAppSelector(selectScreenSize);
@@ -396,28 +399,30 @@ export default function Waveform({
       <Entries ref={entriesContainerRef}>
         {translationLines.map((line, lineIndex) => renderWaveformEntry(line, lineIndex))}
       </Entries>
-      <WaveFormViewport
-        ref={waveformViewportRef}
-        onPointerDown={(event) => {
-          if (dragStateRef.current) return;
-          waveformDragRef.current = {
-            startX: event.clientX,
-            startTimeMs: currentTimeRef.current,
-          };
-          (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-        }}
-      >
-        <Cursor ref={cursorRef} />
-        <WaveFormCanvasWrapper ref={contentRef} style={{ width: `${canvasWidth}px` }}>
-          <Canvas
-            ref={canvasRef}
-            width={canvasWidth}
-            style={{
-              height: CSSVar('waveformHeight'),
-            }}
-          />
-        </WaveFormCanvasWrapper>
-      </WaveFormViewport>
+      <Tooltip delay={400} label={<TooltipSimple>{t('waveform.freeSpaceHint')}</TooltipSimple>}>
+        <WaveFormViewport
+          ref={waveformViewportRef}
+          onPointerDown={(event) => {
+            if (dragStateRef.current) return;
+            waveformDragRef.current = {
+              startX: event.clientX,
+              startTimeMs: currentTimeRef.current,
+            };
+            (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+          }}
+        >
+          <Cursor ref={cursorRef} />
+          <WaveFormCanvasWrapper ref={contentRef} style={{ width: `${canvasWidth}px` }}>
+            <Canvas
+              ref={canvasRef}
+              width={canvasWidth}
+              style={{
+                height: CSSVar('waveformHeight'),
+              }}
+            />
+          </WaveFormCanvasWrapper>
+        </WaveFormViewport>
+      </Tooltip>
     </Container>
   );
 }

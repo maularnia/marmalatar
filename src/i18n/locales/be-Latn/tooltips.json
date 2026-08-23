@@ -38,7 +38,8 @@
     "adjustTime": "Karekcyja času:",
     "orMouseDrag": "abo pieraciahnicie myššu",
     "focusThisLine": "Pstryknicie kab abrać",
-    "orDragToAdjustTiming": "abo paciahnicie kab pasunuć"
+    "orDragToAdjustTiming": "abo paciahnicie kab pasunuć",
+    "freeSpaceHint": "Prakrucicie koła myšy abo paciahnicie volnuju prastoru, kab ruchacca pa škalie času"
   },
   "keystrokeZone": {
     "areaTitle": "Zona {{slot}}",
