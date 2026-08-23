@@ -19,7 +19,7 @@ import { parseProjectFile } from './parsers/project';
 import { computeTranslationProgress } from '@utils/translationProgress';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 
-export type { TProjectCacheEntry, TFolderScanCache };
+export type { TProjectCacheEntry, TFolderScanCache, TProjectEditorState };
 export type TPromptTemplateEntry = TPromptTemplateCacheEntry;
 export type TGlossaryFileEntry = TGlossaryCacheEntry;
 
@@ -199,6 +199,11 @@ export async function scanProjectFileHeaders(
       }
     })
   );
+
+  // Best-effort housekeeping side effect of scanning -- not awaited (so it can't slow down the
+  // scan) and not surfaced as a toast (it isn't a user-initiated action).
+  void cleanupMediaCache().catch(() => {});
+
   return results.filter((p): p is TProjectCacheEntry => p !== null);
 }
 
@@ -312,6 +317,12 @@ export async function writeProjectEditorState(
   editorState: TProjectEditorState
 ): Promise<void> {
   await window.electronAPI.setProjectState(projectId, editorState);
+}
+
+// ── Media cache ──────────────────────────────────────────────────────────────
+
+export async function cleanupMediaCache(): Promise<void> {
+  await window.electronAPI.cleanupMediaCache();
 }
 
 // ── Folder-scan cache ───────────────────────────────────────────────────────

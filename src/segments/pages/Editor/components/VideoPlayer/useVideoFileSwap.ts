@@ -33,7 +33,7 @@ export function useVideoFileSwap() {
       };
       video?.addEventListener('loadedmetadata', onLoadedMetadata);
 
-      setVideoFilePath(result.videoPath);
+      setVideoFilePath(result.videoPath, result.audioPath);
       setVideoData(result.previewImage, result.waveformPeaks);
 
       emitVideoUpdatedMessage(pushMessage);

@@ -1,3 +1,5 @@
+import { emitProjectCreationAbortedMessage } from '@src/messages';
+import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useInfoWindow } from '@src/providers/ConfirmationProvider/ConfirmationProvider';
 import { Loader } from '@src/segments/dialogs/Loader';
 import { useAppDispatch, useAppSelector } from '@src/store/hooks';
@@ -21,6 +23,7 @@ export function useSubmitNewProject() {
   const navigate = useNavigate();
   const folder = useAppSelector(selectFolder);
   const { show: showInfo } = useInfoWindow(Loader);
+  const { pushMessage } = useMessageHelmet();
 
   const submitNewProject = useCallback(
     async (params: SubmitNewProjectParams) => {
@@ -30,14 +33,20 @@ export function useSubmitNewProject() {
       const sanitizedFileName = `${sanitizedName}.mrml`;
       const filePath = `${folder}/${sanitizedFileName}`;
 
-      await showInfo(
-        { message: t('submitNewProject.creatingProject'), animate: false },
-        dispatch(createNewProject({ ...params, filePath }))
-      );
-
-      navigate('/workspace');
+      try {
+        await showInfo(
+          { message: t('submitNewProject.creatingProject'), animate: false },
+          dispatch(createNewProject({ ...params, filePath }))
+        );
+        navigate('/workspace');
+      } catch (error) {
+        emitProjectCreationAbortedMessage(
+          pushMessage,
+          error instanceof Error ? error.message : undefined
+        );
+      }
     },
-    [folder, dispatch, navigate, showInfo, t]
+    [folder, dispatch, navigate, showInfo, t, pushMessage]
   );
 
   return { submitNewProject };

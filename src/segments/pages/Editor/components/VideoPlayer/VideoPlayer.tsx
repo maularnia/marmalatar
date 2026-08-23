@@ -93,6 +93,10 @@ const Video = styled.video`
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 100)};
 `;
 
+const Audio = styled.audio`
+  display: none;
+`;
+
 const BottomPanel = styled.div`
   width: 100%;
   position: absolute;
@@ -126,6 +130,7 @@ const Word = styled.div`
 `;
 
 const TIME_UPDATE_INTERVAL_MS = 100;
+const AUDIO_VIDEO_DRIFT_THRESHOLD_S = 0.15;
 
 type VideoPlayerProps = {
   onPlaybackResume?: () => void;
@@ -135,8 +140,14 @@ type VideoPlayerProps = {
 export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: VideoPlayerProps) {
   const { t } = useTranslation('editor');
   const dispatch = useAppDispatch();
-  const { videoElementRef, registerVideoElementRef, setCurrentTimeMs, reportVideoUnplayable } =
-    useVideo();
+  const {
+    videoElementRef,
+    registerVideoElementRef,
+    audioElementRef,
+    registerAudioElementRef,
+    setCurrentTimeMs,
+    reportVideoUnplayable,
+  } = useVideo();
   const lines = useAppSelector(selectLines);
   const activeLineIndex = useAppSelector(selectActiveLineIndex);
   const videoFilePath = useAppSelector(selectVideoFilePath);
@@ -161,7 +172,17 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
     const video = videoElementRef.current;
-    const emitCurrentTime = () => (video ? setCurrentTimeMs(video.currentTime * 1000) : void 0);
+    const emitCurrentTime = () => {
+      if (!video) return;
+      setCurrentTimeMs(video.currentTime * 1000);
+      const audio = audioElementRef.current;
+      if (
+        audio &&
+        Math.abs(audio.currentTime - video.currentTime) > AUDIO_VIDEO_DRIFT_THRESHOLD_S
+      ) {
+        audio.currentTime = video.currentTime;
+      }
+    };
 
     if (!video) {
       return;
@@ -203,6 +224,14 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       reportVideoUnplayable();
     };
 
+    const audio = audioElementRef.current;
+    const handleAudioError = () => {
+      const err = audio?.error;
+      if (!err || err.code === MediaError.MEDIA_ERR_ABORTED) return;
+      if (!audio?.currentSrc) return;
+      reportVideoUnplayable();
+    };
+
     if (!video.paused) {
       startUpdates();
     }
@@ -211,6 +240,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     video.addEventListener('pause', handlePause);
     video.addEventListener('ended', handlePause);
     video.addEventListener('error', handleError);
+    audio?.addEventListener('error', handleAudioError);
 
     return () => {
       stopUpdates();
@@ -218,8 +248,16 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handlePause);
       video.removeEventListener('error', handleError);
+      audio?.removeEventListener('error', handleAudioError);
     };
-  }, [setCurrentTimeMs, videoElementRef, onPlaybackPause, onPlaybackResume, reportVideoUnplayable]);
+  }, [
+    setCurrentTimeMs,
+    videoElementRef,
+    audioElementRef,
+    onPlaybackPause,
+    onPlaybackResume,
+    reportVideoUnplayable,
+  ]);
 
   return (
     <VideoStage className={classNames({ isCollapsed: effectiveCollapsed })} tabIndex={1}>
@@ -301,7 +339,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       </TopBar>
       {videoFilePath ? (
         <VideoPlayerShell $hidden={effectiveCollapsed}>
-          <Video ref={registerVideoElementRef} playsInline />
+          <Video ref={registerVideoElementRef} playsInline muted />
+          <Audio ref={registerAudioElementRef} />
           <BottomPanel>
             <VideoProgressBar />
           </BottomPanel>

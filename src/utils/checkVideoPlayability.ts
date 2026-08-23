@@ -10,8 +10,31 @@ type VideoElementWithLegacyProps = HTMLVideoElement & {
   audioTracks?: { length: number };
 };
 
-export function checkVideoPlayability(filePath: string): Promise<boolean> {
-  return new Promise((resolve) => {
+// Container/video-decode check only -- resolves on loadedmetadata, rejects on a decode/container
+// error. Does not touch audio at all; see checkAudioPlayability for that.
+export function checkVideoDecodable(filePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement('video');
+    el.preload = 'metadata';
+
+    el.onerror = () => {
+      el.src = '';
+      reject(new Error('Video is not decodable'));
+    };
+    el.onloadedmetadata = () => {
+      el.src = '';
+      resolve();
+    };
+
+    el.src = pathToFileUrl(filePath);
+  });
+}
+
+// Audio-decode-byte-count check, generic over any media file -- works against a video file's
+// embedded audio track (original-file check) or a bare audio file (post-conversion recheck).
+// Resolves if audio decodes, rejects otherwise.
+export function checkAudioPlayability(filePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
     const el = document.createElement('video') as VideoElementWithLegacyProps;
     el.preload = 'auto';
     // volume = 0 (rather than muted) keeps Chromium's audio decode pipeline active
@@ -22,14 +45,18 @@ export function checkVideoPlayability(filePath: string): Promise<boolean> {
     let pollInterval: ReturnType<typeof setInterval> | undefined;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    const finish = (result: boolean) => {
+    const finish = (playable: boolean) => {
       if (settled) return;
       settled = true;
       if (pollInterval !== undefined) clearInterval(pollInterval);
       if (timeoutId !== undefined) clearTimeout(timeoutId);
       el.pause();
       el.src = '';
-      resolve(result);
+      if (playable) {
+        resolve();
+      } else {
+        reject(new Error('Audio is not playable'));
+      }
     };
 
     el.onerror = () => finish(false);

@@ -18,6 +18,16 @@ export function emitVideoPlaybackErrorMessage(pushMessage: PushMessage): void {
   });
 }
 
+// VideoProvider / VideoFileSelect / VideoSelectDialog / useProjectLoader
+
+export function emitAudioExtractionFailedMessage(pushMessage: PushMessage, message?: string): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('audioExtractionFailed.title'),
+    message,
+  });
+}
+
 // useAddToGlossaryDialog
 
 export function emitGlossaryPairAddedMessage(
@@ -106,6 +116,19 @@ export function emitVideoPathRemovalFailedMessage(pushMessage: PushMessage, mess
   });
 }
 
+// useSubmitNewProject
+
+export function emitProjectCreationAbortedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('projectCreationAborted.title'),
+    message,
+  });
+}
+
 // useProjectLoader
 
 export function emitVideoFileMissingMessage(pushMessage: PushMessage): void {
@@ -115,11 +138,44 @@ export function emitVideoFileMissingMessage(pushMessage: PushMessage): void {
   });
 }
 
-export function emitVideoProcessingFailedMessage(pushMessage: PushMessage): void {
+export function emitProjectStateReadFailedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
   pushMessage({
     type: TMessageType.ERROR,
-    title: tErrors('videoProcessingFailed.title'),
-    message: tErrors('videoProcessingFailed.message'),
+    title: tErrors('projectStateReadFailed.title'),
+    message,
+  });
+}
+
+export function emitVideoFileCheckFailedMessage(pushMessage: PushMessage, message?: string): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('videoFileCheckFailed.title'),
+    message,
+  });
+}
+
+export function emitWaveformExtractionFailedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('waveformExtractionFailed.title'),
+    message,
+  });
+}
+
+export function emitThumbnailGenerationFailedMessage(
+  pushMessage: PushMessage,
+  message?: string
+): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('thumbnailGenerationFailed.title'),
+    message,
   });
 }
 
@@ -136,6 +192,20 @@ export function emitProjectLoadedMessage(pushMessage: PushMessage): void {
     type: TMessageType.MESSAGE,
     title: t('projectLoaded.title'),
     message: t('projectLoaded.message'),
+  });
+}
+
+// CleanCache
+
+export function emitCacheCleanupSuccessMessage(pushMessage: PushMessage): void {
+  pushMessage({ type: TMessageType.MESSAGE, title: t('cacheCleanupSuccess.title') });
+}
+
+export function emitCacheCleanupFailedMessage(pushMessage: PushMessage): void {
+  pushMessage({
+    type: TMessageType.ERROR,
+    title: tErrors('cacheCleanupFailed.title'),
+    message: tErrors('cacheCleanupFailed.message'),
   });
 }
 
@@ -299,6 +369,14 @@ export function emitLineTooShortToSplitMessage(pushMessage: PushMessage): void {
     type: TMessageType.ERROR,
     title: tErrors('lineTooShortToSplit.title'),
     message: tErrors('lineTooShortToSplit.message'),
+  });
+}
+
+export function emitEntryTimeShiftBlockedMessage(pushMessage: PushMessage): void {
+  pushMessage({
+    type: TMessageType.WARNING,
+    title: tErrors('entryTimeShiftBlocked.title'),
+    message: tErrors('entryTimeShiftBlocked.message'),
   });
 }
 

@@ -85,5 +85,8 @@
   },
   "promptTemplate": {
     "savingLabel": "Saving prompt template [{{title}}]"
+  },
+  "cacheCleanupSuccess": {
+    "title": "Cache has been cleaned up"
   }
 }

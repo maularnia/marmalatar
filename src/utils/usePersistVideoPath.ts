@@ -1,6 +1,10 @@
 import { emitVideoPathRemovalFailedMessage, emitVideoPathSaveFailedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import { getProjectEditorState, writeProjectEditorState } from '@src/utils/data/discIO';
+import {
+  cleanupMediaCache,
+  getProjectEditorState,
+  writeProjectEditorState,
+} from '@src/utils/data/discIO';
 import { useCallback } from 'react';
 
 export function usePersistVideoPath() {
@@ -12,6 +16,7 @@ export function usePersistVideoPath() {
       try {
         const current = await getProjectEditorState(projectId);
         await writeProjectEditorState(projectId, { ...current, videoPath });
+        void cleanupMediaCache().catch(() => {});
       } catch (err) {
         emitVideoPathSaveFailedMessage(
           pushMessage,
@@ -27,6 +32,7 @@ export function usePersistVideoPath() {
       try {
         const current = await getProjectEditorState(projectId);
         await writeProjectEditorState(projectId, { ...current, videoPath: null });
+        void cleanupMediaCache().catch(() => {});
       } catch (err) {
         emitVideoPathRemovalFailedMessage(
           pushMessage,

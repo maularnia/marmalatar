@@ -34,11 +34,20 @@
   },
   "waveform": {
     "startTime": "Čas pačatku",
-    "endTime": "Čas zakančennia"
+    "endTime": "Čas zakančennia",
+    "adjustTime": "Karekcyja času:",
+    "orMouseDrag": "abo pieraciahnicie myššu",
+    "focusThisLine": "Pstryknicie kab abrać",
+    "orDragToAdjustTiming": "abo paciahnicie kab pasunuć",
+    "freeSpaceHint": "Prakrucicie koła myšy abo paciahnicie volnuju prastoru, kab ruchacca pa škalie času"
   },
   "keystrokeZone": {
     "areaTitle": "Zona {{slot}}",
     "hintPrefix": "Nacisnicie",
     "hintSuffix": "kab prymusova pieraviesci\nsiudy fokus klavijatury"
+  },
+  "editorTable": {
+    "navigationHintPrefix": "",
+    "navigationHintPostfix": "kab skakać pa słupkach i radkach"
   }
 }

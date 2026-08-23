@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { AppDispatch, RootState } from '@store/root';
 import {
   checkFileExists,
+  cleanupMediaCache,
   deleteProjectFileOnDisk,
   getFolderScanCache,
   getTrackedFolder,
@@ -342,6 +343,7 @@ export const deleteProjectFile =
         .projectId;
       await deleteProjectFileOnDisk(filePath, projectId);
       await dispatch(removeProjectFromCache(filePath));
+      void cleanupMediaCache().catch(() => {});
     } finally {
       dispatch(setIsBusy(false));
     }

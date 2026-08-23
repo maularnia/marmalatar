@@ -1,5 +1,5 @@
-import { EditorKeystrokeContext } from '@providers/EditorKeystrokeProvider';
 import { useEditorActions } from '@providers/EditorActionsProvider';
+import { EditorKeystrokeContext } from '@providers/EditorKeystrokeProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { selectAutoMarkLinesCompleted, selectIsSmallScreen } from '@src/store/slices/app';
 import {
@@ -16,23 +16,34 @@ import {
 } from '@src/store/slices/editor';
 import { selectIsEditMode } from '@src/store/slices/project';
 import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
-import { CSSVar } from '@src/theme/utils';
+import { TShade } from '@src/theme/definitions';
+import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import P from '@src/toolkit/P';
+import { TTagSize } from '@src/toolkit/Tag';
+import { TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import classNames from 'classnames';
 import { CSSProperties, type ReactElement, useContext, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
 import FloatingVideoBlock from './components/FloatingVideoBlock/FloatingVideoBlock';
 import VirtualizedList, {
   VirtualizedListHandle,
 } from './components/VirtualizedList/VirtualizedList';
+import { useLinePanel } from './components/WorkTable/useLinePanel';
 import EditorTableLine from './components/WorkTable/WorkTableLine/EditorTableLine';
 import { useLineFingerprint } from './hooks/useLineFingerprint';
 import { useRenderCache } from './hooks/useRenderCache';
-import { useLinePanel } from './components/WorkTable/useLinePanel';
+
+const PageRoot = styled.div`
+  position: relative;
+  height: 100%;
+  min-height: 0;
+`;
 
 const EditorArea = styled.main`
   position: relative;
@@ -66,11 +77,31 @@ const Root = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
+  padding-bottom: ${CSSVar('size34')};
 `;
+
+const NavigationHint = styled(P)`
+  position: absolute;
+  z-index: 2;
+  bottom: ${CSSVar('size10')};
+  right: ${CSSVar('size10')};
+  padding: 0 ${CSSVar('size10')};
+  display: flex;
+  align-items: center;
+  gap: ${CSSVar('size4')};
+  font-size: ${CSSVar('sizeTextSmall')};
+  color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 60)};
+  pointer-events: none;
+`;
+
+const navigationHintKeystroke = (
+  <TooltipKeystrokeHint keys={['Alt', 'Arrow']} size={TTagSize.SMALL} />
+);
 
 const overscrollAmount = 300;
 const estimatedRowHeight = 100;
 export default function Editor() {
+  const { t } = useTranslation('tooltips');
   const dispatch = useAppDispatch();
   const activeLineIndex = useAppSelector(selectActiveLineIndex);
   const focusedLineIndex = useAppSelector(selectFocusedLineIndex);
@@ -176,31 +207,38 @@ export default function Editor() {
   };
 
   return (
-    <EditorArea
-      tabIndex={1}
-      className={classNames({ isSmallScreen })}
-      ref={scrollContainerRef}
-      style={{ '--current-grid-template': columnTemplate } as CSSProperties}
-    >
-      <Root>
-        <FloatingVideoBlock
-          scrollContainerRef={scrollContainerRef}
-          virtualizedListRef={virtualizedListRef}
-          focusedItemIndex={focusedItemIndex}
-        />
-        <VirtualizedList
-          ref={virtualizedListRef}
-          items={translationLines}
-          scrollContainerRef={scrollContainerRef}
-          getItemFingerprint={(line) => getLineFingerprint(line, translationLines.indexOf(line))}
-          pinnedIndices={pinnedIndices}
-          overscanPx={overscrollAmount}
-          estimatedRowHeight={estimatedRowHeight}
-          renderEpoch={renderEpoch}
-          onRenderEpochEnded={() => dispatch(incrementRenderEpoch())}
-          renderItem={({ item, onMeasure }) => renderVirtualizedLine(item, onMeasure)}
-        />
-      </Root>
-    </EditorArea>
+    <PageRoot>
+      <EditorArea
+        tabIndex={1}
+        className={classNames({ isSmallScreen })}
+        ref={scrollContainerRef}
+        style={{ '--current-grid-template': columnTemplate } as CSSProperties}
+      >
+        <Root>
+          <FloatingVideoBlock
+            scrollContainerRef={scrollContainerRef}
+            virtualizedListRef={virtualizedListRef}
+            focusedItemIndex={focusedItemIndex}
+          />
+          <VirtualizedList
+            ref={virtualizedListRef}
+            items={translationLines}
+            scrollContainerRef={scrollContainerRef}
+            getItemFingerprint={(line) => getLineFingerprint(line, translationLines.indexOf(line))}
+            pinnedIndices={pinnedIndices}
+            overscanPx={overscrollAmount}
+            estimatedRowHeight={estimatedRowHeight}
+            renderEpoch={renderEpoch}
+            onRenderEpochEnded={() => dispatch(incrementRenderEpoch())}
+            renderItem={({ item, onMeasure }) => renderVirtualizedLine(item, onMeasure)}
+          />
+        </Root>
+      </EditorArea>
+      <NavigationHint>
+        {t('editorTable.navigationHintPrefix')}
+        {navigationHintKeystroke}
+        {t('editorTable.navigationHintPostfix')}
+      </NavigationHint>
+    </PageRoot>
   );
 }
