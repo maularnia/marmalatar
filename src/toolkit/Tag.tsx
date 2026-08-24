@@ -26,6 +26,7 @@ export type TagProps = {
   variant?: TTagVariant;
   elementRef?: Ref<HTMLDivElement>;
   onRemove?: (event: MouseEvent<HTMLButtonElement>) => void;
+  removeIcon?: TIcon;
 } & Omit<HTMLProps<HTMLDivElement>, 'color' | 'size'>;
 
 const getVariantCSS = (theme: TTheme, variant: TTagVariant, color: TColor): CSSProperties => {
@@ -161,6 +162,7 @@ export default function Tag({
   variant = TTagVariant.PRIMARY,
   elementRef,
   onRemove,
+  removeIcon = TIcon.CROSS,
   ...rootProps
 }: TagProps) {
   const theme = useAppSelector(selectCurrentThemeData);
@@ -192,7 +194,7 @@ export default function Tag({
             onRemove(event);
           }}
         >
-          <Icon icon={TIcon.CROSS} size={TIconSize.XS} />
+          <Icon icon={removeIcon} size={TIconSize.XS} />
         </TagRemoveButton>
       )}
     </TagBrick>
