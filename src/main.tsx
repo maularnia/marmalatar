@@ -18,8 +18,8 @@ import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import './assets/index.css';
 import './assets/variables.css';
-import MessageHelmet from './providers/MessageHelmetProvider';
 import { MainMenuStateContextProvider } from './providers/MenuStateProvider';
+import MessageHelmet from './providers/MessageHelmetProvider';
 
 // Resolve persisted settings before mounting
 window.electronAPI.getAppSettings().then((raw) => {
@@ -38,23 +38,23 @@ window.electronAPI.getAppSettings().then((raw) => {
       <AppErrorBoundary>
         <MemoryRouter>
           <Provider store={store}>
-            <LocaleProvider>
-              <ThemeProvider>
-                <MainMenuStateContextProvider>
-                  <PopperPortalProvider>
-                    <GlobalKeystrokeDispatcher>
-                      <ConfirmationProvider>
-                        <MessageHelmet>
+            <MessageHelmet>
+              <LocaleProvider>
+                <ThemeProvider>
+                  <MainMenuStateContextProvider>
+                    <PopperPortalProvider>
+                      <GlobalKeystrokeDispatcher>
+                        <ConfirmationProvider>
                           <VideoProvider>
                             <App />
                           </VideoProvider>
-                        </MessageHelmet>
-                      </ConfirmationProvider>
-                    </GlobalKeystrokeDispatcher>
-                  </PopperPortalProvider>
-                </MainMenuStateContextProvider>
-              </ThemeProvider>
-            </LocaleProvider>
+                        </ConfirmationProvider>
+                      </GlobalKeystrokeDispatcher>
+                    </PopperPortalProvider>
+                  </MainMenuStateContextProvider>
+                </ThemeProvider>
+              </LocaleProvider>
+            </MessageHelmet>
           </Provider>
         </MemoryRouter>
       </AppErrorBoundary>
