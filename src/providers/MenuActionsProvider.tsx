@@ -6,6 +6,7 @@ import { useDeleteProjectConfirmation } from '@src/segments/dialogs/deleteProjec
 import { Loader } from '@src/segments/dialogs/Loader';
 import { selectIntegrationIsConfigured } from '@src/store/slices/app';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useProjectLoader } from '@src/utils/useProjectLoader';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
@@ -31,14 +32,7 @@ import {
   savePromptTemplate,
   startNewProject,
 } from '@store/thunks';
-import {
-  createContext,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 type TMenuItemKind =
@@ -469,52 +463,29 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
     // create* kinds: nothing to delete, no-op.
   }, [getFocusedItem, handleDeleteProject, handleDeletePromptTemplate, handleDeleteGlossary]);
 
-  const value = useMemo<TMenuActionsContext>(
-    () => ({
-      renamingKey,
-      isCreatingPromptTemplate,
-      isCreatingGlossary,
-      handleSetIsCreatingPromptTemplate,
-      handleSetIsCreatingGlossary,
-      handleCancelCreatingPromptTemplate,
-      handleCancelCreatingGlossary,
-      handleFocusMenuItem,
-      handleMoveMenuFocus,
-      handleStartRenaming,
-      handleRenameFocusedItem,
-      handleStopRenaming,
-      handleOpenProject,
-      handleOpenPromptTemplate,
-      handleOpenGlossary,
-      handleStartNewProject,
-      handleOpenFocusedItem,
-      handleDeleteProject,
-      handleDeletePromptTemplate,
-      handleDeleteGlossary,
-      handleDeleteFocusedItem,
-    }),
-    [
-      renamingKey,
-      isCreatingPromptTemplate,
-      isCreatingGlossary,
-      handleCancelCreatingPromptTemplate,
-      handleCancelCreatingGlossary,
-      handleFocusMenuItem,
-      handleMoveMenuFocus,
-      handleStartRenaming,
-      handleRenameFocusedItem,
-      handleStopRenaming,
-      handleOpenProject,
-      handleOpenPromptTemplate,
-      handleOpenGlossary,
-      handleStartNewProject,
-      handleOpenFocusedItem,
-      handleDeleteProject,
-      handleDeletePromptTemplate,
-      handleDeleteGlossary,
-      handleDeleteFocusedItem,
-    ]
-  );
+  const value = useMemoizedObject<TMenuActionsContext>({
+    renamingKey,
+    isCreatingPromptTemplate,
+    isCreatingGlossary,
+    handleSetIsCreatingPromptTemplate,
+    handleSetIsCreatingGlossary,
+    handleCancelCreatingPromptTemplate,
+    handleCancelCreatingGlossary,
+    handleFocusMenuItem,
+    handleMoveMenuFocus,
+    handleStartRenaming,
+    handleRenameFocusedItem,
+    handleStopRenaming,
+    handleOpenProject,
+    handleOpenPromptTemplate,
+    handleOpenGlossary,
+    handleStartNewProject,
+    handleOpenFocusedItem,
+    handleDeleteProject,
+    handleDeletePromptTemplate,
+    handleDeleteGlossary,
+    handleDeleteFocusedItem,
+  });
 
   return <MenuActionsContext.Provider value={value}>{children}</MenuActionsContext.Provider>;
 }

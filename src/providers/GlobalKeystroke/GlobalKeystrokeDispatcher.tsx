@@ -1,4 +1,5 @@
 import { providerNoop } from '@utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { setThemeSelection } from '@store/slices/app';
 import { closeOverlays, selectCurrentOverlay } from '@store/slices/overlays';
@@ -19,7 +20,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -271,10 +271,11 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
     dispatch(setThemeSelection(TThemeSelection.SYSTEM));
   });
 
-  const value = useMemo<TGlobalKeystrokeContext>(
-    () => ({ registerZone, unregisterZone, setPaused }),
-    [registerZone, unregisterZone, setPaused]
-  );
+  const value = useMemoizedObject<TGlobalKeystrokeContext>({
+    registerZone,
+    unregisterZone,
+    setPaused,
+  });
 
   return (
     <GlobalKeystrokeContext.Provider value={value}>{children}</GlobalKeystrokeContext.Provider>

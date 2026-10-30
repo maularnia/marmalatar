@@ -1,4 +1,5 @@
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import {
   createContext,
   PropsWithChildren,
@@ -39,9 +40,11 @@ export function MenuRefsProvider({ children }: PropsWithChildren) {
     itemRefs.current = new Map();
   }, []);
 
-  return (
-    <MenuRefsContext.Provider value={{ itemRefs, registerMenuItemRef, resetMenuRefs }}>
-      {children}
-    </MenuRefsContext.Provider>
-  );
+  const value = useMemoizedObject<TMenuRefsContext>({
+    itemRefs,
+    registerMenuItemRef,
+    resetMenuRefs,
+  });
+
+  return <MenuRefsContext.Provider value={value}>{children}</MenuRefsContext.Provider>;
 }

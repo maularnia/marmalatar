@@ -61,10 +61,11 @@ import { selectIsEditMode, setEditorMode } from '@src/store/slices/project';
 import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import { selectCurrentBulkJob } from '@store/slices/aiTranslation';
-import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext } from 'react';
 
 type TEditorActionsContext = {
   handleChangeFocusedColumn: (
@@ -668,58 +669,31 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
     handlePlayPause();
   }, [handlePlayPause, seekToLine]);
 
-  const value = useMemo<TEditorActionsContext>(
-    () => ({
-      handleChangeFocusedColumn,
-      handleFocusEditor,
-      handleChangeFocusedLine,
-      handleSetFocusedLineAndColumn,
-      handleSwitchColumn,
-      handleNavigateLine,
-      handleCopySourceToOutput,
-      handleInsertLine,
-      handleSplitLine,
-      handleMergeLines,
-      handleRemoveLine,
-      handleToggleCompleted,
-      handleAdjustStartTime,
-      handleAdjustEndTime,
-      handleAdjustEntryTime,
-      handleUndoRedo,
-      handleAutoMerge,
-      handleCleanup,
-      handleCopyAllSourceToOutput,
-      handleCompleteAllTranslatedLines,
-      handleToggleEditMode,
-      handleShiftAllLines,
-      handlePlayFocusedLine,
-    }),
-    [
-      handleChangeFocusedColumn,
-      handleFocusEditor,
-      handleChangeFocusedLine,
-      handleSetFocusedLineAndColumn,
-      handleSwitchColumn,
-      handleNavigateLine,
-      handleCopySourceToOutput,
-      handleInsertLine,
-      handleSplitLine,
-      handleMergeLines,
-      handleRemoveLine,
-      handleToggleCompleted,
-      handleAdjustStartTime,
-      handleAdjustEndTime,
-      handleAdjustEntryTime,
-      handleUndoRedo,
-      handleAutoMerge,
-      handleCleanup,
-      handleCopyAllSourceToOutput,
-      handleCompleteAllTranslatedLines,
-      handleToggleEditMode,
-      handleShiftAllLines,
-      handlePlayFocusedLine,
-    ]
-  );
+  const value = useMemoizedObject<TEditorActionsContext>({
+    handleChangeFocusedColumn,
+    handleFocusEditor,
+    handleChangeFocusedLine,
+    handleSetFocusedLineAndColumn,
+    handleSwitchColumn,
+    handleNavigateLine,
+    handleCopySourceToOutput,
+    handleInsertLine,
+    handleSplitLine,
+    handleMergeLines,
+    handleRemoveLine,
+    handleToggleCompleted,
+    handleAdjustStartTime,
+    handleAdjustEndTime,
+    handleAdjustEntryTime,
+    handleUndoRedo,
+    handleAutoMerge,
+    handleCleanup,
+    handleCopyAllSourceToOutput,
+    handleCompleteAllTranslatedLines,
+    handleToggleEditMode,
+    handleShiftAllLines,
+    handlePlayFocusedLine,
+  });
 
   return <EditorActionsContext.Provider value={value}>{children}</EditorActionsContext.Provider>;
 }

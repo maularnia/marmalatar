@@ -2,6 +2,7 @@ import { useAppSelector } from '@store/hooks';
 import { selectScreenSize } from '@src/store/slices/app';
 import { TScreenSize } from '@src/theme/types';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { createContext, PropsWithChildren, useContext, useState } from 'react';
 
 type TMenuStateContext = {
@@ -31,11 +32,12 @@ export function MenuStateProvider({ children }: PropsWithChildren) {
   // A focused item or an in-progress rename/create should keep the menu expanded even after the
   // mouse leaves it -- collapsing out from under a focused/editable row would be disorienting.
   const [staleOpen, setStaleOpen] = useState(false);
-  return (
-    <MenuStateContext.Provider
-      value={{ compact: compact && dynamic && !staleOpen, dynamic, setCompact, setStaleOpen }}
-    >
-      {children}
-    </MenuStateContext.Provider>
-  );
+  const value = useMemoizedObject<TMenuStateContext>({
+    compact: compact && dynamic && !staleOpen,
+    dynamic,
+    setCompact,
+    setStaleOpen,
+  });
+
+  return <MenuStateContext.Provider value={value}>{children}</MenuStateContext.Provider>;
 }

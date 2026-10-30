@@ -2,6 +2,7 @@ import { TGlossaryPairColumn, useGlossaryRefs } from '@providers/GlossaryRefsPro
 import { useDeleteGlossaryEntryConfirmation } from '@src/segments/dialogs/deleteGlossaryEntry/useDeleteGlossaryEntryConfirmation';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import {
@@ -15,7 +16,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
@@ -148,26 +148,15 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
     [confirmDeleteGlossaryEntry, dispatch, focusedColumn, handleFocusPairInput]
   );
 
-  const value = useMemo<TGlossaryActionsContext>(
-    () => ({
-      focusedPairIndex,
-      focusedColumn,
-      handleFocusPairInput,
-      handleSetFocusedPair,
-      handleMovePairFocus,
-      handleInsertPair,
-      handleDeletePair,
-    }),
-    [
-      focusedPairIndex,
-      focusedColumn,
-      handleFocusPairInput,
-      handleSetFocusedPair,
-      handleMovePairFocus,
-      handleInsertPair,
-      handleDeletePair,
-    ]
-  );
+  const value = useMemoizedObject<TGlossaryActionsContext>({
+    focusedPairIndex,
+    focusedColumn,
+    handleFocusPairInput,
+    handleSetFocusedPair,
+    handleMovePairFocus,
+    handleInsertPair,
+    handleDeletePair,
+  });
 
   return (
     <GlossaryActionsContext.Provider value={value}>{children}</GlossaryActionsContext.Provider>

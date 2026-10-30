@@ -28,6 +28,7 @@ import {
 import { selectSelectedPromptTemplateFileName } from '@src/store/slices/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import {
@@ -39,7 +40,7 @@ import { addEntryToGlossary } from '@store/thunks';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize } from '@ui-toolkit/Tag';
-import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 type TEditorAIActionsContext = {
@@ -235,15 +236,12 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
     [handleAddToGlossary, lineInputRefs]
   );
 
-  const value = useMemo<TEditorAIActionsContext>(
-    () => ({
-      handleAiTranslate,
-      handleAiTranslateBulk,
-      handleAddToGlossary,
-      handleAddSelectionToGlossary,
-    }),
-    [handleAiTranslate, handleAiTranslateBulk, handleAddToGlossary, handleAddSelectionToGlossary]
-  );
+  const value = useMemoizedObject<TEditorAIActionsContext>({
+    handleAiTranslate,
+    handleAiTranslateBulk,
+    handleAddToGlossary,
+    handleAddSelectionToGlossary,
+  });
 
   return (
     <EditorAIActionsContext.Provider value={value}>{children}</EditorAIActionsContext.Provider>

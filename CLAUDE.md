@@ -121,7 +121,7 @@ Context shape:
 - One context per file: `createContext` with a full default value, an exported `function useX()` hook, and a named `export function XProvider`. The context object itself is never exported
 - The file name matches the provider name, and context types are named `TXContext`
 - Function defaults use a `const noop = providerNoop('XContext')` from `src/utils/noop.ts`, which throws when called without the provider. A context that holds a value uses the value's empty state (`PopperPortalProvider` defaults to `undefined` until its root mounts)
-- Function props are wrapped in `useCallback`. Actions providers pass the context value through `useMemo`
+- Function props are wrapped in `useCallback`. Context values that are objects go through `useMemoizedObject` from `src/utils`, never an inline `value={{ ... }}`
 
 Reading state:
 - Inside handlers, read the store with `fromCurrentStore(selector)`, not `useAppSelector`. Handlers then stay stable and the provider doesn't re-render on every store change

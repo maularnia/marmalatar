@@ -1,5 +1,6 @@
 import { selectProjectId } from '@src/store/slices/project';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppSelector } from '@store/hooks';
 import {
   createContext,
@@ -73,15 +74,11 @@ export function EditorRefsProvider({ children }: PropsWithChildren) {
     splitCursorRef.current = null;
   }, [projectId]);
 
-  return (
-    <EditorRefsContext.Provider
-      value={{
-        splitCursorRef,
-        lineInputRefs,
-        registerLineInputRef,
-      }}
-    >
-      {children}
-    </EditorRefsContext.Provider>
-  );
+  const value = useMemoizedObject<TEditorRefsContext>({
+    splitCursorRef,
+    lineInputRefs,
+    registerLineInputRef,
+  });
+
+  return <EditorRefsContext.Provider value={value}>{children}</EditorRefsContext.Provider>;
 }

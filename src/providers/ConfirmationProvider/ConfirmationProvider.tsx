@@ -8,6 +8,7 @@ import { TButtonVariant } from '@ui-toolkit/Button/types';
 import FocusTrap from '@ui-toolkit/FocusTrap';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { providerNoop } from '@utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ComponentType,
@@ -17,7 +18,6 @@ import {
   RefObject,
   useCallback,
   useContext,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -225,15 +225,12 @@ export function ConfirmationProvider({ children }: PropsWithChildren) {
     return id;
   }, []);
 
-  const value = useMemo(
-    () => ({
-      registerWindow,
-      destroyWindow,
-      open,
-      close,
-    }),
-    [registerWindow, destroyWindow, open, close]
-  );
+  const value = useMemoizedObject<TConfirmationContext>({
+    registerWindow,
+    destroyWindow,
+    open,
+    close,
+  });
   const rerenderWindows = () => setOpenWindows((prev) => [...prev]);
   return (
     <ConfirmationContext.Provider value={value}>

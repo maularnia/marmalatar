@@ -7,6 +7,7 @@ import {
   setVideoFilePath as setVideoFilePathAction,
 } from '@src/store/slices/project';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { pathToFileUrl } from '@utils/checkVideoPlayability';
 import { useAppDispatch } from '@store/hooks';
@@ -17,7 +18,6 @@ import {
   RefObject,
   useCallback,
   useContext,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -239,45 +239,26 @@ export function VideoProvider({ children }: PropsWithChildren) {
     navigate('/');
   }, [dispatch, navigate, pushMessage]);
 
-  const value = useMemo<TVideoContext>(
-    () => ({
-      videoDurationMs,
-      thumbnail,
-      waveformPeaks,
-      setVideoFilePath,
-      setVideoData,
-      videoElementRef,
-      registerVideoElementRef,
-      audioElementRef,
-      registerAudioElementRef,
-      currentTimeRef,
-      setCurrentTimeMs,
-      seekVideoToMs,
-      resetCurrentTime,
-      handlePlay,
-      handlePause,
-      handlePlayPause,
-      seekToLine,
-      reportVideoUnplayable,
-    }),
-    [
-      videoDurationMs,
-      thumbnail,
-      waveformPeaks,
-      setVideoFilePath,
-      setVideoData,
-      registerVideoElementRef,
-      registerAudioElementRef,
-      setCurrentTimeMs,
-      seekVideoToMs,
-      resetCurrentTime,
-      handlePlay,
-      handlePause,
-      handlePlayPause,
-      seekToLine,
-      reportVideoUnplayable,
-    ]
-  );
+  const value = useMemoizedObject<TVideoContext>({
+    videoDurationMs,
+    thumbnail,
+    waveformPeaks,
+    setVideoFilePath,
+    setVideoData,
+    videoElementRef,
+    registerVideoElementRef,
+    audioElementRef,
+    registerAudioElementRef,
+    currentTimeRef,
+    setCurrentTimeMs,
+    seekVideoToMs,
+    resetCurrentTime,
+    handlePlay,
+    handlePause,
+    handlePlayPause,
+    seekToLine,
+    reportVideoUnplayable,
+  });
 
   return <VideoContext.Provider value={value}>{children}</VideoContext.Provider>;
 }

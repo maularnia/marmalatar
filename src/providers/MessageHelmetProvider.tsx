@@ -6,6 +6,7 @@ import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import classNames from 'classnames';
 import { AnimatePresence, motion } from 'motion/react';
 import {
@@ -119,8 +120,10 @@ export function MessageHelmetProvider({ children }: PropsWithChildren) {
     [dismiss]
   );
 
+  const value = useMemoizedObject<TMessageHelmetContext>({ pushMessage });
+
   return (
-    <MessageHelmetContext.Provider value={{ pushMessage }}>
+    <MessageHelmetContext.Provider value={value}>
       <Overlay>
         <AnimatePresence>
           {messages.map((item) => (

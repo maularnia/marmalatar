@@ -1,6 +1,7 @@
 import { selectCurrentGlossary } from '@store/slices/aiPromptEditor';
 import { useAppSelector } from '@store/hooks';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import {
   createContext,
   PropsWithChildren,
@@ -66,14 +67,10 @@ export function GlossaryRefsProvider({ children }: PropsWithChildren) {
     []
   );
 
-  return (
-    <GlossaryRefsContext.Provider
-      value={{
-        pairInputRefs,
-        registerGlossaryPairInputRef,
-      }}
-    >
-      {children}
-    </GlossaryRefsContext.Provider>
-  );
+  const value = useMemoizedObject<TGlossaryRefsContext>({
+    pairInputRefs,
+    registerGlossaryPairInputRef,
+  });
+
+  return <GlossaryRefsContext.Provider value={value}>{children}</GlossaryRefsContext.Provider>;
 }
