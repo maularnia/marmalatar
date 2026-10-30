@@ -23,7 +23,7 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-type VideoContextType = {
+type TVideoContext = {
   videoDurationMs: number | null;
   thumbnail: string | null;
   waveformPeaks: number[];
@@ -46,7 +46,7 @@ type VideoContextType = {
 
 const noop = providerNoop('VideoContext');
 
-const VideoContext = createContext<VideoContextType>({
+const VideoContext = createContext<TVideoContext>({
   videoDurationMs: null,
   thumbnail: null,
   waveformPeaks: [],
@@ -67,7 +67,7 @@ const VideoContext = createContext<VideoContextType>({
   reportVideoUnplayable: noop,
 });
 
-export function useVideo(): VideoContextType {
+export function useVideo(): TVideoContext {
   return useContext(VideoContext);
 }
 
@@ -84,7 +84,7 @@ function loadVideoDuration(url: string): Promise<number> {
   });
 }
 
-export default function VideoProvider({ children }: PropsWithChildren) {
+export function VideoProvider({ children }: PropsWithChildren) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { pushMessage } = useMessageHelmet();
@@ -239,7 +239,7 @@ export default function VideoProvider({ children }: PropsWithChildren) {
     navigate('/');
   }, [dispatch, navigate, pushMessage]);
 
-  const value = useMemo<VideoContextType>(
+  const value = useMemo<TVideoContext>(
     () => ({
       videoDurationMs,
       thumbnail,

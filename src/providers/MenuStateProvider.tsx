@@ -1,27 +1,31 @@
+import { useAppSelector } from '@store/hooks';
 import { selectScreenSize } from '@src/store/slices/app';
 import { TScreenSize } from '@src/theme/types';
 import { providerNoop } from '@src/utils/noop';
 import { createContext, PropsWithChildren, useContext, useState } from 'react';
-import { useSelector } from 'react-redux';
 
-type MenuStateContextType = {
+type TMenuStateContext = {
   dynamic: boolean;
   compact: boolean;
   setCompact: (compact: boolean) => void;
   setStaleOpen: (staleOpen: boolean) => void;
 };
 
-const defaultState: MenuStateContextType = {
+const noop = providerNoop('MenuStateContext');
+
+const MenuStateContext = createContext<TMenuStateContext>({
   dynamic: false,
   compact: false,
-  setCompact: providerNoop('Menu State'),
-  setStaleOpen: providerNoop('Menu State'),
-};
+  setCompact: noop,
+  setStaleOpen: noop,
+});
 
-const MenuStateContext = createContext(defaultState);
+export function useMenuState(): TMenuStateContext {
+  return useContext(MenuStateContext);
+}
 
-export const MainMenuStateContextProvider = ({ children }: PropsWithChildren) => {
-  const screenSize = useSelector(selectScreenSize);
+export function MenuStateProvider({ children }: PropsWithChildren) {
+  const screenSize = useAppSelector(selectScreenSize);
   const dynamic = screenSize == TScreenSize.MEDIUM || screenSize == TScreenSize.SMALL;
   const [compact, setCompact] = useState(true); // true initially if dynamic
   // A focused item or an in-progress rename/create should keep the menu expanded even after the
@@ -34,8 +38,4 @@ export const MainMenuStateContextProvider = ({ children }: PropsWithChildren) =>
       {children}
     </MenuStateContext.Provider>
   );
-};
-
-export const useMainMenuState = (): MenuStateContextType => {
-  return useContext(MenuStateContext);
-};
+}

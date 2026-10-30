@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState } from 'react';
+import { createContext, PropsWithChildren, useContext, useState } from 'react';
 import styled from 'styled-components';
 
 const OverlaysRoot = styled.div`
@@ -15,12 +15,16 @@ const OverlaysRoot = styled.div`
   }
 `;
 
-type PopperPortalContextType = HTMLDivElement | undefined;
+type TPopperPortalContext = HTMLDivElement | undefined;
 
-const PopperPortalContext = React.createContext<PopperPortalContextType>(undefined);
-export const usePopperPortal = () => React.useContext(PopperPortalContext);
+// Undefined until the overlays root has mounted -- consumers wait for it before portaling.
+const PopperPortalContext = createContext<TPopperPortalContext>(undefined);
 
-export default function PopperPortalProvider({ children }: PropsWithChildren) {
+export function usePopperPortal(): TPopperPortalContext {
+  return useContext(PopperPortalContext);
+}
+
+export function PopperPortalProvider({ children }: PropsWithChildren) {
   const [value, setValue] = useState<HTMLDivElement>();
   return (
     <>

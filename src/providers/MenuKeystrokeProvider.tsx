@@ -7,7 +7,7 @@ import {
 } from 'react-keyhub';
 import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { useMenuActions } from '@providers/MenuActionsProvider';
-import { useMainMenuState } from '@providers/MenuStateProvider';
+import { useMenuState } from '@providers/MenuStateProvider';
 import { PropsWithChildren, useEffect, useState } from 'react';
 
 const myShortcuts = {
@@ -63,7 +63,7 @@ const myShortcuts = {
   },
 } satisfies ShortcutSettings;
 
-const useAppMenuKeyStroke = (
+const useAppMenuKeystroke = (
   keystroke: keyof typeof myShortcuts,
   action: (event: KeyboardEvent) => void
 ) => useShortcut(keystroke, action);
@@ -80,24 +80,24 @@ function MenuShortcuts() {
     handleOpenFocusedItem,
   } = useMenuActions();
 
-  useAppMenuKeyStroke('previousMenuItem', () => handleMoveMenuFocus('up'));
-  useAppMenuKeyStroke('nextMenuItem', () => handleMoveMenuFocus('down'));
+  useAppMenuKeystroke('previousMenuItem', () => handleMoveMenuFocus('up'));
+  useAppMenuKeystroke('nextMenuItem', () => handleMoveMenuFocus('down'));
 
-  useAppMenuKeyStroke('renameFocusedItem', () => handleRenameFocusedItem());
+  useAppMenuKeystroke('renameFocusedItem', () => handleRenameFocusedItem());
 
-  useAppMenuKeyStroke('deleteFocusedItemDelete', (event: KeyboardEvent) => {
+  useAppMenuKeystroke('deleteFocusedItemDelete', (event: KeyboardEvent) => {
     event.preventDefault();
     handleDeleteFocusedItem();
   });
 
   // ignoreInputFields:false means this shortcut would otherwise fire in parallel with a rename
   // input's own Enter/Space handling -- handleOpenFocusedItem itself no-ops while renaming.
-  useAppMenuKeyStroke('openFocusedItem', () => handleOpenFocusedItem());
+  useAppMenuKeystroke('openFocusedItem', () => handleOpenFocusedItem());
 
   return null;
 }
 
-export default function MenuKeystrokeProvider({ children }: PropsWithChildren) {
+export function MenuKeystrokeProvider({ children }: PropsWithChildren) {
   return <MenuKeystrokeBody>{children}</MenuKeystrokeBody>;
 }
 
@@ -108,7 +108,7 @@ export default function MenuKeystrokeProvider({ children }: PropsWithChildren) {
 // need shortcut context, unlike <MenuShortcuts/> below.
 function MenuKeystrokeBody({ children }: PropsWithChildren) {
   const { renamingKey, isCreatingPromptTemplate, isCreatingGlossary } = useMenuActions();
-  const { setStaleOpen } = useMainMenuState();
+  const { setStaleOpen } = useMenuState();
 
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const staleOpen =

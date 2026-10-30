@@ -22,7 +22,7 @@ const getCurrentMatcher = (): [MediaQueryList, TScreenSize] => {
   return [small, TScreenSize.SMALL];
 };
 
-export default function ThemeProvider({ children }: PropsWithChildren) {
+export function ThemeProvider({ children }: PropsWithChildren) {
   const dispatch = useAppDispatch();
   const selection = useAppSelector(selectThemeSelection);
   const resolvedThemeName = useAppSelector(selectResolvedThemeName);

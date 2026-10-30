@@ -1,7 +1,7 @@
 import { memo, useLayoutEffect, useRef } from 'react';
 import styled from 'styled-components';
 
-type WaveformTileProps = {
+type TWaveformTileProps = {
   left: number;
   width: number;
   peaks: number[];
@@ -18,7 +18,7 @@ const Canvas = styled.canvas`
   height: 100%;
 `;
 
-function WaveformTile({ left, width, peaks, barWidth, color }: WaveformTileProps) {
+function WaveformTile({ left, width, peaks, barWidth, color }: TWaveformTileProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Layout effect so a freshly mounted tile is drawn before it's painted empty

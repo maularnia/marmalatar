@@ -1,6 +1,6 @@
 import { useGlobalKeystrokeRegistry } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { TKeystrokeSlot } from '@providers/GlobalKeystroke/types';
-import ScopedKeyHubProvider from '@providers/ScopedKeyHubProvider';
+import { ScopedKeyHubProvider } from '@providers/ScopedKeyHubProvider';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';

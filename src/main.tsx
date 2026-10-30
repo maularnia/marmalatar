@@ -1,11 +1,11 @@
 import { ConfirmationProvider } from '@providers/ConfirmationProvider/ConfirmationProvider';
-import GlobalKeystrokeDispatcher from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
-import PopperPortalProvider from '@providers/PopperPortalProvider';
-import VideoProvider from '@providers/VideoProvider';
+import { GlobalKeystrokeDispatcher } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
+import { PopperPortalProvider } from '@providers/PopperPortalProvider';
+import { VideoProvider } from '@providers/VideoProvider';
 import i18n from '@src/i18n';
 import AppErrorBoundary from '@src/layout/components/AppErrorBoundary';
-import LocaleProvider from '@src/providers/LocaleProvider';
-import ThemeProvider from '@src/providers/ThemeProvider';
+import { LocaleProvider } from '@src/providers/LocaleProvider';
+import { ThemeProvider } from '@src/providers/ThemeProvider';
 import { hydrateAppSettings } from '@src/store/slices/app';
 import { parseAppSettings } from '@src/utils/appSettingsFile';
 import { initializeAiIntegration } from '@store/slices/aiTranslation';
@@ -18,8 +18,8 @@ import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import './assets/index.css';
 import './assets/variables.css';
-import { MainMenuStateContextProvider } from './providers/MenuStateProvider';
-import MessageHelmet from './providers/MessageHelmetProvider';
+import { MenuStateProvider } from './providers/MenuStateProvider';
+import { MessageHelmetProvider } from './providers/MessageHelmetProvider';
 
 // Resolve persisted settings before mounting
 window.electronAPI.getAppSettings().then((raw) => {
@@ -38,10 +38,10 @@ window.electronAPI.getAppSettings().then((raw) => {
       <AppErrorBoundary>
         <MemoryRouter>
           <Provider store={store}>
-            <MessageHelmet>
+            <MessageHelmetProvider>
               <LocaleProvider>
                 <ThemeProvider>
-                  <MainMenuStateContextProvider>
+                  <MenuStateProvider>
                     <PopperPortalProvider>
                       <GlobalKeystrokeDispatcher>
                         <ConfirmationProvider>
@@ -51,10 +51,10 @@ window.electronAPI.getAppSettings().then((raw) => {
                         </ConfirmationProvider>
                       </GlobalKeystrokeDispatcher>
                     </PopperPortalProvider>
-                  </MainMenuStateContextProvider>
+                  </MenuStateProvider>
                 </ThemeProvider>
               </LocaleProvider>
-            </MessageHelmet>
+            </MessageHelmetProvider>
           </Provider>
         </MemoryRouter>
       </AppErrorBoundary>

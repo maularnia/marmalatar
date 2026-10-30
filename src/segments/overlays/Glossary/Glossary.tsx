@@ -1,5 +1,5 @@
 import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
-import GlossaryKeyStrokeProvider from '@providers/GlossaryKeyStrokeProvider';
+import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
 import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
 import { Loader } from '@src/segments/dialogs/Loader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
@@ -87,7 +87,7 @@ export default function GlossaryOverlay() {
 
   return (
     <Overlay onClose={() => void handleClose()}>
-      <GlossaryKeyStrokeProvider>
+      <GlossaryKeystrokeProvider>
         <FormsContent>
           <FormsRow>
             <FormsSection>
@@ -153,7 +153,7 @@ export default function GlossaryOverlay() {
             </FormsSection>
           </FormsRow>
         </FormsContent>
-      </GlossaryKeyStrokeProvider>
+      </GlossaryKeystrokeProvider>
     </Overlay>
   );
 }

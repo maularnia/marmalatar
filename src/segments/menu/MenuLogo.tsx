@@ -15,7 +15,7 @@ import classNames from 'classnames';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useMainMenuState } from '../../providers/MenuStateProvider';
+import { useMenuState } from '../../providers/MenuStateProvider';
 import ThemeSelector from './ThemeSelector';
 
 const PanelSwitch = styled.div`
@@ -48,7 +48,7 @@ const Root = styled.div`
 export default function MenuLogo() {
   const { t } = useTranslation('menu');
   const dispatch = useAppDispatch();
-  const { dynamic, compact } = useMainMenuState();
+  const { dynamic, compact } = useMenuState();
   const overlay = useAppSelector(selectCurrentOverlay);
   const { registerMenuItemRef } = useMenuRefs();
   const { zoneRef } = useKeystrokeZone();

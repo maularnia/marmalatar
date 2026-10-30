@@ -25,11 +25,11 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { ConfirmationKeyhubProvider } from './ConfirmationKeyhubProvider';
 import {
-  ConfirmationHookProps,
+  TConfirmationHookProps,
   TConfirmationContext,
   TInternalConfirmationWindowProps,
   TUseConfirm,
-  WindowID,
+  TWindowID,
 } from './types';
 
 const Backdrop = styled(motion.div)`
@@ -91,7 +91,7 @@ const DialogHotkeyTooltips = styled(motion.div).attrs<TAnimatedAttrs>(({ $animat
   justify-content: center;
 `;
 
-const confiramtionNoop = providerNoop('Confirmation');
+const noop = providerNoop('ConfirmationContext');
 
 const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
   onConfirm,
@@ -180,24 +180,24 @@ const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
 };
 
 const ConfirmationContext = createContext<TConfirmationContext>({
-  registerWindow: confiramtionNoop,
-  open: confiramtionNoop,
-  close: confiramtionNoop,
-  destroyWindow: confiramtionNoop,
+  registerWindow: noop,
+  open: noop,
+  close: noop,
+  destroyWindow: noop,
 });
 
-export const ConfirmationProvider = ({ children }: PropsWithChildren) => {
-  const windows = useRef(new Map<WindowID, TInternalConfirmationWindowProps>());
-  const [openWindows, setOpenWindows] = useState<WindowID[]>([]);
+export function ConfirmationProvider({ children }: PropsWithChildren) {
+  const windows = useRef(new Map<TWindowID, TInternalConfirmationWindowProps>());
+  const [openWindows, setOpenWindows] = useState<TWindowID[]>([]);
   const overlays = usePopperPortal();
   // The entire ctrl+1..0/esc isolation mechanism: while any confirmation is open, the global
   // dispatcher is paused, so those shortcuts never fire and can't steal focus from the dialog.
   useGlobalKeystrokePause(openWindows.length > 0);
   // Callbacks to run once a given window has actually finished its exit animation (not merely
   // been removed from `openWindows`) -- see `handleExitComplete` below.
-  const pendingExitCallbacksRef = useRef(new Map<WindowID, () => void>());
+  const pendingExitCallbacksRef = useRef(new Map<TWindowID, () => void>());
 
-  const close = useCallback((id: WindowID, onExitAnimationComplete?: () => void) => {
+  const close = useCallback((id: TWindowID, onExitAnimationComplete?: () => void) => {
     if (onExitAnimationComplete) {
       pendingExitCallbacksRef.current.set(id, onExitAnimationComplete);
     }
@@ -209,12 +209,12 @@ export const ConfirmationProvider = ({ children }: PropsWithChildren) => {
     pendingExitCallbacksRef.current.clear();
   }, []);
 
-  const open = useCallback((id: WindowID, props: TInternalConfirmationWindowProps) => {
+  const open = useCallback((id: TWindowID, props: TInternalConfirmationWindowProps) => {
     windows.current.set(id, props);
     setOpenWindows((prev) => (prev.includes(id) ? prev : [...prev, id]));
   }, []);
 
-  const destroyWindow = useCallback((id: WindowID) => {
+  const destroyWindow = useCallback((id: TWindowID) => {
     windows.current.delete(id);
     setOpenWindows((prev) => prev.filter((windowId) => windowId !== id));
   }, []);
@@ -258,7 +258,7 @@ export const ConfirmationProvider = ({ children }: PropsWithChildren) => {
       {children}
     </ConfirmationContext.Provider>
   );
-};
+}
 
 const ERROR_CONFIRM_DESTROYED = i18n.getFixedT(
   null,
@@ -267,12 +267,14 @@ const ERROR_CONFIRM_DESTROYED = i18n.getFixedT(
 
 export function useInfoWindow<T extends Record<string, unknown>>(Content: ComponentType<T>) {
   const confirmationContext = useContext(ConfirmationContext);
-  const currentWindowRef: RefObject<WindowID | null> = useRef(confirmationContext.registerWindow());
+  const currentWindowRef: RefObject<TWindowID | null> = useRef(
+    confirmationContext.registerWindow()
+  );
   return {
     show: <R,>(
       props: T,
       promise: Promise<R>,
-      options?: Pick<ConfirmationHookProps, 'animate'>
+      options?: Pick<TConfirmationHookProps, 'animate'>
     ): Promise<R> => {
       if (!currentWindowRef.current) throw new Error(ERROR_CONFIRM_DESTROYED);
       const id = currentWindowRef.current;
@@ -293,7 +295,9 @@ export function useInfoWindow<T extends Record<string, unknown>>(Content: Compon
 
 export const useConfirm: TUseConfirm = (Content, confirmProps) => {
   const confirmationContext = useContext(ConfirmationContext);
-  const currentWindowRef: RefObject<WindowID | null> = useRef(confirmationContext.registerWindow());
+  const currentWindowRef: RefObject<TWindowID | null> = useRef(
+    confirmationContext.registerWindow()
+  );
   return {
     // Resolves `true` on confirm, `false` on dismiss -- dismissal is an expected, non-error
     // outcome, so it's never surfaced as a rejection. The promise only ever rejects for genuine

@@ -42,7 +42,7 @@ const isEditableElement = (el: Element | null): boolean =>
   el instanceof HTMLTextAreaElement ||
   (el instanceof HTMLElement && el.isContentEditable);
 
-type ConfirmationKeyhubProviderProps = PropsWithChildren<{
+type TConfirmationKeyhubProviderProps = PropsWithChildren<{
   dialogRef: RefObject<HTMLElement | null>;
   onConfirm?: () => void;
   onDismiss?: () => void;
@@ -52,13 +52,13 @@ type ConfirmationKeyhubProviderProps = PropsWithChildren<{
 // Tab-trapping is handled by <FocusTrap> (see ConfirmationProvider.tsx), which has
 // escapeDeactivates: false -- Escape-to-dismiss is owned here instead, alongside the dialog's own
 // y/n hotkeys, scoped to the dialog element the same way.
-export const ConfirmationKeyhubProvider = ({
+export function ConfirmationKeyhubProvider({
   children,
   dialogRef,
   onConfirm,
   onDismiss,
   isValid,
-}: ConfirmationKeyhubProviderProps) => {
+}: TConfirmationKeyhubProviderProps) {
   useEffect(() => {
     const dialogElement = dialogRef.current;
     if (!dialogElement) return;
@@ -83,4 +83,4 @@ export const ConfirmationKeyhubProvider = ({
   }, [dialogRef, onConfirm, onDismiss, isValid]);
 
   return <>{children}</>;
-};
+}

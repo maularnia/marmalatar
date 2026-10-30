@@ -1,4 +1,5 @@
-import { InputColumnType, useEditorRefs } from '@providers/EditorRefsProvider';
+import { TInputColumn, useEditorRefs } from '@providers/EditorRefsProvider';
+import { useVideo } from '@providers/VideoProvider';
 import {
   emitAutoMergeCancelledMessage,
   emitAutoMergeFailedMessage,
@@ -50,6 +51,8 @@ import {
   setFocusedColumn,
   setFocusedLineIndex,
   setLineCompleted,
+  shiftAllLinesEarlier,
+  shiftAllLinesLater,
   splitLine,
   updateLineTiming,
   updateTranslatedText,
@@ -63,10 +66,10 @@ import { fromCurrentStore } from '@store/store';
 import { selectCurrentBulkJob } from '@store/slices/aiTranslation';
 import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from 'react';
 
-type EditorActionsContextType = {
+type TEditorActionsContext = {
   handleChangeFocusedColumn: (
     lineIndex: number,
-    type: InputColumnType,
+    type: TInputColumn,
     selectAll?: boolean
   ) => boolean;
   /** Refocuses whatever was last focused, falling back to the first line's first available input
@@ -77,7 +80,9 @@ type EditorActionsContextType = {
   /** Syncs `focusedLineIndex`/`focusedColumn` to a line/column that was focused via some element
    * outside `lineInputRefs` (e.g. a zone's generic fallback ref) -- the DOM-focusing itself stays
    * with the caller, since only it knows which element that is. */
-  handleSetFocusedLineAndColumn: (lineIndex: number, column: InputColumnType) => void;
+  handleSetFocusedLineAndColumn: (lineIndex: number, column: TInputColumn) => void;
+  handleSwitchColumn: (targetColumn: TInputColumn, lineIndex: number | null) => void;
+  handleNavigateLine: (direction: 'up' | 'down', lineIndex: number | null) => void;
   handleCopySourceToOutput: (lineIndex: number) => void;
   handleInsertLine: (lineIndex: number, position: 'before' | 'after') => void;
   handleSplitLine: (lineIndex: number, cursorOffset: number | null) => void;
@@ -93,15 +98,19 @@ type EditorActionsContextType = {
   handleCopyAllSourceToOutput: () => void;
   handleCompleteAllTranslatedLines: () => void;
   handleToggleEditMode: () => void;
+  handleShiftAllLines: (direction: 'earlier' | 'later') => void;
+  handlePlayFocusedLine: () => void;
 };
 
 const noop = providerNoop('EditorActionsContext');
 
-const EditorActionsContext = createContext<EditorActionsContextType>({
+const EditorActionsContext = createContext<TEditorActionsContext>({
   handleChangeFocusedColumn: noop,
   handleFocusEditor: noop,
   handleChangeFocusedLine: noop,
   handleSetFocusedLineAndColumn: noop,
+  handleSwitchColumn: noop,
+  handleNavigateLine: noop,
   handleCopySourceToOutput: noop,
   handleInsertLine: noop,
   handleSplitLine: noop,
@@ -117,15 +126,27 @@ const EditorActionsContext = createContext<EditorActionsContextType>({
   handleCopyAllSourceToOutput: noop,
   handleCompleteAllTranslatedLines: noop,
   handleToggleEditMode: noop,
+  handleShiftAllLines: noop,
+  handlePlayFocusedLine: noop,
 });
 
-export function useEditorActions(): EditorActionsContextType {
+function hasSelectedTextInElement(element: HTMLElement): boolean {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    return false;
+  }
+  const range = selection.getRangeAt(0);
+  return element.contains(range.startContainer) && element.contains(range.endContainer);
+}
+
+export function useEditorActions(): TEditorActionsContext {
   return useContext(EditorActionsContext);
 }
 
-export default function EditorActionsProvider({ children }: PropsWithChildren) {
+export function EditorActionsProvider({ children }: PropsWithChildren) {
   const dispatch = useAppDispatch();
   const { lineInputRefs, splitCursorRef } = useEditorRefs();
+  const { handlePlayPause, seekToLine } = useVideo();
 
   const { pushMessage } = useMessageHelmet();
   const { confirmMerge } = useMergeConfirmation();
@@ -145,7 +166,7 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
   );
 
   const handleChangeFocusedColumn = useCallback(
-    (lineIndex: number, type: InputColumnType, selectAll = false): boolean => {
+    (lineIndex: number, type: TInputColumn, selectAll = false): boolean => {
       const el = lineInputRefs.current.get(lineIndex)?.[type];
       if (!el) return false;
       if (type === 'output' || type === 'source') {
@@ -166,7 +187,7 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
   // outside lineInputRefs (e.g. a zone's generic fallback ref) -- the DOM-focusing itself stays
   // with the caller, since only it knows which element that is.
   const handleSetFocusedLineAndColumn = useCallback(
-    (lineIndex: number, column: InputColumnType) => {
+    (lineIndex: number, column: TInputColumn) => {
       focusLine(lineIndex);
       dispatch(setFocusedColumn(column));
     },
@@ -194,7 +215,7 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
   // that destroys whatever was focused, so the refocus has to happen on the next frame, after the
   // remount has actually happened. Centralized here so every such action recovers the same way.
   const refocusLineAfterRender = useCallback(
-    (lineIndex: number, column: InputColumnType) => {
+    (lineIndex: number, column: TInputColumn) => {
       requestAnimationFrame(() => {
         handleChangeFocusedColumn(lineIndex, column, false);
       });
@@ -584,12 +605,77 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
     [dispatch, refocusLineAfterRender, pushMessage]
   );
 
-  const value = useMemo<EditorActionsContextType>(
+  const handleSwitchColumn = useCallback(
+    (targetColumn: TInputColumn, lineIndex: number | null) => {
+      const translationLines = fromCurrentStore(selectLines);
+      const focusedColumn = fromCurrentStore(selectFocusedColumn);
+      const defaultIndex = translationLines.length > 0 ? 0 : null;
+      if (lineIndex == null) {
+        if (defaultIndex == null) return;
+        handleChangeFocusedColumn(defaultIndex, targetColumn);
+        return;
+      }
+      if (!focusedColumn) return;
+      handleChangeFocusedColumn(lineIndex, targetColumn);
+    },
+    [handleChangeFocusedColumn]
+  );
+
+  const handleNavigateLine = useCallback(
+    (direction: 'up' | 'down', lineIndex: number | null) => {
+      const activeElement = (document.activeElement as HTMLElement | null) ?? document.body;
+      const translationLines = fromCurrentStore(selectLines);
+      const focusedColumn = fromCurrentStore(selectFocusedColumn);
+      const defaultIndex = translationLines.length > 0 ? 0 : null;
+      const colType = focusedColumn ?? 'output';
+      if (lineIndex == null) {
+        if (defaultIndex == null) return;
+        handleChangeFocusedColumn(defaultIndex, colType);
+        seekToLine(defaultIndex);
+        return;
+      }
+      const targetIndex = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
+      if (targetIndex < 0 || targetIndex >= translationLines.length) return;
+      const selectAll = focusedColumn === 'output' && hasSelectedTextInElement(activeElement);
+      handleChangeFocusedColumn(targetIndex, colType, selectAll);
+      seekToLine(targetIndex);
+    },
+    [handleChangeFocusedColumn, seekToLine]
+  );
+
+  const handleShiftAllLines = useCallback(
+    (direction: 'earlier' | 'later') => {
+      const timeAdjustmentStep = fromCurrentStore(selectTimeAdjustmentStep);
+      dispatch(
+        direction === 'earlier'
+          ? shiftAllLinesEarlier(timeAdjustmentStep)
+          : shiftAllLinesLater(timeAdjustmentStep)
+      );
+    },
+    [dispatch]
+  );
+
+  const handlePlayFocusedLine = useCallback(() => {
+    const translationLines = fromCurrentStore(selectLines);
+    const focusedLineIndex = fromCurrentStore(selectFocusedLineIndex);
+    if (
+      translationLines.length === 0 ||
+      focusedLineIndex === null ||
+      !translationLines[focusedLineIndex]
+    )
+      return;
+    seekToLine(focusedLineIndex);
+    handlePlayPause();
+  }, [handlePlayPause, seekToLine]);
+
+  const value = useMemo<TEditorActionsContext>(
     () => ({
       handleChangeFocusedColumn,
       handleFocusEditor,
       handleChangeFocusedLine,
       handleSetFocusedLineAndColumn,
+      handleSwitchColumn,
+      handleNavigateLine,
       handleCopySourceToOutput,
       handleInsertLine,
       handleSplitLine,
@@ -605,12 +691,16 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
       handleCopyAllSourceToOutput,
       handleCompleteAllTranslatedLines,
       handleToggleEditMode,
+      handleShiftAllLines,
+      handlePlayFocusedLine,
     }),
     [
       handleChangeFocusedColumn,
       handleFocusEditor,
       handleChangeFocusedLine,
       handleSetFocusedLineAndColumn,
+      handleSwitchColumn,
+      handleNavigateLine,
       handleCopySourceToOutput,
       handleInsertLine,
       handleSplitLine,
@@ -626,6 +716,8 @@ export default function EditorActionsProvider({ children }: PropsWithChildren) {
       handleCopyAllSourceToOutput,
       handleCompleteAllTranslatedLines,
       handleToggleEditMode,
+      handleShiftAllLines,
+      handlePlayFocusedLine,
     ]
   );
 

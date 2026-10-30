@@ -5,36 +5,47 @@ import { TMessageType } from '@src/types';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
+import { providerNoop } from '@src/utils/noop';
 import classNames from 'classnames';
 import { AnimatePresence, motion } from 'motion/react';
-import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  ReactNode,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from 'react';
 import styled, { css } from 'styled-components';
 import P, { TPVariant } from '@ui-toolkit/P';
 import Span from '@ui-toolkit/Span';
 
-type MessageItem = {
+type TMessageItem = {
   id: number;
   type: TMessageType;
   message: ReactNode;
   title: string;
 };
 
-export type PushMessageParams = {
+export type TPushMessageParams = {
   type: TMessageType;
   title: string;
   message?: ReactNode;
 };
 
-type MessageHelmetContextType = {
-  pushMessage: (params: PushMessageParams) => void;
+type TMessageHelmetContext = {
+  pushMessage: (params: TPushMessageParams) => void;
 };
 
-const MessageHelmetContext = createContext<MessageHelmetContextType | null>(null);
+const noop = providerNoop('MessageHelmetContext');
 
-export function useMessageHelmet(): MessageHelmetContextType {
-  const ctx = useContext(MessageHelmetContext);
-  if (!ctx) throw new Error('MessageHelmet provider is missing');
-  return ctx;
+const MessageHelmetContext = createContext<TMessageHelmetContext>({
+  pushMessage: noop,
+});
+
+export function useMessageHelmet(): TMessageHelmetContext {
+  return useContext(MessageHelmetContext);
 }
 
 const MessageTypeToColor: { [key in TMessageType]: TColor } = {
@@ -88,8 +99,8 @@ const CloseButton = styled.div`
   top: 0;
 `;
 
-export default function MessageHelmet({ children }: { children: ReactNode }) {
-  const [messages, setMessages] = useState<MessageItem[]>([]);
+export function MessageHelmetProvider({ children }: PropsWithChildren) {
+  const [messages, setMessages] = useState<TMessageItem[]>([]);
   const nextId = useRef(1);
 
   const dismiss = useCallback((id: number) => {
@@ -97,7 +108,7 @@ export default function MessageHelmet({ children }: { children: ReactNode }) {
   }, []);
 
   const pushMessage = useCallback(
-    ({ type, title, message }: PushMessageParams) => {
+    ({ type, title, message }: TPushMessageParams) => {
       const id = nextId.current++;
       setMessages((prev) => [...prev, { id, type, message, title }]);
       const timeout = MessageTypeToTimeout[type];

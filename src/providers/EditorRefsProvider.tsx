@@ -11,39 +11,39 @@ import {
   useRef,
 } from 'react';
 
-export type InputColumnType = 'source' | 'output' | 'character';
+export type TInputColumn = 'source' | 'output' | 'character';
 
-type RowInputMap = {
+type TRowInputMap = {
   source: HTMLElement | null;
   output: HTMLElement | null;
   character: HTMLElement | null;
 };
 
-type EditorRefsContextType = {
+type TEditorRefsContext = {
   splitCursorRef: RefObject<number | null>;
-  lineInputRefs: RefObject<Map<number, RowInputMap>>;
-  registerLineInputRef: (lineIndex: number, type: InputColumnType, el: HTMLElement | null) => void;
+  lineInputRefs: RefObject<Map<number, TRowInputMap>>;
+  registerLineInputRef: (lineIndex: number, type: TInputColumn, el: HTMLElement | null) => void;
 };
 
 const noop = providerNoop('EditorRefsContext');
 
-const EditorRefsContext = createContext<EditorRefsContextType>({
+const EditorRefsContext = createContext<TEditorRefsContext>({
   splitCursorRef: { current: null },
   lineInputRefs: { current: new Map() },
   registerLineInputRef: noop,
 });
 
-export function useEditorRefs(): EditorRefsContextType {
+export function useEditorRefs(): TEditorRefsContext {
   return useContext(EditorRefsContext);
 }
 
-export default function EditorRefsProvider({ children }: PropsWithChildren) {
+export function EditorRefsProvider({ children }: PropsWithChildren) {
   const splitCursorRef = useRef<number | null>(null);
-  const lineInputRefs = useRef<Map<number, RowInputMap>>(new Map());
+  const lineInputRefs = useRef<Map<number, TRowInputMap>>(new Map());
   const projectId = useAppSelector(selectProjectId);
 
   const registerLineInputRef = useCallback(
-    (lineIndex: number, type: InputColumnType, el: HTMLElement | null) => {
+    (lineIndex: number, type: TInputColumn, el: HTMLElement | null) => {
       const map = lineInputRefs.current;
       if (el === null) {
         const row = map.get(lineIndex);

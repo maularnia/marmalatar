@@ -200,9 +200,11 @@ const GlobalKeystrokeContext = createContext<TGlobalKeystrokeContext>({
   setPaused: noop,
 });
 
-export const useGlobalKeystrokeRegistry = () => useContext(GlobalKeystrokeContext);
+export function useGlobalKeystrokeRegistry(): TGlobalKeystrokeContext {
+  return useContext(GlobalKeystrokeContext);
+}
 
-const useAppGlobalKeyStroke = (
+const useAppGlobalKeystroke = (
   keystroke: keyof TGlobalShortcuts,
   action: (event: KeyboardEvent) => void
 ) => useShortcut(keystroke, action);
@@ -240,32 +242,32 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
   // While anything (currently: a confirmation dialog) has paused us, none of these shortcuts fire.
   useShortcutPause(isPaused);
 
-  useAppGlobalKeyStroke('focusSlot1', () => focusSlot(1));
-  useAppGlobalKeyStroke('focusSlot2', () => focusSlot(2));
-  useAppGlobalKeyStroke('focusSlot3', () => focusSlot(3));
-  useAppGlobalKeyStroke('focusSlot4', () => focusSlot(4));
-  useAppGlobalKeyStroke('focusSlot5', () => focusSlot(5));
-  useAppGlobalKeyStroke('focusSlot6', () => focusSlot(6));
-  useAppGlobalKeyStroke('focusSlot7', () => focusSlot(7));
-  useAppGlobalKeyStroke('focusSlot8', () => focusSlot(8));
-  useAppGlobalKeyStroke('focusSlot9', () => focusSlot(9));
-  useAppGlobalKeyStroke('focusSlot0', () => focusSlot(0));
-  useAppGlobalKeyStroke('closeOverlay', () => {
+  useAppGlobalKeystroke('focusSlot1', () => focusSlot(1));
+  useAppGlobalKeystroke('focusSlot2', () => focusSlot(2));
+  useAppGlobalKeystroke('focusSlot3', () => focusSlot(3));
+  useAppGlobalKeystroke('focusSlot4', () => focusSlot(4));
+  useAppGlobalKeystroke('focusSlot5', () => focusSlot(5));
+  useAppGlobalKeystroke('focusSlot6', () => focusSlot(6));
+  useAppGlobalKeystroke('focusSlot7', () => focusSlot(7));
+  useAppGlobalKeystroke('focusSlot8', () => focusSlot(8));
+  useAppGlobalKeystroke('focusSlot9', () => focusSlot(9));
+  useAppGlobalKeystroke('focusSlot0', () => focusSlot(0));
+  useAppGlobalKeystroke('closeOverlay', () => {
     if (currentOverlay !== null) dispatch(closeOverlays());
   });
-  useAppGlobalKeyStroke('openSettings', () => {
+  useAppGlobalKeystroke('openSettings', () => {
     dispatch(openSettingsOverlay());
   });
-  useAppGlobalKeyStroke('openExport', () => {
+  useAppGlobalKeystroke('openExport', () => {
     dispatch(openExportOverlay());
   });
-  useAppGlobalKeyStroke('switchToDarkTheme', () => {
+  useAppGlobalKeystroke('switchToDarkTheme', () => {
     dispatch(setThemeSelection(TThemeSelection.DARK));
   });
-  useAppGlobalKeyStroke('switchToLightTheme', () => {
+  useAppGlobalKeystroke('switchToLightTheme', () => {
     dispatch(setThemeSelection(TThemeSelection.LIGHT));
   });
-  useAppGlobalKeyStroke('switchToSystemTheme', () => {
+  useAppGlobalKeystroke('switchToSystemTheme', () => {
     dispatch(setThemeSelection(TThemeSelection.SYSTEM));
   });
 
@@ -282,7 +284,7 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
 // The one deliberately `document`-scoped EventBus in the app -- these shortcuts must be reachable
 // regardless of where focus is. Isolation while a confirmation is open is achieved by
 // GlobalKeystrokeRegistry pausing this EventBus via React context, not by narrowing this target.
-export default function GlobalKeystrokeDispatcher({ children }: PropsWithChildren) {
+export function GlobalKeystrokeDispatcher({ children }: PropsWithChildren) {
   return (
     <KeyHubProvider
       shortcuts={globalShortcuts}

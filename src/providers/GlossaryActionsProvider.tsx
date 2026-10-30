@@ -1,4 +1,4 @@
-import { GlossaryPairColumnType, useGlossaryRefs } from '@providers/GlossaryRefsProvider';
+import { TGlossaryPairColumn, useGlossaryRefs } from '@providers/GlossaryRefsProvider';
 import { useDeleteGlossaryEntryConfirmation } from '@src/segments/dialogs/deleteGlossaryEntry/useDeleteGlossaryEntryConfirmation';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { providerNoop } from '@src/utils/noop';
@@ -19,41 +19,43 @@ import {
   useState,
 } from 'react';
 
-type GlossaryActionsContextType = {
+type TGlossaryActionsContext = {
   focusedPairIndex: number | null;
-  focusedColumn: GlossaryPairColumnType | null;
+  focusedColumn: TGlossaryPairColumn | null;
   handleFocusPairInput: (
     pairIndex: number,
-    column: GlossaryPairColumnType,
+    column: TGlossaryPairColumn,
     selectAll?: boolean
   ) => boolean;
-  handleSetFocusedPair: (pairIndex: number, column?: GlossaryPairColumnType) => void;
+  handleSetFocusedPair: (pairIndex: number, column?: TGlossaryPairColumn) => void;
+  handleMovePairFocus: (direction: 'up' | 'down') => void;
   handleInsertPair: (pairIndex: number, position: 'before' | 'after') => void;
   handleDeletePair: (pairIndex: number) => Promise<void>;
 };
 
 const noop = providerNoop('GlossaryActionsContext');
 
-const GlossaryActionsContext = createContext<GlossaryActionsContextType>({
+const GlossaryActionsContext = createContext<TGlossaryActionsContext>({
   focusedPairIndex: null,
   focusedColumn: null,
   handleFocusPairInput: noop,
   handleSetFocusedPair: noop,
+  handleMovePairFocus: noop,
   handleInsertPair: noop,
   handleDeletePair: noop,
 });
 
-export function useGlossaryActions(): GlossaryActionsContextType {
+export function useGlossaryActions(): TGlossaryActionsContext {
   return useContext(GlossaryActionsContext);
 }
 
-export default function GlossaryActionsProvider({ children }: PropsWithChildren) {
+export function GlossaryActionsProvider({ children }: PropsWithChildren) {
   const dispatch = useAppDispatch();
   const { pairInputRefs } = useGlossaryRefs();
   const { confirmDeleteGlossaryEntry } = useDeleteGlossaryEntryConfirmation();
 
   const [focusedPairIndex, setFocusedPairIndex] = useState<number | null>(null);
-  const [focusedColumn, setFocusedColumn] = useState<GlossaryPairColumnType | null>(null);
+  const [focusedColumn, setFocusedColumn] = useState<TGlossaryPairColumn | null>(null);
 
   // Switching to a different glossary while the overlay stays mounted doesn't remount this
   // provider (see GlossaryRefsProvider) -- clear stale focus reactively on that same signal.
@@ -64,7 +66,7 @@ export default function GlossaryActionsProvider({ children }: PropsWithChildren)
   }, [currentGlossary]);
 
   const handleFocusPairInput = useCallback(
-    (pairIndex: number, column: GlossaryPairColumnType, selectAll = false): boolean => {
+    (pairIndex: number, column: TGlossaryPairColumn, selectAll = false): boolean => {
       const el = pairInputRefs.current.get(pairIndex)?.[column];
       if (!el) return false;
       if (selectAll) selectAllContentEditable(el);
@@ -77,10 +79,26 @@ export default function GlossaryActionsProvider({ children }: PropsWithChildren)
     [pairInputRefs]
   );
 
-  const handleSetFocusedPair = useCallback((pairIndex: number, column?: GlossaryPairColumnType) => {
+  const handleSetFocusedPair = useCallback((pairIndex: number, column?: TGlossaryPairColumn) => {
     setFocusedPairIndex(pairIndex);
     if (column) setFocusedColumn(column);
   }, []);
+
+  const handleMovePairFocus = useCallback(
+    (direction: 'up' | 'down') => {
+      const pairCount = fromCurrentStore(selectGlossaryData)?.list.length ?? 0;
+      const column = focusedColumn ?? 'original';
+      if (focusedPairIndex == null) {
+        if (pairCount === 0) return;
+        handleFocusPairInput(0, column);
+        return;
+      }
+      const targetIndex = direction === 'up' ? focusedPairIndex - 1 : focusedPairIndex + 1;
+      if (targetIndex < 0 || targetIndex >= pairCount) return;
+      handleFocusPairInput(targetIndex, column);
+    },
+    [focusedColumn, focusedPairIndex, handleFocusPairInput]
+  );
 
   const handleInsertPair = useCallback(
     (pairIndex: number, position: 'before' | 'after') => {
@@ -130,12 +148,13 @@ export default function GlossaryActionsProvider({ children }: PropsWithChildren)
     [confirmDeleteGlossaryEntry, dispatch, focusedColumn, handleFocusPairInput]
   );
 
-  const value = useMemo<GlossaryActionsContextType>(
+  const value = useMemo<TGlossaryActionsContext>(
     () => ({
       focusedPairIndex,
       focusedColumn,
       handleFocusPairInput,
       handleSetFocusedPair,
+      handleMovePairFocus,
       handleInsertPair,
       handleDeletePair,
     }),
@@ -144,6 +163,7 @@ export default function GlossaryActionsProvider({ children }: PropsWithChildren)
       focusedColumn,
       handleFocusPairInput,
       handleSetFocusedPair,
+      handleMovePairFocus,
       handleInsertPair,
       handleDeletePair,
     ]

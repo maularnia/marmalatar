@@ -24,7 +24,7 @@ import { loadProjectFromDisk } from '@store/thunks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Loader } from '../../dialogs/Loader';
+import { Loader } from '@src/segments/dialogs/Loader';
 
 export function useProjectLoader() {
   const { t } = useTranslation(['dialogs', 'messages']);

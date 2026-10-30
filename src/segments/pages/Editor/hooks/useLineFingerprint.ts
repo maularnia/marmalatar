@@ -1,4 +1,4 @@
-import { EditorKeystrokeContext } from '@providers/EditorKeystrokeProvider';
+import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { selectIntegrationIsConfigured } from '@src/store/slices/app';
 import {
@@ -12,7 +12,7 @@ import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
 import { TSubtitleLine } from '@src/types';
 import { useAppSelector } from '@store/hooks';
 import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 type LineRenderKeyProps = {
@@ -58,8 +58,7 @@ function buildCacheKey(props: LineRenderKeyProps): string {
 export function useLineFingerprint() {
   const { videoDurationMs } = useVideo();
 
-  const { isCtrlPressed, isAltPressed, isCtrlAltPressed, isAltShiftPressed } =
-    useContext(EditorKeystrokeContext);
+  const { isCtrlPressed, isAltPressed, isCtrlAltPressed, isAltShiftPressed } = useEditorKeystroke();
 
   const {
     translationLines,
