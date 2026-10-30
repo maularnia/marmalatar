@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useRenderCache } from '../../hooks/useRenderCache';
 import WaveformEntry from './WaveformEntry';
+import WaveformTile from './WaveformTile';
 import { getWaveformEntryFingerprint } from './useWaveformEntryFingerprint';
 
 type WaveformProps = {
@@ -25,9 +26,11 @@ type WaveformProps = {
 
 const PX_PER_SECOND = 30;
 const CURSOR_OFFSET_RATIO = 0.3;
-const PEAK_HEIGHT_COEFFICIENT = 0.9;
 const MIN_GAP_MS = 50;
 const WHEEL_SEEK_STEP_RATIO = 0.0005;
+// A single canvas wider than 65535px paints as a solid block in Chromium, and at PX_PER_SECOND a
+// feature-length timeline is far wider than that -- so the timeline is drawn as tiles instead.
+const WAVEFORM_TILE_WIDTH = 4096;
 
 export type DragMode = 'move' | 'resize-left' | 'resize-right';
 
@@ -75,11 +78,6 @@ const WaveFormCanvasWrapper = styled.div`
   will-change: transform;
 `;
 
-const Canvas = styled.canvas`
-  display: block;
-  height: 100%;
-`;
-
 const Container = styled.div`
   position: relative;
   bottom: 0;
@@ -101,6 +99,12 @@ const Container = styled.div`
   }
 `;
 
+function getTimelineOffset(cursorX: number, viewportWidth: number, canvasWidth: number) {
+  const targetOffset = cursorX - viewportWidth * CURSOR_OFFSET_RATIO;
+  const maxOffset = Math.max(0, canvasWidth - viewportWidth);
+  return clamp(targetOffset, 0, maxOffset);
+}
+
 export default function Waveform({
   peaks,
   videoDurationMs,
@@ -115,7 +119,6 @@ export default function Waveform({
   const size = useAppSelector(selectScreenSize);
   const theme = useAppSelector(selectCurrentThemeData);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const waveformViewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const entriesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -246,42 +249,6 @@ export default function Waveform({
   }
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-
-    if (!canvas) {
-      return;
-    }
-
-    // Sync canvas resolution to its rendered pixel size
-    canvas.width = canvasWidth;
-    canvas.height = canvas.clientHeight || 80;
-
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-      return;
-    }
-
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = theme.variables.waveformColor.value;
-
-    if (peaks.length === 0) {
-      return;
-    }
-
-    const midY = canvas.height / 2;
-    const barWidth = canvas.width / peaks.length;
-
-    peaks.forEach((peak, index) => {
-      const barHeight = Math.max(1, peak * (canvas.height * PEAK_HEIGHT_COEFFICIENT));
-      const x = index * barWidth;
-      const y = midY - barHeight / 2;
-
-      context.fillRect(x, y, Math.max(1, barWidth), barHeight);
-    });
-  }, [peaks, canvasWidth, theme]);
-
-  useEffect(() => {
     const viewport = waveformViewportRef.current;
     const content = contentRef.current;
     const lineLayer = entriesContainerRef.current;
@@ -292,9 +259,7 @@ export default function Waveform({
     }
 
     const viewportWidth = viewport.clientWidth;
-    const targetOffset = cursorX - viewportWidth * CURSOR_OFFSET_RATIO;
-    const maxOffset = Math.max(0, canvasWidth - viewportWidth);
-    const timelineOffset = clamp(targetOffset, 0, maxOffset);
+    const timelineOffset = getTimelineOffset(cursorX, viewportWidth, canvasWidth);
     const cursorViewportX = clamp(cursorX - timelineOffset, 0, viewportWidth);
 
     content.style.transform = `translateX(${-timelineOffset}px)`;
@@ -346,9 +311,7 @@ export default function Waveform({
     const startPx = timeToPx(line.start_time);
     const endPx = timeToPx(line.end_time);
     const viewportWidth = waveformViewportRef.current?.offsetWidth ?? 0;
-    const targetOffset = cursorX - viewportWidth * CURSOR_OFFSET_RATIO;
-    const maxOffset = Math.max(0, canvasWidth - viewportWidth);
-    const timelineOffset = clamp(targetOffset, 0, maxOffset);
+    const timelineOffset = getTimelineOffset(cursorX, viewportWidth, canvasWidth);
     const visibleStartPx = timelineOffset;
     const visibleEndPx = timelineOffset + viewportWidth;
     if (startPx >= visibleEndPx || endPx <= visibleStartPx) return null;
@@ -394,6 +357,39 @@ export default function Waveform({
     return node;
   }
 
+  // Only the tiles around the viewport are mounted, plus one either side for scrolling into
+  function renderWaveformTiles() {
+    if (peaks.length === 0) return null;
+
+    const viewportWidth = waveformViewportRef.current?.offsetWidth ?? 0;
+    const timelineOffset = getTimelineOffset(cursorX, viewportWidth, canvasWidth);
+    const lastTile = Math.ceil(canvasWidth / WAVEFORM_TILE_WIDTH) - 1;
+    const firstVisibleTile = Math.floor(timelineOffset / WAVEFORM_TILE_WIDTH);
+    const lastVisibleTile = Math.floor((timelineOffset + viewportWidth) / WAVEFORM_TILE_WIDTH);
+    const tiles: ReactElement[] = [];
+
+    for (
+      let tile = Math.max(0, firstVisibleTile - 1);
+      tile <= Math.min(lastTile, lastVisibleTile + 1);
+      tile++
+    ) {
+      const left = tile * WAVEFORM_TILE_WIDTH;
+
+      tiles.push(
+        <WaveformTile
+          key={tile}
+          left={left}
+          width={Math.min(WAVEFORM_TILE_WIDTH, canvasWidth - left)}
+          peaks={peaks}
+          barWidth={canvasWidth / peaks.length}
+          color={theme.variables.waveformColor.value}
+        />
+      );
+    }
+
+    return tiles;
+  }
+
   return (
     <Container ref={containerRef} tabIndex={1} className={size}>
       <Entries ref={entriesContainerRef}>
@@ -412,14 +408,11 @@ export default function Waveform({
           }}
         >
           <Cursor ref={cursorRef} />
-          <WaveFormCanvasWrapper ref={contentRef} style={{ width: `${canvasWidth}px` }}>
-            <Canvas
-              ref={canvasRef}
-              width={canvasWidth}
-              style={{
-                height: CSSVar('waveformHeight'),
-              }}
-            />
+          <WaveFormCanvasWrapper
+            ref={contentRef}
+            style={{ width: `${canvasWidth}px`, height: CSSVar('waveformHeight') }}
+          >
+            {renderWaveformTiles()}
           </WaveFormCanvasWrapper>
         </WaveFormViewport>
       </Tooltip>

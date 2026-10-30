@@ -129,11 +129,13 @@ function cleanupOrphanedMediaCache(appStore: Store, trackedFolder: string): void
 
 export function registerMediaIpc(appStore: Store): void {
   // Extracts audio waveform peaks from a video file using ffmpeg.
-  // Returns number[] of ~24000 normalised [0,1] peaks.
-  // Caches results in {trackedFolder}/.mrmlcache/waveforms/{key}.json.
+  // Returns number[] of normalised [0,1] peaks at PEAKS_PER_SECOND, so resolution doesn't depend
+  // on video length.
+  // Caches results in {trackedFolder}/.mrmlcache/waveforms/{key}.json as { peaksPerSecond, peaks };
+  // a file built at another rate (or in the older bare-array format) is regenerated.
   ipcMain.handle('extract-waveform-peaks', async (_: IpcMainInvokeEvent, filePath: string) => {
     const SAMPLE_RATE = 44100;
-    const TARGET_PEAKS = 24000;
+    const PEAKS_PER_SECOND = 23;
 
     const trackedFolder = appStore.get('trackedFolder') as string | undefined;
     let cacheFile: string | null = null;
@@ -144,7 +146,11 @@ export function registerMediaIpc(appStore: Store): void {
       cacheFile = path.join(cacheDir, `${key}.json`);
       if (fs.existsSync(cacheFile)) {
         try {
-          return JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+          const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8')) as {
+            peaksPerSecond?: number;
+            peaks?: number[];
+          };
+          if (cached.peaksPerSecond === PEAKS_PER_SECOND && cached.peaks) return cached.peaks;
         } catch {
           /* fall through to regenerate */
         }
@@ -183,10 +189,11 @@ export function registerMediaIpc(appStore: Store): void {
         }
         const buf = Buffer.concat(chunks);
         const sampleCount = buf.length / 2; // 2 bytes per s16 sample
-        const blockSize = Math.max(1, Math.floor(sampleCount / TARGET_PEAKS));
+        const blockSize = Math.round(SAMPLE_RATE / PEAKS_PER_SECOND);
+        const peakCount = Math.ceil(sampleCount / blockSize);
         const peaks: number[] = [];
 
-        for (let i = 0; i < TARGET_PEAKS; i++) {
+        for (let i = 0; i < peakCount; i++) {
           let sum = 0;
           const start = i * blockSize;
           const end = Math.min(start + blockSize, sampleCount);
@@ -196,13 +203,18 @@ export function registerMediaIpc(appStore: Store): void {
           peaks.push(end > start ? sum / (end - start) : 0);
         }
 
-        const max = Math.max(...peaks, 1);
+        // Not Math.max(...peaks): a feature-length film exceeds the engine's argument limit
+        const max = peaks.reduce((highest, peak) => Math.max(highest, peak), 1);
         const result = peaks.map((p) => p / max);
 
         if (cacheFile) {
           try {
             ensureDir(path.dirname(cacheFile));
-            fs.writeFileSync(cacheFile, JSON.stringify(result), 'utf8');
+            fs.writeFileSync(
+              cacheFile,
+              JSON.stringify({ peaksPerSecond: PEAKS_PER_SECOND, peaks: result }),
+              'utf8'
+            );
           } catch {
             /* non-fatal */
           }
