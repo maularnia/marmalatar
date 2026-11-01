@@ -1,4 +1,4 @@
-import EditorKeystrokeProvider from '@providers/EditorKeystrokeProvider';
+import { EditorKeystrokeProvider } from '@providers/EditorKeystrokeProvider';
 import { EditorControls } from '@src/segments/pages/Editor/segments/EditorControls';
 import EditorAside from '@src/segments/pages/Editor/segments/EditorAside/EditorAside';
 import { selectScreenSize } from '@src/store/slices/app';

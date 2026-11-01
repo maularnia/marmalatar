@@ -1,4 +1,4 @@
-import { GlossaryPairColumnType, useGlossaryRefs } from '@providers/GlossaryRefsProvider';
+import { TGlossaryPairColumn, useGlossaryRefs } from '@providers/GlossaryRefsProvider';
 import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import Button from '@ui-toolkit/Button/Button';
@@ -27,7 +27,7 @@ type GlossaryTableLineProps = {
   targetLanguage: TLanguage;
   onOriginalChange: (value: string) => void;
   onTranslationChange: (value: string) => void;
-  onFocus: (column: GlossaryPairColumnType) => void;
+  onFocus: (column: TGlossaryPairColumn) => void;
   onDelete: () => void;
   onInsertBefore: () => void;
   onInsertAfter: () => void;
@@ -53,7 +53,7 @@ export default function GlossaryTableLine({
   const [isFocused, setIsFocused] = useState<boolean>();
 
   const onInputFocus = useCallback(
-    (column: GlossaryPairColumnType) => {
+    (column: TGlossaryPairColumn) => {
       onFocus(column);
       setIsFocused(true);
     },

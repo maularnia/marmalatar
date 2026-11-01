@@ -1,9 +1,9 @@
 import i18n from '@src/i18n';
-import type { PushMessageParams } from '@src/providers/MessageHelmetProvider';
+import type { TPushMessageParams } from '@src/providers/MessageHelmetProvider';
 import { TMessageType } from '@src/types';
 import type { ReactNode } from 'react';
 
-type PushMessage = (params: PushMessageParams) => void;
+type PushMessage = (params: TPushMessageParams) => void;
 
 const t = i18n.getFixedT(null, 'messages');
 const tErrors = i18n.getFixedT(null, 'errors');

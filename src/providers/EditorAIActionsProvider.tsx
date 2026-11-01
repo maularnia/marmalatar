@@ -10,6 +10,7 @@ import {
   emitTranslationCancelledMessage,
   emitUnableToTranslateLineMessage,
 } from '@src/messages';
+import { useEditorRefs } from '@providers/EditorRefsProvider';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useAddToGlossaryDialog } from '@src/segments/dialogs/addToGlossary/useAddToGlossaryDialog';
 import { useTranslationOverrideConfirmation } from '@src/segments/dialogs/translationOverrride/useTranslationOverrideConfirmation';
@@ -27,6 +28,7 @@ import {
 import { selectSelectedPromptTemplateFileName } from '@src/store/slices/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import {
@@ -38,30 +40,33 @@ import { addEntryToGlossary } from '@store/thunks';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize } from '@ui-toolkit/Tag';
-import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
-type EditorAIActionsContextType = {
+type TEditorAIActionsContext = {
   handleAiTranslate: (lineNo: number) => void;
   handleAiTranslateBulk: () => void;
   handleAddToGlossary: (selectedText: string) => void;
+  handleAddSelectionToGlossary: (lineIndex: number) => void;
 };
 
 const noop = providerNoop('EditorAIActionsContext');
 
-const EditorAIActionsContext = createContext<EditorAIActionsContextType>({
+const EditorAIActionsContext = createContext<TEditorAIActionsContext>({
   handleAiTranslate: noop,
   handleAiTranslateBulk: noop,
   handleAddToGlossary: noop,
+  handleAddSelectionToGlossary: noop,
 });
 
-export function useEditorAIActions(): EditorAIActionsContextType {
+export function useEditorAIActions(): TEditorAIActionsContext {
   return useContext(EditorAIActionsContext);
 }
 
-export default function EditorAIActionsProvider({ children }: PropsWithChildren) {
+export function EditorAIActionsProvider({ children }: PropsWithChildren) {
   const { t } = useTranslation(['messages', 'dialogs']);
   const dispatch = useAppDispatch();
+  const { lineInputRefs } = useEditorRefs();
   const { pushMessage } = useMessageHelmet();
   const { addToGlossary } = useAddToGlossaryDialog();
   const { confirmTranslationOverride } = useTranslationOverrideConfirmation();
@@ -216,10 +221,27 @@ export default function EditorAIActionsProvider({ children }: PropsWithChildren)
     [addToGlossary, dispatch, pushMessage]
   );
 
-  const value = useMemo<EditorAIActionsContextType>(
-    () => ({ handleAiTranslate, handleAiTranslateBulk, handleAddToGlossary }),
-    [handleAiTranslate, handleAiTranslateBulk, handleAddToGlossary]
+  const handleAddSelectionToGlossary = useCallback(
+    (lineIndex: number) => {
+      const sourceInput = lineInputRefs.current.get(lineIndex)?.source ?? null;
+      if (!sourceInput) return;
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+      const range = selection.getRangeAt(0);
+      if (!sourceInput.contains(range.commonAncestorContainer)) return;
+      const selectedText = selection.toString();
+      if (!selectedText.trim()) return;
+      handleAddToGlossary(selectedText);
+    },
+    [handleAddToGlossary, lineInputRefs]
   );
+
+  const value = useMemoizedObject<TEditorAIActionsContext>({
+    handleAiTranslate,
+    handleAiTranslateBulk,
+    handleAddToGlossary,
+    handleAddSelectionToGlossary,
+  });
 
   return (
     <EditorAIActionsContext.Provider value={value}>{children}</EditorAIActionsContext.Provider>

@@ -76,7 +76,8 @@
   },
   "spellcheck": {
     "missingDictionaryAsset": "Не знойдзены рэсурс [{{suffix}}]",
-    "dictionaryLoadFailed": "Не атрымлася загрузіць слоўнік [{{url}}]"
+    "dictionaryLoadFailed": "Не атрымлася загрузіць слоўнік [{{url}}]",
+    "workerFailed": "Не атрымалася запусціць праверку правапісу"
   },
   "project": {
     "corrupted": "Пашкоджаны файл праекту",

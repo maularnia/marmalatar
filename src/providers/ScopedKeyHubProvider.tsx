@@ -9,7 +9,7 @@ import {
 } from 'react-keyhub';
 import { KeyboardEvent, PropsWithChildren, useMemo, useState } from 'react';
 
-type ScopedKeyHubProviderProps<T extends ShortcutSettings> = PropsWithChildren<{
+type TScopedKeyHubProviderProps<T extends ShortcutSettings> = PropsWithChildren<{
   shortcuts: T;
   options?: Omit<EventBusOptions, 'target'>;
   /** Stops keydowns that (a) originate from an editable element (input/textarea/contentEditable)
@@ -33,12 +33,12 @@ type ScopedKeyHubProviderProps<T extends ShortcutSettings> = PropsWithChildren<{
 // as useLayoutEffect) and only mounts KeyHubProvider (and therefore `children`) once that node
 // exists, so its shortcuts are scoped to this subtree instead of defaulting to `document` and
 // seeing every keydown on the page regardless of which region actually has focus.
-export default function ScopedKeyHubProvider<T extends ShortcutSettings>({
+export function ScopedKeyHubProvider<T extends ShortcutSettings>({
   shortcuts,
   options,
   ignoreEditableElements,
   children,
-}: ScopedKeyHubProviderProps<T>) {
+}: TScopedKeyHubProviderProps<T>) {
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
 
   const registeredCombos = useMemo(() => {

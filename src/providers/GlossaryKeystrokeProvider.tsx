@@ -7,8 +7,6 @@ import {
 } from 'react-keyhub';
 import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
-import { fromCurrentStore } from '@store/store';
-import { selectGlossaryData } from '@store/slices/aiPromptEditor';
 import { PropsWithChildren } from 'react';
 
 const myShortcuts = {
@@ -94,12 +92,12 @@ const myShortcuts = {
   },
 } satisfies ShortcutSettings;
 
-const useAppGlossaryKeyStroke = (
+const useAppGlossaryKeystroke = (
   keystroke: keyof typeof myShortcuts,
   action: (event: KeyboardEvent) => void
 ) => useShortcut(keystroke, action);
 
-export default function GlossaryKeyStrokeProvider({ children }: PropsWithChildren) {
+export function GlossaryKeystrokeProvider({ children }: PropsWithChildren) {
   return (
     <KeystrokeZone
       shortcuts={myShortcuts}
@@ -125,52 +123,40 @@ function GlossaryShortcuts() {
     focusedPairIndex,
     focusedColumn,
     handleFocusPairInput,
+    handleMovePairFocus,
     handleDeletePair,
     handleInsertPair,
   } = useGlossaryActions();
 
-  const navigatePair = (direction: 'up' | 'down') => {
-    const pairCount = fromCurrentStore(selectGlossaryData)?.list.length ?? 0;
-    const column = focusedColumn ?? 'original';
-    if (focusedPairIndex == null) {
-      if (pairCount === 0) return;
-      handleFocusPairInput(0, column);
-      return;
-    }
-    const targetIndex = direction === 'up' ? focusedPairIndex - 1 : focusedPairIndex + 1;
-    if (targetIndex < 0 || targetIndex >= pairCount) return;
-    handleFocusPairInput(targetIndex, column);
-  };
+  useAppGlossaryKeystroke('previousPairInput', () => handleMovePairFocus('up'));
+  useAppGlossaryKeystroke('nextPairInput', () => handleMovePairFocus('down'));
 
-  useAppGlossaryKeyStroke('previousPairInput', () => navigatePair('up'));
-  useAppGlossaryKeyStroke('nextPairInput', () => navigatePair('down'));
-
-  useAppGlossaryKeyStroke('focusOriginalColumn', () => {
+  useAppGlossaryKeystroke('focusOriginalColumn', () => {
     if (focusedColumn === 'original') return;
     handleFocusPairInput(focusedPairIndex ?? 0, 'original');
   });
 
-  useAppGlossaryKeyStroke('focusTranslationColumn', () => {
+  useAppGlossaryKeystroke('focusTranslationColumn', () => {
     if (focusedColumn === 'translation') return;
     handleFocusPairInput(focusedPairIndex ?? 0, 'translation');
   });
 
-  const handleDeletePairKeyStroke = (event: KeyboardEvent) => {
+  const handleDeletePairKeystroke = (event: KeyboardEvent) => {
     if (focusedPairIndex == null) return;
     event.preventDefault();
     handleDeletePair(focusedPairIndex);
   };
 
-  useAppGlossaryKeyStroke('deletePair', handleDeletePairKeyStroke);
-  useAppGlossaryKeyStroke('deletePairDelete', handleDeletePairKeyStroke);
+  useAppGlossaryKeystroke('deletePair', handleDeletePairKeystroke);
+  useAppGlossaryKeystroke('deletePairDelete', handleDeletePairKeystroke);
 
-  useAppGlossaryKeyStroke('insertPairBefore', (event) => {
+  useAppGlossaryKeystroke('insertPairBefore', (event) => {
     if (focusedPairIndex == null) return;
     event.preventDefault();
     handleInsertPair(focusedPairIndex, 'before');
   });
 
-  useAppGlossaryKeyStroke('insertPairAfter', (event) => {
+  useAppGlossaryKeystroke('insertPairAfter', (event) => {
     if (focusedPairIndex == null) return;
     event.preventDefault();
     handleInsertPair(focusedPairIndex, 'after');

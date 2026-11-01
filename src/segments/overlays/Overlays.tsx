@@ -1,4 +1,4 @@
-import GlossaryStateProvider from '@providers/GlossaryStateProvider';
+import { GlossaryStateProvider } from '@providers/GlossaryStateProvider';
 import { useAppSelector } from '@store/hooks';
 import { selectCurrentOverlay } from '@store/slices/overlays';
 import { AnimatePresence } from 'motion/react';

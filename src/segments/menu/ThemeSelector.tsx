@@ -7,7 +7,7 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
 import styled from 'styled-components';
-import { useMainMenuState } from '../../providers/MenuStateProvider';
+import { useMenuState } from '../../providers/MenuStateProvider';
 import { ListItem } from '@ui-toolkit/ListItem';
 
 const ThemeShortcutList = styled.div`
@@ -49,7 +49,7 @@ const ThemeShortcuts: Array<{ key: string; label: string }> = [
 export default function ThemeSelector() {
   const dispatch = useAppDispatch();
   const selection = useAppSelector(selectThemeSelection);
-  const { dynamic, compact } = useMainMenuState();
+  const { dynamic, compact } = useMenuState();
   const toggleThemes = () => {
     const nextIndex = (themes.indexOf(selection) + 1) % themes.length;
     dispatch(setThemeSelection(themes[nextIndex]));

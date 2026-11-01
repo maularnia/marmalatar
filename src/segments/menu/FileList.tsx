@@ -39,7 +39,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { MainMenuListItem } from './MainMenuListItem';
-import { useMainMenuState } from '../../providers/MenuStateProvider';
+import { useMenuState } from '../../providers/MenuStateProvider';
 
 const Section = styled.div`
   display: flex;
@@ -80,15 +80,15 @@ export default function FileList() {
   const listIsDisabled = discIsBusy || translationIsBusy;
   const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
   const currentGlossary = useAppSelector(selectCurrentGlossary);
-  const { compact, dynamic } = useMainMenuState();
+  const { compact, dynamic } = useMenuState();
   const currentProjectId = useAppSelector(selectProjectId);
   const integrationIsConfigured = useAppSelector(selectIntegrationIsConfigured);
 
   const {
     isCreatingPromptTemplate,
-    setIsCreatingPromptTemplate,
+    handleSetIsCreatingPromptTemplate,
     isCreatingGlossary,
-    setIsCreatingGlossary,
+    handleSetIsCreatingGlossary,
     handleOpenProject,
     handleOpenPromptTemplate,
     handleOpenGlossary,
@@ -132,7 +132,7 @@ export default function FileList() {
       await dispatch(renamePromptTemplateFile(fileName, newTitle));
     } else {
       await dispatch(createPromptTemplateFile(newTitle));
-      setIsCreatingPromptTemplate(false);
+      handleSetIsCreatingPromptTemplate(false);
     }
   };
 
@@ -141,7 +141,7 @@ export default function FileList() {
       await dispatch(renameGlossaryFile(fileName, newTitle));
     } else {
       await dispatch(createGlossaryFile(newTitle));
-      setIsCreatingGlossary(false);
+      handleSetIsCreatingGlossary(false);
     }
   };
 
@@ -265,7 +265,7 @@ export default function FileList() {
                   icon={TIcon.PLUS}
                   color={ThemeColors.ACCENT2}
                   compact={compact}
-                  onClick={() => setIsCreatingPromptTemplate(true)}
+                  onClick={() => handleSetIsCreatingPromptTemplate(true)}
                 >
                   {tMenu('fileList.createButton')}
                 </ListItem>
@@ -327,7 +327,7 @@ export default function FileList() {
               {!isCreatingGlossary && (
                 <ListItem
                   ref={setCreateGlossaryRef}
-                  onClick={() => setIsCreatingGlossary(true)}
+                  onClick={() => handleSetIsCreatingGlossary(true)}
                   color={ThemeColors.ACCENT2}
                   icon={TIcon.PLUS}
                   compact={compact}

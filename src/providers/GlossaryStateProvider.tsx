@@ -1,8 +1,8 @@
 import { PropsWithChildren } from 'react';
-import GlossaryRefsProvider from '@providers/GlossaryRefsProvider';
-import GlossaryActionsProvider from '@providers/GlossaryActionsProvider';
+import { GlossaryRefsProvider } from '@providers/GlossaryRefsProvider';
+import { GlossaryActionsProvider } from '@providers/GlossaryActionsProvider';
 
-export default function GlossaryStateProvider({ children }: PropsWithChildren) {
+export function GlossaryStateProvider({ children }: PropsWithChildren) {
   return (
     <GlossaryRefsProvider>
       <GlossaryActionsProvider>{children}</GlossaryActionsProvider>

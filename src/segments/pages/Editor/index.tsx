@@ -1,5 +1,5 @@
 import { useEditorActions } from '@providers/EditorActionsProvider';
-import { EditorKeystrokeContext } from '@providers/EditorKeystrokeProvider';
+import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { selectAutoMarkLinesCompleted, selectIsSmallScreen } from '@src/store/slices/app';
 import {
@@ -26,7 +26,7 @@ import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import classNames from 'classnames';
-import { CSSProperties, type ReactElement, useContext, useMemo, useRef } from 'react';
+import { CSSProperties, type ReactElement, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
@@ -109,7 +109,7 @@ export default function Editor() {
   const { seekToLine, handlePause } = useVideo();
   const isSmallScreen = useAppSelector(selectIsSmallScreen);
   const focusedItemIndex = focusedLineIndex ?? -1;
-  const { isAltShiftPressed } = useContext(EditorKeystrokeContext);
+  const { isAltShiftPressed } = useEditorKeystroke();
   const isEditMode = useAppSelector(selectIsEditMode);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);

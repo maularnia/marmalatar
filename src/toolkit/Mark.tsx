@@ -7,7 +7,6 @@ export type SpellCheckMark = {
   start: number;
   end: number;
   word: string;
-  suggestions: string[];
 };
 
 export const getMarkCss = (color: TColor) => css`

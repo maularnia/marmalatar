@@ -76,7 +76,8 @@
   },
   "spellcheck": {
     "missingDictionaryAsset": "Missing dictionary [{{suffix}}]",
-    "dictionaryLoadFailed": "Unable to load dictionary [{{url}}]"
+    "dictionaryLoadFailed": "Unable to load dictionary [{{url}}]",
+    "workerFailed": "Could not start the spellchecker"
   },
   "project": {
     "corrupted": "Corrupted project file",

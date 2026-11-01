@@ -1,6 +1,6 @@
 import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 import { TColor, TColorCustom } from '@src/theme/definitions';
-import type { InputColumnType } from '@providers/EditorRefsProvider';
+import type { TInputColumn } from '@providers/EditorRefsProvider';
 import { TCharacter, TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { computeTranslationProgress } from '@utils/translationProgress';
@@ -12,7 +12,7 @@ type EditorSliceState = {
   // Editor UI memory (not persisted)
   activeLineIndex: number | null;
   focusedLineIndex: number | null;
-  focusedColumn: InputColumnType | null;
+  focusedColumn: TInputColumn | null;
   renderEpoch: number;
   textSelection: string;
   // Translation
@@ -157,7 +157,7 @@ const editorSlice = createSlice({
             : lineIndex;
       state.textSelection = '';
     },
-    setFocusedColumn(state, action: PayloadAction<InputColumnType | null>) {
+    setFocusedColumn(state, action: PayloadAction<TInputColumn | null>) {
       state.focusedColumn = action.payload;
     },
     incrementRenderEpoch(state) {

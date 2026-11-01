@@ -6,7 +6,8 @@ import { useDeleteProjectConfirmation } from '@src/segments/dialogs/deleteProjec
 import { Loader } from '@src/segments/dialogs/Loader';
 import { selectIntegrationIsConfigured } from '@src/store/slices/app';
 import { providerNoop } from '@src/utils/noop';
-import { useProjectLoader } from '@src/segments/menu/hooks/useProjectLoader';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
+import { useProjectLoader } from '@src/utils/useProjectLoader';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import {
@@ -31,17 +32,10 @@ import {
   savePromptTemplate,
   startNewProject,
 } from '@store/thunks';
-import {
-  createContext,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-type MenuItemKind =
+type TMenuItemKind =
   | 'project'
   | 'promptTemplate'
   | 'glossary'
@@ -60,14 +54,14 @@ export const CREATE_GLOSSARY_KEY = '##create-glossary##';
 // participates in the same combined focus/navigation tracking.
 export const SETTINGS_KEY = '##settings##';
 
-type MenuItemRef = { key: string; kind: MenuItemKind };
+type TMenuItemRef = { key: string; kind: TMenuItemKind };
 
-type MenuActionsContextType = {
+type TMenuActionsContext = {
   renamingKey: string | null;
   isCreatingPromptTemplate: boolean;
   isCreatingGlossary: boolean;
-  setIsCreatingPromptTemplate: (value: boolean) => void;
-  setIsCreatingGlossary: (value: boolean) => void;
+  handleSetIsCreatingPromptTemplate: (value: boolean) => void;
+  handleSetIsCreatingGlossary: (value: boolean) => void;
   handleCancelCreatingPromptTemplate: () => void;
   handleCancelCreatingGlossary: () => void;
   handleFocusMenuItem: (key: string) => void;
@@ -90,12 +84,12 @@ type TProjectEntry = ReturnType<typeof selectProjects>[number];
 
 const noop = providerNoop('MenuActionsContext');
 
-const MenuActionsContext = createContext<MenuActionsContextType>({
+const MenuActionsContext = createContext<TMenuActionsContext>({
   renamingKey: null,
   isCreatingPromptTemplate: false,
   isCreatingGlossary: false,
-  setIsCreatingPromptTemplate: noop,
-  setIsCreatingGlossary: noop,
+  handleSetIsCreatingPromptTemplate: noop,
+  handleSetIsCreatingGlossary: noop,
   handleCancelCreatingPromptTemplate: noop,
   handleCancelCreatingGlossary: noop,
   handleFocusMenuItem: noop,
@@ -114,11 +108,11 @@ const MenuActionsContext = createContext<MenuActionsContextType>({
   handleDeleteFocusedItem: noop,
 });
 
-export function useMenuActions(): MenuActionsContextType {
+export function useMenuActions(): TMenuActionsContext {
   return useContext(MenuActionsContext);
 }
 
-export default function MenuActionsProvider({ children }: PropsWithChildren) {
+export function MenuActionsProvider({ children }: PropsWithChildren) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { itemRefs } = useMenuRefs();
@@ -130,19 +124,19 @@ export default function MenuActionsProvider({ children }: PropsWithChildren) {
   const { confirmDeleteProject } = useDeleteProjectConfirmation();
 
   const [renamingKey, setRenamingKey] = useState<string | null>(null);
-  const [isCreatingPromptTemplate, setIsCreatingPromptTemplate] = useState(false);
-  const [isCreatingGlossary, setIsCreatingGlossary] = useState(false);
+  const [isCreatingPromptTemplate, handleSetIsCreatingPromptTemplate] = useState(false);
+  const [isCreatingGlossary, handleSetIsCreatingGlossary] = useState(false);
 
   // Not exposed via context -- only feeds keyboard-navigation bookkeeping below, so it's cheap to
   // recompute fresh from the store on every call rather than keep it reactive. Only the two local
   // "creating" flags actually need to be closure deps -- they change which literal entries get
   // added, everything else is read fresh via fromCurrentStore() each time this runs.
-  const getCombinedItems = useCallback((): MenuItemRef[] => {
+  const getCombinedItems = useCallback((): TMenuItemRef[] => {
     const projects = fromCurrentStore(selectProjects);
     const promptTemplateItems = fromCurrentStore(selectPromptTemplateItems);
     const glossaryItems = fromCurrentStore(selectGlossaryItems);
     const integrationIsConfigured = fromCurrentStore(selectIntegrationIsConfigured);
-    const items: MenuItemRef[] = [
+    const items: TMenuItemRef[] = [
       { key: SETTINGS_KEY, kind: 'settings' },
       ...projects.map((p) => ({ key: p.filePath, kind: 'project' as const })),
     ];
@@ -176,7 +170,7 @@ export default function MenuActionsProvider({ children }: PropsWithChildren) {
 
   // Live-resolved from document.activeElement (see the type comment) rather than tracked as
   // state -- correct at the moment it's called regardless of *how* focus got to a menu item.
-  const getFocusedItem = useCallback((): MenuItemRef | null => {
+  const getFocusedItem = useCallback((): TMenuItemRef | null => {
     const active = document.activeElement;
     if (!active) return null;
     for (const item of getCombinedItems()) {
@@ -212,14 +206,14 @@ export default function MenuActionsProvider({ children }: PropsWithChildren) {
   );
 
   const handleCancelCreatingPromptTemplate = useCallback(() => {
-    setIsCreatingPromptTemplate(false);
+    handleSetIsCreatingPromptTemplate(false);
     // The Create button remounts (it's conditionally rendered) once isCreatingPromptTemplate
     // flips false, so wait a frame before it can actually receive focus.
     requestAnimationFrame(() => handleFocusMenuItem(CREATE_PROMPT_TEMPLATE_KEY));
   }, [handleFocusMenuItem]);
 
   const handleCancelCreatingGlossary = useCallback(() => {
-    setIsCreatingGlossary(false);
+    handleSetIsCreatingGlossary(false);
     requestAnimationFrame(() => handleFocusMenuItem(CREATE_GLOSSARY_KEY));
   }, [handleFocusMenuItem]);
 
@@ -364,10 +358,10 @@ export default function MenuActionsProvider({ children }: PropsWithChildren) {
         handleStartNewProject();
         break;
       case 'createPromptTemplate':
-        setIsCreatingPromptTemplate(true);
+        handleSetIsCreatingPromptTemplate(true);
         break;
       case 'createGlossary':
-        setIsCreatingGlossary(true);
+        handleSetIsCreatingGlossary(true);
         break;
       case 'project': {
         const project = fromCurrentStore(selectProjects).find((p) => p.filePath === key);
@@ -469,52 +463,29 @@ export default function MenuActionsProvider({ children }: PropsWithChildren) {
     // create* kinds: nothing to delete, no-op.
   }, [getFocusedItem, handleDeleteProject, handleDeletePromptTemplate, handleDeleteGlossary]);
 
-  const value = useMemo<MenuActionsContextType>(
-    () => ({
-      renamingKey,
-      isCreatingPromptTemplate,
-      isCreatingGlossary,
-      setIsCreatingPromptTemplate,
-      setIsCreatingGlossary,
-      handleCancelCreatingPromptTemplate,
-      handleCancelCreatingGlossary,
-      handleFocusMenuItem,
-      handleMoveMenuFocus,
-      handleStartRenaming,
-      handleRenameFocusedItem,
-      handleStopRenaming,
-      handleOpenProject,
-      handleOpenPromptTemplate,
-      handleOpenGlossary,
-      handleStartNewProject,
-      handleOpenFocusedItem,
-      handleDeleteProject,
-      handleDeletePromptTemplate,
-      handleDeleteGlossary,
-      handleDeleteFocusedItem,
-    }),
-    [
-      renamingKey,
-      isCreatingPromptTemplate,
-      isCreatingGlossary,
-      handleCancelCreatingPromptTemplate,
-      handleCancelCreatingGlossary,
-      handleFocusMenuItem,
-      handleMoveMenuFocus,
-      handleStartRenaming,
-      handleRenameFocusedItem,
-      handleStopRenaming,
-      handleOpenProject,
-      handleOpenPromptTemplate,
-      handleOpenGlossary,
-      handleStartNewProject,
-      handleOpenFocusedItem,
-      handleDeleteProject,
-      handleDeletePromptTemplate,
-      handleDeleteGlossary,
-      handleDeleteFocusedItem,
-    ]
-  );
+  const value = useMemoizedObject<TMenuActionsContext>({
+    renamingKey,
+    isCreatingPromptTemplate,
+    isCreatingGlossary,
+    handleSetIsCreatingPromptTemplate,
+    handleSetIsCreatingGlossary,
+    handleCancelCreatingPromptTemplate,
+    handleCancelCreatingGlossary,
+    handleFocusMenuItem,
+    handleMoveMenuFocus,
+    handleStartRenaming,
+    handleRenameFocusedItem,
+    handleStopRenaming,
+    handleOpenProject,
+    handleOpenPromptTemplate,
+    handleOpenGlossary,
+    handleStartNewProject,
+    handleOpenFocusedItem,
+    handleDeleteProject,
+    handleDeletePromptTemplate,
+    handleDeleteGlossary,
+    handleDeleteFocusedItem,
+  });
 
   return <MenuActionsContext.Provider value={value}>{children}</MenuActionsContext.Provider>;
 }

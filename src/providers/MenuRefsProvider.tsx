@@ -1,4 +1,5 @@
 import { providerNoop } from '@src/utils/noop';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import {
   createContext,
   PropsWithChildren,
@@ -8,7 +9,7 @@ import {
   useRef,
 } from 'react';
 
-type MenuRefsContextType = {
+type TMenuRefsContext = {
   itemRefs: RefObject<Map<string, HTMLElement>>;
   registerMenuItemRef: (key: string, el: HTMLElement | null) => void;
   resetMenuRefs: () => void;
@@ -16,17 +17,17 @@ type MenuRefsContextType = {
 
 const noop = providerNoop('MenuRefsContext');
 
-const MenuRefsContext = createContext<MenuRefsContextType>({
+const MenuRefsContext = createContext<TMenuRefsContext>({
   itemRefs: { current: new Map() },
   registerMenuItemRef: noop,
   resetMenuRefs: noop,
 });
 
-export function useMenuRefs(): MenuRefsContextType {
+export function useMenuRefs(): TMenuRefsContext {
   return useContext(MenuRefsContext);
 }
 
-export default function MenuRefsProvider({ children }: PropsWithChildren) {
+export function MenuRefsProvider({ children }: PropsWithChildren) {
   const itemRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   const registerMenuItemRef = useCallback((key: string, el: HTMLElement | null) => {
@@ -39,9 +40,11 @@ export default function MenuRefsProvider({ children }: PropsWithChildren) {
     itemRefs.current = new Map();
   }, []);
 
-  return (
-    <MenuRefsContext.Provider value={{ itemRefs, registerMenuItemRef, resetMenuRefs }}>
-      {children}
-    </MenuRefsContext.Provider>
-  );
+  const value = useMemoizedObject<TMenuRefsContext>({
+    itemRefs,
+    registerMenuItemRef,
+    resetMenuRefs,
+  });
+
+  return <MenuRefsContext.Provider value={value}>{children}</MenuRefsContext.Provider>;
 }
