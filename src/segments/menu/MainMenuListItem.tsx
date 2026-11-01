@@ -1,4 +1,3 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { useMenuActions } from '@providers/MenuActionsProvider';
 import { useMenuRefs } from '@providers/MenuRefsProvider';
 import i18n from '@src/i18n';
@@ -14,7 +13,7 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
 import { toSlug } from '@utils/string';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader } from '../dialogs/Loader';
+import { useLoader } from '../dialogs/loader/useLoader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 
 const MAX_NAME_LENGTH = 64;
@@ -88,7 +87,7 @@ export function MainMenuListItem({
   const wasEditingRef = useRef(isEditing);
 
   const { pushMessage } = useMessageHelmet();
-  const { show: showLoading } = useInfoWindow(Loader);
+  const { load } = useLoader();
 
   const setItemRef = useCallback(
     (el: HTMLDivElement | null) => registerMenuItemRef(itemKey, el),
@@ -149,7 +148,7 @@ export function MainMenuListItem({
         : tMessages('mainMenuListItem.renamingFile');
 
     try {
-      await showLoading({ message: label, animate: false }, onCommit(fileName, draftValue));
+      await load({ messages: [label] }, onCommit(fileName, draftValue));
       setError(null);
       handleStopRenaming(itemKey);
     } catch (e) {

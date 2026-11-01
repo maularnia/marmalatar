@@ -75,15 +75,22 @@
     "renamingFile": "Перайменаванне файла"
   },
   "projectLoader": {
-    "loadingVideo": "Відэа загружаецца"
+    "loadingVideo": "Апрацоўваем відэа",
+    "blamingProcessor": "Вінавацім працэсар у марудлівасці",
+    "reevaluatingExpectations": "Пераглядаем свае чаканні",
+    "computingWaveforms": "Вылічаем хвалевыя формы",
+    "surfingWaveforms": "Сёрфім па хвалевых формах",
+    "demandingRam": "Патрабуем больш аператыўкі"
   },
   "submitNewProject": {
     "creatingProject": "Ініцыялізацыя"
   },
   "glossary": {
+    "loadingLabel": "Ладаванне гласарыя [{{title}}]",
     "savingLabel": "Захаванне гласарыя [{{title}}]"
   },
   "promptTemplate": {
+    "loadingLabel": "Ладаванне шаблону запыту [{{title}}]",
     "savingLabel": "Захаванне шаблону запыту [{{title}}]"
   },
   "cacheCleanupSuccess": {

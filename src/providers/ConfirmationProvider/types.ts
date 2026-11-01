@@ -10,6 +10,14 @@ export type TConfirmationHookProps = {
    * animated (`true`) when omitted. Applies to both confirmation windows (`useConfirm`) and info
    * windows (`useInfoWindow`). */
   animate?: boolean;
+  /** Time, in ms, an info window (`useInfoWindow`) waits before appearing. If the promise settles
+   * sooner, the window never appears. Defaults to 300; 0 opens it immediately. Has no effect on
+   * confirmation windows (`useConfirm`). */
+  delay?: number;
+  /** Shortest time, in ms, an info window (`useInfoWindow`) stays on screen, so a promise that
+   * settles quickly doesn't flash the window. Counted from the moment the window appears. Defaults
+   * to 1000. Has no effect on confirmation windows (`useConfirm`), which stay open until answered. */
+  minLifeTime?: number;
 };
 
 export type TInternalConfirmationWindowProps = {

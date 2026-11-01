@@ -9,6 +9,7 @@ import {
 } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import { LogoLoader } from '@src/toolkit/LogoLoader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
 import { useAppDispatch } from '@store/hooks';
@@ -17,8 +18,7 @@ import { selectCheckGrammar } from '@store/slices/app';
 import { fromCurrentStore } from '@store/store';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
-import Icon from '@ui-toolkit/Icon/Icon';
-import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
+import { TIcon } from '@ui-toolkit/Icon/icons';
 import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import TinyDivEditor from '@ui-toolkit/TinyDivEditor';
@@ -135,20 +135,6 @@ const AIThinkingMessage = styled.div`
   gap: ${CSSVar('mainTableLineCellSpacingX')};
   padding: ${CSSVar('mainTableLineCellSpacingY')} ${CSSVar('mainTableLineCellSpacingX')};
   color: ${CSSVar('mainTableLineColorFocus')};
-`;
-const LoaderContainer = styled.div`
-  @keyframes loading-animation {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  display: inline-block;
-  font-size: 0;
-  line-height: 0;
-  animation: loading-animation 1s infinite linear;
 `;
 const Line = styled.div`
   position: relative;
@@ -589,9 +575,7 @@ export default function EditorTableLine({
           <LineCell>
             {isFrozen && (
               <AIThinkingMessage>
-                <LoaderContainer>
-                  <Icon icon={TIcon.LOADER_RUNNER} size={TIconSize.L} />
-                </LoaderContainer>
+                <LogoLoader size={16} />
                 <P>{t('tableLine.aiThinking')}</P>
               </AIThinkingMessage>
             )}

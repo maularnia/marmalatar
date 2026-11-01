@@ -4,16 +4,7 @@ import { motion, MotionProps } from 'motion/react';
 import { useId } from 'react';
 import { LOGO_MASK_PATH, LOGO_STROKE_PATH } from './Logo/paths';
 
-const EYE_DURATION = 0.3;
-const RIGHT_EYE_DELAY = 0.1;
-// Counted from the moment the right eye starts appearing
-const STROKE_DELAY = RIGHT_EYE_DELAY + 0.2;
 const STROKE_PHASE_DURATION = 1;
-
-const eyeAnimation = {
-  initial: { opacity: 0, scale: 0 },
-  animate: { opacity: 1, scale: 1 },
-} satisfies MotionProps;
 
 const strokeAnimation = {
   initial: { pathLength: 0, pathOffset: 0 },
@@ -25,7 +16,6 @@ const strokeAnimation = {
     pathOffset: [0, 0, 1],
   },
   transition: {
-    delay: STROKE_DELAY,
     duration: STROKE_PHASE_DURATION * 2,
     times: [0, 0.5, 1],
     // Any easing that slows down at the keyframes would read as a pause between the phases
@@ -79,23 +69,6 @@ export function LogoLoader({ size = 64 }: TLogoLoaderProps) {
           {...strokeAnimation}
         />
       </g>
-
-      <motion.circle
-        cx="73.5"
-        cy="120.5"
-        r="11.5"
-        fill={accent1}
-        {...eyeAnimation}
-        transition={{ duration: EYE_DURATION, ease: 'easeOut' }}
-      />
-      <motion.circle
-        cx="115"
-        cy="119"
-        r="13"
-        fill={accent1}
-        {...eyeAnimation}
-        transition={{ duration: EYE_DURATION, ease: 'easeOut', delay: RIGHT_EYE_DELAY }}
-      />
     </svg>
   );
 }

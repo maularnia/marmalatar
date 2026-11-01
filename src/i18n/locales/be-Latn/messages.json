@@ -75,15 +75,22 @@
     "renamingFile": "Pierajmienavańnie fajła"
   },
   "projectLoader": {
-    "loadingVideo": "Videa zahružajecca"
+    "loadingVideo": "Apracoŭvajem videa",
+    "blamingProcessor": "Vinavacim pracesar u marudlivaści",
+    "reevaluatingExpectations": "Pierahladajem svaje čakańni",
+    "computingWaveforms": "Vyličajem chvalevyja formy",
+    "surfingWaveforms": "Siorfim pa chvalach",
+    "demandingRam": "Patrabujem bolš apieratyŭki"
   },
   "submitNewProject": {
     "creatingProject": "Inicyjalizacyja"
   },
   "glossary": {
+    "loadingLabel": "Ładavańnie głasaryja [{{title}}]",
     "savingLabel": "Zachavańnie głasaryja [{{title}}]"
   },
   "promptTemplate": {
+    "loadingLabel": "Ładavańnie šabłonu zapytu [{{title}}]",
     "savingLabel": "Zachavańnie šabłonu zapytu [{{title}}]"
   },
   "cacheCleanupSuccess": {

@@ -1,7 +1,6 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { useMessageHelmet } from '@providers/MessageHelmetProvider';
 import { emitCacheCleanupFailedMessage, emitCacheCleanupSuccessMessage } from '@src/messages';
-import { Loader } from '@src/segments/dialogs/Loader';
+import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { cleanupMediaCache } from '@src/utils/data/discIO';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
@@ -12,11 +11,11 @@ import { useTranslation } from 'react-i18next';
 export default function CleanCache() {
   const { t } = useTranslation('settings');
   const { pushMessage } = useMessageHelmet();
-  const { show: showLoading } = useInfoWindow(Loader);
+  const { load } = useLoader();
 
   const handleClean = async () => {
     try {
-      await showLoading({}, cleanupMediaCache());
+      await load({ messages: [] }, cleanupMediaCache());
       emitCacheCleanupSuccessMessage(pushMessage);
     } catch {
       emitCacheCleanupFailedMessage(pushMessage);
