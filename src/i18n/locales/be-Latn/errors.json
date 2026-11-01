@@ -76,7 +76,8 @@
   },
   "spellcheck": {
     "missingDictionaryAsset": "Nie znojdzieny resurs [{{suffix}}]",
-    "dictionaryLoadFailed": "Nie atrymłasia zahruzić słoŭnik [{{url}}]"
+    "dictionaryLoadFailed": "Nie atrymłasia zahruzić słoŭnik [{{url}}]",
+    "workerFailed": "Nie atrymałasia zapuścić pravierku pravapisu"
   },
   "project": {
     "corrupted": "Paškodžany fajł prajektu",

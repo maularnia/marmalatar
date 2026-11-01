@@ -134,7 +134,7 @@ function stripMarks(el: HTMLDivElement, text: string): void {
   if (caret !== null) setCaretOffset(el, caret);
 }
 
-type ActivePanel = { mark: SpellCheckMark; top: number; left: number };
+type ActivePanel = { mark: SpellCheckMark; suggestions: string[]; top: number; left: number };
 
 export default function TinyDivEditor({
   ref: forwardedRef,
@@ -347,9 +347,7 @@ export default function TinyDivEditor({
       if (!editable || document.activeElement !== editable) return undefined;
       const offset = getCaretOffset(editable);
       if (offset === null) return undefined;
-      return appliedMarks.find(
-        (mark) => offset >= mark.start && offset <= mark.end && mark.suggestions.length > 0
-      );
+      return appliedMarks.find((mark) => offset >= mark.start && offset <= mark.end);
     };
 
     const checkCaretPosition = () => {
@@ -363,20 +361,30 @@ export default function TinyDivEditor({
       if (!mark) return;
 
       showTimeoutRef.current = setTimeout(() => {
-        const root = rootRef.current;
-        const editable = editableRef.current;
-        if (!root || !editable || activeMarkIdRef.current !== id) return;
-        const liveTarget = editable.querySelector(`mark[data-mark-id="${id}"]`);
-        if (!liveTarget) return;
+        // Suggestions take up to seconds per word, so they're only computed for the word the caret
+        // has settled on, and the panel opens once they arrive. A failure just leaves it closed --
+        // the mark itself is still valid.
+        void spellCheckClientRef.current
+          ?.suggest(mark.word)
+          .then((suggestions) => {
+            const root = rootRef.current;
+            const editable = editableRef.current;
+            if (!suggestions?.length || !root || !editable) return;
+            if (activeMarkIdRef.current !== id) return;
+            const liveTarget = editable.querySelector(`mark[data-mark-id="${id}"]`);
+            if (!liveTarget) return;
 
-        const markRect = liveTarget.getBoundingClientRect();
-        const rootRect = root.getBoundingClientRect();
-        setActiveIndex(mark.suggestions.length - 1);
-        setActivePanel({
-          mark,
-          top: markRect.top - rootRect.top,
-          left: markRect.left - rootRect.left,
-        });
+            const markRect = liveTarget.getBoundingClientRect();
+            const rootRect = root.getBoundingClientRect();
+            setActiveIndex(suggestions.length - 1);
+            setActivePanel({
+              mark,
+              suggestions,
+              top: markRect.top - rootRect.top,
+              left: markRect.left - rootRect.left,
+            });
+          })
+          .catch(() => {});
       }, SUGGESTIONS_SHOW_DELAY_MS);
     };
 
@@ -413,7 +421,7 @@ export default function TinyDivEditor({
   // overriding the contentEditable's native caret-movement/newline behavior for those keys.
   useEffect(() => {
     if (!activePanel) return;
-    const suggestions = activePanel.mark.suggestions;
+    const { suggestions } = activePanel;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowDown') {
@@ -462,7 +470,7 @@ export default function TinyDivEditor({
       {activePanel && (
         <SuggestionsPanel style={{ top: activePanel.top, left: activePanel.left }}>
           <SuggestionsList>
-            {activePanel.mark.suggestions.map((suggestion, index) => (
+            {activePanel.suggestions.map((suggestion, index) => (
               <li key={suggestion}>
                 <ListItem
                   isActive={index === activeIndex}
