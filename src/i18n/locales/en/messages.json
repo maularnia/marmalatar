@@ -75,15 +75,22 @@
     "renamingFile": "Renaming file"
   },
   "projectLoader": {
-    "loadingVideo": "Video is loading..."
+    "loadingVideo": "Processing attached project video",
+    "blamingProcessor": "Blaming processor for slow performance",
+    "reevaluatingExpectations": "Re-evaluating expectations",
+    "computingWaveforms": "Computing waveforms",
+    "surfingWaveforms": "Surfing the waveforms",
+    "demandingRam": "Demanding more RAM"
   },
   "submitNewProject": {
     "creatingProject": "Project is being initialized..."
   },
   "glossary": {
+    "loadingLabel": "Loading glossary [{{title}}]...",
     "savingLabel": "Saving glossary [{{title}}]..."
   },
   "promptTemplate": {
+    "loadingLabel": "Loading prompt template [{{title}}]...",
     "savingLabel": "Saving prompt template [{{title}}]"
   },
   "cacheCleanupSuccess": {

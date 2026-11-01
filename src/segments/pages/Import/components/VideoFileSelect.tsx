@@ -3,6 +3,7 @@ import { emitAudioExtractionFailedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useVideo } from '@src/providers/VideoProvider';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
+import { LogoLoader } from '@src/toolkit/LogoLoader';
 import { TWaveformStatus } from '@src/types';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import FileSelectButton from '@ui-toolkit/FileSelectButton/FileSelectButton';
@@ -21,8 +22,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-const MessageFullWidth = styled(Message)`
-  align-self: stretch;
+const FileFormSectionEntry = styled(FormSectionEntry)`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const FileFormMessage = styled(Message)`
+  flex-grow: 1;
 `;
 
 type VideoFileSelectProps = {
@@ -188,15 +194,16 @@ export default function VideoFileSelect({
             </FileSelectButton>
           </FormSectionEntry>
           {waveformStatus !== TWaveformStatus.IDLE && (
-            <FormSectionEntry>
-              <MessageFullWidth
+            <FileFormSectionEntry>
+              {waveformStatus === TWaveformStatus.EXTRACTING_AUDIO && <LogoLoader size={24} />}
+              <FileFormMessage
                 color={VideoFilesProcessingStatusToColor[waveformStatus]}
                 type={TMessageVariant.SECONDARY}
                 size={TMessageSize.S}
               >
                 {VideoFileProcessingStatusToMessage[waveformStatus]}
-              </MessageFullWidth>
-            </FormSectionEntry>
+              </FileFormMessage>
+            </FileFormSectionEntry>
           )}
           <FormSectionEntry>
             <P color={ThemeColors.TEXT} variant={TPVariant.TERTIARY}>

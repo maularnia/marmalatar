@@ -1,7 +1,6 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
 import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
-import { Loader } from '@src/segments/dialogs/Loader';
+import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
@@ -48,7 +47,7 @@ export default function GlossaryOverlay() {
   const dispatch = useAppDispatch();
   const currentGlossary = useAppSelector(selectCurrentGlossary);
   const glossaryData = useAppSelector(selectGlossaryData);
-  const { show: showLoading } = useInfoWindow(Loader);
+  const { load } = useLoader();
   const { handleSetFocusedPair, handleInsertPair, handleDeletePair } = useGlossaryActions();
 
   const formData = glossaryData ?? emptyFormData;
@@ -74,11 +73,8 @@ export default function GlossaryOverlay() {
   }, [handleInsertPair, formData.list.length]);
 
   const handleClose = async () => {
-    await showLoading(
-      {
-        message: t('messages:glossary.savingLabel', { title: formData.title || '...' }),
-        animate: false,
-      },
+    await load(
+      { messages: [t('messages:glossary.savingLabel', { title: formData.title || '...' })] },
       dispatch(saveGlossary()) as Promise<unknown>
     );
     dispatch(closeOverlays());

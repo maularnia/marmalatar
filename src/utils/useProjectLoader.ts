@@ -1,11 +1,4 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { useVideo } from '@providers/VideoProvider';
-import {
-  checkExternalPathExists,
-  getProjectEditorState,
-  TProjectCacheEntry,
-} from '@src/utils/data/discIO';
-import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
 import {
   emitAudioExtractionFailedMessage,
   emitProjectLoadedMessage,
@@ -17,14 +10,20 @@ import {
   emitWaveformExtractionFailedMessage,
 } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
+import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
+import {
+  checkExternalPathExists,
+  getProjectEditorState,
+  TProjectCacheEntry,
+} from '@src/utils/data/discIO';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
+import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
 import { useAppDispatch } from '@store/hooks';
 import { loadProjectFromDisk } from '@store/thunks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Loader } from '@src/segments/dialogs/Loader';
 
 export function useProjectLoader() {
   const { t } = useTranslation(['dialogs', 'messages']);
@@ -34,7 +33,7 @@ export function useProjectLoader() {
   const { pushMessage } = useMessageHelmet();
   const { selectVideo } = useVideoSelectDialog();
   const { persistVideoPath, removeVideoPath } = usePersistVideoPath();
-  const { show: showInfo } = useInfoWindow(Loader);
+  const { load } = useLoader();
 
   const loadProject = useCallback(
     async (project: TProjectCacheEntry) => {
@@ -108,8 +107,17 @@ export function useProjectLoader() {
         return;
       }
 
-      const result = await showInfo(
-        { message: t('messages:projectLoader.loadingVideo'), animate: false },
+      const result = await load(
+        {
+          messages: [
+            t('messages:projectLoader.loadingVideo'),
+            t('messages:projectLoader.blamingProcessor'),
+            t('messages:projectLoader.reevaluatingExpectations'),
+            t('messages:projectLoader.computingWaveforms'),
+            t('messages:projectLoader.surfingWaveforms'),
+            t('messages:projectLoader.demandingRam'),
+          ],
+        },
         (async (): Promise<{
           audioPath: string;
           waveformPeaks: number[];
@@ -164,7 +172,7 @@ export function useProjectLoader() {
       resetCurrentTime,
       pushMessage,
       selectVideo,
-      showInfo,
+      load,
       persistVideoPath,
       removeVideoPath,
       t,

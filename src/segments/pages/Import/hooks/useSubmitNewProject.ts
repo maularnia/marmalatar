@@ -1,7 +1,6 @@
 import { emitProjectCreationAbortedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import { useInfoWindow } from '@src/providers/ConfirmationProvider/ConfirmationProvider';
-import { Loader } from '@src/segments/dialogs/Loader';
+import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { useAppDispatch, useAppSelector } from '@src/store/hooks';
 import { selectFolder } from '@src/store/slices/disc';
 import { createNewProject } from '@src/store/thunks';
@@ -22,7 +21,7 @@ export function useSubmitNewProject() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const folder = useAppSelector(selectFolder);
-  const { show: showInfo } = useInfoWindow(Loader);
+  const { load } = useLoader();
   const { pushMessage } = useMessageHelmet();
 
   const submitNewProject = useCallback(
@@ -34,8 +33,18 @@ export function useSubmitNewProject() {
       const filePath = `${folder}/${sanitizedFileName}`;
 
       try {
-        await showInfo(
-          { message: t('submitNewProject.creatingProject'), animate: false },
+        await load(
+          {
+            messages: [
+              t('submitNewProject.creatingProject'),
+              'Counting subtitle entries',
+              'Blamin processor for slow performance',
+              'Re-evaluating expectations',
+              'Computing waveforms',
+              'Surfing on waveforms',
+              'Demanding more RAM',
+            ],
+          },
           dispatch(createNewProject({ ...params, filePath }))
         );
         navigate('/workspace');
@@ -46,7 +55,7 @@ export function useSubmitNewProject() {
         );
       }
     },
-    [folder, dispatch, navigate, showInfo, t, pushMessage]
+    [folder, dispatch, navigate, load, t, pushMessage]
   );
 
   return { submitNewProject };

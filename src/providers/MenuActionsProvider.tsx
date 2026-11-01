@@ -1,9 +1,8 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { useMenuRefs } from '@providers/MenuRefsProvider';
 import { useDeleteContextConfirmation } from '@src/segments/dialogs/deleteContext/useDeleteContextConfirmation';
 import { useDeleteGlossaryConfirmation } from '@src/segments/dialogs/deleteGlossary/useDeleteGlossaryConfirmation';
 import { useDeleteProjectConfirmation } from '@src/segments/dialogs/deleteProject/useDeleteProjectConfirmation';
-import { Loader } from '@src/segments/dialogs/Loader';
+import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { selectIntegrationIsConfigured } from '@src/store/slices/app';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
@@ -33,6 +32,7 @@ import {
   startNewProject,
 } from '@store/thunks';
 import { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 type TMenuItemKind =
@@ -117,7 +117,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const { itemRefs } = useMenuRefs();
 
-  const { show: showLoading } = useInfoWindow(Loader);
+  const { t } = useTranslation('messages');
+  const { load } = useLoader();
   const { loadProject } = useProjectLoader();
   const { confirmDeleteContext } = useDeleteContextConfirmation();
   const { confirmDeleteGlossary } = useDeleteGlossaryConfirmation();
@@ -264,8 +265,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
         fromCurrentStore(selectPromptTemplateItems).find(
           (c) => c.fileName === currentPromptTemplate
         )?.title ?? '...';
-      await showLoading(
-        { message: `Saving prompt template ${title}...`, animate: false },
+      await load(
+        { messages: [t('promptTemplate.savingLabel', { title })] },
         dispatch(savePromptTemplate()) as Promise<unknown>,
         { minLifeTime: 0 }
       );
@@ -273,13 +274,13 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
       const title =
         fromCurrentStore(selectGlossaryItems).find((g) => g.fileName === currentGlossary)?.title ??
         '...';
-      await showLoading(
-        { message: `Saving glossary ${title}...`, animate: false },
+      await load(
+        { messages: [t('glossary.savingLabel', { title })] },
         dispatch(saveGlossary()) as Promise<unknown>,
         { minLifeTime: 0 }
       );
     }
-  }, [showLoading, dispatch]);
+  }, [load, dispatch, t]);
 
   const handleOpenProject = useCallback(
     async (project: TProjectEntry, isActive: boolean) => {
@@ -305,12 +306,12 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
       )
         return;
       await saveCurrentIfNeeded();
-      await showLoading(
-        { message: `Loading prompt template ${title}...` },
+      await load(
+        { messages: [t('promptTemplate.loadingLabel', { title })] },
         dispatch(openPromptTemplateEditor(fileName)) as Promise<unknown>
       );
     },
-    [saveCurrentIfNeeded, showLoading, dispatch]
+    [saveCurrentIfNeeded, load, dispatch, t]
   );
 
   const handleOpenGlossary = useCallback(
@@ -324,12 +325,12 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
       )
         return;
       await saveCurrentIfNeeded();
-      await showLoading(
-        { message: `Loading glossary ${title}...` },
+      await load(
+        { messages: [t('glossary.loadingLabel', { title })] },
         dispatch(openAIGlossaryEditor(fileName)) as Promise<unknown>
       );
     },
-    [saveCurrentIfNeeded, showLoading, dispatch]
+    [saveCurrentIfNeeded, load, dispatch, t]
   );
 
   const handleStartNewProject = useCallback(() => {

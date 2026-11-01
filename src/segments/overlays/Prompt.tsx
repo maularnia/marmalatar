@@ -1,4 +1,3 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import {
@@ -19,7 +18,7 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import TextArea from '@ui-toolkit/TextArea';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 import { useTranslation } from 'react-i18next';
-import { Loader } from '../dialogs/Loader';
+import { useLoader } from '../dialogs/loader/useLoader';
 import Overlay from './Overlay';
 
 const emptyFormData: PromptTemplateFileDataType = {
@@ -34,7 +33,7 @@ export default function PromptOverlay() {
   const dispatch = useAppDispatch();
   const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
   const promptTemplateData = useAppSelector(selectPromptTemplateData);
-  const { show: showLoading } = useInfoWindow(Loader);
+  const { load } = useLoader();
 
   const formData = promptTemplateData ?? emptyFormData;
 
@@ -43,11 +42,8 @@ export default function PromptOverlay() {
   };
 
   const handleClose = async () => {
-    await showLoading(
-      {
-        message: t('messages:promptTemplate.savingLabel', { title: formData.title || '...' }),
-        animate: false,
-      },
+    await load(
+      { messages: [t('messages:promptTemplate.savingLabel', { title: formData.title || '...' })] },
       dispatch(savePromptTemplate()) as Promise<unknown>
     );
     dispatch(closeOverlays());
