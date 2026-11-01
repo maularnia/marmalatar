@@ -1,69 +1,101 @@
-import { motion } from 'motion/react';
+import { TShade } from '@src/theme/definitions';
+import { CSSColor, ThemeColors } from '@src/theme/utils';
+import { motion, MotionProps } from 'motion/react';
 import { useId } from 'react';
+import { LOGO_MASK_PATH, LOGO_STROKE_PATH } from './Logo/paths';
 
-// LM filled shapes — used only as clip mask
-const L_PATH = 'M50 218V38H73.1042V201.054H160.373V218H50Z';
-const M_PATH =
-  'M50.1674 218V38H73.2717L128.521 117.456L183.896 38H207V218H183.896V74.0251L137.311 138.795H119.606L73.2717 74.2762V218H50.1674Z';
+const EYE_DURATION = 0.3;
+const RIGHT_EYE_DELAY = 0.1;
+// Counted from the moment the right eye starts appearing
+const STROKE_DELAY = RIGHT_EYE_DELAY + 0.2;
+const STROKE_PHASE_DURATION = 1;
 
-// Single unclosed skeleton running through the letterforms:
-// start at L-foot right end → left along foot → up left bar → M left diagonal
-// → M right diagonal → down M right bar
-const SKELETON_PATH = 'M160.4 209.5 L61.7 209.5 L61.7 38 L128.5 117.5 L195.5 38 L195.5 218';
+const eyeAnimation = {
+  initial: { opacity: 0, scale: 0 },
+  animate: { opacity: 1, scale: 1 },
+} satisfies MotionProps;
 
-const EYE1_PATH =
-  'M100.227 173.816C100.227 177.513 97.2283 180.51 93.5297 180.51C89.8311 180.51 86.8328 177.513 86.8328 173.816C86.8328 170.119 89.8311 167.121 93.5297 167.121C97.2283 167.121 100.227 170.119 100.227 173.816Z';
-const EYE2_PATH =
-  'M172.553 164.444C172.553 170.359 167.756 175.155 161.838 175.155C155.92 175.155 151.123 170.359 151.123 164.444C151.123 158.528 155.92 153.732 161.838 153.732C167.756 153.732 172.553 158.528 172.553 164.444Z';
+const strokeAnimation = {
+  initial: { pathLength: 0, pathOffset: 0 },
+  // Fill: the dash grows from the path start. Empty: the dash start chases its end, so the stroke
+  // leaves in the same direction it came in. Both ends of the loop are an empty stroke, which makes
+  // the repeat seamless.
+  animate: {
+    pathLength: [0, 1, 1],
+    pathOffset: [0, 0, 1],
+  },
+  transition: {
+    delay: STROKE_DELAY,
+    duration: STROKE_PHASE_DURATION * 2,
+    times: [0, 0.5, 1],
+    // Any easing that slows down at the keyframes would read as a pause between the phases
+    ease: 'linear',
+    repeat: Infinity,
+  },
+} satisfies MotionProps;
 
-type LogoLoaderProps = {
+type TLogoLoaderProps = {
   size?: number;
 };
 
-export function LogoLoader({ size = 64 }: LogoLoaderProps) {
+export function LogoLoader({ size = 64 }: TLogoLoaderProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  const clipId = `ll-${uid}`;
+  const maskId = `logo-loader-mask-${uid}`;
+  const gradientId = `logo-loader-gradient-${uid}`;
+  const accent1 = CSSColor(ThemeColors.ACCENT1, TShade.DEFAULT, 100);
+  const accent2 = CSSColor(ThemeColors.ACCENT2, TShade.DEFAULT, 100);
 
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 256 256"
+      viewBox="0 0 185 185"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <clipPath id={clipId}>
-          <path d={L_PATH} />
-          <path d={M_PATH} />
-        </clipPath>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={accent1} />
+          <stop offset="100%" stopColor={accent2} />
+        </linearGradient>
+        <mask
+          id={maskId}
+          style={{ maskType: 'alpha' }}
+          maskUnits="userSpaceOnUse"
+          x="17"
+          y="4"
+          width="150"
+          height="177"
+        >
+          <path d={LOGO_MASK_PATH} fill="white" />
+        </mask>
       </defs>
 
-      {/* Skeleton stroke clipped to letterform silhouette */}
-      <g clipPath={`url(#${clipId})`}>
+      <g mask={`url(#${maskId})`}>
         <motion.path
-          d={SKELETON_PATH}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={40}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          animate={{
-            pathLength: [0, 1, 1],
-            pathOffset: [0, 0, 1],
-          }}
-          transition={{
-            duration: 2.5,
-            repeat: Infinity,
-            times: [0, 0.45, 1],
-            ease: ['easeInOut', 'easeInOut'],
-          }}
+          d={LOGO_STROKE_PATH}
+          stroke={`url(#${gradientId})`}
+          strokeWidth={33}
+          {...strokeAnimation}
         />
       </g>
 
-      {/* Eyes always visible, outside the clip */}
-      <path d={EYE1_PATH} fill="currentColor" />
-      <path d={EYE2_PATH} fill="currentColor" />
+      <motion.circle
+        cx="73.5"
+        cy="120.5"
+        r="11.5"
+        fill={accent1}
+        {...eyeAnimation}
+        transition={{ duration: EYE_DURATION, ease: 'easeOut' }}
+      />
+      <motion.circle
+        cx="115"
+        cy="119"
+        r="13"
+        fill={accent1}
+        {...eyeAnimation}
+        transition={{ duration: EYE_DURATION, ease: 'easeOut', delay: RIGHT_EYE_DELAY }}
+      />
     </svg>
   );
 }
