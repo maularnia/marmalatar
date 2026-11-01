@@ -31,7 +31,7 @@ const animateEaseInOut: TTransitionConfig = {
 //   default: { ease: 'easeIn', duration: timeDefault },
 //   fast: { ease: 'easeIn', duration: timeFast },
 // };
-const animateEaseOut: TTransitionConfig = {
+export const animateEaseOut: TTransitionConfig = {
   slow: { ease: 'easeOut', duration: timeSlow },
   default: { ease: 'easeOut', duration: timeDefault },
   fast: { ease: 'easeOut', duration: timeFast },

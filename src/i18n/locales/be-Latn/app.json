@@ -1,8 +1,4 @@
 {
-  "title": {
-    "name": "Marmalatar",
-    "subtitle": "Pamočnik pierakładčyka"
-  },
   "video": {
     "supportedFormats": "Prahrama padtrymlivaje: .mp4, .m4v, .mkv, .webm, .mov, .avi, .wmv, .flv, .mpg, .mpeg, .m2ts, .mts, .ts, .3gp, .3g2, .ogv,.asf",
     "supportedCodecs": "Sumiaščalnyja kodeki: H.264, VP8, VP9, AV1"
