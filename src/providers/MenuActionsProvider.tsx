@@ -253,6 +253,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
     setRenamingKey((prev) => (prev === key ? null : prev));
   }, []);
 
+  // Runs right before opening something, so no minimum lifetime here: it would be added on top of
+  // the opening loader's own one.
   const saveCurrentIfNeeded = useCallback(async () => {
     const currentOverlay = fromCurrentStore(selectCurrentOverlay);
     const currentPromptTemplate = fromCurrentStore(selectCurrentPromptTemplate);
@@ -264,7 +266,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
         )?.title ?? '...';
       await showLoading(
         { message: `Saving prompt template ${title}...`, animate: false },
-        dispatch(savePromptTemplate()) as Promise<unknown>
+        dispatch(savePromptTemplate()) as Promise<unknown>,
+        { minLifeTime: 0 }
       );
     } else if (currentOverlay === 'glossary' && currentGlossary) {
       const title =
@@ -272,7 +275,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
         '...';
       await showLoading(
         { message: `Saving glossary ${title}...`, animate: false },
-        dispatch(saveGlossary()) as Promise<unknown>
+        dispatch(saveGlossary()) as Promise<unknown>,
+        { minLifeTime: 0 }
       );
     }
   }, [showLoading, dispatch]);
