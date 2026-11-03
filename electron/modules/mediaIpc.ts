@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import type Store from 'electron-store';
+import { z } from 'zod';
 import { createNamespacedRecordStore } from '../utils/namespacedRecordStore';
 import { listFilesByExtension } from '../utils/listFilesByExtension';
 import { runWithFallback } from '../utils/runWithFallback';
@@ -16,6 +17,19 @@ const ffmpegBinaryName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
 const ffmpegPath = app.isPackaged
   ? path.join(process.resourcesPath, 'ffmpeg-static', ffmpegBinaryName)
   : path.join(__dirname, '../../node_modules/ffmpeg-static', ffmpegBinaryName);
+
+// Same reasoning as ffmpegPath. ffprobe-static holds one binary per platform and arch, and
+// electron-builder.yml copies only the current one into the packaged app.
+const ffprobeBinaryName = process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe';
+const ffprobePath = app.isPackaged
+  ? path.join(process.resourcesPath, 'ffprobe-static', ffprobeBinaryName)
+  : path.join(
+      __dirname,
+      '../../node_modules/ffprobe-static/bin',
+      process.platform,
+      process.arch,
+      ffprobeBinaryName
+    );
 
 const MEDIA_CACHE_SUBDIRS = ['audio', 'previews', 'waveforms'] as const;
 
@@ -44,50 +58,51 @@ function ffmpegError(context: string, code: number | null, stderr: string): Erro
   );
 }
 
-// Extracts duration using ffmpeg's stderr output (no ffprobe needed).
-// -t 1 bounds decoding to ~1s of output -- the stream-info header (which is all we read) is
-// printed immediately on open regardless, so this avoids decoding the entire file just to read
-// it (confirmed: ~26s for a 24-minute 1080p HEVC file without -t, ~0.1s with it).
-function getDurationViaFfmpeg(filePath: string): Promise<number | null> {
+// Runs ffprobe and returns its JSON output, or null if it fails. Stdout is collected as Buffers,
+// not strings: decoding each chunk on its own would corrupt a multi-byte character that happens to
+// span two chunks.
+function runFfprobe(args: string[]): Promise<unknown> {
   return new Promise((resolve) => {
-    const proc = spawn(ffmpegPath, ['-i', filePath, '-t', '1', '-f', 'null', '-'], {
-      stdio: ['ignore', 'ignore', 'pipe'],
+    const proc = spawn(ffprobePath, ['-v', 'error', '-of', 'json', ...args], {
+      stdio: ['ignore', 'pipe', 'ignore'],
     });
-    let stderr = '';
-    proc.stderr?.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-    proc.on('close', () => {
-      const match = stderr.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
-      if (!match) return resolve(null);
-      const seconds = parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseFloat(match[3]);
-      resolve(seconds);
+    const chunks: Buffer[] = [];
+    proc.stdout?.on('data', (chunk: Buffer) => chunks.push(chunk));
+    proc.on('close', (code) => {
+      if (code !== 0) return resolve(null);
+      resolve(runWithFallback(() => JSON.parse(Buffer.concat(chunks).toString('utf8')), null));
     });
     proc.on('error', () => resolve(null));
   });
 }
 
-// Extracts the audio codec name from ffmpeg's stream-info stderr line, e.g.
-// "Stream #0:1(eng): Audio: aac (LC), 48000 Hz, stereo, fltp, 69 kb/s". Returns null if
-// there's no audio stream or the line couldn't be parsed. See getDurationViaFfmpeg for why -t 1
-// is used -- same reasoning, same header line is available almost instantly regardless.
-function getAudioCodecViaFfmpeg(filePath: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const proc = spawn(ffmpegPath, ['-i', filePath, '-t', '1', '-f', 'null', '-'], {
-      stdio: ['ignore', 'ignore', 'pipe'],
-    });
-    let stderr = '';
-    proc.stderr?.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-    proc.on('close', () => {
-      const match = stderr.match(
-        /Stream #\d+:\d+(?:\[[^\]]*\])?(?:\([^)]*\))?:\s*Audio:\s*([a-zA-Z0-9_]+)/
-      );
-      resolve(match ? match[1].toLowerCase() : null);
-    });
-    proc.on('error', () => resolve(null));
-  });
+const FfprobeDurationSchema = z.object({
+  format: z.object({ duration: z.coerce.number() }),
+});
+
+// Duration in seconds, or null if the file has none or can't be read
+async function getDuration(filePath: string): Promise<number | null> {
+  const output = await runFfprobe(['-show_entries', 'format=duration', filePath]);
+  const parsed = FfprobeDurationSchema.safeParse(output);
+  return parsed.success ? parsed.data.format.duration : null;
+}
+
+const FfprobeCodecSchema = z.object({
+  streams: z.array(z.object({ codec_name: z.string() })).min(1),
+});
+
+// Codec name of the first audio stream, e.g. "aac", or null if there's no audio stream or the file
+// can't be read
+async function getAudioCodec(filePath: string): Promise<string | null> {
+  const output = await runFfprobe([
+    '-select_streams',
+    'a:0',
+    '-show_entries',
+    'stream=codec_name',
+    filePath,
+  ]);
+  const parsed = FfprobeCodecSchema.safeParse(output);
+  return parsed.success ? parsed.data.streams[0].codec_name.toLowerCase() : null;
 }
 
 function readProjectId(mrmlFilePath: string): string | null {
@@ -248,7 +263,7 @@ export function registerMediaIpc(appStore: Store): void {
       }
     }
 
-    const duration = await getDurationViaFfmpeg(filePath);
+    const duration = await getDuration(filePath);
     const seekTime = duration ? Math.max(1, duration / 3) : 5;
 
     return new Promise((resolve, reject) => {
@@ -320,7 +335,7 @@ export function registerMediaIpc(appStore: Store): void {
       return cacheFile;
     }
 
-    const codec = await getAudioCodecViaFfmpeg(filePath);
+    const codec = await getAudioCodec(filePath);
     // -map 0:a:0 explicitly selects just the first audio stream -- plain -vn only excludes
     // video. -map_chapters -1 stops chapter markers (e.g. from .mkv) from being auto-copied in
     // as a stray "Data: bin_data" text track alongside the audio (confirmed via real-world test).

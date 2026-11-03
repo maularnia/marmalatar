@@ -6,6 +6,8 @@ directories:
 files:
   - out/**
   - node_modules/**
+  # Every platform's ffprobe binary, 300+ MB. extraResources below copies the one that's needed.
+  - '!node_modules/ffprobe-static/**'
   - package.json
 extraResources:
   - from: node_modules/ffmpeg-static
@@ -13,6 +15,9 @@ extraResources:
 win:
   target: nsis
   icon: electron/assets/icon.ico
+  extraResources:
+    - from: node_modules/ffprobe-static/bin/win32/x64
+      to: ffprobe-static
 linux:
   target:
     - AppImage
@@ -20,6 +25,9 @@ linux:
     - pacman
     - rpm
   icon: electron/assets/icon-256.png
+  extraResources:
+    - from: node_modules/ffprobe-static/bin/linux/x64
+      to: ffprobe-static
   maintainer: Maularnia <mauliarnia.by@gmail.com>
   category: TextEditor
   syncDesktopName: true
