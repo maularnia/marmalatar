@@ -65,7 +65,8 @@ export interface ElectronAPI {
   lmStudioTranslate: (params: LMStudioTranslationParams) => Promise<LMStudioTranslationResult>;
   lmStudioCancel: (requestId: string) => Promise<void>;
   lmStudioTokenize: (params: TokenizeWithLMStudioParams) => Promise<number>;
-  deeplEncryptionAvailable: () => Promise<boolean>;
+  // Whether the OS can encrypt stored secrets; without it they're stored as plain text
+  isEncryptionAvailable: () => Promise<boolean>;
   getDeepLApiKey: () => Promise<string>;
   setDeepLApiKey: (apiKey: string) => Promise<void>;
   deeplPing: (apiKey: string) => Promise<boolean>;

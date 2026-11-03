@@ -63,7 +63,7 @@ const api: ElectronAPI = {
   lmStudioTranslate: invoke<[LMStudioTranslationParams]>('lmstudio-translate'),
   lmStudioCancel: invoke<[string]>('lmstudio-cancel'),
   lmStudioTokenize: invoke<[TokenizeWithLMStudioParams]>('lmstudio-tokenize'),
-  deeplEncryptionAvailable: invoke('deepl-encryption-available'),
+  isEncryptionAvailable: invoke('is-encryption-available'),
   getDeepLApiKey: invoke('get-deepl-api-key'),
   setDeepLApiKey: invoke<[string]>('set-deepl-api-key'),
   deeplPing: invoke<[string]>('deepl-ping'),

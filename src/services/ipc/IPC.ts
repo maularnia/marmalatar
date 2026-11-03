@@ -1,5 +1,6 @@
 import type { IPCSegment, TBridgeCall } from './IPCSegment';
 import { IPCDeepl } from './segments/deepl';
+import { IPCEncryption } from './segments/encryption';
 import { IPCFiles } from './segments/files';
 import { IPCLmStudio } from './segments/lmStudio';
 import { IPCMedia } from './segments/media';
@@ -17,6 +18,7 @@ const SEGMENTS = [
   IPCMedia,
   IPCLmStudio,
   IPCDeepl,
+  IPCEncryption,
 ] as const;
 
 // What IPC needs from a segment class: the name it's exposed under, and a constructor taking the

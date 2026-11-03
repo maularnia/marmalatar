@@ -1,4 +1,4 @@
-import { safeStorage } from 'electron';
+import { decryptSecret, encryptSecret, type TStoredSecret } from '../encryption/encryption';
 import type Store from 'electron-store';
 import * as deepl from 'deepl-node';
 import type {
@@ -79,21 +79,16 @@ export async function translateWithDeepL({
   return lines.map((line, i) => ({ line: line.line, text: results[i]?.text ?? '' }));
 }
 
-// ── safeStorage-backed API key persistence ──────────────────────────────────
+// ── Encrypted API key persistence ───────────────────────────────────────────
 // Stored inside the app's existing electron-store config, not a separate file -- the protection
-// comes from safeStorage's OS-level encryption, not from file location.
-type StoredApiKey = { value: string; encrypted: boolean };
+// comes from OS-level encryption (see ../encryption/encryption.ts), not from file location.
 const DEEPL_API_KEY_STORE_KEY = 'deeplApiKeyEncrypted';
 
 export function getDeepLApiKey(appStore: Store): string {
-  const stored = appStore.get(DEEPL_API_KEY_STORE_KEY) as StoredApiKey | undefined;
+  const stored = appStore.get(DEEPL_API_KEY_STORE_KEY) as TStoredSecret | undefined;
   if (!stored?.value) return '';
-  if (!stored.encrypted) return stored.value;
-  try {
-    return safeStorage.decryptString(Buffer.from(stored.value, 'base64'));
-  } catch {
-    return ''; // ciphertext unreadable (e.g. OS keychain unavailable) -- force re-entry
-  }
+  // Unreadable ciphertext forces the user to enter the key again
+  return decryptSecret(stored) ?? '';
 }
 
 export function setDeepLApiKey(appStore: Store, apiKey: string): void {
@@ -101,18 +96,5 @@ export function setDeepLApiKey(appStore: Store, apiKey: string): void {
     appStore.delete(DEEPL_API_KEY_STORE_KEY);
     return;
   }
-  if (safeStorage.isEncryptionAvailable()) {
-    const encrypted: StoredApiKey = {
-      value: safeStorage.encryptString(apiKey).toString('base64'),
-      encrypted: true,
-    };
-    appStore.set(DEEPL_API_KEY_STORE_KEY, encrypted);
-  } else {
-    const plain: StoredApiKey = { value: apiKey, encrypted: false };
-    appStore.set(DEEPL_API_KEY_STORE_KEY, plain);
-  }
-}
-
-export function isDeepLEncryptionAvailable(): boolean {
-  return safeStorage.isEncryptionAvailable();
+  appStore.set(DEEPL_API_KEY_STORE_KEY, encryptSecret(apiKey));
 }

@@ -10,7 +10,6 @@ import {
 } from './lmStudio';
 import {
   getDeepLApiKey,
-  isDeepLEncryptionAvailable,
   listDeepLGlossaries,
   pingDeepL,
   setDeepLApiKey,
@@ -98,7 +97,6 @@ export function registerAiIpc(appStore: Store): void {
     tokenizeWithLMStudio(TokenizeWithLMStudioParamsSchema.parse(params))
   );
 
-  ipcMain.handle('deepl-encryption-available', () => isDeepLEncryptionAvailable());
   ipcMain.handle('get-deepl-api-key', () => getDeepLApiKey(appStore));
   ipcMain.handle('set-deepl-api-key', (_: IpcMainInvokeEvent, apiKey: string) =>
     setDeepLApiKey(appStore, apiKey)

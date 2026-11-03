@@ -8,6 +8,7 @@ import { registerScannerIpc } from './modules/scanner/scannerIpc';
 import { registerAppSettingsIpc } from './modules/appSettingsIpc';
 import { registerMediaIpc } from './modules/mediaIpc';
 import { registerAiIpc } from './modules/ai/aiIpc';
+import { registerEncryptionIpc } from './modules/encryption/encryptionIpc';
 import { registerAutoUpdate } from './modules/autoUpdate';
 
 const appStore = new Store();
@@ -50,6 +51,7 @@ registerScannerIpc(appStore);
 registerAppSettingsIpc(appStore);
 registerMediaIpc(appStore);
 registerAiIpc(appStore);
+registerEncryptionIpc();
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);

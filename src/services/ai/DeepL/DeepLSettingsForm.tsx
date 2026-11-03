@@ -133,7 +133,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
   };
 
   useEffect(() => {
-    void IPC.deepl.isEncryptionAvailable().then(setEncryptionAvailable);
+    void IPC.encryption.isAvailable().then(setEncryptionAvailable);
   }, []);
 
   // Hydrate from whatever's already cached (e.g. set at boot) or, failing that, persisted storage.
