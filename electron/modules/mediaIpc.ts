@@ -9,6 +9,7 @@ import { listFilesByExtension } from '../utils/listFilesByExtension';
 import { runWithFallback } from '../utils/runWithFallback';
 import { getFileCacheKey } from '../utils/fileCacheKey';
 import type { ProjectState } from '../../bridge/definitions/projectState';
+import type { TAudioTrack } from '../../bridge/definitions/audioTrack';
 
 // Forge's Vite plugin strips node_modules from the packaged app, so ffmpeg-static's
 // JS (and its own __dirname-based path lookup) isn't available at runtime. The binary
@@ -103,6 +104,49 @@ async function getAudioCodec(filePath: string): Promise<string | null> {
   ]);
   const parsed = FfprobeCodecSchema.safeParse(output);
   return parsed.success ? parsed.data.streams[0].codec_name.toLowerCase() : null;
+}
+
+const FfprobeAudioStreamsSchema = z.object({
+  streams: z.array(
+    z.object({
+      index: z.number(),
+      codec_name: z.string().optional(),
+      channels: z.number().optional(),
+      channel_layout: z.string().optional(),
+      sample_rate: z.coerce.number().optional(),
+      bit_rate: z.coerce.number().optional(),
+      tags: z.object({ language: z.string().optional(), title: z.string().optional() }).optional(),
+      disposition: z.object({ default: z.number(), comment: z.number() }).optional(),
+    })
+  ),
+});
+
+// Every audio stream of the file, in file order. Rejects when ffprobe can't read the file, so
+// callers can tell that apart from a file that simply has no audio.
+async function listAudioTracks(filePath: string): Promise<TAudioTrack[]> {
+  const output = await runFfprobe([
+    '-select_streams',
+    'a',
+    '-show_entries',
+    'stream=index,codec_name,channels,channel_layout,sample_rate,bit_rate:stream_tags=language,title:stream_disposition=default,comment',
+    filePath,
+  ]);
+  const parsed = FfprobeAudioStreamsSchema.safeParse(output);
+  if (!parsed.success) throw new Error(`Unable to read audio tracks of ${filePath}`);
+  return parsed.data.streams.map((stream) => ({
+    id: stream.index,
+    codec: stream.codec_name ?? null,
+    channels: stream.channels ?? null,
+    channelLayout: stream.channel_layout ?? null,
+    sampleRate: stream.sample_rate ?? null,
+    bitRate: stream.bit_rate ?? null,
+    language: stream.tags?.language ?? null,
+    title: stream.tags?.title ?? null,
+    isDefault: stream.disposition?.default === 1,
+    // Unreliable: ffprobe-static's ffprobe 4.0.2 doesn't read Matroska's commentary flag, and a
+    // test .mp4 with the flag set also came out false
+    isCommentary: stream.disposition?.comment === 1,
+  }));
 }
 
 function readProjectId(mrmlFilePath: string): string | null {
@@ -322,6 +366,10 @@ export function registerMediaIpc(appStore: Store): void {
   // AAC Stereo 192kbps. Returns the cached file's absolute path (not inline bytes -- the
   // renderer needs a real file:// path for an <audio> element).
   // Caches the result in {trackedFolder}/.mrmlcache/audio/{key}.m4a.
+  ipcMain.handle('list-audio-tracks', (_: IpcMainInvokeEvent, filePath: string) =>
+    listAudioTracks(filePath)
+  );
+
   ipcMain.handle('extract-or-convert-audio', async (_: IpcMainInvokeEvent, filePath: string) => {
     const trackedFolder = appStore.get('trackedFolder') as string | undefined;
     if (!trackedFolder) {

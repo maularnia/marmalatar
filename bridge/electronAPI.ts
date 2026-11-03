@@ -1,4 +1,5 @@
 import type { ProjectState } from './definitions/projectState';
+import type { TAudioTrack } from './definitions/audioTrack';
 import type { AppSettingsContract } from './definitions/appSettings';
 import type { IntegrationSettings } from './definitions/integrationSettings';
 import type { ProjectCacheEntry } from './definitions/projectCacheEntry';
@@ -57,6 +58,8 @@ export interface ElectronAPI {
   extractWaveformPeaks: (filePath: string) => Promise<number[]>;
   generateThumbnail: (filePath: string) => Promise<string>;
   extractOrConvertAudio: (filePath: string) => Promise<string>;
+  // Rejects when the file can't be read; an empty list means it has no audio
+  listAudioTracks: (filePath: string) => Promise<TAudioTrack[]>;
   // Resolves in-use video paths from the tracked folder's .mrml files + projectStates itself --
   // no arguments needed, see electron/modules/mediaIpc.ts's cleanupOrphanedMediaCache.
   cleanupMediaCache: () => Promise<void>;
