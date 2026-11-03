@@ -1,4 +1,5 @@
 import { useVideo } from '@providers/VideoProvider';
+import { useSelectAudioTrackDialog } from '@src/segments/dialogs/selectAudioTrack/useSelectAudioTrackDialog';
 import { selectIsSmallScreen } from '@src/store/slices/app';
 import {
   selectActiveLineIndex,
@@ -152,6 +153,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
   const activeLineIndex = useAppSelector(selectActiveLineIndex);
   const videoFilePath = useAppSelector(selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
+  const { selectAudioTrack } = useSelectAudioTrackDialog();
   const characterPool = useAppSelector(selectCharacterPool);
   const isSmallScreen = useAppSelector(selectIsSmallScreen);
   const isVideoCollapsed = useAppSelector(selectIsVideoCollapsed);
@@ -315,6 +317,18 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
           ) : null}
         </TopBarPanel>
         <TopBarPanel>
+          {videoFilePath && (
+            <TopBarBlurWrapper>
+              <Button
+                variant={TButtonVariant.PRIMARY}
+                color={ThemeColors.TEXT}
+                size={TButtonSize.SMALL}
+                icon={TIcon.AUDIO_TRACK}
+                // Not wired yet: the chosen track isn't applied
+                onClick={() => void selectAudioTrack(videoFilePath)}
+              />
+            </TopBarBlurWrapper>
+          )}
           <TopBarBlurWrapper>
             <Button
               variant={TButtonVariant.PRIMARY}

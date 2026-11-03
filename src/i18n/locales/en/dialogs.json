@@ -71,6 +71,14 @@
     "bodyHasContent": "Output already has content",
     "bodyWillTranslate": "The line will be translated with AI"
   },
+  "selectAudioTrack": {
+    "title": "Select audio track",
+    "selectButton": "Select",
+    "placeholder": "Audio track",
+    "listing": "Reading audio tracks...",
+    "listingFailed": "Unable to read audio tracks",
+    "noTracks": "This video has no audio tracks"
+  },
   "videoSelect": {
     "title": "Select a video file",
     "filePlaceholder": ".mp4, .mkv, .webm.",

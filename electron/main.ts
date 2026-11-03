@@ -6,7 +6,7 @@ import { registerPromptTemplateIpc } from './modules/promptTemplateIpc';
 import { registerGlossaryIpc } from './modules/glossaryIpc';
 import { registerScannerIpc } from './modules/scanner/scannerIpc';
 import { registerAppSettingsIpc } from './modules/appSettingsIpc';
-import { registerMediaIpc } from './modules/mediaIpc';
+import { registerMediaIpc } from './modules/media/mediaIpc';
 import { registerAiIpc } from './modules/ai/aiIpc';
 import { registerEncryptionIpc } from './modules/encryption/encryptionIpc';
 import { registerAutoUpdate } from './modules/autoUpdate';

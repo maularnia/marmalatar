@@ -71,6 +71,14 @@
     "bodyHasContent": "Гэта перазапіша тэкст перакладу",
     "bodyWillTranslate": "радок будзе перакладзены ШІ"
   },
+  "selectAudioTrack": {
+    "title": "Абярыце аўдыядарожку",
+    "selectButton": "Абраць",
+    "placeholder": "Аўдыядарожка",
+    "listing": "Чытаем аўдыядарожкі...",
+    "listingFailed": "Не атрымалася прачытаць аўдыядарожкі",
+    "noTracks": "У гэтым відэа няма аўдыядарожак"
+  },
   "videoSelect": {
     "title": "Абярыце відэа-файл",
     "filePlaceholder": ".mp4, .mkv, .webm.",

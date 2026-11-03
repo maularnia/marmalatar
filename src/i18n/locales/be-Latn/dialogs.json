@@ -71,6 +71,14 @@
     "bodyHasContent": "Heta pierazapiša tekst pierakładu",
     "bodyWillTranslate": "radok budzie pierakładzieny ŠI"
   },
+  "selectAudioTrack": {
+    "title": "Abiarycie aŭdyjadarožku",
+    "selectButton": "Abrać",
+    "placeholder": "Aŭdyjadarožka",
+    "listing": "Čytajem aŭdyjadarožki...",
+    "listingFailed": "Nie atrymałasia pračytać aŭdyjadarožki",
+    "noTracks": "U hetym videa niama aŭdyjadarožak"
+  },
   "videoSelect": {
     "title": "Abiarycie videa-fajł",
     "filePlaceholder": ".mp4, .mkv, .webm.",

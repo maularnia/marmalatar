@@ -95,4 +95,5 @@ export enum TIcon {
   CLEANUP = 'cleanup',
   DOUBLE_RIGHT = 'double-right',
   DOUBLE_TICK = 'double-tick',
+  AUDIO_TRACK = 'audio-track',
 }

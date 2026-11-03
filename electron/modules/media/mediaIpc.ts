@@ -3,34 +3,21 @@ import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import type Store from 'electron-store';
-import { z } from 'zod';
-import { createNamespacedRecordStore } from '../utils/namespacedRecordStore';
-import { listFilesByExtension } from '../utils/listFilesByExtension';
-import { runWithFallback } from '../utils/runWithFallback';
-import { getFileCacheKey } from '../utils/fileCacheKey';
-import type { ProjectState } from '../../bridge/definitions/projectState';
-import type { TAudioTrack } from '../../bridge/definitions/audioTrack';
+import { createNamespacedRecordStore } from '../../utils/namespacedRecordStore';
+import { listFilesByExtension } from '../../utils/listFilesByExtension';
+import { runWithFallback } from '../../utils/runWithFallback';
+import { getFileCacheKey } from '../../utils/fileCacheKey';
+import type { ProjectState } from '../../../bridge/definitions/projectState';
+import { getAudioCodec, getDuration, listAudioTracks } from './metadata';
 
 // Forge's Vite plugin strips node_modules from the packaged app, so ffmpeg-static's
 // JS (and its own __dirname-based path lookup) isn't available at runtime. The binary
 // is copied in via packagerConfig.extraResource instead, and located relative to that.
+// In development __dirname is the bundled out/main, not this source file's folder.
 const ffmpegBinaryName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
 const ffmpegPath = app.isPackaged
   ? path.join(process.resourcesPath, 'ffmpeg-static', ffmpegBinaryName)
   : path.join(__dirname, '../../node_modules/ffmpeg-static', ffmpegBinaryName);
-
-// Same reasoning as ffmpegPath. ffprobe-static holds one binary per platform and arch, and
-// electron-builder.yml copies only the current one into the packaged app.
-const ffprobeBinaryName = process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe';
-const ffprobePath = app.isPackaged
-  ? path.join(process.resourcesPath, 'ffprobe-static', ffprobeBinaryName)
-  : path.join(
-      __dirname,
-      '../../node_modules/ffprobe-static/bin',
-      process.platform,
-      process.arch,
-      ffprobeBinaryName
-    );
 
 const MEDIA_CACHE_SUBDIRS = ['audio', 'previews', 'waveforms'] as const;
 
@@ -57,96 +44,6 @@ function ffmpegError(context: string, code: number | null, stderr: string): Erro
   return new Error(
     tail ? `${context} (exit code ${code}): ${tail}` : `${context} (exit code ${code})`
   );
-}
-
-// Runs ffprobe and returns its JSON output, or null if it fails. Stdout is collected as Buffers,
-// not strings: decoding each chunk on its own would corrupt a multi-byte character that happens to
-// span two chunks.
-function runFfprobe(args: string[]): Promise<unknown> {
-  return new Promise((resolve) => {
-    const proc = spawn(ffprobePath, ['-v', 'error', '-of', 'json', ...args], {
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    const chunks: Buffer[] = [];
-    proc.stdout?.on('data', (chunk: Buffer) => chunks.push(chunk));
-    proc.on('close', (code) => {
-      if (code !== 0) return resolve(null);
-      resolve(runWithFallback(() => JSON.parse(Buffer.concat(chunks).toString('utf8')), null));
-    });
-    proc.on('error', () => resolve(null));
-  });
-}
-
-const FfprobeDurationSchema = z.object({
-  format: z.object({ duration: z.coerce.number() }),
-});
-
-// Duration in seconds, or null if the file has none or can't be read
-async function getDuration(filePath: string): Promise<number | null> {
-  const output = await runFfprobe(['-show_entries', 'format=duration', filePath]);
-  const parsed = FfprobeDurationSchema.safeParse(output);
-  return parsed.success ? parsed.data.format.duration : null;
-}
-
-const FfprobeCodecSchema = z.object({
-  streams: z.array(z.object({ codec_name: z.string() })).min(1),
-});
-
-// Codec name of the first audio stream, e.g. "aac", or null if there's no audio stream or the file
-// can't be read
-async function getAudioCodec(filePath: string): Promise<string | null> {
-  const output = await runFfprobe([
-    '-select_streams',
-    'a:0',
-    '-show_entries',
-    'stream=codec_name',
-    filePath,
-  ]);
-  const parsed = FfprobeCodecSchema.safeParse(output);
-  return parsed.success ? parsed.data.streams[0].codec_name.toLowerCase() : null;
-}
-
-const FfprobeAudioStreamsSchema = z.object({
-  streams: z.array(
-    z.object({
-      index: z.number(),
-      codec_name: z.string().optional(),
-      channels: z.number().optional(),
-      channel_layout: z.string().optional(),
-      sample_rate: z.coerce.number().optional(),
-      bit_rate: z.coerce.number().optional(),
-      tags: z.object({ language: z.string().optional(), title: z.string().optional() }).optional(),
-      disposition: z.object({ default: z.number(), comment: z.number() }).optional(),
-    })
-  ),
-});
-
-// Every audio stream of the file, in file order. Rejects when ffprobe can't read the file, so
-// callers can tell that apart from a file that simply has no audio.
-async function listAudioTracks(filePath: string): Promise<TAudioTrack[]> {
-  const output = await runFfprobe([
-    '-select_streams',
-    'a',
-    '-show_entries',
-    'stream=index,codec_name,channels,channel_layout,sample_rate,bit_rate:stream_tags=language,title:stream_disposition=default,comment',
-    filePath,
-  ]);
-  const parsed = FfprobeAudioStreamsSchema.safeParse(output);
-  if (!parsed.success) throw new Error(`Unable to read audio tracks of ${filePath}`);
-  return parsed.data.streams.map((stream) => ({
-    id: stream.index,
-    codec: stream.codec_name ?? null,
-    channels: stream.channels ?? null,
-    channelLayout: stream.channel_layout ?? null,
-    sampleRate: stream.sample_rate ?? null,
-    bitRate: stream.bit_rate ?? null,
-    language: stream.tags?.language ?? null,
-    title: stream.tags?.title ?? null,
-    isDefault: stream.disposition?.default === 1,
-    // Unreliable: ffprobe-static's ffprobe 4.0.2 doesn't read Matroska's commentary flag, and a
-    // test .mp4 with the flag set also came out false
-    isCommentary: stream.disposition?.comment === 1,
-  }));
 }
 
 function readProjectId(mrmlFilePath: string): string | null {

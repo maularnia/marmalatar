@@ -61,7 +61,7 @@ export interface ElectronAPI {
   // Rejects when the file can't be read; an empty list means it has no audio
   listAudioTracks: (filePath: string) => Promise<TAudioTrack[]>;
   // Resolves in-use video paths from the tracked folder's .mrml files + projectStates itself --
-  // no arguments needed, see electron/modules/mediaIpc.ts's cleanupOrphanedMediaCache.
+  // no arguments needed, see electron/modules/media/mediaIpc.ts's cleanupOrphanedMediaCache.
   cleanupCache: () => Promise<void>;
   lmStudioPing: (host: string) => Promise<boolean>;
   lmStudioListModels: (host: string) => Promise<Array<{ value: string; label: string }>>;
