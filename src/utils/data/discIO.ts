@@ -323,7 +323,7 @@ export async function writeProjectEditorState(
 // ── Media cache ──────────────────────────────────────────────────────────────
 
 export async function cleanupMediaCache(): Promise<void> {
-  await IPC.media.cleanupMediaCache();
+  await IPC.media.cleanupCache();
 }
 
 // ── Folder-scan cache ───────────────────────────────────────────────────────

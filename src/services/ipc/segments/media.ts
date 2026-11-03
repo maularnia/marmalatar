@@ -6,7 +6,7 @@ export class IPCMedia extends IPCSegment {
 
   readonly extractWaveformPeaks = this.bridgeCall('extractWaveformPeaks');
   readonly generateThumbnail = this.bridgeCall('generateThumbnail');
-  readonly extractOrConvertAudio = this.bridgeCall('extractOrConvertAudio');
+  readonly extractAudio = this.bridgeCall('extractAudio');
   readonly listAudioTracks = this.bridgeCall('listAudioTracks');
-  readonly cleanupMediaCache = this.bridgeCall('cleanupMediaCache');
+  readonly cleanupCache = this.bridgeCall('cleanupCache');
 }

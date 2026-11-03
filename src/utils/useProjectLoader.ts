@@ -126,7 +126,7 @@ export function useProjectLoader() {
         } | null> => {
           let audioPath: string;
           try {
-            audioPath = await IPC.media.extractOrConvertAudio(savedPath);
+            audioPath = await IPC.media.extractAudio(savedPath);
           } catch (error) {
             emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
             return null;

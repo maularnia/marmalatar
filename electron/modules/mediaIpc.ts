@@ -370,7 +370,7 @@ export function registerMediaIpc(appStore: Store): void {
     listAudioTracks(filePath)
   );
 
-  ipcMain.handle('extract-or-convert-audio', async (_: IpcMainInvokeEvent, filePath: string) => {
+  ipcMain.handle('extract-audio', async (_: IpcMainInvokeEvent, filePath: string) => {
     const trackedFolder = appStore.get('trackedFolder') as string | undefined;
     if (!trackedFolder) {
       throw new Error('No tracked folder available to cache extracted audio');
@@ -426,7 +426,7 @@ export function registerMediaIpc(appStore: Store): void {
   });
 
   // Prunes orphaned cache entries -- see cleanupOrphanedMediaCache above for the resolution logic.
-  ipcMain.handle('cleanup-media-cache', () => {
+  ipcMain.handle('cleanup-cache', () => {
     const trackedFolder = appStore.get('trackedFolder') as string | undefined;
     if (!trackedFolder) return;
     cleanupOrphanedMediaCache(appStore, trackedFolder);

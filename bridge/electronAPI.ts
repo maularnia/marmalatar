@@ -57,12 +57,12 @@ export interface ElectronAPI {
   getPathForFile: (file: File) => string;
   extractWaveformPeaks: (filePath: string) => Promise<number[]>;
   generateThumbnail: (filePath: string) => Promise<string>;
-  extractOrConvertAudio: (filePath: string) => Promise<string>;
+  extractAudio: (filePath: string) => Promise<string>;
   // Rejects when the file can't be read; an empty list means it has no audio
   listAudioTracks: (filePath: string) => Promise<TAudioTrack[]>;
   // Resolves in-use video paths from the tracked folder's .mrml files + projectStates itself --
   // no arguments needed, see electron/modules/mediaIpc.ts's cleanupOrphanedMediaCache.
-  cleanupMediaCache: () => Promise<void>;
+  cleanupCache: () => Promise<void>;
   lmStudioPing: (host: string) => Promise<boolean>;
   lmStudioListModels: (host: string) => Promise<Array<{ value: string; label: string }>>;
   lmStudioTranslate: (params: LMStudioTranslationParams) => Promise<LMStudioTranslationResult>;

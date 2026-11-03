@@ -105,7 +105,7 @@ export default function VideoSelectDialog({
       setWaveformStatus(TWaveformStatus.EXTRACTING_AUDIO);
       let audioPath: string;
       try {
-        audioPath = await IPC.media.extractOrConvertAudio(videoPath);
+        audioPath = await IPC.media.extractAudio(videoPath);
       } catch (error) {
         if (cancelled) return;
         setWaveformStatus(TWaveformStatus.AUDIO_EXTRACTION_FAILED);

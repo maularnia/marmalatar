@@ -114,7 +114,7 @@ export default function VideoFileSelect({
       setWaveformStatus(TWaveformStatus.EXTRACTING_AUDIO);
       let audioPath: string;
       try {
-        audioPath = await IPC.media.extractOrConvertAudio(videoPath);
+        audioPath = await IPC.media.extractAudio(videoPath);
       } catch (error) {
         if (isCancelled) return;
         setWaveformStatus(TWaveformStatus.AUDIO_EXTRACTION_FAILED);

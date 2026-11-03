@@ -123,7 +123,7 @@ export function VideoProvider({ children }: PropsWithChildren) {
       if (!audioPath && audioElementRef.current) {
         const audioElement = audioElementRef.current;
         IPC.media
-          .extractOrConvertAudio(path)
+          .extractAudio(path)
           .then((resolvedAudioPath) => {
             if (audioElementRef.current === audioElement) {
               audioElement.src = pathToFileUrl(resolvedAudioPath);
@@ -152,7 +152,7 @@ export function VideoProvider({ children }: PropsWithChildren) {
       const videoFilePath = fromCurrentStore(selectVideoFilePath);
       if (e && videoFilePath) {
         IPC.media
-          .extractOrConvertAudio(videoFilePath)
+          .extractAudio(videoFilePath)
           .then((resolvedAudioPath) => {
             if (audioElementRef.current === e) {
               e.src = pathToFileUrl(resolvedAudioPath);
