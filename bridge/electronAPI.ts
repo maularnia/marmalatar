@@ -17,7 +17,7 @@ import type {
 } from './definitions/deepl';
 
 // Canonical shape of the `window.electronAPI` bridge exposed by electron/preload.ts and consumed
-// directly as `window.electronAPI` throughout src/ -- the single source of truth both sides are
+// in src/ only through src/services/ipc -- the single source of truth both sides are
 // typed against, so a signature drift between what preload.ts exposes and what the renderer
 // expects is a compile error rather than a silent runtime break.
 export interface ElectronAPI {

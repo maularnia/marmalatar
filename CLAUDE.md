@@ -47,7 +47,7 @@ root folder `src`.
 - src/partials - forms and genmeral chunk of code widely resused across paa (settings forms and form chunks)
 - src/providers - business logic core of the application.
 - src/segments - logical chunks/groups of components grouped by functional similarity (dialogs, menu, overlays, pages/views)
-- src/services - pure services providing utility functions for providers to perform specific set of tasks (spellchecking/ai-translations) `spellcheck` runs dictionary parsing and text checks in one Web Worker shared by every editor, because that work is too slow for the UI thread. Suggestions take seconds per word, so they're only requested for the word the caret is on.
+- src/services - pure services providing utility functions for providers to perform specific set of tasks (spellchecking/ai-translations) `spellcheck` runs dictionary parsing and text checks in one Web Worker shared by every editor, because that work is too slow for the UI thread. Suggestions take seconds per word, so they're only requested for the word the caret is on. `ipc` is the renderer's only way to reach the main process: consumers use the `IPC` singleton (`IPC.files.readFile(...)`), whose properties are `IPCSegment` subclasses from `ipc/segments`, one per theme. ESLint forbids `window.electronAPI` and direct segment imports anywhere else.
 - src/store - application store and store-slices
 - src/theme - theme service. Extracted to a separate folder due to scale and complexity
 - src/toolkit - UI atomic compoenet library of genreal purpose. Inputs, Icons, Selects, Tags...

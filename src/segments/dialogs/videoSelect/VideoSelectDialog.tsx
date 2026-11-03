@@ -14,6 +14,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { DialogBodyStandard, DialogContent, DialogTitle, DialogTitleContent } from '../partials';
+import { IPC } from '@src/services/ipc/IPC';
 
 export type VideoSelectResult = {
   videoPath: string;
@@ -74,7 +75,7 @@ export default function VideoSelectDialog({
       return;
     }
 
-    const videoPath = window.electronAPI.getPathForFile(videoFile);
+    const videoPath = IPC.files.getPathFile(videoFile);
     if (!videoPath) {
       setWaveformStatus(TWaveformStatus.ERROR);
       onValidChange(false);
@@ -97,14 +98,14 @@ export default function VideoSelectDialog({
       if (cancelled) return;
 
       // Step 2: thumbnail (best-effort, non-fatal on failure)
-      const previewImage = await window.electronAPI.generateThumbnail(videoPath).catch(() => null);
+      const previewImage = await IPC.media.generateThumbnail(videoPath).catch(() => null);
       if (cancelled) return;
 
       // Step 3: extract/convert audio to AAC.
       setWaveformStatus(TWaveformStatus.EXTRACTING_AUDIO);
       let audioPath: string;
       try {
-        audioPath = await window.electronAPI.extractOrConvertAudio(videoPath);
+        audioPath = await IPC.media.extractOrConvertAudio(videoPath);
       } catch (error) {
         if (cancelled) return;
         setWaveformStatus(TWaveformStatus.AUDIO_EXTRACTION_FAILED);
@@ -126,7 +127,7 @@ export default function VideoSelectDialog({
       if (cancelled) return;
 
       try {
-        const waveformPeaks = await window.electronAPI.extractWaveformPeaks(audioPath);
+        const waveformPeaks = await IPC.media.extractWaveformPeaks(audioPath);
         if (cancelled) return;
         setWaveformStatus(TWaveformStatus.SUCCESS);
         onValidChange(true);

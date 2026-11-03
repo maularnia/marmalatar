@@ -24,6 +24,7 @@ import { loadProjectFromDisk } from '@store/thunks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { IPC } from '@src/services/ipc/IPC';
 
 export function useProjectLoader() {
   const { t } = useTranslation(['dialogs', 'messages']);
@@ -125,7 +126,7 @@ export function useProjectLoader() {
         } | null> => {
           let audioPath: string;
           try {
-            audioPath = await window.electronAPI.extractOrConvertAudio(savedPath);
+            audioPath = await IPC.media.extractOrConvertAudio(savedPath);
           } catch (error) {
             emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
             return null;
@@ -133,7 +134,7 @@ export function useProjectLoader() {
 
           let waveformPeaks: number[];
           try {
-            waveformPeaks = await window.electronAPI.extractWaveformPeaks(audioPath);
+            waveformPeaks = await IPC.media.extractWaveformPeaks(audioPath);
           } catch (error) {
             emitWaveformExtractionFailedMessage(pushMessage, toErrorMessage(error));
             return null;
@@ -141,7 +142,7 @@ export function useProjectLoader() {
 
           let previewImage: string | null;
           try {
-            previewImage = await window.electronAPI.generateThumbnail(savedPath);
+            previewImage = await IPC.media.generateThumbnail(savedPath);
           } catch (error) {
             emitThumbnailGenerationFailedMessage(pushMessage, toErrorMessage(error));
             return null;

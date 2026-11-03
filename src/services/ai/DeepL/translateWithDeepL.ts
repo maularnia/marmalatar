@@ -5,20 +5,8 @@ import {
   TranslationProgressSnapshot,
 } from '@src/services/ai/types';
 import { AgentJob } from '@src/services/ai/agentJob';
-import {
-  DeepLGlossaryOption,
-  DeepLOutputLine,
-  DeepLTranslateBulkParams,
-  DeepLTranslationParams,
-} from './types';
-
-export async function pingDeepL(apiKey: string): Promise<boolean> {
-  return window.electronAPI.deeplPing(apiKey);
-}
-
-export async function listDeepLGlossaries(apiKey: string): Promise<DeepLGlossaryOption[]> {
-  return window.electronAPI.deeplListGlossaries(apiKey);
-}
+import { DeepLOutputLine, DeepLTranslateBulkParams, DeepLTranslationParams } from './types';
+import { IPC } from '@src/services/ipc/IPC';
 
 export async function translateWithDeepL({
   apiKey,
@@ -29,7 +17,7 @@ export async function translateWithDeepL({
   modelType,
   glossaryId,
 }: DeepLTranslationParams): Promise<DeepLOutputLine[]> {
-  return window.electronAPI.deeplTranslate({
+  return IPC.deepl.translate({
     apiKey,
     sourceLang,
     targetLang,

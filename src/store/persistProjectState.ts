@@ -4,6 +4,7 @@ import { AppSettingsSchema, buildAppSettingsSaveData } from '@utils/appSettingsF
 import { z } from 'zod';
 import type { AppDispatch, RootState } from './root';
 import { saveProjectToDisk } from './thunks';
+import { IPC } from '@src/services/ipc/IPC';
 
 // `version` is a wire/persistence-only field added by the bridge contract's VersionedSchema base --
 // it has no counterpart in the `app` redux slice, so it's excluded from the watched key list below.
@@ -73,6 +74,6 @@ persistProjectStateMiddleware.startListening({
 
   effect: async (_action, api) => {
     const state = api.getState() as RootState;
-    await window.electronAPI.setAppSettings(buildAppSettingsSaveData(state));
+    await IPC.settings.setAppSettings(buildAppSettingsSaveData(state));
   },
 });

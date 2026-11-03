@@ -15,11 +15,6 @@ export type DeepLOutputLine = {
   text: string;
 };
 
-export type DeepLGlossaryOption = {
-  value: string;
-  label: string;
-};
-
 export type DeepLTranslationParams = {
   apiKey: string;
   sourceLang: string;

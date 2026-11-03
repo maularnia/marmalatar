@@ -21,6 +21,7 @@ import { checkAudioPlayability, checkVideoDecodable } from '@utils/checkVideoPla
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import { IPC } from '@src/services/ipc/IPC';
 
 const FileFormSectionEntry = styled(FormSectionEntry)`
   flex-direction: row;
@@ -78,7 +79,7 @@ export default function VideoFileSelect({
       return;
     }
 
-    const videoPath = window.electronAPI.getPathForFile(value);
+    const videoPath = IPC.files.getPathFile(value);
     if (!videoPath) {
       setWaveformStatus(TWaveformStatus.ERROR);
       onError(t('videoFileSelect.pathUnresolved'));
@@ -102,7 +103,7 @@ export default function VideoFileSelect({
       if (isCancelled) return;
 
       // Step 2: thumbnail (best-effort, non-fatal on failure)
-      const previewImage = await window.electronAPI.generateThumbnail(videoPath).catch(() => null);
+      const previewImage = await IPC.media.generateThumbnail(videoPath).catch(() => null);
       if (isCancelled) return;
 
       // Step 3: extract/convert audio to AAC. The original file's audio is intentionally not
@@ -113,7 +114,7 @@ export default function VideoFileSelect({
       setWaveformStatus(TWaveformStatus.EXTRACTING_AUDIO);
       let audioPath: string;
       try {
-        audioPath = await window.electronAPI.extractOrConvertAudio(videoPath);
+        audioPath = await IPC.media.extractOrConvertAudio(videoPath);
       } catch (error) {
         if (isCancelled) return;
         setWaveformStatus(TWaveformStatus.AUDIO_EXTRACTION_FAILED);
@@ -137,7 +138,7 @@ export default function VideoFileSelect({
       if (isCancelled) return;
 
       try {
-        const waveformPeaks = await window.electronAPI.extractWaveformPeaks(audioPath);
+        const waveformPeaks = await IPC.media.extractWaveformPeaks(audioPath);
         if (isCancelled) return;
         setVideoFilePath(videoPath, audioPath);
         setVideoData(previewImage ?? null, waveformPeaks);

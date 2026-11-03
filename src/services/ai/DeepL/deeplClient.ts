@@ -1,7 +1,7 @@
 import { AiClient, TranslationRequestContext } from '@src/services/ai/types';
 import i18n from '@src/i18n';
 import { resolveBatchSize } from '@src/services/ai/batchingUtils';
-import { pingDeepL, translateBatchWithDeepL, translateWithDeepL } from './translateWithDeepL';
+import { translateBatchWithDeepL, translateWithDeepL } from './translateWithDeepL';
 import {
   DEEPL_LANGUAGES_WITHOUT_FORMALITY_SUPPORT,
   DEEPL_LANGUAGES_WITHOUT_GLOSSARY_SUPPORT,
@@ -11,6 +11,7 @@ import {
   resolveDeepLTargetLanguageCode,
 } from './consts';
 import DeepLSettingsForm from './DeepLSettingsForm';
+import { IPC } from '@src/services/ipc/IPC';
 
 export type DeepLSettingKey =
   | 'api_key'
@@ -91,14 +92,14 @@ class DeepLClient extends AiClient<DeepLSettingKey> {
   override setCurrentSettings(settings: Record<DeepLSettingKey, string>): void {
     this.currentSettings = settings;
     const { [apiKeySettingKey]: apiKey, ...rest } = settings;
-    void window.electronAPI.setDeepLApiKey(apiKey ?? '');
-    void window.electronAPI.setIntegrationSettings(this.id, rest);
+    void IPC.deepl.setApiKey(apiKey ?? '');
+    void IPC.settings.setIntegrationSettings(this.id, rest);
   }
 
   override async loadPersistedSettings(): Promise<Record<DeepLSettingKey, string> | null> {
     const [apiKey, rest] = await Promise.all([
-      window.electronAPI.getDeepLApiKey(),
-      window.electronAPI.getIntegrationSettings(this.id) as Promise<Record<
+      IPC.deepl.getApiKey(),
+      IPC.settings.getIntegrationSettings(this.id) as Promise<Record<
         DeepLSettingKey,
         string
       > | null>,
@@ -115,7 +116,7 @@ class DeepLClient extends AiClient<DeepLSettingKey> {
   async ping(): Promise<boolean> {
     return this.guardBackendCall(async () => {
       const settings = this.requireCurrentSettings();
-      return pingDeepL(settings[apiKeySettingKey]);
+      return IPC.deepl.ping(settings[apiKeySettingKey]);
     });
   }
 

@@ -20,14 +20,15 @@ import './assets/index.css';
 import './assets/variables.css';
 import { MenuStateProvider } from './providers/MenuStateProvider';
 import { MessageHelmetProvider } from './providers/MessageHelmetProvider';
+import { IPC } from '@src/services/ipc/IPC';
 
 // Resolve persisted settings before mounting
-window.electronAPI.getAppSettings().then((raw) => {
+IPC.settings.getAppSettings().then((raw) => {
   const settings = parseAppSettings(raw);
   store.dispatch(hydrateAppSettings(settings));
   void i18n.changeLanguage(settings.uiLocale);
   if (JSON.stringify(raw) !== JSON.stringify(settings)) {
-    void window.electronAPI.setAppSettings(settings);
+    void IPC.settings.setAppSettings(settings);
   }
 
   void store.dispatch(initDisc());

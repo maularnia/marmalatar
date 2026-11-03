@@ -18,6 +18,7 @@ import {
 import { parseProjectFile } from './parsers/project';
 import { computeTranslationProgress } from '@utils/translationProgress';
 import { FALLBACK_EMOJI } from '@utils/emoji';
+import { IPC } from '@src/services/ipc/IPC';
 
 export type { TProjectCacheEntry, TFolderScanCache, TProjectEditorState };
 export type TPromptTemplateEntry = TPromptTemplateCacheEntry;
@@ -56,7 +57,7 @@ function toProjectCacheEntry(
 }
 
 export async function readProjectFile(filePath: string): Promise<TScannedProjectEntry> {
-  const text = await window.electronAPI.readFile(toFileName(filePath));
+  const text = await IPC.files.readFile(toFileName(filePath));
   if (!text) throw new Error(t('project.cannotRead'));
 
   const data = parseProjectFile(text);
@@ -97,7 +98,7 @@ export async function writeProjectSaveData(filePath: string, state: RootState): 
     },
   });
 
-  await window.electronAPI.writeFile(toFileName(filePath), JSON.stringify(payload, null, 2));
+  await IPC.files.writeFile(toFileName(filePath), JSON.stringify(payload, null, 2));
 }
 
 export function buildProjectEditorStateSaveData(state: RootState): TProjectEditorState {
@@ -115,7 +116,7 @@ function parseProjectEditorState(raw: unknown): TProjectEditorState {
 export async function readPromptTemplateFile(
   fileName: string
 ): Promise<PromptTemplateFileDataType | null> {
-  const text = await window.electronAPI.readFile(fileName);
+  const text = await IPC.files.readFile(fileName);
   if (!text) return null;
   try {
     return readPromptTemplateFileContract(JSON.parse(text));
@@ -128,11 +129,11 @@ export async function writePromptTemplateFile(
   fileName: string,
   data: PromptTemplateFileDataType
 ): Promise<void> {
-  await window.electronAPI.writeFile(fileName, JSON.stringify(data, null, 2));
+  await IPC.files.writeFile(fileName, JSON.stringify(data, null, 2));
 }
 
 export async function readGlossaryFile(fileName: string): Promise<AIGlossaryFileDataType | null> {
-  const text = await window.electronAPI.readFile(fileName);
+  const text = await IPC.files.readFile(fileName);
   if (!text) return null;
   try {
     return readGlossaryFileContract(JSON.parse(text));
@@ -145,21 +146,21 @@ export async function writeGlossaryFile(
   fileName: string,
   data: AIGlossaryFileDataType
 ): Promise<void> {
-  await window.electronAPI.writeFile(fileName, JSON.stringify(data, null, 2));
+  await IPC.files.writeFile(fileName, JSON.stringify(data, null, 2));
 }
 
 // ── Working folder ──────────────────────────────────────────────────────────
 
 export async function getTrackedFolder(): Promise<string | null> {
-  return window.electronAPI.getTrackedFolder();
+  return IPC.files.getTrackedFolder();
 }
 
 export async function setTrackedFolder(folder: string): Promise<void> {
-  await window.electronAPI.setTrackedFolder(folder);
+  await IPC.files.setTrackedFolder(folder);
 }
 
 export async function selectFolderDialog(): Promise<string | null> {
-  return window.electronAPI.selectFolder();
+  return IPC.files.selectFolder();
 }
 
 // ── Generic file helpers ────────────────────────────────────────────────────
@@ -168,15 +169,15 @@ export async function selectFolderDialog(): Promise<string | null> {
 // which live outside the tracked folder).
 
 export async function checkFileExists(fileName: string): Promise<boolean> {
-  return window.electronAPI.checkFileExists(fileName);
+  return IPC.files.checkFileExists(fileName);
 }
 
 export async function checkExternalPathExists(absolutePath: string): Promise<boolean> {
-  return window.electronAPI.checkExternalPathExists(absolutePath);
+  return IPC.files.checkExternalPathExists(absolutePath);
 }
 
 export async function deleteFile(fileName: string): Promise<void> {
-  await window.electronAPI.deleteFile(fileName);
+  await IPC.files.deleteFile(fileName);
 }
 
 // ── Projects ─────────────────────────────────────────────────────────────────
@@ -188,7 +189,7 @@ export async function deleteFile(fileName: string): Promise<void> {
 export async function scanProjectFileHeaders(
   previousProgressByFilePath: ReadonlyMap<string, number>
 ): Promise<TProjectCacheEntry[]> {
-  const filePaths = await window.electronAPI.listMrmlFiles();
+  const filePaths = await IPC.files.listMrmlFiles();
   const results = await Promise.all(
     filePaths.map(async (fp) => {
       try {
@@ -212,7 +213,7 @@ export async function renameProjectFileOnDisk(
   newFilePath: string,
   projectName: string
 ): Promise<{ project: TProjectFileData['project'] }> {
-  const text = await window.electronAPI.readFile(toFileName(filePath));
+  const text = await IPC.files.readFile(toFileName(filePath));
   if (!text) throw new Error(t('project.cannotRead'));
 
   let data: Record<string, unknown>;
@@ -224,9 +225,9 @@ export async function renameProjectFileOnDisk(
   const projectData = data.project as TProjectFileData['project'];
   projectData.projectName = projectName;
 
-  await window.electronAPI.writeFile(toFileName(newFilePath), JSON.stringify(data, null, 2));
+  await IPC.files.writeFile(toFileName(newFilePath), JSON.stringify(data, null, 2));
   if (newFilePath !== filePath) {
-    await window.electronAPI.deleteFile(toFileName(filePath));
+    await IPC.files.deleteFile(toFileName(filePath));
   }
 
   return { project: projectData };
@@ -236,7 +237,7 @@ export async function updateProjectEmojiOnDisk(
   filePath: string,
   emoji: string
 ): Promise<{ project: TProjectFileData['project'] }> {
-  const text = await window.electronAPI.readFile(toFileName(filePath));
+  const text = await IPC.files.readFile(toFileName(filePath));
   if (!text) throw new Error(t('project.cannotRead'));
 
   let data: Record<string, unknown>;
@@ -248,7 +249,7 @@ export async function updateProjectEmojiOnDisk(
   const projectData = data.project as TProjectFileData['project'];
   projectData.emoji = emoji;
 
-  await window.electronAPI.writeFile(toFileName(filePath), JSON.stringify(data, null, 2));
+  await IPC.files.writeFile(toFileName(filePath), JSON.stringify(data, null, 2));
 
   return { project: projectData };
 }
@@ -257,18 +258,18 @@ export async function deleteProjectFileOnDisk(
   filePath: string,
   projectId?: string | null
 ): Promise<void> {
-  await window.electronAPI.deleteFile(toFileName(filePath));
-  if (projectId) await window.electronAPI.removeProjectState(projectId);
+  await IPC.files.deleteFile(toFileName(filePath));
+  if (projectId) await IPC.projectState.remove(projectId);
 }
 
 // ── Prompt templates ─────────────────────────────────────────────────────────
 
 export async function scanPromptTemplateFiles(): Promise<TPromptTemplateEntry[]> {
-  const paths = await window.electronAPI.listPromptTemplateFiles();
+  const paths = await IPC.files.listPromptTemplateFiles();
   const items: TPromptTemplateEntry[] = [];
   for (const p of paths) {
     const basename = toFileName(p);
-    const text = await window.electronAPI.readFile(basename);
+    const text = await IPC.files.readFile(basename);
     if (!text) continue;
     try {
       const data = readPromptTemplateFileContract(JSON.parse(text));
@@ -283,11 +284,11 @@ export async function scanPromptTemplateFiles(): Promise<TPromptTemplateEntry[]>
 // ── AI glossaries ────────────────────────────────────────────────────────────
 
 export async function scanGlossaryFiles(): Promise<TGlossaryFileEntry[]> {
-  const paths = await window.electronAPI.listAIGlossaryFiles();
+  const paths = await IPC.files.listAIGlossaryFiles();
   const items: TGlossaryFileEntry[] = [];
   for (const p of paths) {
     const basename = toFileName(p);
-    const text = await window.electronAPI.readFile(basename);
+    const text = await IPC.files.readFile(basename);
     if (!text) continue;
     try {
       const data = readGlossaryFileContract(JSON.parse(text));
@@ -309,26 +310,26 @@ export async function scanGlossaryFiles(): Promise<TGlossaryFileEntry[]> {
 // ── Per-project editor state ────────────────────────────────────────────────
 
 export async function getProjectEditorState(projectId: string): Promise<TProjectEditorState> {
-  return parseProjectEditorState(await window.electronAPI.getProjectState(projectId));
+  return parseProjectEditorState(await IPC.projectState.get(projectId));
 }
 
 export async function writeProjectEditorState(
   projectId: string,
   editorState: TProjectEditorState
 ): Promise<void> {
-  await window.electronAPI.setProjectState(projectId, editorState);
+  await IPC.projectState.set(projectId, editorState);
 }
 
 // ── Media cache ──────────────────────────────────────────────────────────────
 
 export async function cleanupMediaCache(): Promise<void> {
-  await window.electronAPI.cleanupMediaCache();
+  await IPC.media.cleanupMediaCache();
 }
 
 // ── Folder-scan cache ───────────────────────────────────────────────────────
 
 export async function getFolderScanCache(): Promise<TFolderScanCache | null> {
-  const raw = await window.electronAPI.getFolderScanCache();
+  const raw = await IPC.scanCache.get();
   if (!raw) return null;
   const result = FolderScanCacheSchema.safeParse(raw);
   return result.success ? result.data : null;
@@ -338,38 +339,38 @@ export async function setFolderScanCache(cache: TFolderScanCache): Promise<void>
   // The FE's own TFolderScanCache has no top-level `version` (it's rebuilt locally rather than
   // re-exporting the bridge contract -- see schemas.ts), so it's added here at the one place that
   // actually crosses into the versioned bridge contract.
-  await window.electronAPI.setFolderScanCache({ version: 1, ...cache });
+  await IPC.scanCache.set({ version: 1, ...cache });
 }
 
 export async function upsertProjectCacheEntry(entry: TProjectCacheEntry): Promise<void> {
-  await window.electronAPI.upsertProjectCacheEntry(entry);
+  await IPC.scanCache.upsertProject(entry);
 }
 
 export async function removeProjectCacheEntry(filePath: string): Promise<void> {
-  await window.electronAPI.removeProjectCacheEntry(filePath);
+  await IPC.scanCache.removeProject(filePath);
 }
 
 export async function updateProjectCacheProgress(
   filePath: string,
   translationProgress: number
 ): Promise<void> {
-  await window.electronAPI.updateProjectCacheProgress(filePath, translationProgress);
+  await IPC.scanCache.updateProjectProgress(filePath, translationProgress);
 }
 
 export async function upsertPromptTemplateCacheEntry(
   entry: TPromptTemplateCacheEntry
 ): Promise<void> {
-  await window.electronAPI.upsertPromptTemplateCacheEntry(entry);
+  await IPC.scanCache.upsertPromptTemplate(entry);
 }
 
 export async function removePromptTemplateCacheEntry(fileName: string): Promise<void> {
-  await window.electronAPI.removePromptTemplateCacheEntry(fileName);
+  await IPC.scanCache.removePromptTemplate(fileName);
 }
 
 export async function upsertGlossaryCacheEntry(entry: TGlossaryCacheEntry): Promise<void> {
-  await window.electronAPI.upsertGlossaryCacheEntry(entry);
+  await IPC.scanCache.upsertGlossary(entry);
 }
 
 export async function removeGlossaryCacheEntry(fileName: string): Promise<void> {
-  await window.electronAPI.removeGlossaryCacheEntry(fileName);
+  await IPC.scanCache.removeGlossary(fileName);
 }

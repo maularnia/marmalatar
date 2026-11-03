@@ -24,6 +24,7 @@ import {
   LMStudioTranslateBulkParams,
   LMStudioTranslationParams,
 } from './types';
+import { IPC } from '@src/services/ipc/IPC';
 
 function buildLMStudioFullSystemPrompt(
   context: TranslationRequestContext | undefined,
@@ -44,13 +45,13 @@ function buildLMStudioFullSystemPrompt(
 }
 
 export async function pingLMStudioEndpoint({ host }: LMStudioPingParams): Promise<boolean> {
-  return window.electronAPI.lmStudioPing(host);
+  return IPC.lmStudio.ping(host);
 }
 
 export async function listLMStudioModels({
   host,
 }: LMStudioPingParams): Promise<LMStudioModelOption[]> {
-  return window.electronAPI.lmStudioListModels(host);
+  return IPC.lmStudio.listModels(host);
 }
 
 export async function translateWithLMStudio({
@@ -65,10 +66,10 @@ export async function translateWithLMStudio({
 }: LMStudioTranslationParams): Promise<LMStudioOutputLine[]> {
   const requestId = crypto.randomUUID();
   signal?.addEventListener('abort', () => {
-    void window.electronAPI.lmStudioCancel(requestId);
+    void IPC.lmStudio.cancel(requestId);
   });
 
-  return window.electronAPI.lmStudioTranslate({
+  return IPC.lmStudio.translate({
     requestId,
     host,
     model,
@@ -92,7 +93,7 @@ export async function tokenizeWithLMStudio({
   const fullPromptText = [buildLMStudioFullSystemPrompt(context, isStructured), userContent].join(
     '\n\n'
   );
-  return window.electronAPI.lmStudioTokenize({ host, model, text: fullPromptText });
+  return IPC.lmStudio.tokenize({ host, model, text: fullPromptText });
 }
 
 export function translateBatchWithLMStudio({

@@ -22,6 +22,7 @@ import {
   useState,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IPC } from '@src/services/ipc/IPC';
 
 type TVideoContext = {
   videoDurationMs: number | null;
@@ -121,7 +122,7 @@ export function VideoProvider({ children }: PropsWithChildren) {
       // re-derive it via the same content-addressed cache the import flow already populated.
       if (!audioPath && audioElementRef.current) {
         const audioElement = audioElementRef.current;
-        window.electronAPI
+        IPC.media
           .extractOrConvertAudio(path)
           .then((resolvedAudioPath) => {
             if (audioElementRef.current === audioElement) {
@@ -150,7 +151,7 @@ export function VideoProvider({ children }: PropsWithChildren) {
       audioElementRef.current = e;
       const videoFilePath = fromCurrentStore(selectVideoFilePath);
       if (e && videoFilePath) {
-        window.electronAPI
+        IPC.media
           .extractOrConvertAudio(videoFilePath)
           .then((resolvedAudioPath) => {
             if (audioElementRef.current === e) {

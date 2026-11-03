@@ -72,6 +72,33 @@ export default tseslint.config(
     },
   },
 
+  // The renderer reaches the main process only through src/services/ipc
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/services/ipc/**', 'src/electron.d.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'window',
+          property: 'electronAPI',
+          message: 'Use the IPC singleton from src/services/ipc/IPC instead.',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/services/ipc/*', '!**/services/ipc/IPC'],
+              message: 'Use the IPC singleton from src/services/ipc/IPC.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   {
     files: ['src/theme/themes/*.ts', 'src/theme/variables/globals.ts'],
     rules: {

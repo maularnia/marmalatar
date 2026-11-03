@@ -20,7 +20,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/types';
-import { listDeepLGlossaries } from './translateWithDeepL';
 import {
   DEEPL_FORMALITY_OPTIONS,
   DEEPL_LANGUAGES_WITHOUT_FORMALITY_SUPPORT,
@@ -46,6 +45,7 @@ import {
   getLinesPerRequestOptions,
 } from '@src/services/ai/config';
 import { useLanguageLabels } from '@src/utils/languageLabels';
+import { IPC } from '@src/services/ipc/IPC';
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -119,7 +119,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
       const apiKey = getValues(apiKeySettingKey);
       const connected = await deeplClient.ping();
       if (!connected) throw new Error(t('shared.connectFailed', { name: deeplClient.name }));
-      const options = await listDeepLGlossaries(apiKey);
+      const options = await IPC.deepl.listGlossaries(apiKey);
       setGlossaryOptions(options);
       deeplClient.setCachedOptions(options);
       lastVerifiedApiKeyRef.current = apiKey;
@@ -133,7 +133,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
   };
 
   useEffect(() => {
-    void window.electronAPI.deeplEncryptionAvailable().then(setEncryptionAvailable);
+    void IPC.deepl.isEncryptionAvailable().then(setEncryptionAvailable);
   }, []);
 
   // Hydrate from whatever's already cached (e.g. set at boot) or, failing that, persisted storage.

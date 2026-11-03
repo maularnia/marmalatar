@@ -2,6 +2,7 @@ import i18n from '@src/i18n';
 import { TLanguage, TSubtitleLine } from '@src/types';
 import type { TOptionSelect } from '@ui-toolkit/Select/Select';
 import type { ComponentType } from 'react';
+import { IPC } from '@src/services/ipc/IPC';
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -169,7 +170,7 @@ export abstract class AiClient<TSettingKey extends string = string> {
    */
   setCurrentSettings(settings: Record<TSettingKey, string>): void {
     this.currentSettings = settings;
-    void window.electronAPI.setIntegrationSettings(this.id, settings);
+    void IPC.settings.setIntegrationSettings(this.id, settings);
   }
 
   /**
@@ -180,7 +181,7 @@ export abstract class AiClient<TSettingKey extends string = string> {
    * "nothing persisted" result must not clobber that back to null.
    */
   async loadPersistedSettings(): Promise<Record<TSettingKey, string> | null> {
-    const stored = (await window.electronAPI.getIntegrationSettings(this.id)) as Record<
+    const stored = (await IPC.settings.getIntegrationSettings(this.id)) as Record<
       TSettingKey,
       string
     > | null;
