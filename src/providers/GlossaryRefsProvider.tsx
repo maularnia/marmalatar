@@ -1,4 +1,4 @@
-import { selectCurrentGlossary } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/aiPromptEditor';
 import { useAppSelector } from '@store/hooks';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
@@ -45,7 +45,7 @@ export function GlossaryRefsProvider({ children }: PropsWithChildren) {
   // glossary from the menu without closing this one first) doesn't remount this provider --
   // currentGlossary is the one signal that reliably changes on every such switch, so refs are
   // cleared reactively instead of relying on a caller to remember to reset them.
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
+  const currentGlossary = useAppSelector(glossaries.selectCurrent);
   useEffect(() => {
     pairInputRefs.current = new Map();
   }, [currentGlossary]);

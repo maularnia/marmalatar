@@ -18,7 +18,7 @@ export enum TLanguage {
 
 /**
  * Canonical English language names -- deliberately NOT localized. Used only where a language name
- * is sent as context to an AI backend (see aiTranslation.ts's buildContext) or embedded in
+ * is sent as context to an AI backend (see the ai slice's buildContext) or embedded in
  * exported file names/metadata (see Export.tsx), both of which must stay stable and decoupled from
  * the app's current UI locale. Anything the user actually reads (selectors, inline messages)
  * should use the localized labels from useLanguageLabels/useLanguageOptions in

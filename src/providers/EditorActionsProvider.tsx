@@ -30,42 +30,16 @@ import { useCopyOverrideConfirmation } from '@src/segments/dialogs/copyOverride/
 import { useDeleteLineConfirmation } from '@src/segments/dialogs/delete/useDeleteLineConfirmation';
 import { useMergeConfirmation } from '@src/segments/dialogs/lineMerge/useMergeConfirmation';
 import { useSplitConfirmation } from '@src/segments/dialogs/split/useSplitConfirmation';
-import {
-  selectAskBeforeDelete,
-  selectAskBeforeMerge,
-  selectAskBeforeSplit,
-  selectAutoMarkLinesCompleted,
-  selectTimeAdjustmentStep,
-} from '@src/store/slices/app';
-import {
-  autoMergeAdjacentLines,
-  cleanupLines,
-  completeAllTranslatedLines,
-  copyAllSourceToOutput,
-  insertLine,
-  mergeLines,
-  removeLine,
-  restoreHistory,
-  selectFocusedColumn,
-  selectFocusedLineIndex,
-  selectLines,
-  setFocusedColumn,
-  setFocusedLineIndex,
-  setLineCompleted,
-  shiftAllLinesEarlier,
-  shiftAllLinesLater,
-  splitLine,
-  updateLineTiming,
-  updateTranslatedText,
-} from '@src/store/slices/editor';
-import { selectIsEditMode, setEditorMode } from '@src/store/slices/project';
-import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
+import { prompt } from '@src/store/slices/prompt';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
-import { selectCurrentBulkJob } from '@store/slices/aiTranslation';
+import { ai } from '@store/slices/ai';
 import { createContext, PropsWithChildren, useCallback, useContext } from 'react';
 
 type TEditorActionsContext = {
@@ -161,7 +135,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const focusLine = useCallback(
     (lineIndex: number | null) => {
-      dispatch(setFocusedLineIndex(lineIndex));
+      dispatch(editor.setFocusedLineIndex(lineIndex));
       splitCursorRef.current = null;
     },
     [dispatch, splitCursorRef]
@@ -179,7 +153,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
       }
       el.scrollIntoView({ block: 'nearest' });
       focusLine(lineIndex);
-      dispatch(setFocusedColumn(type));
+      dispatch(editor.setFocusedColumn(type));
       return true;
     },
     [lineInputRefs, focusLine, dispatch]
@@ -191,7 +165,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
   const handleSetFocusedLineAndColumn = useCallback(
     (lineIndex: number, column: TInputColumn) => {
       focusLine(lineIndex);
-      dispatch(setFocusedColumn(column));
+      dispatch(editor.setFocusedColumn(column));
     },
     [focusLine, dispatch]
   );
@@ -200,15 +174,15 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
   // was, and otherwise land on the first line's first available input -- output normally, source
   // when edit mode hides the output column.
   const handleFocusEditor = useCallback((): boolean => {
-    const focusedLineIndex = fromCurrentStore(selectFocusedLineIndex);
-    const focusedColumn = fromCurrentStore(selectFocusedColumn);
+    const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
+    const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
     if (
       focusedLineIndex !== null &&
       handleChangeFocusedColumn(focusedLineIndex, focusedColumn ?? 'output')
     ) {
       return true;
     }
-    if (fromCurrentStore(selectLines).length === 0) return false;
+    if (fromCurrentStore(editor.selectLines).length === 0) return false;
     return handleChangeFocusedColumn(0, 'output') || handleChangeFocusedColumn(0, 'source');
   }, [handleChangeFocusedColumn]);
 
@@ -227,7 +201,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleChangeFocusedLine = useCallback(
     (lineIndex: number) => {
-      const line = fromCurrentStore(selectLines)[lineIndex] ?? null;
+      const line = fromCurrentStore(editor.selectLines)[lineIndex] ?? null;
       if (!line) return;
       focusLine(lineIndex);
     },
@@ -236,10 +210,10 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleCopySourceToOutput = useCallback(
     async (lineIndex: number) => {
-      if (fromCurrentStore(selectIsEditMode)) return;
-      const line = fromCurrentStore(selectLines)[lineIndex];
+      if (fromCurrentStore(projects.selectIsEditMode)) return;
+      const line = fromCurrentStore(editor.selectLines)[lineIndex];
       if (!line) return;
-      const autoMarkLinesCompleted = fromCurrentStore(selectAutoMarkLinesCompleted);
+      const autoMarkLinesCompleted = fromCurrentStore(settings.selectAutoMarkLinesCompleted);
       if (line.output?.trim()) {
         let confirmed: boolean;
         try {
@@ -258,10 +232,10 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           return;
         }
       }
-      dispatch(updateTranslatedText({ lineIndex, text: line.input ?? '' }));
+      dispatch(editor.updateTranslatedText({ lineIndex, text: line.input ?? '' }));
       if (autoMarkLinesCompleted)
         dispatch(
-          setLineCompleted({ lineIndex, completed: Boolean(line.input), skipHistory: true })
+          editor.setLineCompleted({ lineIndex, completed: Boolean(line.input), skipHistory: true })
         );
       handleChangeFocusedColumn(lineIndex, 'output', true);
       emitTextCopiedMessage(pushMessage);
@@ -271,14 +245,14 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleSplitLine = useCallback(
     async (lineIndex: number, cursorOffset: number | null) => {
-      const translationLines = fromCurrentStore(selectLines);
-      const frozenLineNumbers = fromCurrentStore(selectFrozenLineNumbers);
+      const translationLines = fromCurrentStore(editor.selectLines);
+      const frozenLineNumbers = fromCurrentStore(prompt.selectFrozenLineNumbers);
       if (frozenLineNumbers.includes(translationLines[lineIndex]?.line_no)) return;
-      if (fromCurrentStore(selectCurrentBulkJob)?.running) return;
-      const focusedColumn = fromCurrentStore(selectFocusedColumn);
+      if (fromCurrentStore(ai.selectCurrentBulkJob)?.running) return;
+      const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
       if (!focusedColumn || (focusedColumn !== 'source' && focusedColumn !== 'output')) return;
-      if (fromCurrentStore(selectAskBeforeSplit) && !(await confirmSplit())) return;
-      dispatch(splitLine({ lineIndex, cursorOffset, column: focusedColumn }));
+      if (fromCurrentStore(settings.selectAskBeforeSplit) && !(await confirmSplit())) return;
+      dispatch(editor.splitLine({ lineIndex, cursorOffset, column: focusedColumn }));
       refocusLineAfterRender(lineIndex, focusedColumn);
       emitLineSplitMessage(pushMessage);
     },
@@ -287,15 +261,15 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleMergeLines = useCallback(
     async (lineIndex: number, direction: 'up' | 'down') => {
-      const translationLines = fromCurrentStore(selectLines);
+      const translationLines = fromCurrentStore(editor.selectLines);
       const partnerIndex = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
       if (partnerIndex < 0 || partnerIndex >= translationLines.length) return;
       const line = translationLines[lineIndex];
       const partnerLine = translationLines[partnerIndex];
-      const frozenSet = new Set(fromCurrentStore(selectFrozenLineNumbers));
+      const frozenSet = new Set(fromCurrentStore(prompt.selectFrozenLineNumbers));
       if (frozenSet.has(line.line_no) || frozenSet.has(partnerLine.line_no)) return;
-      if (fromCurrentStore(selectCurrentBulkJob)?.running) return;
-      if (fromCurrentStore(selectAskBeforeMerge)) {
+      if (fromCurrentStore(ai.selectCurrentBulkJob)?.running) return;
+      if (fromCurrentStore(settings.selectAskBeforeMerge)) {
         let confirmed: boolean;
         try {
           confirmed = await confirmMerge({
@@ -314,7 +288,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           return;
         }
       }
-      dispatch(mergeLines({ lineIndex, direction }));
+      dispatch(editor.mergeLines({ lineIndex, direction }));
       const resultingIndex = direction === 'up' ? partnerIndex : lineIndex;
       refocusLineAfterRender(resultingIndex, 'output');
       emitLinesMergedMessage(pushMessage);
@@ -324,10 +298,10 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleToggleCompleted = useCallback(
     (lineIndex: number) => {
-      const translationLines = fromCurrentStore(selectLines);
-      const focusedColumn = fromCurrentStore(selectFocusedColumn);
+      const translationLines = fromCurrentStore(editor.selectLines);
+      const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
       const completed = !translationLines[lineIndex].completed;
-      dispatch(setLineCompleted({ lineIndex, completed }));
+      dispatch(editor.setLineCompleted({ lineIndex, completed }));
       if (completed) {
         // Marking complete advances to the next line.
         if (translationLines[lineIndex + 1])
@@ -344,12 +318,12 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleRemoveLine = useCallback(
     async (lineIndex: number) => {
-      if (fromCurrentStore(selectCurrentBulkJob)?.running) return;
-      if (fromCurrentStore(selectAskBeforeDelete)) {
+      if (fromCurrentStore(ai.selectCurrentBulkJob)?.running) return;
+      if (fromCurrentStore(settings.selectAskBeforeDelete)) {
         let confirmed: boolean;
         try {
           confirmed = await confirmDeleteLine({
-            lineNo: fromCurrentStore(selectLines)[lineIndex]?.line_no ?? lineIndex + 1,
+            lineNo: fromCurrentStore(editor.selectLines)[lineIndex]?.line_no ?? lineIndex + 1,
           });
         } catch (e) {
           emitDeleteLineFailedMessage(
@@ -363,10 +337,10 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           return;
         }
       }
-      const translationLines = fromCurrentStore(selectLines);
+      const translationLines = fromCurrentStore(editor.selectLines);
       const hasNext = lineIndex + 1 < translationLines.length;
       const hasPrev = lineIndex > 0;
-      dispatch(removeLine(lineIndex));
+      dispatch(editor.removeLine(lineIndex));
       const targetIndex = hasNext ? lineIndex : hasPrev ? lineIndex - 1 : null;
       if (targetIndex != null) {
         refocusLineAfterRender(targetIndex, 'output');
@@ -380,8 +354,8 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleAdjustStartTime = useCallback(
     (lineIndex: number, direction: 'earlier' | 'later') => {
-      const translationLines = fromCurrentStore(selectLines);
-      const timeAdjustmentStep = fromCurrentStore(selectTimeAdjustmentStep);
+      const translationLines = fromCurrentStore(editor.selectLines);
+      const timeAdjustmentStep = fromCurrentStore(settings.selectTimeAdjustmentStep);
       const line = translationLines[lineIndex];
       if (!line) return;
       if (direction === 'earlier') {
@@ -393,7 +367,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           return;
         }
         dispatch(
-          updateLineTiming({
+          editor.updateLineTiming({
             lineIndex,
             startTime: next,
             endTime: line.end_time,
@@ -408,7 +382,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           return;
         }
         dispatch(
-          updateLineTiming({
+          editor.updateLineTiming({
             lineIndex,
             startTime: next,
             endTime: line.end_time,
@@ -421,8 +395,8 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleAdjustEndTime = useCallback(
     (lineIndex: number, direction: 'earlier' | 'later') => {
-      const translationLines = fromCurrentStore(selectLines);
-      const timeAdjustmentStep = fromCurrentStore(selectTimeAdjustmentStep);
+      const translationLines = fromCurrentStore(editor.selectLines);
+      const timeAdjustmentStep = fromCurrentStore(settings.selectTimeAdjustmentStep);
       const line = translationLines[lineIndex];
       if (!line) return;
       if (direction === 'earlier') {
@@ -434,7 +408,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           return;
         }
         dispatch(
-          updateLineTiming({
+          editor.updateLineTiming({
             lineIndex,
             startTime: line.start_time,
             endTime: next,
@@ -449,7 +423,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           return;
         }
         dispatch(
-          updateLineTiming({
+          editor.updateLineTiming({
             lineIndex,
             startTime: line.start_time,
             endTime: next,
@@ -462,8 +436,8 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleAdjustEntryTime = useCallback(
     (lineIndex: number, direction: 'earlier' | 'later') => {
-      const translationLines = fromCurrentStore(selectLines);
-      const timeAdjustmentStep = fromCurrentStore(selectTimeAdjustmentStep);
+      const translationLines = fromCurrentStore(editor.selectLines);
+      const timeAdjustmentStep = fromCurrentStore(settings.selectTimeAdjustmentStep);
       const line = translationLines[lineIndex];
       if (!line) return;
       if (direction === 'earlier') {
@@ -475,7 +449,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           emitEntryTimeShiftBlockedMessage(pushMessage);
           return;
         }
-        dispatch(updateLineTiming({ lineIndex, startTime: nextStart, endTime: nextEnd }));
+        dispatch(editor.updateLineTiming({ lineIndex, startTime: nextStart, endTime: nextEnd }));
       } else {
         const nextL =
           lineIndex + 1 < translationLines.length ? translationLines[lineIndex + 1] : null;
@@ -486,7 +460,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
           emitEntryTimeShiftBlockedMessage(pushMessage);
           return;
         }
-        dispatch(updateLineTiming({ lineIndex, startTime: nextStart, endTime: nextEnd }));
+        dispatch(editor.updateLineTiming({ lineIndex, startTime: nextStart, endTime: nextEnd }));
       }
     },
     [dispatch, pushMessage]
@@ -494,10 +468,10 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleUndoRedo = useCallback(
     (direction: 'backward' | 'forward') => {
-      if (fromCurrentStore(selectCurrentBulkJob)?.running) return;
-      const focusedLineIndex = fromCurrentStore(selectFocusedLineIndex);
-      const focusedColumn = fromCurrentStore(selectFocusedColumn);
-      dispatch(restoreHistory(direction));
+      if (fromCurrentStore(ai.selectCurrentBulkJob)?.running) return;
+      const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
+      const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
+      dispatch(editor.restoreHistory(direction));
       if (focusedLineIndex !== null && focusedColumn) {
         refocusLineAfterRender(focusedLineIndex, focusedColumn);
       }
@@ -506,7 +480,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
   );
 
   const handleAutoMerge = useCallback(async () => {
-    if (fromCurrentStore(selectCurrentBulkJob)?.running) return;
+    if (fromCurrentStore(ai.selectCurrentBulkJob)?.running) return;
     let threshold: number | null;
     try {
       threshold = await confirmAutoMerge();
@@ -521,12 +495,12 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
       emitAutoMergeCancelledMessage(pushMessage);
       return;
     }
-    dispatch(autoMergeAdjacentLines({ threshold }));
+    dispatch(editor.autoMergeAdjacentLines({ threshold }));
   }, [confirmAutoMerge, dispatch, pushMessage]);
 
   const handleCleanup = useCallback(async () => {
-    if (fromCurrentStore(selectCurrentBulkJob)?.running) return;
-    const isEditMode = fromCurrentStore(selectIsEditMode);
+    if (fromCurrentStore(ai.selectCurrentBulkJob)?.running) return;
+    const isEditMode = fromCurrentStore(projects.selectIsEditMode);
     let values: TCleanupFormValues | null;
     try {
       values = await confirmCleanup(isEditMode);
@@ -542,7 +516,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
       return;
     }
     const { targetColumn, ...options } = values;
-    dispatch(cleanupLines({ targetColumn, options }));
+    dispatch(editor.cleanupLines({ targetColumn, options }));
     // Cleanup can drop lines/renumber, which may bump renderEpoch and remount visible rows --
     // wait a frame before refocusing, same as refocusLineAfterRender does for other structural
     // changes.
@@ -552,9 +526,14 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
   }, [confirmCleanup, dispatch, pushMessage, handleFocusEditor]);
 
   const handleCopyAllSourceToOutput = useCallback(async () => {
-    if (fromCurrentStore(selectCurrentBulkJob)?.running || fromCurrentStore(selectIsEditMode))
+    if (
+      fromCurrentStore(ai.selectCurrentBulkJob)?.running ||
+      fromCurrentStore(projects.selectIsEditMode)
+    )
       return;
-    const hasExistingOutput = fromCurrentStore(selectLines).some((line) => line.output?.trim());
+    const hasExistingOutput = fromCurrentStore(editor.selectLines).some((line) =>
+      line.output?.trim()
+    );
     let overrideExisting: boolean | null;
     try {
       overrideExisting = await confirmCopyAllSourceToOutput(hasExistingOutput);
@@ -571,19 +550,19 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
       emitCopyAllCancelledMessage(pushMessage);
       return;
     }
-    dispatch(copyAllSourceToOutput({ overrideExisting }));
+    dispatch(editor.copyAllSourceToOutput({ overrideExisting }));
   }, [confirmCopyAllSourceToOutput, dispatch, pushMessage]);
 
   const handleCompleteAllTranslatedLines = useCallback(() => {
-    if (fromCurrentStore(selectCurrentBulkJob)?.running) return;
-    dispatch(completeAllTranslatedLines());
+    if (fromCurrentStore(ai.selectCurrentBulkJob)?.running) return;
+    dispatch(editor.completeAllTranslatedLines());
   }, [dispatch]);
 
   const handleToggleEditMode = useCallback(() => {
-    const isEditMode = fromCurrentStore(selectIsEditMode);
-    const focusedLineIndex = fromCurrentStore(selectFocusedLineIndex);
+    const isEditMode = fromCurrentStore(projects.selectIsEditMode);
+    const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
     const nextMode = isEditMode ? 'translate' : 'edit';
-    dispatch(setEditorMode(nextMode));
+    dispatch(projects.setEditorMode(nextMode));
     if (focusedLineIndex !== null) {
       refocusLineAfterRender(focusedLineIndex, nextMode === 'edit' ? 'source' : 'output');
     }
@@ -591,7 +570,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleInsertLine = useCallback(
     (lineIndex: number, position: 'before' | 'after') => {
-      const line = fromCurrentStore(selectLines)[lineIndex];
+      const line = fromCurrentStore(editor.selectLines)[lineIndex];
       if (!line) return;
       const duration = line.end_time - line.start_time;
       const mid = line.start_time + Math.floor(duration / 2);
@@ -599,8 +578,8 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
         emitLineTooShortToSplitMessage(pushMessage);
         return;
       }
-      const column = fromCurrentStore(selectFocusedColumn) ?? 'output';
-      dispatch(insertLine({ lineIndex, position }));
+      const column = fromCurrentStore(editor.selectFocusedColumn) ?? 'output';
+      dispatch(editor.insertLine({ lineIndex, position }));
       const targetIndex = position === 'before' ? lineIndex : lineIndex + 1;
       refocusLineAfterRender(targetIndex, column);
     },
@@ -609,8 +588,8 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleSwitchColumn = useCallback(
     (targetColumn: TInputColumn, lineIndex: number | null) => {
-      const translationLines = fromCurrentStore(selectLines);
-      const focusedColumn = fromCurrentStore(selectFocusedColumn);
+      const translationLines = fromCurrentStore(editor.selectLines);
+      const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
       const defaultIndex = translationLines.length > 0 ? 0 : null;
       if (lineIndex == null) {
         if (defaultIndex == null) return;
@@ -626,8 +605,8 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
   const handleNavigateLine = useCallback(
     (direction: 'up' | 'down', lineIndex: number | null) => {
       const activeElement = (document.activeElement as HTMLElement | null) ?? document.body;
-      const translationLines = fromCurrentStore(selectLines);
-      const focusedColumn = fromCurrentStore(selectFocusedColumn);
+      const translationLines = fromCurrentStore(editor.selectLines);
+      const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
       const defaultIndex = translationLines.length > 0 ? 0 : null;
       const colType = focusedColumn ?? 'output';
       if (lineIndex == null) {
@@ -647,19 +626,19 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
 
   const handleShiftAllLines = useCallback(
     (direction: 'earlier' | 'later') => {
-      const timeAdjustmentStep = fromCurrentStore(selectTimeAdjustmentStep);
+      const timeAdjustmentStep = fromCurrentStore(settings.selectTimeAdjustmentStep);
       dispatch(
         direction === 'earlier'
-          ? shiftAllLinesEarlier(timeAdjustmentStep)
-          : shiftAllLinesLater(timeAdjustmentStep)
+          ? editor.shiftAllLinesEarlier(timeAdjustmentStep)
+          : editor.shiftAllLinesLater(timeAdjustmentStep)
       );
     },
     [dispatch]
   );
 
   const handlePlayFocusedLine = useCallback(() => {
-    const translationLines = fromCurrentStore(selectLines);
-    const focusedLineIndex = fromCurrentStore(selectFocusedLineIndex);
+    const translationLines = fromCurrentStore(editor.selectLines);
+    const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
     if (
       translationLines.length === 0 ||
       focusedLineIndex === null ||

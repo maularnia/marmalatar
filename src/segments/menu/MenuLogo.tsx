@@ -1,7 +1,7 @@
 import { SETTINGS_KEY } from '@providers/MenuActionsProvider';
 import { useMenuRefs } from '@providers/MenuRefsProvider';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { selectCurrentOverlay } from '@src/store/slices/overlays';
+import { overlays } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
@@ -49,7 +49,7 @@ export default function MenuLogo() {
   const { t } = useTranslation('menu');
   const dispatch = useAppDispatch();
   const { dynamic, compact } = useMenuState();
-  const overlay = useAppSelector(selectCurrentOverlay);
+  const overlay = useAppSelector(overlays.selectCurrent);
   const { registerMenuItemRef } = useMenuRefs();
   const { zoneRef } = useKeystrokeZone();
   const setSettingsRef = useCallback(

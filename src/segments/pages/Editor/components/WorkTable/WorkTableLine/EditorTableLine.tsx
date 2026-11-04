@@ -1,20 +1,16 @@
 import { useEditorRefs } from '@providers/EditorRefsProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { selectFocusedColumn, setFocusedColumn, setTextSelection } from '@src/store/slices/editor';
-import {
-  selectIsEditMode,
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-} from '@src/store/slices/project';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
 import { useAppDispatch } from '@store/hooks';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import { selectCheckGrammar } from '@store/slices/app';
+import { ai } from '@store/slices/ai';
+import { settings } from '@store/slices/settings';
 import { fromCurrentStore } from '@store/store';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
@@ -384,11 +380,11 @@ export default function EditorTableLine({
   const { zoneRef } = useKeystrokeZone();
   const { videoDurationMs } = useVideo();
   const dispatch = useAppDispatch();
-  const sourceLanguage = useSelector(selectProjectSourceLanguage);
-  const targetLanguage = useSelector(selectProjectTargetLanguage);
-  const isTranslationBusy = useSelector(selectTranslationIsBusy);
-  const isEditMode = useSelector(selectIsEditMode);
-  const checkGrammar = useSelector(selectCheckGrammar);
+  const sourceLanguage = useSelector(projects.selectSourceLanguage);
+  const targetLanguage = useSelector(projects.selectTargetLanguage);
+  const isTranslationBusy = useSelector(ai.selectIsBusy);
+  const isEditMode = useSelector(projects.selectIsEditMode);
+  const checkGrammar = useSelector(settings.selectCheckGrammar);
 
   const isNegativeStart = startTime < 0;
   const isBeyondVideo =
@@ -399,15 +395,15 @@ export default function EditorTableLine({
     if (!input) return;
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
-      dispatch(setTextSelection(''));
+      dispatch(editor.setTextSelection(''));
       return;
     }
     const range = selection.getRangeAt(0);
     if (!input.contains(range.commonAncestorContainer)) {
-      dispatch(setTextSelection(''));
+      dispatch(editor.setTextSelection(''));
       return;
     }
-    dispatch(setTextSelection(selection.toString()));
+    dispatch(editor.setTextSelection(selection.toString()));
   };
 
   const selectedCharacters = useMemo(() => parseCharacterList(character), [character]);
@@ -444,7 +440,7 @@ export default function EditorTableLine({
   }, []);
 
   const updateSplitCursor = () => {
-    const focusedColumn = fromCurrentStore(selectFocusedColumn);
+    const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
     const input =
       focusedColumn === 'output'
         ? translatedInputRef.current
@@ -517,10 +513,10 @@ export default function EditorTableLine({
             data-line-no={lineNo}
             onFocus={() => {
               onFocus();
-              dispatch(setFocusedColumn('source'));
+              dispatch(editor.setFocusedColumn('source'));
             }}
             onClick={() => {
-              dispatch(setFocusedColumn('source'));
+              dispatch(editor.setFocusedColumn('source'));
               updateSplitCursor();
             }}
             onSelect={() => {
@@ -547,7 +543,7 @@ export default function EditorTableLine({
         </NumberLineCell>
         <LineCell
           style={{ cursor: 'text' }}
-          onBlur={() => dispatch(setFocusedColumn(null))}
+          onBlur={() => dispatch(editor.setFocusedColumn(null))}
           onClick={() => {
             if (isTranslationBusy || !characterInputRef.current?.inputRef) return;
             characterInputRef.current.inputRef.focus();
@@ -559,7 +555,7 @@ export default function EditorTableLine({
             characters={characterOptions}
             onFocus={() => {
               onFocus();
-              dispatch(setFocusedColumn('character'));
+              dispatch(editor.setFocusedColumn('character'));
             }}
             value={selectedCharacters}
             disabled={isTranslationBusy}
@@ -592,10 +588,10 @@ export default function EditorTableLine({
               data-line-no={lineNo}
               onFocus={() => {
                 onFocus();
-                dispatch(setFocusedColumn('output'));
+                dispatch(editor.setFocusedColumn('output'));
               }}
               onClick={() => {
-                dispatch(setFocusedColumn('output'));
+                dispatch(editor.setFocusedColumn('output'));
                 updateSplitCursor();
               }}
               onKeyUp={updateSplitCursor}

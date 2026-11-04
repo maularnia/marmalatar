@@ -3,12 +3,7 @@ import { PropsWithChildren, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { LARGE_SCREEN_THRESHOLD, MEDUIM_SCREEN_THRESHOLD } from '@src/consts';
 import { TThemeSelection } from '@src/types';
-import {
-  selectResolvedThemeName,
-  selectThemeSelection,
-  setScreenSize,
-  setResolvedThemeName,
-} from '@store/slices/app';
+import { settings } from '@store/slices/settings';
 import { TScreenSize } from '@src/theme/types';
 
 const getCurrentMatcher = (): [MediaQueryList, TScreenSize] => {
@@ -24,8 +19,8 @@ const getCurrentMatcher = (): [MediaQueryList, TScreenSize] => {
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const dispatch = useAppDispatch();
-  const selection = useAppSelector(selectThemeSelection);
-  const resolvedThemeName = useAppSelector(selectResolvedThemeName);
+  const selection = useAppSelector(settings.selectThemeSelection);
+  const resolvedThemeName = useAppSelector(settings.selectResolvedThemeName);
   const matcher = useRef<MediaQueryList>(null);
   useEffect(() => {
     const onMatchChage = () => {
@@ -33,7 +28,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
       const [mc, size] = getCurrentMatcher();
       matcher.current = mc;
       matcher.current.addEventListener('change', onMatchChage);
-      dispatch(setScreenSize(size));
+      dispatch(settings.setScreenSize(size));
     };
     onMatchChage();
     return () => {
@@ -43,13 +38,15 @@ export function ThemeProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (selection !== TThemeSelection.SYSTEM) {
-      dispatch(setResolvedThemeName(selection === TThemeSelection.DARK ? 'dark' : 'light'));
+      dispatch(
+        settings.setResolvedThemeName(selection === TThemeSelection.DARK ? 'dark' : 'light')
+      );
       return;
     }
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    dispatch(setResolvedThemeName(mq.matches ? 'dark' : 'light'));
+    dispatch(settings.setResolvedThemeName(mq.matches ? 'dark' : 'light'));
     const handler = (e: MediaQueryListEvent) =>
-      dispatch(setResolvedThemeName(e.matches ? 'dark' : 'light'));
+      dispatch(settings.setResolvedThemeName(e.matches ? 'dark' : 'light'));
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, [selection, dispatch]);

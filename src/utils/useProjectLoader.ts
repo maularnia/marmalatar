@@ -12,8 +12,9 @@ import {
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
-import { checkForeignFileExists } from '@store/slices/workingFolder';
-import { getProjectEditorState, loadProjectFromDisk, TProjectEntry } from '@store/slices/project';
+import { workingFolder } from '@store/slices/workingFolder';
+import { TProjectEntry } from '@store/slices/project';
+import { projects } from '@store/slices/project';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
 import { useAppDispatch } from '@store/hooks';
@@ -42,7 +43,7 @@ export function useProjectLoader() {
         preview: string | null
       ) {
         try {
-          await dispatch(loadProjectFromDisk(proj));
+          await dispatch(projects.loadFromDisk(proj));
         } catch (error) {
           emitProjectLoadFailedMessage(pushMessage, toErrorMessage(error));
           return;
@@ -75,9 +76,9 @@ export function useProjectLoader() {
         );
       }
 
-      let editorState: Awaited<ReturnType<typeof getProjectEditorState>>;
+      let editorState: Awaited<ReturnType<typeof projects.getEditorState>>;
       try {
-        editorState = await getProjectEditorState(project.projectId);
+        editorState = await projects.getEditorState(project.projectId);
       } catch (error) {
         emitProjectStateReadFailedMessage(pushMessage, toErrorMessage(error));
         return;
@@ -93,7 +94,7 @@ export function useProjectLoader() {
       // ── Saved path: verify existence, then process via backend ─────────────
       let fileExists: boolean;
       try {
-        fileExists = await checkForeignFileExists(savedPath);
+        fileExists = await workingFolder.checkForeignFileExists(savedPath);
       } catch (error) {
         emitVideoFileCheckFailedMessage(pushMessage, toErrorMessage(error));
         fileExists = false;

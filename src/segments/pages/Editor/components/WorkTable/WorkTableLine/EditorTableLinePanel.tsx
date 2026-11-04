@@ -1,4 +1,4 @@
-import { selectIsLargeScreen } from '@src/store/slices/app';
+import { settings } from '@src/store/slices/settings';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
@@ -49,7 +49,7 @@ export function EditorTableLinePanel({
   onToggleCompleted,
 }: EditorTableLinePanelProps) {
   const { t } = useTranslation('tooltips');
-  const isLargeScreen = useSelector(selectIsLargeScreen);
+  const isLargeScreen = useSelector(settings.selectIsLargeScreen);
   return (
     <LinePanel className={classNames({ isLargeScreen })}>
       <LineMetaSection className={'editorControls'}>

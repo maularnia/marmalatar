@@ -1,8 +1,8 @@
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { setThemeSelection } from '@store/slices/app';
-import { closeOverlays, selectCurrentOverlay } from '@store/slices/overlays';
+import { settings } from '@store/slices/settings';
+import { overlays } from '@store/slices/overlays';
 import { openExportOverlay, openSettingsOverlay } from '@store/thunks';
 import { TThemeSelection } from '@src/types';
 import {
@@ -214,7 +214,7 @@ const useAppGlobalKeystroke = (
 // context regardless of where its dialogs are portaled.
 function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
   const dispatch = useAppDispatch();
-  const currentOverlay = useAppSelector(selectCurrentOverlay);
+  const currentOverlay = useAppSelector(overlays.selectCurrent);
   const slotsRef = useRef(new Map<TKeystrokeSlot, () => void>());
   const pauseSourcesRef = useRef(new Set<string>());
   const [isPaused, setIsPaused] = useState(false);
@@ -253,7 +253,7 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
   useAppGlobalKeystroke('focusSlot9', () => focusSlot(9));
   useAppGlobalKeystroke('focusSlot0', () => focusSlot(0));
   useAppGlobalKeystroke('closeOverlay', () => {
-    if (currentOverlay !== null) dispatch(closeOverlays());
+    if (currentOverlay !== null) dispatch(overlays.closeAll());
   });
   useAppGlobalKeystroke('openSettings', () => {
     dispatch(openSettingsOverlay());
@@ -262,13 +262,13 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
     dispatch(openExportOverlay());
   });
   useAppGlobalKeystroke('switchToDarkTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.DARK));
+    dispatch(settings.setThemeSelection(TThemeSelection.DARK));
   });
   useAppGlobalKeystroke('switchToLightTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.LIGHT));
+    dispatch(settings.setThemeSelection(TThemeSelection.LIGHT));
   });
   useAppGlobalKeystroke('switchToSystemTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.SYSTEM));
+    dispatch(settings.setThemeSelection(TThemeSelection.SYSTEM));
   });
 
   const value = useMemoizedObject<TGlobalKeystrokeContext>({

@@ -1,4 +1,4 @@
-import { selectProjectName } from '@src/store/slices/project';
+import { projects } from '@src/store/slices/project';
 import { exportAsAss } from '@src/utils/data/parsers/ass';
 import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
@@ -17,7 +17,7 @@ export function ExportASS({
   targetLanguage,
 }: ExporterProps) {
   const { t } = useTranslation('export');
-  const showName = useAppSelector(selectProjectName) ?? '';
+  const showName = useAppSelector(projects.selectName) ?? '';
   return (
     <FormFooter>
       <Button

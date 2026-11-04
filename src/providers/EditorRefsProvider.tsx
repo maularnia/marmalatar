@@ -1,4 +1,4 @@
-import { selectProjectId } from '@src/store/slices/project';
+import { projects } from '@src/store/slices/project';
 import type { TInputColumn } from '@src/types';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
@@ -40,7 +40,7 @@ export function useEditorRefs(): TEditorRefsContext {
 export function EditorRefsProvider({ children }: PropsWithChildren) {
   const splitCursorRef = useRef<number | null>(null);
   const lineInputRefs = useRef<Map<number, TRowInputMap>>(new Map());
-  const projectId = useAppSelector(selectProjectId);
+  const projectId = useAppSelector(projects.selectId);
 
   const registerLineInputRef = useCallback(
     (lineIndex: number, type: TInputColumn, el: HTMLElement | null) => {

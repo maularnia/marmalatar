@@ -7,29 +7,13 @@ import {
 import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
 import { useMenuRefs } from '@providers/MenuRefsProvider';
 import i18n from '@src/i18n';
-import { selectIntegrationIsConfigured } from '@src/store/slices/app';
-import {
-  renameProjectFile,
-  selectProjectId,
-  selectProjects,
-  updateProjectEmoji,
-} from '@src/store/slices/project';
+import { settings } from '@src/store/slices/settings';
+import { projects } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  createGlossaryFile,
-  createPromptTemplateFile,
-  renameGlossaryFile,
-  renamePromptTemplateFile,
-  selectCurrentGlossary,
-  selectCurrentPromptTemplate,
-  selectGlossaryItems,
-  selectPromptTemplateItems,
-  updateGlossaryEmoji,
-  updatePromptTemplateEmoji,
-} from '@store/slices/aiPromptEditor';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import { selectWorkingFolderIsBusy, selectFolder } from '@store/slices/workingFolder';
+import { glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
+import { ai } from '@store/slices/ai';
+import { workingFolder } from '@store/slices/workingFolder';
 import H from '@ui-toolkit/H';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -72,18 +56,18 @@ const t = i18n.getFixedT(null, 'errors');
 export default function FileList() {
   const { t: tMenu } = useTranslation('menu');
   const dispatch = useAppDispatch();
-  const folder = useAppSelector(selectFolder);
-  const projects = useAppSelector(selectProjects);
-  const promptTemplateItems = useAppSelector(selectPromptTemplateItems);
-  const glossaryItems = useAppSelector(selectGlossaryItems);
-  const workingFolderIsBusy = useAppSelector(selectWorkingFolderIsBusy);
-  const translationIsBusy = useAppSelector(selectTranslationIsBusy);
+  const folder = useAppSelector(workingFolder.selectFolder);
+  const projectList = useAppSelector(projects.selectList);
+  const promptTemplateItems = useAppSelector(promptTemplates.selectItems);
+  const glossaryItems = useAppSelector(glossaries.selectItems);
+  const workingFolderIsBusy = useAppSelector(workingFolder.selectIsBusy);
+  const translationIsBusy = useAppSelector(ai.selectIsBusy);
   const listIsDisabled = workingFolderIsBusy || translationIsBusy;
-  const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
+  const currentPromptTemplate = useAppSelector(promptTemplates.selectCurrent);
+  const currentGlossary = useAppSelector(glossaries.selectCurrent);
   const { compact, dynamic } = useMenuState();
-  const currentProjectId = useAppSelector(selectProjectId);
-  const integrationIsConfigured = useAppSelector(selectIntegrationIsConfigured);
+  const currentProjectId = useAppSelector(projects.selectId);
+  const integrationIsConfigured = useAppSelector(settings.selectIntegrationIsConfigured);
 
   const {
     isCreatingPromptTemplate,
@@ -115,7 +99,7 @@ export default function FileList() {
     [registerMenuItemRef]
   );
 
-  const projectFileNames = useMemo(() => projects.map((p) => p.fileName), [projects]);
+  const projectFileNames = useMemo(() => projectList.map((p) => p.fileName), [projectList]);
   const promptTemplateFileNames = useMemo(
     () => promptTemplateItems.map((c) => c.fileName),
     [promptTemplateItems]
@@ -123,37 +107,37 @@ export default function FileList() {
   const glossaryFileNames = useMemo(() => glossaryItems.map((g) => g.fileName), [glossaryItems]);
 
   const handleCommitProject = async (fileName: string | null, newTitle: string) => {
-    const project = projects.find((p) => p.fileName === fileName);
+    const project = projectList.find((p) => p.fileName === fileName);
     if (!project) throw new Error(t('fileList.projectNotFound'));
-    await dispatch(renameProjectFile(project.projectId, newTitle));
+    await dispatch(projects.rename(project.projectId, newTitle));
   };
 
   const handleCommitPromptTemplate = async (fileName: string | null, newTitle: string) => {
     if (fileName) {
-      await dispatch(renamePromptTemplateFile(fileName, newTitle));
+      await dispatch(promptTemplates.rename(fileName, newTitle));
     } else {
-      await dispatch(createPromptTemplateFile(newTitle));
+      await dispatch(promptTemplates.create(newTitle));
       handleSetIsCreatingPromptTemplate(false);
     }
   };
 
   const handleCommitGlossary = async (fileName: string | null, newTitle: string) => {
     if (fileName) {
-      await dispatch(renameGlossaryFile(fileName, newTitle));
+      await dispatch(glossaries.rename(fileName, newTitle));
     } else {
-      await dispatch(createGlossaryFile(newTitle));
+      await dispatch(glossaries.create(newTitle));
       handleSetIsCreatingGlossary(false);
     }
   };
 
   if (
     !folder ||
-    (projects.length === 0 && promptTemplateItems.length === 0 && glossaryItems.length === 0)
+    (projectList.length === 0 && promptTemplateItems.length === 0 && glossaryItems.length === 0)
   )
     return null;
   return (
     <>
-      {projects.length > 0 && (
+      {projectList.length > 0 && (
         <>
           <Section>
             {!dynamic && (
@@ -162,8 +146,8 @@ export default function FileList() {
               </ListHeader>
             )}
             <List>
-              {projects.length
-                ? projects.map((project) => {
+              {projectList.length
+                ? projectList.map((project) => {
                     const isActive = project.projectId === currentProjectId;
                     return (
                       <MainMenuListItem
@@ -180,7 +164,7 @@ export default function FileList() {
                         existingFileNames={projectFileNames}
                         emoji={project.emoji}
                         onEmojiSelect={(emoji) =>
-                          void dispatch(updateProjectEmoji(project.projectId, emoji))
+                          void dispatch(projects.updateEmoji(project.projectId, emoji))
                         }
                         onClick={() => void handleOpenProject(project, isActive)}
                         onCommit={handleCommitProject}
@@ -236,7 +220,7 @@ export default function FileList() {
                         existingFileNames={promptTemplateFileNames}
                         emoji={emoji}
                         onEmojiSelect={(newEmoji) =>
-                          void dispatch(updatePromptTemplateEmoji(fileName, newEmoji))
+                          void dispatch(promptTemplates.updateEmoji(fileName, newEmoji))
                         }
                         onClick={() => void handleOpenPromptTemplate(fileName, title)}
                         onCommit={handleCommitPromptTemplate}
@@ -298,7 +282,7 @@ export default function FileList() {
                           existingFileNames={glossaryFileNames}
                           emoji={emoji}
                           onEmojiSelect={(newEmoji) =>
-                            void dispatch(updateGlossaryEmoji(fileName, newEmoji))
+                            void dispatch(glossaries.updateEmoji(fileName, newEmoji))
                           }
                           onClick={() => void handleOpenGlossary(fileName, title)}
                           onCommit={handleCommitGlossary}

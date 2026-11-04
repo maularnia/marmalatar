@@ -1,12 +1,7 @@
 import { useVideo } from '@providers/VideoProvider';
 import GeneralSettings from '@src/partials/Settings';
-import {
-  selectActiveLineIndex,
-  selectFocusedLineIndex,
-  selectLines,
-  updateLineTiming,
-} from '@src/store/slices/editor';
-import { selectIsEditMode, selectVideoFilePath } from '@src/store/slices/project';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
@@ -63,17 +58,17 @@ const AsideVideoWrapper = styled.div``;
 export default function EditorAside() {
   const { t } = useTranslation(['editorAside', 'app']);
   const dispatch = useAppDispatch();
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const isEditMode = useAppSelector(projects.selectIsEditMode);
   const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
     (state) => ({
-      translationLines: selectLines(state),
-      activeLineIndex: selectActiveLineIndex(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
+      translationLines: editor.selectLines(state),
+      activeLineIndex: editor.selectActiveLineIndex(state),
+      focusedLineIndex: editor.selectFocusedLineIndex(state),
     }),
     shallowEqual
   );
   const { videoDurationMs, waveformPeaks } = useVideo();
-  const videoFilePath = useAppSelector(selectVideoFilePath);
+  const videoFilePath = useAppSelector(projects.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   return (
     <Aside tabIndex={1}>
@@ -89,7 +84,7 @@ export default function EditorAside() {
             focusedLineIndex={focusedLineIndex}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
+              dispatch(editor.updateLineTiming({ lineIndex, startTime, endTime }));
             }}
           />
         </AsideVideoContainer>

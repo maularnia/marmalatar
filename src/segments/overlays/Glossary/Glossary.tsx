@@ -5,14 +5,8 @@ import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  saveGlossary,
-  selectCurrentGlossary,
-  selectGlossaryData,
-  setGlossaryData,
-  updateGlossaryLanguages,
-} from '@store/slices/aiPromptEditor';
-import { closeOverlays } from '@store/slices/overlays';
+import { glossaries } from '@store/slices/aiPromptEditor';
+import { overlays } from '@store/slices/overlays';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import {
@@ -46,8 +40,8 @@ export default function GlossaryOverlay() {
   const { t } = useTranslation(['glossary', 'tooltips', 'messages']);
   const languageOptions = useLanguageOptions();
   const dispatch = useAppDispatch();
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
-  const glossaryData = useAppSelector(selectGlossaryData);
+  const currentGlossary = useAppSelector(glossaries.selectCurrent);
+  const glossaryData = useAppSelector(glossaries.selectData);
   const { load } = useLoader();
   const { handleSetFocusedPair, handleInsertPair, handleDeletePair } = useGlossaryActions();
 
@@ -58,7 +52,7 @@ export default function GlossaryOverlay() {
   const handleLanguagesChange = useCallback(
     (sourceLanguage: TLanguage, targetLanguage: TLanguage) => {
       if (!currentGlossary) return;
-      void dispatch(updateGlossaryLanguages(currentGlossary, sourceLanguage, targetLanguage));
+      void dispatch(glossaries.updateLanguages(currentGlossary, sourceLanguage, targetLanguage));
     },
     [dispatch, currentGlossary]
   );
@@ -67,7 +61,7 @@ export default function GlossaryOverlay() {
       const list = formData.list.map((entry, i) =>
         i === index ? { ...entry, [field]: value } : entry
       );
-      dispatch(setGlossaryData({ ...formData, list }));
+      dispatch(glossaries.setData({ ...formData, list }));
     },
     [dispatch, formData]
   );
@@ -79,9 +73,9 @@ export default function GlossaryOverlay() {
   const handleClose = async () => {
     await load(
       { messages: [t('messages:glossary.savingLabel', { title: formData.title || '...' })] },
-      dispatch(saveGlossary()) as Promise<unknown>
+      dispatch(glossaries.save()) as Promise<unknown>
     );
-    dispatch(closeOverlays());
+    dispatch(overlays.closeAll());
   };
   if (!currentGlossary) return null;
 

@@ -1,3 +1,4 @@
+import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
 import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
@@ -14,19 +15,11 @@ import {
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import type { AppDispatch, RootState } from '@store/root';
-import { reconcileGlossarySelectionWithDirection } from '@store/slices/aiPromptEditor';
-import { cleanupMediaCache, selectFolder, setIsBusy } from '@store/slices/workingFolder';
-import {
-  clearFileData,
-  resetEditorMemoryState,
-  setCharacterPool,
-  setLines,
-  setTotalLinesToTranslate,
-  setVideoCollapsed,
-} from '@store/slices/editor';
-import { setFrozenLineNumbers } from '@store/slices/prompt';
+import { glossaries } from '@store/slices/aiPromptEditor';
+import { workingFolder } from '@store/slices/workingFolder';
+import { editor } from '@store/slices/editor';
+import { prompt } from '@store/slices/prompt';
 
-export type { TProjectEditorState };
 export type TProjectEntry = TProjectListEntry;
 
 const t = i18n.getFixedT(null, 'errors');
@@ -101,7 +94,7 @@ async function deleteProjectOnDisk(projectId: string): Promise<void> {
   await IPC.projects.delete(projectId);
 }
 
-export function buildProjectEditorStateSaveData(state: RootState): TProjectStatePrefs {
+function buildProjectEditorStateSaveData(state: RootState): TProjectStatePrefs {
   return {
     editorMode: state.project.editorMode,
     isVideoCollapsed: state.editor.isVideoCollapsed,
@@ -109,12 +102,12 @@ export function buildProjectEditorStateSaveData(state: RootState): TProjectState
   };
 }
 
-export async function getProjectEditorState(projectId: string): Promise<TProjectEditorState> {
+async function getProjectEditorState(projectId: string): Promise<TProjectEditorState> {
   const raw = await IPC.projects.getState(projectId);
   return ProjectEditorStateSchema.parse(raw && typeof raw === 'object' ? raw : {});
 }
 
-export async function writeProjectEditorState(
+async function writeProjectEditorState(
   projectId: string,
   prefs: TProjectStatePrefs
 ): Promise<void> {
@@ -150,7 +143,7 @@ const projectSlice = createSlice({
   name: 'project',
   initialState,
   reducers: {
-    setProjects(state, action: PayloadAction<TProjectEntry[]>) {
+    setProjectList(state, action: PayloadAction<TProjectEntry[]>) {
       state.projects = action.payload;
     },
     // Replaces one project's list item with the entry the main process returned after a write, so
@@ -191,7 +184,7 @@ const projectSlice = createSlice({
     },
   },
   selectors: {
-    selectProjects: (state) => state.projects,
+    selectProjectList: (state) => state.projects,
     selectCurrentProjectFilePath: (state) => state.currentProjectFilePath,
     selectProjectId: (state) => state.projectId,
     selectProjectName: (state) => state.projectName,
@@ -212,8 +205,8 @@ const {
   setProjectEmoji,
 } = projectSlice.actions;
 
-export const {
-  setProjects,
+const {
+  setProjectList,
   setVideoFilePath,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
@@ -223,8 +216,8 @@ export const {
 
 const { selectCurrentProjectFilePath } = projectSlice.selectors;
 
-export const {
-  selectProjects,
+const {
+  selectProjectList,
   selectProjectId,
   selectProjectName,
   selectVideoFilePath,
@@ -241,10 +234,10 @@ export default projectSlice.reducer;
 
 // The list comes from the main process, which renormalizes it against the tracked folder on every
 // read, so after any write the renderer just reads it again.
-export const refreshProjects =
+const refreshProjects =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
-    dispatch(setProjects(await listProjects()));
+    dispatch(setProjectList(await listProjects()));
   };
 
 type CreateNewProjectParams = {
@@ -254,7 +247,7 @@ type CreateNewProjectParams = {
   targetLanguage: TLanguage;
 };
 
-export const createNewProject =
+const createProject =
   (params: CreateNewProjectParams) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const projectName = params.projectName.trim();
@@ -262,8 +255,8 @@ export const createNewProject =
     const { sourceLanguage, targetLanguage } = params;
 
     dispatch(setCurrentProjectFilePath(null));
-    dispatch(resetEditorMemoryState());
-    dispatch(setVideoCollapsed(false));
+    dispatch(editor.resetMemoryState());
+    dispatch(editor.setVideoCollapsed(false));
 
     let emoji: string;
     try {
@@ -274,12 +267,12 @@ export const createNewProject =
 
     // The main process names the file and assigns the projectId, so the project exists on disk
     // before anything is applied to the editor
-    const editor = { characterPool: [], lines: params.lines };
+    const editorData = { characterPool: [], lines: params.lines };
     let entry: TProjectEntry | null;
     try {
       entry = await createProjectOnDisk(
         { projectName, emoji, sourceLanguage, targetLanguage },
-        { editor }
+        { editor: editorData }
       );
     } catch {
       throw new Error(t('createNewProject.fileSaveFailed'));
@@ -294,7 +287,7 @@ export const createNewProject =
         sourceLanguage,
         targetLanguage,
       },
-      editor,
+      editor: editorData,
     });
 
     dispatch(setEditorMode('translate'));
@@ -314,9 +307,9 @@ export const createNewProject =
   };
 
 // Writes the open project's lines and characters to its file. A project without a file yet is
-// skipped: createNewProject creates it. The returned entry carries the progress the main process
+// skipped: createProject creates it. The returned entry carries the progress the main process
 // computed from the new lines.
-export const saveProjectToDisk =
+const saveProjectToDisk =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const state = getState();
@@ -325,7 +318,7 @@ export const saveProjectToDisk =
     dispatch(setProjectEntry(await writeProjectBody(projectId, state)));
   };
 
-export const saveProjectLanguages =
+const saveProjectLanguages =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const state = getState();
@@ -339,18 +332,18 @@ export const saveProjectLanguages =
 
 // Saves the currently open project (if any) before tearing down editor/project state to start a
 // new one -- no confirmation dialog, the save makes it non-destructive.
-export const startNewProject =
+const startNewProject =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     if (selectIsProjectOpen(getState())) {
       await dispatch(saveProjectToDisk());
     }
-    dispatch(resetEditorMemoryState());
+    dispatch(editor.resetMemoryState());
     dispatch(resetProject());
-    dispatch(clearFileData());
+    dispatch(editor.clearFileData());
   };
 
-export const loadProjectFromDisk =
+const loadProjectFromDisk =
   (project: TProjectEntry) =>
   async (dispatch: AppDispatch): Promise<void> => {
     let data: TProjectFileData;
@@ -361,7 +354,7 @@ export const loadProjectFromDisk =
     }
 
     dispatch(setCurrentProjectFilePath(null));
-    dispatch(resetEditorMemoryState());
+    dispatch(editor.resetMemoryState());
 
     applyProjectData(dispatch, data);
 
@@ -372,7 +365,7 @@ export const loadProjectFromDisk =
       throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
     }
     dispatch(setEditorMode(editorState.editorMode));
-    dispatch(setVideoCollapsed(editorState.isVideoCollapsed));
+    dispatch(editor.setVideoCollapsed(editorState.isVideoCollapsed));
     // Restore the video that was attached when the project was last saved/closed.
     dispatch(setVideoFilePath(editorState.videoPath));
 
@@ -389,19 +382,19 @@ function applyProjectData(
 
   dispatch(setProjectSourceLanguage(data.project.sourceLanguage));
   dispatch(setProjectTargetLanguage(data.project.targetLanguage));
-  dispatch(reconcileGlossarySelectionWithDirection());
-  dispatch(setFrozenLineNumbers([]));
+  dispatch(glossaries.reconcileSelectionWithDirection());
+  dispatch(prompt.setFrozenLineNumbers([]));
 
-  dispatch(setCharacterPool(data.editor.characterPool));
+  dispatch(editor.setCharacterPool(data.editor.characterPool));
 
-  dispatch(setLines(data.editor.lines));
-  dispatch(setTotalLinesToTranslate(data.editor.lines.length));
+  dispatch(editor.setLines(data.editor.lines));
+  dispatch(editor.setTotalLinesToTranslate(data.editor.lines.length));
 }
 
-export const renameProjectFile =
+const renameProject =
   (projectId: string, newName: string) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const folder = selectFolder(getState());
+    const folder = workingFolder.selectFolder(getState());
     if (!folder) throw new Error(t('project.folderNotTracked'));
     const trimmed = newName.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
@@ -417,7 +410,7 @@ export const renameProjectFile =
     dispatch(setProjectEntry(entry));
   };
 
-export const updateProjectEmoji =
+const updateProjectEmoji =
   (projectId: string, emoji: string) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const entry = await updateProjectEmojiOnDisk(projectId, emoji);
@@ -429,15 +422,47 @@ export const updateProjectEmoji =
     dispatch(setProjectEntry(entry));
   };
 
-export const deleteProjectFile =
+const deleteProject =
   (projectId: string) =>
   async (dispatch: AppDispatch): Promise<void> => {
-    dispatch(setIsBusy(true));
+    dispatch(workingFolder.setIsBusy(true));
     try {
       await deleteProjectOnDisk(projectId);
       await dispatch(refreshProjects());
-      void cleanupMediaCache().catch(() => {});
+      void workingFolder.cleanupMediaCache().catch(() => {});
     } finally {
-      dispatch(setIsBusy(false));
+      dispatch(workingFolder.setIsBusy(false));
     }
   };
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+export const projects = api('project', {
+  buildProjectEditorStateSaveData,
+  createProject,
+  deleteProject,
+  getProjectEditorState,
+  loadProjectFromDisk,
+  refreshProjects,
+  renameProject,
+  resetProject,
+  saveProjectLanguages,
+  saveProjectToDisk,
+  selectEditorMode,
+  selectIsEditMode,
+  selectIsProjectOpen,
+  selectProjectId,
+  selectProjectList,
+  selectProjectName,
+  selectProjectSourceLanguage,
+  selectProjectTargetLanguage,
+  selectVideoFilePath,
+  setEditorMode,
+  setProjectList,
+  setProjectSourceLanguage,
+  setProjectTargetLanguage,
+  setVideoFilePath,
+  startNewProject,
+  updateProjectEmoji,
+  writeProjectEditorState,
+});

@@ -1,16 +1,13 @@
 import PromptSetupRow from '@src/partials/PromptSetup';
-import { selectAIintegrationEnabled } from '@src/store/slices/app';
+import { settings } from '@src/store/slices/settings';
 import { useAppSelector } from '@store/hooks';
-import {
-  selectIntegrationConnected,
-  selectIntegrationPingError,
-} from '@store/slices/aiTranslation';
+import { ai } from '@store/slices/ai';
 import { FormRoot, FormsContent } from '@ui-toolkit/forms';
 
 export default function AiTranslationStatusPanel() {
-  const aiTranslationEnabled = useAppSelector(selectAIintegrationEnabled);
-  const connected = useAppSelector(selectIntegrationConnected);
-  const pingError = useAppSelector(selectIntegrationPingError);
+  const aiTranslationEnabled = useAppSelector(settings.selectAIintegrationEnabled);
+  const connected = useAppSelector(ai.selectIntegrationConnected);
+  const pingError = useAppSelector(ai.selectIntegrationPingError);
   const isReady = aiTranslationEnabled && connected && !pingError;
 
   if (isReady) {

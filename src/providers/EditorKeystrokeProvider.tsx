@@ -4,9 +4,9 @@ import { useEditorRefs } from '@providers/EditorRefsProvider';
 import KeystrokeZone, {
   useKeystrokeZone,
 } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { selectFocusedColumn, selectFocusedLineIndex, selectLines } from '@src/store/slices/editor';
+import { editor } from '@src/store/slices/editor';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import { ai } from '@store/slices/ai';
 import { fromCurrentStore } from '@store/store';
 import { createContext, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
 import {
@@ -461,7 +461,7 @@ function EditorShortcuts() {
     action: (event: KeyboardEvent) => void
   ) => {
     useAppKeystroke(keystroke, (event) => {
-      if (fromCurrentStore(selectTranslationIsBusy)) return;
+      if (fromCurrentStore(ai.selectIsBusy)) return;
       action(event);
     });
   };
@@ -499,8 +499,8 @@ function EditorShortcuts() {
   // runs, so it doesn't need to be re-registered every time focus changes.
   useEffect(() => {
     const focusOverride = () => {
-      const focusedLineIndex = fromCurrentStore(selectFocusedLineIndex);
-      const focusedColumn = fromCurrentStore(selectFocusedColumn);
+      const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
+      const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
       if (
         focusedLineIndex !== null &&
         handleChangeFocusedColumn(focusedLineIndex, focusedColumn ?? 'output')
@@ -517,8 +517,8 @@ function EditorShortcuts() {
   }, [handleChangeFocusedColumn, handleSetFocusedLineAndColumn, zoneRef, setFocusOverride]);
 
   const getKeystrokeLineIndex = () => {
-    const focusedLineIndex = fromCurrentStore(selectFocusedLineIndex);
-    const translationLines = fromCurrentStore(selectLines);
+    const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
+    const translationLines = fromCurrentStore(editor.selectLines);
     return focusedLineIndex ?? (translationLines.length > 0 ? 0 : null);
   };
 
@@ -617,7 +617,7 @@ function EditorShortcuts() {
 
   useGuardedKeystroke('focusCharacterSelector', () => {
     const lineIndex = getKeystrokeLineIndex();
-    const focusedColumn = fromCurrentStore(selectFocusedColumn);
+    const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
     if (focusedColumn === 'source') return;
     const target = focusedColumn === 'character' ? 'source' : 'character';
     handleSwitchColumn(target, lineIndex);
@@ -625,7 +625,7 @@ function EditorShortcuts() {
 
   useGuardedKeystroke('focusTranslationInput', () => {
     const lineIndex = getKeystrokeLineIndex();
-    const focusedColumn = fromCurrentStore(selectFocusedColumn);
+    const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
     const target = focusedColumn === 'source' ? 'character' : 'output';
     handleSwitchColumn(target, lineIndex);
   });

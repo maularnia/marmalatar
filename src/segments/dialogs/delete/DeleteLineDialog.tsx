@@ -1,5 +1,5 @@
 import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
-import { selectLines } from '@src/store/slices/editor';
+import { editor } from '@src/store/slices/editor';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
 import { useAppSelector } from '@store/hooks';
@@ -26,7 +26,7 @@ const LineNumberTag = styled(Tag)`
 
 export function DeleteLineDialog({ lineNo }: DeleteLineProps) {
   const { t } = useTranslation('dialogs');
-  const lines = useAppSelector(selectLines);
+  const lines = useAppSelector(editor.selectLines);
   const text = lines[lineNo - 1]?.output || lines[lineNo - 1]?.input || '';
   const Body =
     text.length > 50 ? DialogBodyStandard : text.length > 10 ? DialogBodySmall : Fragment;

@@ -1,61 +1,31 @@
 import type { AppDispatch, RootState } from './root';
-import {
-  refreshGlossaries,
-  refreshPromptTemplates,
-  resetAiPromptEditor,
-  saveGlossary,
-  selectCurrentGlossary,
-  selectCurrentPromptTemplate,
-  setGlossaryItems,
-  setPromptTemplateItems,
-  writePromptTemplateBody,
-} from './slices/aiPromptEditor';
-import { refreshSelectedPromptTemplateData } from './slices/aiTranslation';
-import {
-  cleanupMediaCache,
-  getTrackedFolder,
-  rescanFolder,
-  selectFolder,
-  selectFolderDialog,
-  setFolder,
-  setInitialized,
-  setIsBusy,
-  setTrackedFolder,
-} from './slices/workingFolder';
-import { resetEditorMemoryState } from './slices/editor';
-import {
-  closeOverlays,
-  selectCurrentOverlay,
-  setCurrentOverlay,
-  TOverlay,
-} from './slices/overlays';
-import {
-  refreshProjects,
-  resetProject,
-  saveProjectToDisk,
-  selectIsProjectOpen,
-  setProjects,
-} from './slices/project';
-import { resetPromptState, selectSelectedPromptTemplateFileName } from './slices/prompt';
+import { aiPromptEditor, glossaries, promptTemplates } from './slices/aiPromptEditor';
+import { ai } from './slices/ai';
+import { workingFolder } from './slices/workingFolder';
+import { editor } from './slices/editor';
+import { TOverlay } from './slices/overlays';
+import { overlays } from './slices/overlays';
+import { projects } from './slices/project';
+import { prompt } from './slices/prompt';
 
 // Thunks that span slices which import each other, so they can't live in either slice file
 // without an import cycle.
 
 // ── AI Prompt Template ──────────────────────────────────────────────────────
 
-// Lives here because it refreshes the translation's selected template (aiTranslation), and the
-// aiTranslation slice imports aiPromptEditor
+// Lives here because it refreshes the translation's selected template (the ai slice), and the
+// ai slice imports aiPromptEditor
 export const savePromptTemplate =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const state = getState();
     const { currentPromptTemplate, promptTemplateData } = state.aiPromptEditor;
-    const folder = selectFolder(state);
+    const folder = workingFolder.selectFolder(state);
     if (!currentPromptTemplate || !folder || !promptTemplateData) return;
-    await writePromptTemplateBody(currentPromptTemplate, promptTemplateData);
-    await dispatch(refreshPromptTemplates());
-    if (selectSelectedPromptTemplateFileName(state) === currentPromptTemplate) {
-      void dispatch(refreshSelectedPromptTemplateData());
+    await promptTemplates.writeBody(currentPromptTemplate, promptTemplateData);
+    await dispatch(promptTemplates.refresh());
+    if (prompt.selectSelectedPromptTemplateFileName(state) === currentPromptTemplate) {
+      void dispatch(ai.refreshSelectedPromptTemplateData());
     }
   };
 
@@ -66,15 +36,15 @@ export const savePromptTemplate =
 export const openSettingsOverlay =
   () =>
   (dispatch: AppDispatch): void => {
-    dispatch(resetAiPromptEditor());
-    dispatch(setCurrentOverlay(TOverlay.SETTINGS));
+    dispatch(aiPromptEditor.reset());
+    dispatch(overlays.setCurrent(TOverlay.SETTINGS));
   };
 
 export const openExportOverlay =
   () =>
   (dispatch: AppDispatch): void => {
-    dispatch(resetAiPromptEditor());
-    dispatch(setCurrentOverlay(TOverlay.EXPORT));
+    dispatch(aiPromptEditor.reset());
+    dispatch(overlays.setCurrent(TOverlay.EXPORT));
   };
 
 // ── Folder ──────────────────────────────────────────────────────────────────
@@ -84,16 +54,16 @@ export const openExportOverlay =
 const refreshAll =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    if (!selectFolder(getState())) {
-      dispatch(setProjects([]));
-      dispatch(setPromptTemplateItems([]));
-      dispatch(setGlossaryItems([]));
+    if (!workingFolder.selectFolder(getState())) {
+      dispatch(projects.setList([]));
+      dispatch(promptTemplates.setItems([]));
+      dispatch(glossaries.setItems([]));
       return;
     }
     await Promise.all([
-      dispatch(refreshProjects()),
-      dispatch(refreshPromptTemplates()),
-      dispatch(refreshGlossaries()),
+      dispatch(projects.refresh()),
+      dispatch(promptTemplates.refresh()),
+      dispatch(glossaries.refresh()),
     ]);
   };
 
@@ -103,15 +73,15 @@ const refreshAll =
 export const forceRescan =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
-    dispatch(setIsBusy(true));
+    dispatch(workingFolder.setIsBusy(true));
     try {
-      await rescanFolder();
+      await workingFolder.rescanFolder();
       await dispatch(refreshAll());
       // Best-effort housekeeping side effect of scanning -- not awaited (so it can't slow down the
       // scan) and not surfaced as a toast (it isn't a user-initiated action).
-      void cleanupMediaCache().catch(() => {});
+      void workingFolder.cleanupMediaCache().catch(() => {});
     } finally {
-      dispatch(setIsBusy(false));
+      dispatch(workingFolder.setIsBusy(false));
     }
   };
 
@@ -119,13 +89,13 @@ export const initWorkingFolder =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
     try {
-      const savedFolder = await getTrackedFolder();
+      const savedFolder = await workingFolder.getTrackedFolder();
       if (!savedFolder) return;
-      dispatch(setFolder(savedFolder));
+      dispatch(workingFolder.setFolder(savedFolder));
       // The main process keeps the last listing, so no live scan is needed at startup
       await dispatch(refreshAll());
     } finally {
-      dispatch(setInitialized(true));
+      dispatch(workingFolder.setInitialized(true));
     }
   };
 
@@ -134,35 +104,35 @@ export const initWorkingFolder =
 export const pickFolder =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<boolean> => {
-    dispatch(setIsBusy(true));
+    dispatch(workingFolder.setIsBusy(true));
     try {
-      const selected = await selectFolderDialog();
+      const selected = await workingFolder.selectFolderDialog();
       if (!selected) return false;
 
       const state = getState();
-      if (selectIsProjectOpen(state)) {
-        await dispatch(saveProjectToDisk());
+      if (projects.selectIsOpen(state)) {
+        await dispatch(projects.saveToDisk());
       }
 
-      const currentOverlay = selectCurrentOverlay(state);
-      if (currentOverlay === TOverlay.PROMPT_TEMPLATE && selectCurrentPromptTemplate(state)) {
+      const currentOverlay = overlays.selectCurrent(state);
+      if (currentOverlay === TOverlay.PROMPT_TEMPLATE && promptTemplates.selectCurrent(state)) {
         await dispatch(savePromptTemplate());
-      } else if (currentOverlay === TOverlay.GLOSSARY && selectCurrentGlossary(state)) {
-        await dispatch(saveGlossary());
+      } else if (currentOverlay === TOverlay.GLOSSARY && glossaries.selectCurrent(state)) {
+        await dispatch(glossaries.save());
       }
 
-      await setTrackedFolder(selected);
-      dispatch(setFolder(selected));
+      await workingFolder.setTrackedFolder(selected);
+      dispatch(workingFolder.setFolder(selected));
 
-      dispatch(resetEditorMemoryState());
-      dispatch(closeOverlays());
-      dispatch(resetProject());
-      dispatch(resetPromptState());
-      dispatch(resetAiPromptEditor());
+      dispatch(editor.resetMemoryState());
+      dispatch(overlays.closeAll());
+      dispatch(projects.reset());
+      dispatch(prompt.reset());
+      dispatch(aiPromptEditor.reset());
 
       await dispatch(forceRescan());
       return true;
     } finally {
-      dispatch(setIsBusy(false));
+      dispatch(workingFolder.setIsBusy(false));
     }
   };

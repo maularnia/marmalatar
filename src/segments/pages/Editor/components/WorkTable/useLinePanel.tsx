@@ -1,6 +1,6 @@
 import { useEditorActions } from '@providers/EditorActionsProvider';
-import { selectAutoMarkLinesCompleted } from '@src/store/slices/app';
-import { selectFocusedLineIndex, selectLines } from '@src/store/slices/editor';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
 import { useAppSelector } from '@store/hooks';
 import { cloneElement, type ReactElement, type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { shallowEqual } from 'react-redux';
@@ -10,9 +10,9 @@ export function useLinePanel() {
   const { handleRemoveLine, handleToggleCompleted } = useEditorActions();
   const { translationLines, autoMarkLinesCompleted, focusedLineIndex } = useAppSelector(
     (state) => ({
-      translationLines: selectLines(state),
-      autoMarkLinesCompleted: selectAutoMarkLinesCompleted(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
+      translationLines: editor.selectLines(state),
+      autoMarkLinesCompleted: settings.selectAutoMarkLinesCompleted(state),
+      focusedLineIndex: editor.selectFocusedLineIndex(state),
     }),
     shallowEqual
   );

@@ -1,9 +1,9 @@
 import { exporterList } from './formats/list';
 import { ExportFormatlabels, ExportFormats, FrameRate } from './types';
 import Overlay from '@src/segments/overlays/Overlay';
-import { selectCharacterPool, selectLines } from '@src/store/slices/editor';
-import { closeOverlays } from '@src/store/slices/overlays';
-import { selectIsEditMode, selectProjectTargetLanguage } from '@src/store/slices/project';
+import { editor } from '@src/store/slices/editor';
+import { overlays } from '@src/store/slices/overlays';
+import { projects } from '@src/store/slices/project';
 import { ThemeColors } from '@src/theme/utils';
 import { LANGUAGE_LABELS, TCharacter } from '@src/types';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
@@ -37,10 +37,10 @@ interface CharacterOption extends TOptionSelect {
 export default function Export() {
   const { t } = useTranslation('export');
   const dispatch = useAppDispatch();
-  const translationLines = useAppSelector(selectLines);
-  const characterPool = useAppSelector(selectCharacterPool);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const translationLines = useAppSelector(editor.selectLines);
+  const characterPool = useAppSelector(editor.selectCharacterPool);
+  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
+  const isEditMode = useAppSelector(projects.selectIsEditMode);
 
   const formatOptions = Object.values(ExportFormats).map((format) => ({
     value: format,
@@ -94,7 +94,7 @@ export default function Export() {
   const effectiveSourceFps = applyTimeCorrection ? sourceFps : FrameRate.FPS23P976;
   const effectiveResultFps = applyTimeCorrection ? resultFps : FrameRate.FPS23P976;
   return (
-    <Overlay onClose={() => dispatch(closeOverlays())}>
+    <Overlay onClose={() => dispatch(overlays.closeAll())}>
       <FormRoot>
         <FormsContent>
           <FormsRow>

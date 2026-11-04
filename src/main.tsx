@@ -6,9 +6,9 @@ import i18n from '@src/i18n';
 import AppErrorBoundary from '@src/layout/components/AppErrorBoundary';
 import { LocaleProvider } from '@src/providers/LocaleProvider';
 import { ThemeProvider } from '@src/providers/ThemeProvider';
-import { hydrateAppSettings } from '@src/store/slices/app';
+import { settings } from '@src/store/slices/settings';
 import { parseAppSettings } from '@src/utils/appSettingsFile';
-import { initializeAiIntegration } from '@store/slices/aiTranslation';
+import { ai } from '@store/slices/ai';
 import { initWorkingFolder } from '@store/thunks';
 import { store } from '@store/store';
 import React from 'react';
@@ -24,15 +24,15 @@ import { IPC } from '@src/services/ipc/IPC';
 
 // Resolve persisted settings before mounting
 IPC.settings.getAppSettings().then((raw) => {
-  const settings = parseAppSettings(raw);
-  store.dispatch(hydrateAppSettings(settings));
-  void i18n.changeLanguage(settings.uiLocale);
-  if (JSON.stringify(raw) !== JSON.stringify(settings)) {
-    void IPC.settings.setAppSettings(settings);
+  const persistedSettings = parseAppSettings(raw);
+  store.dispatch(settings.hydrate(persistedSettings));
+  void i18n.changeLanguage(persistedSettings.uiLocale);
+  if (JSON.stringify(raw) !== JSON.stringify(persistedSettings)) {
+    void IPC.settings.setAppSettings(persistedSettings);
   }
 
   void store.dispatch(initWorkingFolder());
-  void store.dispatch(initializeAiIntegration()).catch(() => {});
+  void store.dispatch(ai.initializeAiIntegration()).catch(() => {});
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

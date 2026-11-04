@@ -2,14 +2,14 @@ import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { ProjectSaveV1Schema, type TProjectFileBody } from '@src/utils/data/schemas';
 import { AppSettingsSchema, buildAppSettingsSaveData } from '@utils/appSettingsFile';
 import type { AppDispatch, RootState } from './root';
-import { saveProjectLanguages, saveProjectToDisk } from './slices/project';
+import { projects } from './slices/project';
 import { IPC } from '@src/services/ipc/IPC';
 
 // `version` is a wire/persistence-only field added by the bridge contract's VersionedSchema base --
 // it has no counterpart in the `app` redux slice, so it's excluded from the watched key list below.
 const APP_SETTINGS_KEYS = AppSettingsSchema.keyof().options.filter(
   (key) => key !== 'version'
-) as (keyof RootState['app'])[];
+) as (keyof RootState['settings'])[];
 
 type PersistedEditorFields = keyof TProjectFileBody['editor'];
 
@@ -36,7 +36,7 @@ persistProjectStateMiddleware.startListening({
     await api.delay(1500);
 
     // Skips a project that has no file yet
-    await (api.dispatch as AppDispatch)(saveProjectToDisk());
+    await (api.dispatch as AppDispatch)(projects.saveToDisk());
   },
 });
 
@@ -56,14 +56,14 @@ persistProjectStateMiddleware.startListening({
     api.cancelActiveListeners();
     // Swapping the direction changes both languages in two actions: write once
     await api.delay(100);
-    await (api.dispatch as AppDispatch)(saveProjectLanguages());
+    await (api.dispatch as AppDispatch)(projects.saveLanguages());
   },
 });
 
 persistProjectStateMiddleware.startListening({
   predicate: (_action, currentState, previousState) => {
-    const prev = (previousState as RootState).app;
-    const next = (currentState as RootState).app;
+    const prev = (previousState as RootState).settings;
+    const next = (currentState as RootState).settings;
     return APP_SETTINGS_KEYS.some((key) => prev[key] !== next[key]);
   },
 

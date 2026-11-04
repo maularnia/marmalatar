@@ -2,7 +2,7 @@ import { useConfirm } from '@providers/ConfirmationProvider/ConfirmationProvider
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { deleteProjectFile, resetProject, selectProjectId } from '@store/slices/project';
+import { projects } from '@store/slices/project';
 import { useNavigate } from 'react-router-dom';
 import { DeleteProjectDialog } from './DeleteProjectDialog';
 
@@ -10,7 +10,7 @@ const t = i18n.getFixedT(null, 'dialogs');
 
 export const useDeleteProjectConfirmation = () => {
   const dispatch = useAppDispatch();
-  const currentProjectId = useAppSelector(selectProjectId);
+  const currentProjectId = useAppSelector(projects.selectId);
   const navigate = useNavigate();
   const { confirm } = useConfirm(DeleteProjectDialog, {
     confirmButton: { children: t('shared.yes'), color: ThemeColors.RED },
@@ -19,9 +19,9 @@ export const useDeleteProjectConfirmation = () => {
   return {
     confirmDeleteProject: async (projectName: string, projectId: string): Promise<boolean> => {
       if (!(await confirm({ projectName }))) return false;
-      await dispatch(deleteProjectFile(projectId));
+      await dispatch(projects.delete(projectId));
       if (projectId === currentProjectId) {
-        dispatch(resetProject());
+        dispatch(projects.reset());
         navigate('/');
       }
       return true;

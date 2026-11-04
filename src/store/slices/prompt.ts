@@ -1,3 +1,4 @@
+import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type PromptState = {
@@ -44,7 +45,7 @@ const promptSlice = createSlice({
   },
 });
 
-export const {
+const {
   setFrozenLineNumbers,
   addFrozenLine,
   removeFrozenLine,
@@ -55,8 +56,24 @@ export const {
 
 export default promptSlice.reducer;
 
-export const {
+const {
   selectFrozenLineNumbers,
   selectSelectedPromptTemplateFileName,
   selectSelectedGlossaryFileNames,
 } = promptSlice.selectors;
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+// Keyed on "promptState" rather than "prompt", which would also cut "Prompt" out of
+// selectSelectedPromptTemplateFileName and friends
+export const prompt = api('promptState', {
+  addFrozenLine,
+  removeFrozenLine,
+  resetPromptState,
+  selectFrozenLineNumbers,
+  selectSelectedGlossaryFileNames,
+  selectSelectedPromptTemplateFileName,
+  setFrozenLineNumbers,
+  setSelectedGlossaryFileNames,
+  setSelectedPromptTemplateFileName,
+});

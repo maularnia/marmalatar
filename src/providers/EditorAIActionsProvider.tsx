@@ -15,27 +15,17 @@ import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useAddToGlossaryDialog } from '@src/segments/dialogs/addToGlossary/useAddToGlossaryDialog';
 import { useTranslationOverrideConfirmation } from '@src/segments/dialogs/translationOverrride/useTranslationOverrideConfirmation';
 import { aiClients } from '@src/services/ai/clients';
-import {
-  selectAskBeforeAITranslate,
-  selectAutoMarkLinesCompleted,
-  selectSelectedIntegrationId,
-} from '@src/store/slices/app';
-import { selectLines, setLineCompleted, updateTranslatedText } from '@src/store/slices/editor';
-import {
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-} from '@src/store/slices/project';
-import { selectSelectedPromptTemplateFileName } from '@src/store/slices/prompt';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
+import { prompt } from '@src/store/slices/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
-import {
-  startAutomatedBulkTranslation,
-  startAutomatedTranslation,
-} from '@store/slices/aiTranslation';
-import { addEntryToGlossary, selectGlossaryItems } from '@store/slices/aiPromptEditor';
+import { ai } from '@store/slices/ai';
+import { glossaries } from '@store/slices/aiPromptEditor';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize } from '@ui-toolkit/Tag';
@@ -71,11 +61,13 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
   const { confirmTranslationOverride } = useTranslationOverrideConfirmation();
 
   const isPromptTemplateSelected = useCallback((): boolean => {
-    const selectedIntegrationId = fromCurrentStore(selectSelectedIntegrationId);
+    const selectedIntegrationId = fromCurrentStore(settings.selectSelectedIntegrationId);
     const client = selectedIntegrationId
       ? aiClients[selectedIntegrationId as keyof typeof aiClients]
       : undefined;
-    const selectedPromptTemplateFileName = fromCurrentStore(selectSelectedPromptTemplateFileName);
+    const selectedPromptTemplateFileName = fromCurrentStore(
+      prompt.selectSelectedPromptTemplateFileName
+    );
     if (client?.supportsContext && !selectedPromptTemplateFileName) {
       emitNoPromptTemplateMessage(pushMessage);
       return false;
@@ -87,9 +79,9 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
     async (lineIndex: number) => {
       if (!isPromptTemplateSelected()) return;
 
-      const line = fromCurrentStore(selectLines)[lineIndex];
+      const line = fromCurrentStore(editor.selectLines)[lineIndex];
       const outputNotEmpty = Boolean(line?.output?.trim());
-      if (outputNotEmpty || fromCurrentStore(selectAskBeforeAITranslate)) {
+      if (outputNotEmpty || fromCurrentStore(settings.selectAskBeforeAITranslate)) {
         let confirmed: boolean;
         try {
           confirmed = await confirmTranslationOverride({
@@ -108,7 +100,7 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
       }
 
       try {
-        await dispatch(startAutomatedTranslation(lineIndex));
+        await dispatch(ai.startAutomated(lineIndex));
         emitAiTranslationJobDoneMessage(pushMessage);
       } catch (err) {
         emitAiTranslationJobFailedMessage(
@@ -123,25 +115,25 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
   );
 
   const handleAiTranslateBulk = useCallback(() => {
-    const selectedIntegrationId = fromCurrentStore(selectSelectedIntegrationId);
+    const selectedIntegrationId = fromCurrentStore(settings.selectSelectedIntegrationId);
     if (!selectedIntegrationId) return;
     if (!isPromptTemplateSelected()) return;
-    const translationLines = fromCurrentStore(selectLines);
-    const autoMarkLinesCompleted = fromCurrentStore(selectAutoMarkLinesCompleted);
+    const translationLines = fromCurrentStore(editor.selectLines);
+    const autoMarkLinesCompleted = fromCurrentStore(settings.selectAutoMarkLinesCompleted);
     const lines = translationLines.filter((line) => !line.output);
     if (!lines.length) return;
     try {
       dispatch(
-        startAutomatedBulkTranslation({
+        ai.startAutomatedBulk({
           lines,
           onChunkTranslated: ({ results }) => {
             results.forEach(({ line, translatedText }) => {
               const lineIndex = translationLines.indexOf(line);
               if (lineIndex >= 0) {
-                dispatch(updateTranslatedText({ lineIndex, text: translatedText }));
+                dispatch(editor.updateTranslatedText({ lineIndex, text: translatedText }));
                 if (autoMarkLinesCompleted)
                   dispatch(
-                    setLineCompleted({
+                    editor.setLineCompleted({
                       lineIndex,
                       completed: Boolean(translatedText),
                       skipHistory: true,
@@ -168,9 +160,9 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
       const text = selectedText.trim();
       if (!text) return;
 
-      const sourceLanguage = fromCurrentStore(selectProjectSourceLanguage);
-      const targetLanguage = fromCurrentStore(selectProjectTargetLanguage);
-      const filteredGlossaries = fromCurrentStore(selectGlossaryItems).filter(
+      const sourceLanguage = fromCurrentStore(projects.selectSourceLanguage);
+      const targetLanguage = fromCurrentStore(projects.selectTargetLanguage);
+      const filteredGlossaries = fromCurrentStore(glossaries.selectItems).filter(
         (g) => g.sourceLanguage === sourceLanguage && g.targetLanguage === targetLanguage
       );
       if (!filteredGlossaries.length) {
@@ -185,7 +177,7 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
         });
         if (result) {
           const added = await (dispatch(
-            addEntryToGlossary(
+            glossaries.addEntry(
               { original: result.pair[0], translation: result.pair[1] },
               result.glossaryFileName
             )

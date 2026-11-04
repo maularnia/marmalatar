@@ -3,26 +3,17 @@ import { useDeleteContextConfirmation } from '@src/segments/dialogs/deleteContex
 import { useDeleteGlossaryConfirmation } from '@src/segments/dialogs/deleteGlossary/useDeleteGlossaryConfirmation';
 import { useDeleteProjectConfirmation } from '@src/segments/dialogs/deleteProject/useDeleteProjectConfirmation';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
-import { selectIntegrationIsConfigured } from '@src/store/slices/app';
+import { settings } from '@src/store/slices/settings';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useProjectLoader } from '@src/utils/useProjectLoader';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
-import {
-  openAIGlossaryEditor,
-  openPromptTemplateEditor,
-  resetAiPromptEditor,
-  saveGlossary,
-  selectCurrentGlossary,
-  selectCurrentPromptTemplate,
-  selectGlossaryItems,
-  selectPromptTemplateItems,
-} from '@store/slices/aiPromptEditor';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import { selectWorkingFolderIsBusy } from '@store/slices/workingFolder';
-import { closeOverlays, selectCurrentOverlay } from '@store/slices/overlays';
-import { selectProjectId, selectProjects, startNewProject } from '@store/slices/project';
+import { aiPromptEditor, glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
+import { ai } from '@store/slices/ai';
+import { workingFolder } from '@store/slices/workingFolder';
+import { overlays } from '@store/slices/overlays';
+import { projects } from '@store/slices/project';
 import { openSettingsOverlay, savePromptTemplate } from '@store/thunks';
 import { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -73,7 +64,7 @@ type TMenuActionsContext = {
   handleDeleteFocusedItem: () => void;
 };
 
-type TProjectEntry = ReturnType<typeof selectProjects>[number];
+type TProjectEntry = ReturnType<typeof projects.selectList>[number];
 
 const noop = providerNoop('MenuActionsContext');
 
@@ -126,15 +117,15 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   // "creating" flags actually need to be closure deps -- they change which literal entries get
   // added, everything else is read fresh via fromCurrentStore() each time this runs.
   const getCombinedItems = useCallback((): TMenuItemRef[] => {
-    const projects = fromCurrentStore(selectProjects);
-    const promptTemplateItems = fromCurrentStore(selectPromptTemplateItems);
-    const glossaryItems = fromCurrentStore(selectGlossaryItems);
-    const integrationIsConfigured = fromCurrentStore(selectIntegrationIsConfigured);
+    const projectList = fromCurrentStore(projects.selectList);
+    const promptTemplateItems = fromCurrentStore(promptTemplates.selectItems);
+    const glossaryItems = fromCurrentStore(glossaries.selectItems);
+    const integrationIsConfigured = fromCurrentStore(settings.selectIntegrationIsConfigured);
     const items: TMenuItemRef[] = [
       { key: SETTINGS_KEY, kind: 'settings' },
-      ...projects.map((p) => ({ key: p.filePath, kind: 'project' as const })),
+      ...projectList.map((p) => ({ key: p.filePath, kind: 'project' as const })),
     ];
-    if (projects.length > 0) {
+    if (projectList.length > 0) {
       items.push({ key: CREATE_PROJECT_KEY, kind: 'createProject' });
     }
     if (integrationIsConfigured) {
@@ -250,12 +241,12 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   // Runs right before opening something, so no minimum lifetime here: it would be added on top of
   // the opening loader's own one.
   const saveCurrentIfNeeded = useCallback(async () => {
-    const currentOverlay = fromCurrentStore(selectCurrentOverlay);
-    const currentPromptTemplate = fromCurrentStore(selectCurrentPromptTemplate);
-    const currentGlossary = fromCurrentStore(selectCurrentGlossary);
+    const currentOverlay = fromCurrentStore(overlays.selectCurrent);
+    const currentPromptTemplate = fromCurrentStore(promptTemplates.selectCurrent);
+    const currentGlossary = fromCurrentStore(glossaries.selectCurrent);
     if (currentOverlay === 'promptTemplate' && currentPromptTemplate) {
       const title =
-        fromCurrentStore(selectPromptTemplateItems).find(
+        fromCurrentStore(promptTemplates.selectItems).find(
           (c) => c.fileName === currentPromptTemplate
         )?.title ?? '...';
       await load(
@@ -265,11 +256,11 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
       );
     } else if (currentOverlay === 'glossary' && currentGlossary) {
       const title =
-        fromCurrentStore(selectGlossaryItems).find((g) => g.fileName === currentGlossary)?.title ??
-        '...';
+        fromCurrentStore(glossaries.selectItems).find((g) => g.fileName === currentGlossary)
+          ?.title ?? '...';
       await load(
         { messages: [t('glossary.savingLabel', { title })] },
-        dispatch(saveGlossary()) as Promise<unknown>,
+        dispatch(glossaries.save()) as Promise<unknown>,
         { minLifeTime: 0 }
       );
     }
@@ -278,11 +269,11 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleOpenProject = useCallback(
     async (project: TProjectEntry, isActive: boolean) => {
       const isBusy =
-        fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+        fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
       if (isActive || isBusy) return;
       await saveCurrentIfNeeded();
-      dispatch(closeOverlays());
-      dispatch(resetAiPromptEditor());
+      dispatch(overlays.closeAll());
+      dispatch(aiPromptEditor.reset());
       void loadProject(project);
     },
     [saveCurrentIfNeeded, dispatch, loadProject]
@@ -291,17 +282,17 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleOpenPromptTemplate = useCallback(
     async (fileName: string, title: string) => {
       const isBusy =
-        fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+        fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
       if (isBusy) return;
       if (
-        fromCurrentStore(selectCurrentOverlay) === 'promptTemplate' &&
-        fromCurrentStore(selectCurrentPromptTemplate) === fileName
+        fromCurrentStore(overlays.selectCurrent) === 'promptTemplate' &&
+        fromCurrentStore(promptTemplates.selectCurrent) === fileName
       )
         return;
       await saveCurrentIfNeeded();
       await load(
         { messages: [t('promptTemplate.loadingLabel', { title })] },
-        dispatch(openPromptTemplateEditor(fileName)) as Promise<unknown>
+        dispatch(promptTemplates.openEditor(fileName)) as Promise<unknown>
       );
     },
     [saveCurrentIfNeeded, load, dispatch, t]
@@ -310,29 +301,29 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleOpenGlossary = useCallback(
     async (fileName: string, title: string) => {
       const isBusy =
-        fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+        fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
       if (isBusy) return;
       if (
-        fromCurrentStore(selectCurrentOverlay) === 'glossary' &&
-        fromCurrentStore(selectCurrentGlossary) === fileName
+        fromCurrentStore(overlays.selectCurrent) === 'glossary' &&
+        fromCurrentStore(glossaries.selectCurrent) === fileName
       )
         return;
       await saveCurrentIfNeeded();
       await load(
         { messages: [t('glossary.loadingLabel', { title })] },
-        dispatch(openAIGlossaryEditor(fileName)) as Promise<unknown>
+        dispatch(glossaries.openEditor(fileName)) as Promise<unknown>
       );
     },
     [saveCurrentIfNeeded, load, dispatch, t]
   );
 
   const handleStartNewProject = useCallback(() => {
-    if (fromCurrentStore(selectProjectId)) {
+    if (fromCurrentStore(projects.selectId)) {
       // No confirmation -- the current project is saved to disk first, so this is non-destructive.
       // Editor refs (line-index-keyed input map, split cursor) are reset by EditorRefsProvider
       // itself, reacting to the projectId change this dispatch causes.
       void (async () => {
-        await dispatch(startNewProject());
+        await dispatch(projects.startNew());
         navigate('/intro/import');
       })();
     } else {
@@ -346,7 +337,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
     if (renamingKey != null) return;
     const focusedItem = getFocusedItem();
     const isBusy =
-      fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+      fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
     if (isBusy || !focusedItem) return;
     const { key, kind } = focusedItem;
     switch (kind) {
@@ -363,19 +354,19 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
         handleSetIsCreatingGlossary(true);
         break;
       case 'project': {
-        const project = fromCurrentStore(selectProjects).find((p) => p.filePath === key);
+        const project = fromCurrentStore(projects.selectList).find((p) => p.filePath === key);
         if (!project) return;
-        void handleOpenProject(project, project.projectId === fromCurrentStore(selectProjectId));
+        void handleOpenProject(project, project.projectId === fromCurrentStore(projects.selectId));
         break;
       }
       case 'promptTemplate': {
-        const item = fromCurrentStore(selectPromptTemplateItems).find((c) => c.fileName === key);
+        const item = fromCurrentStore(promptTemplates.selectItems).find((c) => c.fileName === key);
         if (!item) return;
         void handleOpenPromptTemplate(item.fileName, item.title);
         break;
       }
       case 'glossary': {
-        const item = fromCurrentStore(selectGlossaryItems).find((g) => g.fileName === key);
+        const item = fromCurrentStore(glossaries.selectItems).find((g) => g.fileName === key);
         if (!item) return;
         void handleOpenGlossary(item.fileName, item.title);
         break;
@@ -437,19 +428,19 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleDeleteFocusedItem = useCallback(() => {
     const focusedItem = getFocusedItem();
     const isBusy =
-      fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+      fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
     if (isBusy || !focusedItem) return;
     const { key, kind } = focusedItem;
     if (kind === 'project') {
-      const project = fromCurrentStore(selectProjects).find((p) => p.filePath === key);
+      const project = fromCurrentStore(projects.selectList).find((p) => p.filePath === key);
       if (!project) return;
       void handleDeleteProject(project.filePath, project.projectName, project.projectId);
     } else if (kind === 'promptTemplate') {
-      const item = fromCurrentStore(selectPromptTemplateItems).find((c) => c.fileName === key);
+      const item = fromCurrentStore(promptTemplates.selectItems).find((c) => c.fileName === key);
       if (!item) return;
       void handleDeletePromptTemplate(item.fileName, item.title);
     } else if (kind === 'glossary') {
-      const item = fromCurrentStore(selectGlossaryItems).find((g) => g.fileName === key);
+      const item = fromCurrentStore(glossaries.selectItems).find((g) => g.fileName === key);
       if (!item) return;
       void handleDeleteGlossary(item.fileName, item.title);
     }

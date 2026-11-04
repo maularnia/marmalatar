@@ -1,35 +1,13 @@
 import { aiClients } from '@src/services/ai/clients';
 import type { AiClient } from '@src/services/ai/types';
-import { selectAIintegrationEnabled, selectSelectedIntegrationId } from '@src/store/slices/app';
-import {
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-} from '@src/store/slices/project';
-import {
-  selectSelectedGlossaryFileNames,
-  selectSelectedPromptTemplateFileName,
-  setSelectedGlossaryFileNames,
-} from '@src/store/slices/prompt';
+import { settings } from '@src/store/slices/settings';
+import { projects } from '@src/store/slices/project';
+import { prompt } from '@src/store/slices/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  refreshResolvedGlossaryEntries,
-  selectGlossaryItems,
-  selectPromptTemplateItems,
-  selectResolvedGlossaryEntries,
-} from '@store/slices/aiPromptEditor';
-import {
-  applySelectedPromptTemplateFileName,
-  estimateContextWindowUsage,
-  selectContextWindowEstimate,
-  selectContextWindowEstimateStatus,
-  selectIntegrationConnected,
-  selectIntegrationPingError,
-  selectTranslationIsBusy,
-  setContextWindowEstimate,
-  setContextWindowEstimateStatus,
-} from '@store/slices/aiTranslation';
+import { glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
+import { ai } from '@store/slices/ai';
 import {
   FormSectionEntry,
   FormsRow,
@@ -50,20 +28,25 @@ const ESTIMATE_DEBOUNCE_MS = 500;
 export default function PromptSetupRow() {
   const { t } = useTranslation('settings');
   const dispatch = useAppDispatch();
-  const promptTemplateItems = useAppSelector(selectPromptTemplateItems);
-  const glossaryItems = useAppSelector(selectGlossaryItems);
-  const isBusy = useAppSelector(selectTranslationIsBusy);
-  const sourceLanguage = useAppSelector(selectProjectSourceLanguage);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const selectedPromptTemplateFileName = useAppSelector(selectSelectedPromptTemplateFileName);
-  const selectedGlossaryFileNames = useAppSelector(selectSelectedGlossaryFileNames, shallowEqual);
-  const resolvedGlossaryEntries = useAppSelector(selectResolvedGlossaryEntries);
-  const selectedIntegrationId = useAppSelector(selectSelectedIntegrationId);
-  const aiTranslationEnabled = useAppSelector(selectAIintegrationEnabled);
-  const connected = useAppSelector(selectIntegrationConnected);
-  const pingError = useAppSelector(selectIntegrationPingError);
-  const estimation = useAppSelector(selectContextWindowEstimate);
-  const estimationStatus = useAppSelector(selectContextWindowEstimateStatus);
+  const promptTemplateItems = useAppSelector(promptTemplates.selectItems);
+  const glossaryItems = useAppSelector(glossaries.selectItems);
+  const isBusy = useAppSelector(ai.selectIsBusy);
+  const sourceLanguage = useAppSelector(projects.selectSourceLanguage);
+  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
+  const selectedPromptTemplateFileName = useAppSelector(
+    prompt.selectSelectedPromptTemplateFileName
+  );
+  const selectedGlossaryFileNames = useAppSelector(
+    prompt.selectSelectedGlossaryFileNames,
+    shallowEqual
+  );
+  const resolvedGlossaryEntries = useAppSelector(glossaries.selectResolvedEntries);
+  const selectedIntegrationId = useAppSelector(settings.selectSelectedIntegrationId);
+  const aiTranslationEnabled = useAppSelector(settings.selectAIintegrationEnabled);
+  const connected = useAppSelector(ai.selectIntegrationConnected);
+  const pingError = useAppSelector(ai.selectIntegrationPingError);
+  const estimation = useAppSelector(ai.selectContextWindowEstimate);
+  const estimationStatus = useAppSelector(ai.selectContextWindowEstimateStatus);
 
   const activeClient = selectedIntegrationId
     ? (aiClients as Record<string, AiClient>)[selectedIntegrationId]
@@ -89,31 +72,31 @@ export default function PromptSetupRow() {
   );
 
   // Re-resolve glossary entries whenever the selection changes and nothing's cached yet --
-  // setSelectedGlossaryFileNames clears the cache, this repopulates it from disc.
+  // prompt.setSelectedGlossaryFileNames clears the cache, this repopulates it from disc.
   useEffect(() => {
     if (selectedGlossaryFileNames.length > 0 && resolvedGlossaryEntries.length === 0) {
-      void dispatch(refreshResolvedGlossaryEntries());
+      void dispatch(glossaries.refreshResolvedEntries());
     }
   }, [selectedGlossaryFileNames, resolvedGlossaryEntries.length, dispatch]);
 
   // Never re-runs while a valid estimate is already showing ('success') -- whatever it actually
   // depends on (prompt template, glossary selection, direction) is instead degraded back to
-  // 'idle' at the exact point it changes (see the extraReducers matcher in aiTranslation.ts), so
+  // 'idle' at the exact point it changes (see the extraReducers matcher in ai.ts), so
   // simply mounting/re-rendering this component (e.g. opening Settings while the Editor aside's
   // own instance is already showing a valid estimate) never fires a redundant request. Otherwise
   // (disabled, misconfigured, or no template selected) the estimate is dropped and unavailable.
   useEffect(() => {
     if (!metricsSupported || !configured || !selectedPromptTemplateFileName) {
-      dispatch(setContextWindowEstimateStatus('idle'));
-      dispatch(setContextWindowEstimate(null));
+      dispatch(ai.setContextWindowEstimateStatus('idle'));
+      dispatch(ai.setContextWindowEstimate(null));
       return;
     }
 
     if (estimationStatus === 'success') return;
 
-    dispatch(setContextWindowEstimateStatus('estimating'));
+    dispatch(ai.setContextWindowEstimateStatus('estimating'));
     const timer = setTimeout(() => {
-      void dispatch(estimateContextWindowUsage());
+      void dispatch(ai.estimateContextWindowUsage());
     }, ESTIMATE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
@@ -162,7 +145,7 @@ export default function PromptSetupRow() {
                     options={promptTemplateOptions}
                     value={selectedPromptTemplateFileName ?? ''}
                     onChange={([v]) =>
-                      void dispatch(applySelectedPromptTemplateFileName((v as string) || null))
+                      void dispatch(ai.applySelectedPromptTemplateFileName((v as string) || null))
                     }
                     placeholder={t('aiSettings.prompt.promptTemplatePlaceholder')}
                     disabled={isBusy}
@@ -175,7 +158,7 @@ export default function PromptSetupRow() {
                     multiple
                     options={filteredGlossaryOptions}
                     value={selectedGlossaryFileNames}
-                    onChange={(values) => dispatch(setSelectedGlossaryFileNames(values))}
+                    onChange={(values) => dispatch(prompt.setSelectedGlossaryFileNames(values))}
                     placeholder={t('aiSettings.prompt.glossariesPlaceholder')}
                     disabled={isBusy}
                   />

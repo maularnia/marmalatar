@@ -1,3 +1,4 @@
+import { api } from '@store/createApi';
 import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 import { TColor, TColorCustom } from '@src/theme/definitions';
 import { TCharacter, TInputColumn, TSubtitleLine } from '@src/types';
@@ -605,7 +606,7 @@ const editorSlice = createSlice({
   },
 });
 
-export const {
+const {
   // Editor UI memory
   setActiveLineIndex,
   setFocusedLineIndex,
@@ -640,7 +641,7 @@ export const {
   setVideoCollapsed,
 } = editorSlice.actions;
 
-export const {
+const {
   selectActiveLineIndex,
   selectFocusedLineIndex,
   selectFocusedColumn,
@@ -654,3 +655,46 @@ export const {
 } = editorSlice.selectors;
 
 export default editorSlice.reducer;
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+export const editor = api('editor', {
+  addTranslatedLine,
+  autoMergeAdjacentLines,
+  cleanupLines,
+  clearFileData,
+  completeAllTranslatedLines,
+  copyAllSourceToOutput,
+  incrementRenderEpoch,
+  insertLine,
+  mergeLines,
+  removeLine,
+  resetEditorMemoryState,
+  restoreHistory,
+  selectActiveLineIndex,
+  selectCanRedo,
+  selectCanUndo,
+  selectCharacterPool,
+  selectFocusedColumn,
+  selectFocusedLineIndex,
+  selectIsVideoCollapsed,
+  selectLines,
+  selectRenderEpoch,
+  selectTextSelection,
+  setActiveLineIndex,
+  setCharacterPool,
+  setFocusedColumn,
+  setFocusedLineIndex,
+  setLineCompleted,
+  setLines,
+  setTextSelection,
+  setTotalLinesToTranslate,
+  setVideoCollapsed,
+  shiftAllLinesEarlier,
+  shiftAllLinesLater,
+  splitLine,
+  updateLineTiming,
+  updateSourceText,
+  updateTranslatedText,
+  updateTranslationCharacter,
+});

@@ -1,16 +1,12 @@
 import { aiClients } from '@src/services/ai/clients';
 import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/config';
 import type { AiClient } from '@src/services/ai/types';
-import {
-  selectAIintegrationEnabled,
-  selectSelectedIntegrationId,
-  setAIintegrationEnabled,
-} from '@src/store/slices/app';
-import { selectIsProjectOpen } from '@src/store/slices/project';
+import { settings } from '@src/store/slices/settings';
+import { projects } from '@src/store/slices/project';
 import { ThemeColors } from '@src/theme/utils';
 import Toggle from '@src/toolkit/Toggle';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { initializeAiIntegration, selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import { ai } from '@store/slices/ai';
 import {
   FormSectionEntry,
   FormsRow,
@@ -28,11 +24,11 @@ import AiUserInputSection from './PromptSetup';
 export default function AiSettings() {
   const { t } = useTranslation('settings');
   const dispatch = useAppDispatch();
-  const isBusy = useAppSelector(selectTranslationIsBusy);
+  const isBusy = useAppSelector(ai.selectIsBusy);
 
-  const selectedIntegrationId = useAppSelector(selectSelectedIntegrationId);
-  const aiTranslationEnabled = useAppSelector(selectAIintegrationEnabled);
-  const isProjectOpen = useAppSelector(selectIsProjectOpen);
+  const selectedIntegrationId = useAppSelector(settings.selectSelectedIntegrationId);
+  const aiTranslationEnabled = useAppSelector(settings.selectAIintegrationEnabled);
+  const isProjectOpen = useAppSelector(projects.selectIsOpen);
 
   const activeId = selectedIntegrationId ?? DEFAULT_AI_CLIENT_ID;
   const activeClient = (aiClients as Record<string, AiClient>)[activeId];
@@ -53,7 +49,7 @@ export default function AiSettings() {
 
   const handleSwitchIntegration = (newId: string) => {
     setSettingsValid(false);
-    void dispatch(initializeAiIntegration(newId));
+    void dispatch(ai.initializeAiIntegration(newId));
   };
 
   return (
@@ -76,7 +72,9 @@ export default function AiSettings() {
             after={
               <Toggle
                 checked={aiTranslationEnabled}
-                onChange={(e) => dispatch(setAIintegrationEnabled(e.currentTarget.checked))}
+                onChange={(e) =>
+                  dispatch(settings.setAIintegrationEnabled(e.currentTarget.checked))
+                }
               />
             }
           >

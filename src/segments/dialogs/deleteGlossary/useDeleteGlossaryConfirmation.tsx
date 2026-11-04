@@ -2,8 +2,8 @@ import { useConfirm } from '@providers/ConfirmationProvider/ConfirmationProvider
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { useAppDispatch } from '@store/hooks';
-import { closeOverlays } from '@store/slices/overlays';
-import { deleteGlossary } from '@store/slices/aiPromptEditor';
+import { overlays } from '@store/slices/overlays';
+import { glossaries } from '@store/slices/aiPromptEditor';
 import { DeleteGlossaryDialog } from './DeleteGlossaryDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');
@@ -17,8 +17,8 @@ export const useDeleteGlossaryConfirmation = () => {
   return {
     confirmDeleteGlossary: async (fileName: string, title: string): Promise<boolean> => {
       if (!(await confirm({ title }))) return false;
-      dispatch(closeOverlays());
-      await dispatch(deleteGlossary(fileName));
+      dispatch(overlays.closeAll());
+      await dispatch(glossaries.delete(fileName));
       return true;
     },
   };

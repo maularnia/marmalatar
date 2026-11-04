@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectWorkingFolderIsBusy, selectFolder } from '@store/slices/workingFolder';
+import { workingFolder } from '@store/slices/workingFolder';
 import { forceRescan } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -9,8 +9,8 @@ import { TButtonVariant } from '../Button/types';
 export default function RescanButton() {
   const { t } = useTranslation('settings');
   const dispatch = useAppDispatch();
-  const folder = useAppSelector(selectFolder);
-  const isBusy = useAppSelector(selectWorkingFolderIsBusy);
+  const folder = useAppSelector(workingFolder.selectFolder);
+  const isBusy = useAppSelector(workingFolder.selectIsBusy);
 
   return (
     <Button

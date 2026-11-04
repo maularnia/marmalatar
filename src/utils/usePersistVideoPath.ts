@@ -1,7 +1,7 @@
 import { emitVideoPathRemovalFailedMessage, emitVideoPathSaveFailedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import { cleanupMediaCache } from '@store/slices/workingFolder';
-import { getProjectEditorState, writeProjectEditorState } from '@store/slices/project';
+import { workingFolder } from '@store/slices/workingFolder';
+import { projects } from '@store/slices/project';
 import { useCallback } from 'react';
 
 export function usePersistVideoPath() {
@@ -11,9 +11,9 @@ export function usePersistVideoPath() {
     async (projectId: string, videoPath: string | null) => {
       if (!videoPath) return;
       try {
-        const current = await getProjectEditorState(projectId);
-        await writeProjectEditorState(projectId, { ...current, videoPath });
-        void cleanupMediaCache().catch(() => {});
+        const current = await projects.getEditorState(projectId);
+        await projects.writeEditorState(projectId, { ...current, videoPath });
+        void workingFolder.cleanupMediaCache().catch(() => {});
       } catch (err) {
         emitVideoPathSaveFailedMessage(
           pushMessage,
@@ -27,9 +27,9 @@ export function usePersistVideoPath() {
   const removeVideoPath = useCallback(
     async (projectId: string) => {
       try {
-        const current = await getProjectEditorState(projectId);
-        await writeProjectEditorState(projectId, { ...current, videoPath: null });
-        void cleanupMediaCache().catch(() => {});
+        const current = await projects.getEditorState(projectId);
+        await projects.writeEditorState(projectId, { ...current, videoPath: null });
+        void workingFolder.cleanupMediaCache().catch(() => {});
       } catch (err) {
         emitVideoPathRemovalFailedMessage(
           pushMessage,

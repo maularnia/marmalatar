@@ -1,11 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  estimateContextWindowUsage,
-  selectIntegrationConnected,
-  selectIntegrationPingError,
-  setIntegrationConnectionStatus,
-} from '@store/slices/aiTranslation';
-import { selectProjectTargetLanguage } from '@src/store/slices/project';
+import { ai } from '@store/slices/ai';
+import { projects } from '@src/store/slices/project';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { getErrorMessage } from '@src/utils/errors';
@@ -65,9 +60,9 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
   );
   const linesPerRequestOptions = useMemo(() => getLinesPerRequestOptions(tSettings), [tSettings]);
   const dispatch = useAppDispatch();
-  const connected = useAppSelector(selectIntegrationConnected);
-  const pingError = useAppSelector(selectIntegrationPingError);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
+  const connected = useAppSelector(ai.selectIntegrationConnected);
+  const pingError = useAppSelector(ai.selectIntegrationPingError);
+  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
   const languageLabels = useLanguageLabels();
   // Both glossary and formality support are DeepL properties of the target language only (not
   // the source/target pair as a whole) -- only check targetLanguage.
@@ -124,11 +119,16 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
       deeplClient.setCachedOptions(options);
       lastVerifiedApiKeyRef.current = apiKey;
       setConnectionStatus('connected');
-      dispatch(setIntegrationConnectionStatus({ connected: true }));
+      dispatch(ai.setIntegrationConnectionStatus({ connected: true }));
     } catch (err) {
       setConnectionStatus('error');
       setConnectionError(getErrorMessage(err));
-      dispatch(setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(err) }));
+      dispatch(
+        ai.setIntegrationConnectionStatus({
+          connected: false,
+          error: getErrorMessage(err),
+        })
+      );
     }
   };
 
@@ -174,7 +174,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
     deeplClient.setCurrentSettings(getValues());
     if (commitDebounceRef.current) clearTimeout(commitDebounceRef.current);
     commitDebounceRef.current = setTimeout(() => {
-      void dispatch(estimateContextWindowUsage());
+      void dispatch(ai.estimateContextWindowUsage());
     }, SETTINGS_COMMIT_DEBOUNCE_MS);
   }, [
     isValid,

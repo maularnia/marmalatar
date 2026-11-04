@@ -1,3 +1,4 @@
+import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export enum TOverlay {
@@ -22,7 +23,7 @@ const overlaysSlice = createSlice({
     setCurrentOverlay(state, action: PayloadAction<TOverlay | null>) {
       state.currentOverlay = action.payload;
     },
-    closeOverlays(state) {
+    closeAllOverlays(state) {
       state.currentOverlay = null;
     },
   },
@@ -31,6 +32,14 @@ const overlaysSlice = createSlice({
   },
 });
 
-export const { setCurrentOverlay, closeOverlays } = overlaysSlice.actions;
-export const { selectCurrentOverlay } = overlaysSlice.selectors;
+const { setCurrentOverlay, closeAllOverlays } = overlaysSlice.actions;
+const { selectCurrentOverlay } = overlaysSlice.selectors;
 export default overlaysSlice.reducer;
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+export const overlays = api('overlay', {
+  closeAllOverlays,
+  selectCurrentOverlay,
+  setCurrentOverlay,
+});

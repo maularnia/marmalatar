@@ -1,16 +1,10 @@
 import Select from '@ui-toolkit/Select/Select';
 import { useAppDispatch, useAppSelector } from '@src/store/hooks';
-import {
-  selectIsEditMode,
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-  setProjectSourceLanguage,
-  setProjectTargetLanguage,
-} from '@src/store/slices/project';
+import { projects } from '@src/store/slices/project';
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { reconcileGlossarySelectionWithDirection } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/aiPromptEditor';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -48,17 +42,17 @@ export const EditorTableHeader = () => {
   const { t } = useTranslation('editor');
   const dispatch = useAppDispatch();
   const languageOptions = useLanguageOptions();
-  const sourceLanguage = useAppSelector(selectProjectSourceLanguage);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const sourceLanguage = useAppSelector(projects.selectSourceLanguage);
+  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
+  const isEditMode = useAppSelector(projects.selectIsEditMode);
   return (
     <Row>
       <Cell>
         <Select
           value={sourceLanguage ?? TLanguage.English}
           onChange={([value]) => {
-            dispatch(setProjectSourceLanguage(value as TLanguage));
-            dispatch(reconcileGlossarySelectionWithDirection());
+            dispatch(projects.setSourceLanguage(value as TLanguage));
+            dispatch(glossaries.reconcileSelectionWithDirection());
           }}
           options={languageOptions}
         />
@@ -69,8 +63,8 @@ export const EditorTableHeader = () => {
           <Select
             value={targetLanguage ?? TLanguage.Belarusian}
             onChange={([value]) => {
-              dispatch(setProjectTargetLanguage(value as TLanguage));
-              dispatch(reconcileGlossarySelectionWithDirection());
+              dispatch(projects.setTargetLanguage(value as TLanguage));
+              dispatch(glossaries.reconcileSelectionWithDirection());
             }}
             options={languageOptions}
           />

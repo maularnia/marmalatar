@@ -5,11 +5,7 @@ import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
-import {
-  selectCurrentGlossary,
-  selectGlossaryData,
-  setGlossaryData,
-} from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/aiPromptEditor';
 import {
   createContext,
   PropsWithChildren,
@@ -59,7 +55,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
 
   // Switching to a different glossary while the overlay stays mounted doesn't remount this
   // provider (see GlossaryRefsProvider) -- clear stale focus reactively on that same signal.
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
+  const currentGlossary = useAppSelector(glossaries.selectCurrent);
   useEffect(() => {
     setFocusedPairIndex(null);
     setFocusedColumn(null);
@@ -86,7 +82,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
 
   const handleMovePairFocus = useCallback(
     (direction: 'up' | 'down') => {
-      const pairCount = fromCurrentStore(selectGlossaryData)?.list.length ?? 0;
+      const pairCount = fromCurrentStore(glossaries.selectData)?.list.length ?? 0;
       const column = focusedColumn ?? 'original';
       if (focusedPairIndex == null) {
         if (pairCount === 0) return;
@@ -102,7 +98,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
 
   const handleInsertPair = useCallback(
     (pairIndex: number, position: 'before' | 'after') => {
-      const glossaryData = fromCurrentStore(selectGlossaryData);
+      const glossaryData = fromCurrentStore(glossaries.selectData);
       if (!glossaryData) return;
       const targetIndex = position === 'before' ? pairIndex : pairIndex + 1;
       const list = [
@@ -110,7 +106,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
         { original: '', translation: '' },
         ...glossaryData.list.slice(targetIndex),
       ];
-      dispatch(setGlossaryData({ ...glossaryData, list }));
+      dispatch(glossaries.setData({ ...glossaryData, list }));
       const column = focusedColumn ?? 'original';
       requestAnimationFrame(() => {
         handleFocusPairInput(targetIndex, column, false);
@@ -121,7 +117,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
 
   const handleDeletePair = useCallback(
     async (pairIndex: number) => {
-      const glossaryData = fromCurrentStore(selectGlossaryData);
+      const glossaryData = fromCurrentStore(glossaries.selectData);
       if (!glossaryData) return;
       const pair = glossaryData.list[pairIndex];
       if (!pair) return;
@@ -133,7 +129,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
       const hasNext = pairIndex + 1 < glossaryData.list.length;
       const hasPrev = pairIndex > 0;
       const list = glossaryData.list.filter((_, i) => i !== pairIndex);
-      dispatch(setGlossaryData({ ...glossaryData, list }));
+      dispatch(glossaries.setData({ ...glossaryData, list }));
       const targetIndex = hasNext ? pairIndex : hasPrev ? pairIndex - 1 : null;
       const column = focusedColumn ?? 'original';
       if (targetIndex != null) {

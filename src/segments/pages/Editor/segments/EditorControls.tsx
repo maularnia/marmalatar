@@ -2,30 +2,13 @@ import { useEditorActions } from '@providers/EditorActionsProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { useEditorAIActions } from '@src/providers/EditorAIActionsProvider';
 import { useEditorRefs } from '@src/providers/EditorRefsProvider';
-import {
-  selectIntegrationIsConfigured,
-  selectIsSmallScreen,
-  selectTimeAdjustmentStep,
-} from '@src/store/slices/app';
-import {
-  selectCanRedo,
-  selectCanUndo,
-  selectFocusedColumn,
-  selectFocusedLineIndex,
-  selectLines,
-  selectTextSelection,
-  shiftAllLinesEarlier,
-  shiftAllLinesLater,
-} from '@src/store/slices/editor';
-import { selectIsEditMode, selectVideoFilePath } from '@src/store/slices/project';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  cancelAutomatedBulkTranslation,
-  selectCurrentBulkJob,
-  selectTranslationIsBusy,
-} from '@store/slices/aiTranslation';
+import { ai } from '@store/slices/ai';
 import { openExportOverlay } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
@@ -97,9 +80,9 @@ export function EditorControls() {
   const dispatch = useAppDispatch();
   const { integrationIsConfigured, focusedLineIndex, textSelection } = useAppSelector(
     (state) => ({
-      integrationIsConfigured: selectIntegrationIsConfigured(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
-      textSelection: selectTextSelection(state),
+      integrationIsConfigured: settings.selectIntegrationIsConfigured(state),
+      focusedLineIndex: editor.selectFocusedLineIndex(state),
+      textSelection: editor.selectTextSelection(state),
     }),
     shallowEqual
   );
@@ -114,20 +97,20 @@ export function EditorControls() {
     handleCompleteAllTranslatedLines,
     handleToggleEditMode,
   } = useEditorActions();
-  const currentBulkJob = useAppSelector(selectCurrentBulkJob);
-  const isBusy = useAppSelector(selectTranslationIsBusy);
-  const allLines = useAppSelector(selectLines);
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const currentBulkJob = useAppSelector(ai.selectCurrentBulkJob);
+  const isBusy = useAppSelector(ai.selectIsBusy);
+  const allLines = useAppSelector(editor.selectLines);
+  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
+  const isEditMode = useAppSelector(projects.selectIsEditMode);
   const isAiAvailable = integrationIsConfigured && !isBusy && !isEditMode;
   const isAutoMergeAvailable = !currentBulkJob && !isBusy;
   const isExportAvailable = !currentBulkJob && !isBusy;
-  const timeAdjustmentStep = useAppSelector(selectTimeAdjustmentStep);
-  const canUndo = useAppSelector(selectCanUndo);
-  const canRedo = useAppSelector(selectCanRedo);
+  const timeAdjustmentStep = useAppSelector(settings.selectTimeAdjustmentStep);
+  const canUndo = useAppSelector(editor.selectCanUndo);
+  const canRedo = useAppSelector(editor.selectCanRedo);
   const { handleUndoRedo } = useEditorActions();
   const { videoDurationMs } = useVideo();
-  const videoPath = useAppSelector(selectVideoFilePath);
+  const videoPath = useAppSelector(projects.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   const earliestStartTime = allLines.length
     ? Math.min(...allLines.map((line) => line.start_time))
@@ -136,7 +119,7 @@ export function EditorControls() {
   const canShiftEarlier = allLines.length > 0 && earliestStartTime > 0;
   const canShiftLater =
     allLines.length > 0 && (videoDurationMs == null || latestEndTime < videoDurationMs);
-  const focusedColumn = useAppSelector(selectFocusedColumn);
+  const focusedColumn = useAppSelector(editor.selectFocusedColumn);
   const { handleAiTranslate, handleAiTranslateBulk, handleAddToGlossary } = useEditorAIActions();
 
   const aiSectionRef = useRef<HTMLDivElement>(null);
@@ -198,7 +181,7 @@ export function EditorControls() {
                 <PanelButton
                   icon={TIcon.STOP}
                   color={ThemeColors.RED}
-                  onClick={() => dispatch(cancelAutomatedBulkTranslation())}
+                  onClick={() => dispatch(ai.cancelAutomatedBulk())}
                 />
               </AiTranslationProgressBar>
             ) : (
@@ -238,7 +221,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canShiftEarlier || isBusy}
             icon={TIcon.BACKWARD}
-            onClick={() => dispatch(shiftAllLinesEarlier(timeAdjustmentStep))}
+            onClick={() => dispatch(editor.shiftAllLinesEarlier(timeAdjustmentStep))}
           />
         </Tooltip>
         <Tooltip
@@ -254,7 +237,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canShiftLater || isBusy}
             icon={TIcon.FORWARD}
-            onClick={() => dispatch(shiftAllLinesLater(timeAdjustmentStep))}
+            onClick={() => dispatch(editor.shiftAllLinesLater(timeAdjustmentStep))}
           />
         </Tooltip>
         <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />

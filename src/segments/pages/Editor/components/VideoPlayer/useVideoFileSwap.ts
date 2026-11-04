@@ -3,8 +3,8 @@ import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideo
 import { emitVideoUpdatedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
-import { selectActiveLineIndex } from '@src/store/slices/editor';
-import { selectProjectId } from '@src/store/slices/project';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
 import { fromCurrentStore } from '@store/store';
 import { useCallback, useRef } from 'react';
 
@@ -22,13 +22,13 @@ export function useVideoFileSwap() {
       const result = await selectVideo();
       if (!result) return;
 
-      const projectId = fromCurrentStore(selectProjectId);
+      const projectId = fromCurrentStore(projects.selectId);
       if (projectId) await persistVideoPath(projectId, result.videoPath);
 
       const video = videoElementRef.current;
       const onLoadedMetadata = () => {
         video?.removeEventListener('loadedmetadata', onLoadedMetadata);
-        const activeLineIndex = fromCurrentStore(selectActiveLineIndex);
+        const activeLineIndex = fromCurrentStore(editor.selectActiveLineIndex);
         if (activeLineIndex != null) seekToLine(activeLineIndex);
       };
       video?.addEventListener('loadedmetadata', onLoadedMetadata);

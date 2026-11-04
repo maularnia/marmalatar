@@ -1,5 +1,5 @@
 import { useAppSelector } from '@store/hooks';
-import { selectScreenSize } from '@src/store/slices/app';
+import { settings } from '@src/store/slices/settings';
 import { TScreenSize } from '@src/theme/types';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
@@ -26,7 +26,7 @@ export function useMenuState(): TMenuStateContext {
 }
 
 export function MenuStateProvider({ children }: PropsWithChildren) {
-  const screenSize = useAppSelector(selectScreenSize);
+  const screenSize = useAppSelector(settings.selectScreenSize);
   const dynamic = screenSize == TScreenSize.MEDIUM || screenSize == TScreenSize.SMALL;
   const [compact, setCompact] = useState(true); // true initially if dynamic
   // A focused item or an in-progress rename/create should keep the menu expanded even after the

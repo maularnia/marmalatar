@@ -1,16 +1,7 @@
 import { useVideo } from '@providers/VideoProvider';
-import {
-  selectIsSmallScreen,
-  selectScreenSize,
-  selectScrollVideoIntoViewOnPlay,
-} from '@src/store/slices/app';
-import {
-  selectActiveLineIndex,
-  selectIsVideoCollapsed,
-  selectLines,
-  updateLineTiming,
-} from '@src/store/slices/editor';
-import { selectVideoFilePath } from '@src/store/slices/project';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
 import { TScreenSize } from '@src/theme/types';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
@@ -53,12 +44,12 @@ export default function FloatingVideoBlock({
   focusedItemIndex,
 }: FloatingVideoBlockProps) {
   const dispatch = useAppDispatch();
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const videoFilePath = useAppSelector(selectVideoFilePath);
-  const activeLineIndex = useAppSelector(selectActiveLineIndex);
-  const translationLines = useAppSelector(selectLines);
-  const screenSize = useAppSelector(selectScreenSize);
-  const isVideoCollapsed = useAppSelector(selectIsVideoCollapsed);
+  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
+  const videoFilePath = useAppSelector(projects.selectVideoFilePath);
+  const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
+  const translationLines = useAppSelector(editor.selectLines);
+  const screenSize = useAppSelector(settings.selectScreenSize);
+  const isVideoCollapsed = useAppSelector(editor.selectIsVideoCollapsed);
   const { videoDurationMs, waveformPeaks, videoElementRef } = useVideo();
   const isLargeScreen = screenSize !== TScreenSize.SMALL;
 
@@ -73,7 +64,7 @@ export default function FloatingVideoBlock({
   const handlePlaybackResume = () => {
     if (!scrollContainerRef.current) return;
     scrollBeforePlayRef.current = scrollContainerRef.current.scrollTop;
-    if (fromCurrentStore(selectScrollVideoIntoViewOnPlay))
+    if (fromCurrentStore(settings.selectScrollVideoIntoViewOnPlay))
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollTop - videoContainerShiftRef.current,
         behavior: 'smooth',
@@ -207,7 +198,7 @@ export default function FloatingVideoBlock({
             focusedLineIndex={focusedItemIndex >= 0 ? focusedItemIndex : null}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
+              dispatch(editor.updateLineTiming({ lineIndex, startTime, endTime }));
             }}
           />
         </>

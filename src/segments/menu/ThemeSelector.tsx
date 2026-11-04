@@ -2,7 +2,7 @@ import { TColor } from '@src/theme/definitions';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { TThemeSelection } from '@src/types';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectThemeSelection, setThemeSelection } from '@store/slices/app';
+import { settings } from '@store/slices/settings';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
@@ -48,11 +48,11 @@ const ThemeShortcuts: Array<{ key: string; label: string }> = [
 
 export default function ThemeSelector() {
   const dispatch = useAppDispatch();
-  const selection = useAppSelector(selectThemeSelection);
+  const selection = useAppSelector(settings.selectThemeSelection);
   const { dynamic, compact } = useMenuState();
   const toggleThemes = () => {
     const nextIndex = (themes.indexOf(selection) + 1) % themes.length;
-    dispatch(setThemeSelection(themes[nextIndex]));
+    dispatch(settings.setThemeSelection(themes[nextIndex]));
   };
   return (
     <Tooltip

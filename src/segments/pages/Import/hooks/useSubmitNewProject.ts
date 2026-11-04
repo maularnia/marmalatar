@@ -2,8 +2,8 @@ import { emitProjectCreationAbortedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { useAppDispatch, useAppSelector } from '@src/store/hooks';
-import { selectFolder } from '@src/store/slices/workingFolder';
-import { createNewProject } from '@store/slices/project';
+import { workingFolder } from '@src/store/slices/workingFolder';
+import { projects } from '@store/slices/project';
 import { TLanguage, TSubtitleLine } from '@src/types';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +20,7 @@ export function useSubmitNewProject() {
   const { t } = useTranslation('messages');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const folder = useAppSelector(selectFolder);
+  const folder = useAppSelector(workingFolder.selectFolder);
   const { load } = useLoader();
   const { pushMessage } = useMessageHelmet();
 
@@ -41,7 +41,7 @@ export function useSubmitNewProject() {
               'Demanding more RAM',
             ],
           },
-          dispatch(createNewProject(params))
+          dispatch(projects.create(params))
         );
         navigate('/workspace');
       } catch (error) {

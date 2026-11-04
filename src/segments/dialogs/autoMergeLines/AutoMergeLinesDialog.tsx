@@ -1,6 +1,6 @@
 import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
 import { useAppSelector } from '@src/store/hooks';
-import { selectAutoMergeThreshold } from '@src/store/slices/app';
+import { settings } from '@src/store/slices/settings';
 import { ThemeColors } from '@src/theme/utils';
 import P from '@ui-toolkit/P';
 import Span from '@ui-toolkit/Span';
@@ -12,7 +12,7 @@ type AutoMergeLinesDialogProps = TConfirmationWindowProps;
 
 export function AutoMergeLinesDialog(_props: AutoMergeLinesDialogProps) {
   const { t } = useTranslation('dialogs');
-  const threshold = useAppSelector(selectAutoMergeThreshold);
+  const threshold = useAppSelector(settings.selectAutoMergeThreshold);
   return (
     <DialogBodyStandard>
       <DialogTitle>

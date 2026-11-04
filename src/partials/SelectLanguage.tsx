@@ -4,7 +4,7 @@ import {
   UI_LOCALE_LABELS,
   type TUiLocale,
 } from '@src/i18n/locales';
-import { selectUiLocale, setUiLocale } from '@src/store/slices/app';
+import { settings } from '@src/store/slices/settings';
 import { TIcon } from '@src/toolkit/Icon/icons';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import {
@@ -25,7 +25,7 @@ const UI_LOCALE_OPTIONS = SUPPORTED_UI_LOCALES.map((code) => ({
 export default function SelectLanguage() {
   const { t } = useTranslation('settings');
   const dispatch = useAppDispatch();
-  const uiLocale = useAppSelector(selectUiLocale);
+  const uiLocale = useAppSelector(settings.selectUiLocale);
 
   return (
     <FormsSection>
@@ -35,7 +35,7 @@ export default function SelectLanguage() {
           <Select
             options={UI_LOCALE_OPTIONS}
             value={uiLocale}
-            onChange={([v]) => dispatch(setUiLocale(v as TUiLocale))}
+            onChange={([v]) => dispatch(settings.setUiLocale(v as TUiLocale))}
           />
         </FormSectionEntry>
       </FormsSectionContent>

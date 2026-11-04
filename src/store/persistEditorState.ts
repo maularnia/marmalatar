@@ -1,5 +1,5 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
-import { buildProjectEditorStateSaveData, writeProjectEditorState } from './slices/project';
+import { projects } from './slices/project';
 import type { RootState } from './root';
 
 // Device-specific editor/UI preferences (editorMode, isVideoCollapsed, video path) --
@@ -46,6 +46,6 @@ persistEditorStateMiddleware.startListening({
     const projectId = state.project.projectId;
     if (!projectId) return;
 
-    await writeProjectEditorState(projectId, buildProjectEditorStateSaveData(state));
+    await projects.writeEditorState(projectId, projects.buildEditorStateSaveData(state));
   },
 });

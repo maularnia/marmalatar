@@ -1,3 +1,4 @@
+import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IPC } from '@src/services/ipc/IPC';
 
@@ -7,29 +8,29 @@ import { IPC } from '@src/services/ipc/IPC';
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
 
-export async function getTrackedFolder(): Promise<string | null> {
+async function getTrackedFolder(): Promise<string | null> {
   return IPC.files.getTrackedFolder();
 }
 
-export async function setTrackedFolder(folder: string): Promise<void> {
+async function setTrackedFolder(folder: string): Promise<void> {
   await IPC.files.setTrackedFolder(folder);
 }
 
-export async function selectFolderDialog(): Promise<string | null> {
+async function selectFolderDialog(): Promise<string | null> {
   return IPC.files.selectFolder();
 }
 
 // Video paths live outside the tracked folder, wherever the user picked the video from
-export async function checkForeignFileExists(absolutePath: string): Promise<boolean> {
+async function checkForeignFileExists(absolutePath: string): Promise<boolean> {
   return IPC.files.checkForeignFileExists(absolutePath);
 }
 
-export async function cleanupMediaCache(): Promise<void> {
+async function cleanupMediaCache(): Promise<void> {
   await IPC.media.cleanupCache();
 }
 
 // Makes the next list read scan the tracked folder again, picking up files changed outside the app
-export async function rescanFolder(): Promise<void> {
+async function rescanFolder(): Promise<void> {
   await IPC.files.rescan();
 }
 
@@ -66,9 +67,25 @@ const workingFolderSlice = createSlice({
   },
 });
 
-export const { setFolder, setInitialized, setIsBusy } = workingFolderSlice.actions;
+const { setFolder, setInitialized, setIsBusy } = workingFolderSlice.actions;
 
-export const { selectFolder, selectInitialized, selectWorkingFolderIsBusy } =
-  workingFolderSlice.selectors;
+const { selectFolder, selectInitialized, selectWorkingFolderIsBusy } = workingFolderSlice.selectors;
 
 export default workingFolderSlice.reducer;
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+export const workingFolder = api('workingFolder', {
+  checkForeignFileExists,
+  cleanupMediaCache,
+  getTrackedFolder,
+  rescanFolder,
+  selectFolder,
+  selectFolderDialog,
+  selectInitialized,
+  selectWorkingFolderIsBusy,
+  setFolder,
+  setInitialized,
+  setIsBusy,
+  setTrackedFolder,
+});

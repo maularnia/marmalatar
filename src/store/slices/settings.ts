@@ -1,3 +1,4 @@
+import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { themes } from '@src/theme/themes';
 import { TThemeSelection } from '@src/types';
@@ -56,8 +57,8 @@ const initialState: AppState = {
   uiLocale: UI_LOCALE_DEFAULT,
 };
 
-const appSlice = createSlice({
-  name: 'app',
+const settingsSlice = createSlice({
+  name: 'settings',
   initialState,
   reducers: {
     setResolvedThemeName(state, action: PayloadAction<keyof TThemesMap>) {
@@ -105,7 +106,7 @@ const appSlice = createSlice({
     setUiLocale(state, action: PayloadAction<TUiLocale>) {
       state.uiLocale = action.payload;
     },
-    hydrateAppSettings(state, action: PayloadAction<PersistedAppSettings>) {
+    hydrateSettings(state, action: PayloadAction<PersistedAppSettings>) {
       Object.assign(state, action.payload);
     },
   },
@@ -133,7 +134,7 @@ const appSlice = createSlice({
   },
 });
 
-export const {
+const {
   setResolvedThemeName,
   setScreenSize,
   setSelectedIntegration,
@@ -149,12 +150,12 @@ export const {
   setThemeSelection,
   setCheckGrammar,
   setUiLocale,
-  hydrateAppSettings,
-} = appSlice.actions;
+  hydrateSettings,
+} = settingsSlice.actions;
 
-export default appSlice.reducer;
+export default settingsSlice.reducer;
 
-export const {
+const {
   selectResolvedThemeName,
   selectScreenSize,
   selectIsLargeScreen,
@@ -174,4 +175,44 @@ export const {
   selectThemeSelection,
   selectCheckGrammar,
   selectUiLocale,
-} = appSlice.selectors;
+} = settingsSlice.selectors;
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+export const settings = api('settings', {
+  hydrateSettings,
+  selectAIintegrationEnabled,
+  selectAskBeforeAITranslate,
+  selectAskBeforeDelete,
+  selectAskBeforeMerge,
+  selectAskBeforeSplit,
+  selectAutoMarkLinesCompleted,
+  selectAutoMergeThreshold,
+  selectCheckGrammar,
+  selectCurrentThemeData,
+  selectIntegrationIsConfigured,
+  selectIsLargeScreen,
+  selectIsSmallScreen,
+  selectResolvedThemeName,
+  selectScreenSize,
+  selectScrollVideoIntoViewOnPlay,
+  selectSelectedIntegrationId,
+  selectThemeSelection,
+  selectTimeAdjustmentStep,
+  selectUiLocale,
+  setAIintegrationEnabled,
+  setAskBeforeAITranslate,
+  setAskBeforeDelete,
+  setAskBeforeMerge,
+  setAskBeforeSplit,
+  setAutoMarkLinesCompleted,
+  setAutoMergeThreshold,
+  setCheckGrammar,
+  setResolvedThemeName,
+  setScreenSize,
+  setScrollVideoIntoViewOnPlay,
+  setSelectedIntegration,
+  setThemeSelection,
+  setTimeAdjustmentStep,
+  setUiLocale,
+});

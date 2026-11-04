@@ -1,17 +1,12 @@
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { useVideo } from '@providers/VideoProvider';
-import { selectIntegrationIsConfigured } from '@src/store/slices/app';
-import {
-  selectActiveLineIndex,
-  selectCharacterPool,
-  selectFocusedLineIndex,
-  selectLines,
-} from '@src/store/slices/editor';
-import { selectEditorMode } from '@src/store/slices/project';
-import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
+import { prompt } from '@src/store/slices/prompt';
 import { TSubtitleLine } from '@src/types';
 import { useAppSelector } from '@store/hooks';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import { ai } from '@store/slices/ai';
 import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
@@ -71,14 +66,14 @@ export function useLineFingerprint() {
     editorMode,
   } = useAppSelector(
     (state) => ({
-      translationLines: selectLines(state),
-      frozenLineNumbers: selectFrozenLineNumbers(state),
-      integrationIsConfigured: selectIntegrationIsConfigured(state),
-      translationIsBusy: selectTranslationIsBusy(state),
-      characterOptions: selectCharacterPool(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
-      activeLineIndex: selectActiveLineIndex(state),
-      editorMode: selectEditorMode(state),
+      translationLines: editor.selectLines(state),
+      frozenLineNumbers: prompt.selectFrozenLineNumbers(state),
+      integrationIsConfigured: settings.selectIntegrationIsConfigured(state),
+      translationIsBusy: ai.selectIsBusy(state),
+      characterOptions: editor.selectCharacterPool(state),
+      focusedLineIndex: editor.selectFocusedLineIndex(state),
+      activeLineIndex: editor.selectActiveLineIndex(state),
+      editorMode: projects.selectEditorMode(state),
     }),
     shallowEqual
   );

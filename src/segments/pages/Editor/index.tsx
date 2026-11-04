@@ -1,21 +1,10 @@
 import { useEditorActions } from '@providers/EditorActionsProvider';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { useVideo } from '@providers/VideoProvider';
-import { selectAutoMarkLinesCompleted, selectIsSmallScreen } from '@src/store/slices/app';
-import {
-  incrementRenderEpoch,
-  selectActiveLineIndex,
-  selectCharacterPool,
-  selectFocusedLineIndex,
-  selectLines,
-  selectRenderEpoch,
-  setLineCompleted,
-  updateSourceText,
-  updateTranslatedText,
-  updateTranslationCharacter,
-} from '@src/store/slices/editor';
-import { selectIsEditMode } from '@src/store/slices/project';
-import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
+import { prompt } from '@src/store/slices/prompt';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
@@ -103,26 +92,26 @@ const estimatedRowHeight = 100;
 export default function Editor() {
   const { t } = useTranslation('tooltips');
   const dispatch = useAppDispatch();
-  const activeLineIndex = useAppSelector(selectActiveLineIndex);
-  const focusedLineIndex = useAppSelector(selectFocusedLineIndex);
+  const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
+  const focusedLineIndex = useAppSelector(editor.selectFocusedLineIndex);
   const { handleChangeFocusedLine, handleFocusEditor, handleMergeLines } = useEditorActions();
   const { seekToLine, handlePause } = useVideo();
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
+  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
   const focusedItemIndex = focusedLineIndex ?? -1;
   const { isAltShiftPressed } = useEditorKeystroke();
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const isEditMode = useAppSelector(projects.selectIsEditMode);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const { translationLines, frozenLineNumbers, characterOptions } = useAppSelector(
     (state) => ({
-      translationLines: selectLines(state),
-      frozenLineNumbers: selectFrozenLineNumbers(state),
-      characterOptions: selectCharacterPool(state),
+      translationLines: editor.selectLines(state),
+      frozenLineNumbers: prompt.selectFrozenLineNumbers(state),
+      characterOptions: editor.selectCharacterPool(state),
     }),
     shallowEqual
   );
-  const renderEpoch = useAppSelector(selectRenderEpoch);
+  const renderEpoch = useAppSelector(editor.selectRenderEpoch);
 
   // This route element remounts fresh every time a project is opened (navigating away from
   // /workspace unmounts it) -- so a mount-only focus here means the editor always grabs focus as
@@ -189,14 +178,16 @@ export default function Editor() {
           handlePause();
         }}
         onCharacterChange={(character) =>
-          dispatch(updateTranslationCharacter({ lineIndex, character }))
+          dispatch(editor.updateTranslationCharacter({ lineIndex, character }))
         }
         onOutputTextChange={(text) => {
-          dispatch(updateTranslatedText({ lineIndex, text }));
-          if (fromCurrentStore(selectAutoMarkLinesCompleted))
-            dispatch(setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true }));
+          dispatch(editor.updateTranslatedText({ lineIndex, text }));
+          if (fromCurrentStore(settings.selectAutoMarkLinesCompleted))
+            dispatch(
+              editor.setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true })
+            );
         }}
-        onSourceTextChange={(text) => dispatch(updateSourceText({ lineIndex, text }))}
+        onSourceTextChange={(text) => dispatch(editor.updateSourceText({ lineIndex, text }))}
         onMergeUpClick={() => handleMergeLines(lineIndex, 'up')}
         onMergeDownClick={() => handleMergeLines(lineIndex, 'down')}
       />
@@ -229,7 +220,7 @@ export default function Editor() {
             overscanPx={overscrollAmount}
             estimatedRowHeight={estimatedRowHeight}
             renderEpoch={renderEpoch}
-            onRenderEpochEnded={() => dispatch(incrementRenderEpoch())}
+            onRenderEpochEnded={() => dispatch(editor.incrementRenderEpoch())}
             renderItem={({ item, onMeasure }) => renderVirtualizedLine(item, onMeasure)}
           />
         </Root>

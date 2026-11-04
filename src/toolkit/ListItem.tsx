@@ -3,7 +3,7 @@ import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import { TTheme } from '@src/theme/types';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@store/slices/settings';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Span from '@ui-toolkit/Span';
@@ -234,7 +234,7 @@ export const ListItem = ({
   ref: forwardedRef,
   ...rest
 }: ListItemProps) => {
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   const [isHovered, setIsHovered] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);

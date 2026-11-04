@@ -1,14 +1,8 @@
 import { useVideo } from '@providers/VideoProvider';
 import { useSelectAudioTrackDialog } from '@src/segments/dialogs/selectAudioTrack/useSelectAudioTrackDialog';
-import { selectIsSmallScreen } from '@src/store/slices/app';
-import {
-  selectActiveLineIndex,
-  selectCharacterPool,
-  selectIsVideoCollapsed,
-  selectLines,
-  setVideoCollapsed,
-} from '@src/store/slices/editor';
-import { selectVideoFilePath } from '@src/store/slices/project';
+import { settings } from '@src/store/slices/settings';
+import { editor } from '@src/store/slices/editor';
+import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { TCharacter } from '@src/types';
@@ -149,14 +143,14 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     setCurrentTimeMs,
     reportVideoUnplayable,
   } = useVideo();
-  const lines = useAppSelector(selectLines);
-  const activeLineIndex = useAppSelector(selectActiveLineIndex);
-  const videoFilePath = useAppSelector(selectVideoFilePath);
+  const lines = useAppSelector(editor.selectLines);
+  const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
+  const videoFilePath = useAppSelector(projects.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   const { selectAudioTrack } = useSelectAudioTrackDialog();
-  const characterPool = useAppSelector(selectCharacterPool);
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const isVideoCollapsed = useAppSelector(selectIsVideoCollapsed);
+  const characterPool = useAppSelector(editor.selectCharacterPool);
+  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
+  const isVideoCollapsed = useAppSelector(editor.selectIsVideoCollapsed);
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;
@@ -345,7 +339,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
                 variant={TButtonVariant.PRIMARY}
                 size={TButtonSize.SMALL}
                 icon={isVideoCollapsed ? TIcon.ARROW_TOGGLE_DOWN : TIcon.ARROW_TOGGLE_UP}
-                onClick={() => dispatch(setVideoCollapsed(!isVideoCollapsed))}
+                onClick={() => dispatch(editor.setVideoCollapsed(!isVideoCollapsed))}
               />
             </TopBarBlurWrapper>
           )}

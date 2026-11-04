@@ -1,5 +1,5 @@
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@store/slices/settings';
 import { usePopperPortal } from '@providers/PopperPortalProvider';
 import { TColor } from '@src/theme/definitions';
 import { ThemeColors, CSSVar } from '@src/theme/utils';
@@ -67,7 +67,7 @@ export default function Select<T extends TOptionSelect = TOptionSelect>({
   disabled = false,
   errors,
 }: SelectProps<T>) {
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   const hasErrors = Boolean(errors?.length);
   const effectiveColor = hasErrors
     ? ThemeColors.RED
