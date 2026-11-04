@@ -86,19 +86,6 @@ export const workingFolderScan =
     }
   };
 
-const workingFolderInit =
-  () =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    try {
-      const savedFolder = await dispatch(workingFolder.loadTrackedFolder());
-      if (!savedFolder) return;
-      // The main process keeps the last listing, so no live scan is needed at startup
-      await dispatch(refreshAll());
-    } finally {
-      dispatch(workingFolder.setInitialized(true));
-    }
-  };
-
 // Saves whatever is open in every slice before switching folders
 
 export const workingFolderPick =
@@ -144,6 +131,9 @@ export const hydrateApp =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
     await dispatch(settings.load());
-    void dispatch(workingFolderInit());
+    // The main process keeps the last listing, so no live scan is needed at startup
+    void dispatch(workingFolder.loadTrackedFolder())
+      .then((savedFolder) => (savedFolder ? dispatch(refreshAll()) : undefined))
+      .finally(() => dispatch(workingFolder.setInitialized(true)));
     void dispatch(ai.initializeAiIntegration()).catch(() => {});
   };
