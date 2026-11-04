@@ -5,14 +5,8 @@ import { readProjectSaveFile, type TProjectFileData } from '../schemas';
 
 const t = i18n.getFixedT(null, 'errors');
 
-export function parseProjectFile(text: string): TProjectFileData {
-  let json: unknown;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    throw new Error(t('project.corrupted'));
-  }
-
+// Takes the file as the project service returned it: parsed JSON, not yet validated
+export function parseProjectFile(json: unknown): TProjectFileData {
   try {
     return readProjectSaveFile(json);
   } catch (err) {

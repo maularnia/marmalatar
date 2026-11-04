@@ -80,16 +80,13 @@
     "workerFailed": "Nie atrymałasia zapuścić pravierku pravapisu"
   },
   "project": {
-    "corrupted": "Paškodžany fajł prajektu",
     "invalidFile": "Nieadpaviednaje značeńnie pola [{{path}}]: {{message}}",
     "incompatibleVersion": "Hety fajł prajektu stvorany novaj versijaj prahramy i nie moža być adkryty",
     "cannotRead": "Nie atrymałasia pračytać fajł",
-    "cannotSaveWithoutName": "Nielha zachavać prajekt biez nazvy",
     "nameRequired": "Nazvu nielha pakinuć pustoj",
     "alreadyExists": "Taki fajł užo isnuje",
     "folderNotTracked": "Abiarycie pracoŭnuju papku",
-    "editorStateReadFailed": "Nie atrymałasia pračytać stan redaktara",
-    "progressPersistFailed": "Nie atrymałasia zachavać prahres pierakładu"
+    "editorStateReadFailed": "Nie atrymałasia pračytać stan redaktara"
   },
   "createNewProject": {
     "emojiSelectionFailed": "Nie atrymałasia padabrać emodzi dla prajekta",

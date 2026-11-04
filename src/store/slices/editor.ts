@@ -3,7 +3,6 @@ import { TColor, TColorCustom } from '@src/theme/definitions';
 import type { TInputColumn } from '@providers/EditorRefsProvider';
 import { TCharacter, TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
-import { computeTranslationProgress } from '@utils/translationProgress';
 import { cleanupEntries, TEntryCleanupOptions } from '@utils/data/entryCleanup';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -600,7 +599,6 @@ const editorSlice = createSlice({
     selectLines: (state) => state.lines,
     selectCanUndo: (state) => state.past.length > 0,
     selectCanRedo: (state) => state.future.length > 0,
-    selectTranslationProgress: (state) => computeTranslationProgress(state.lines),
     // Character pool
     selectCharacterPool: (state) => state.characterPool,
     // Video UI
@@ -652,7 +650,6 @@ export const {
   selectLines,
   selectCanUndo,
   selectCanRedo,
-  selectTranslationProgress,
   selectCharacterPool,
   selectIsVideoCollapsed,
 } = editorSlice.selectors;

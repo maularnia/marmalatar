@@ -4,6 +4,7 @@ import {
   CREATE_PROMPT_TEMPLATE_KEY,
   useMenuActions,
 } from '@providers/MenuActionsProvider';
+import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
 import { useMenuRefs } from '@providers/MenuRefsProvider';
 import i18n from '@src/i18n';
 import { selectIntegrationIsConfigured } from '@src/store/slices/app';
@@ -124,7 +125,7 @@ export default function FileList() {
   const handleCommitProject = async (fileName: string | null, newTitle: string) => {
     const project = projects.find((p) => p.fileName === fileName);
     if (!project) throw new Error(t('fileList.projectNotFound'));
-    await dispatch(renameProjectFile(project.filePath, newTitle));
+    await dispatch(renameProjectFile(project.projectId, newTitle));
   };
 
   const handleCommitPromptTemplate = async (fileName: string | null, newTitle: string) => {
@@ -175,12 +176,11 @@ export default function FileList() {
                         compact={compact}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
                         progress={project.translationProgress}
-                        fileExtension=".mrml"
-                        slugFallback="project"
+                        toFileName={toProjectFileName}
                         existingFileNames={projectFileNames}
                         emoji={project.emoji}
                         onEmojiSelect={(emoji) =>
-                          void dispatch(updateProjectEmoji(project.filePath, emoji))
+                          void dispatch(updateProjectEmoji(project.projectId, emoji))
                         }
                         onClick={() => void handleOpenProject(project, isActive)}
                         onCommit={handleCommitProject}
@@ -232,8 +232,7 @@ export default function FileList() {
                         compact={compact}
                         isDisabled={listIsDisabled}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                        fileExtension=".mrmlpt"
-                        slugFallback="prompt-template"
+                        toFileName={toPromptTemplateFileName}
                         existingFileNames={promptTemplateFileNames}
                         emoji={emoji}
                         onEmojiSelect={(newEmoji) =>
@@ -252,8 +251,7 @@ export default function FileList() {
                   itemKey="##new-prompt-template##"
                   fileName={null}
                   title=""
-                  fileExtension=".mrmlpt"
-                  slugFallback="prompt-template"
+                  toFileName={toPromptTemplateFileName}
                   existingFileNames={promptTemplateFileNames}
                   onCommit={handleCommitPromptTemplate}
                   onDiscard={handleCancelCreatingPromptTemplate}
@@ -296,8 +294,7 @@ export default function FileList() {
                           isActive={isActive}
                           isDisabled={listIsDisabled}
                           color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                          fileExtension=".mrmlg"
-                          slugFallback="glossary"
+                          toFileName={toGlossaryFileName}
                           existingFileNames={glossaryFileNames}
                           emoji={emoji}
                           onEmojiSelect={(newEmoji) =>
@@ -317,8 +314,7 @@ export default function FileList() {
                   itemKey="##new-glossary##"
                   fileName={null}
                   title=""
-                  fileExtension=".mrmlg"
-                  slugFallback="glossary"
+                  toFileName={toGlossaryFileName}
                   existingFileNames={glossaryFileNames}
                   onCommit={handleCommitGlossary}
                   onDiscard={handleCancelCreatingGlossary}

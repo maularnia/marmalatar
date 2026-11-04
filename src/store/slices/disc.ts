@@ -1,17 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { AppDispatch, RootState } from '@store/root';
 import {
-  checkFileExists,
   cleanupMediaCache,
-  deleteProjectFileOnDisk,
+  deleteProjectOnDisk,
   getTrackedFolder,
   listGlossaries,
   listProjects,
   listPromptTemplates,
-  renameProjectFileOnDisk,
+  renameProjectOnDisk,
   rescanFolder,
   updateProjectEmojiOnDisk,
-  updateProjectProgress,
   type TGlossaryEntry,
   type TProjectEntry,
   type TPromptTemplateEntry,
@@ -29,7 +27,6 @@ import {
   setProjectEmoji,
   setProjectName,
 } from '@store/slices/project';
-import { toSlug } from '@utils/string';
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -182,64 +179,56 @@ export const initDisc =
     }
   };
 
-export const persistProjectProgress =
-  (projectId: string, translationProgress: number) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+// Replaces one project's list item with the entry the main process returned after a write, so the
+// menu shows what the file now holds (name, emoji, progress) without listing the folder again
+export const applyProjectEntry =
+  (entry: TProjectEntry) =>
+  (dispatch: AppDispatch, getState: () => RootState): void => {
     const items = selectProjects(getState());
-    const idx = items.findIndex((p) => p.projectId === projectId);
-    if (idx >= 0 && items[idx].translationProgress !== translationProgress) {
-      const next = [...items];
-      next[idx] = { ...next[idx], translationProgress };
-      dispatch(setProjects(next));
-    }
-    await updateProjectProgress(projectId, translationProgress);
+    const idx = items.findIndex((p) => p.projectId === entry.projectId);
+    if (idx < 0) return;
+    const next = [...items];
+    next[idx] = entry;
+    dispatch(setProjects(next));
   };
 
 export const renameProjectFile =
-  (filePath: string, newName: string) =>
+  (projectId: string, newName: string) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const folder = selectFolder(getState());
     if (!folder) throw new Error(t('project.folderNotTracked'));
     const trimmed = newName.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
-    const oldFileName = filePath.split(/[/\\]/).pop()!;
-    const newFileName = `${toSlug(trimmed, 'project')}.mrml`;
-    const newFilePath = `${folder}/${newFileName}`;
+    const entry = await renameProjectOnDisk(projectId, trimmed);
+    if (!entry) throw new Error(t('project.alreadyExists'));
 
-    if (newFileName !== oldFileName) {
-      const exists = await checkFileExists(newFileName);
-      if (exists) throw new Error(t('project.alreadyExists'));
+    if (projectId === selectProjectId(getState())) {
+      dispatch(setCurrentProjectFilePath(entry.filePath));
+      dispatch(setProjectName(entry.projectName));
     }
 
-    const { project } = await renameProjectFileOnDisk(filePath, newFilePath, trimmed);
-
-    if (project.projectId === selectProjectId(getState())) {
-      dispatch(setCurrentProjectFilePath(newFilePath));
-      dispatch(setProjectName(trimmed));
-    }
-
-    await dispatch(refreshProjects());
+    dispatch(applyProjectEntry(entry));
   };
 
 export const updateProjectEmoji =
-  (filePath: string, emoji: string) =>
+  (projectId: string, emoji: string) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const { project } = await updateProjectEmojiOnDisk(filePath, emoji);
+    const entry = await updateProjectEmojiOnDisk(projectId, emoji);
 
-    if (project.projectId === selectProjectId(getState())) {
-      dispatch(setProjectEmoji(emoji));
+    if (projectId === selectProjectId(getState())) {
+      dispatch(setProjectEmoji(entry.emoji));
     }
 
-    await dispatch(refreshProjects());
+    dispatch(applyProjectEntry(entry));
   };
 
 export const deleteProjectFile =
-  (filePath: string) =>
+  (projectId: string) =>
   async (dispatch: AppDispatch): Promise<void> => {
     dispatch(setIsBusy(true));
     try {
-      await deleteProjectFileOnDisk(filePath);
+      await deleteProjectOnDisk(projectId);
       await dispatch(refreshProjects());
       void cleanupMediaCache().catch(() => {});
     } finally {

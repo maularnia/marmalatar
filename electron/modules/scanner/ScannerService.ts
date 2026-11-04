@@ -23,7 +23,8 @@ export function scanLegacyTrackedFolder(
 
 // Owns the tracked folder: picking and remembering it, file I/O inside it, and listing its files.
 // It never reads file contents for the listing; the project, prompt template and glossary
-// services build their own entries from it.
+// services build their own entries from it. File I/O is for those services only, not exposed to
+// the renderer: each service checks a file is one of its listed entries before touching it.
 export class ScannerService extends Service<TScannerData> {
   static readonly serviceName = 'scanner';
 
@@ -52,28 +53,8 @@ export class ScannerService extends Service<TScannerData> {
     }),
     // Rescan on request: picks up files changed outside the app
     this.handle('drop-cache', () => this.dropCache()),
-    // Paths are resolved against (and may not escape) the tracked folder, see
-    // resolveWorkFolderPath
-    this.handle('delete-file', (_: IpcMainInvokeEvent, relativePath: string) => {
-      runWithFallback(() => fs.unlinkSync(this.resolveWorkFolderPath(relativePath)), undefined);
-      this.dropCache();
-    }),
-    this.handle('check-file-exists', (_: IpcMainInvokeEvent, relativePath: string) =>
-      runWithFallback(() => fs.existsSync(this.resolveWorkFolderPath(relativePath)), false)
-    ),
-    this.handle('read-file', (_: IpcMainInvokeEvent, relativePath: string) =>
-      runWithFallback(
-        (): string | null => fs.readFileSync(this.resolveWorkFolderPath(relativePath), 'utf8'),
-        null
-      )
-    ),
-    this.handle('write-file', (_: IpcMainInvokeEvent, relativePath: string, content: string) => {
-      fs.writeFileSync(this.resolveWorkFolderPath(relativePath), content, 'utf8');
-      // The new modification time changes the file's hash
-      this.dropCache();
-    }),
     // Video files live wherever the user picked them from, not inside the tracked folder -- this
-    // handler is intentionally unrestricted (unlike the ones above), used only to check whether a
+    // handler is intentionally not resolved against the tracked folder, used only to check whether a
     // previously-saved video path is still on disk.
     this.handle('check-external-path-exists', (_: IpcMainInvokeEvent, absolutePath: string) =>
       runWithFallback(() => fs.existsSync(absolutePath), false)
@@ -102,6 +83,45 @@ export class ScannerService extends Service<TScannerData> {
       throw new Error(`Refusing to access a path outside the tracked folder: ${relativePath}`);
     }
     return resolved;
+  }
+
+  // A JSON file in the tracked folder, parsed. null if it's missing, unreadable or not JSON.
+  readFile(relativePath: string): unknown {
+    return runWithFallback(
+      (): unknown => JSON.parse(fs.readFileSync(this.resolveWorkFolderPath(relativePath), 'utf8')),
+      null
+    );
+  }
+
+  writeFile(relativePath: string, data: unknown): void {
+    fs.writeFileSync(
+      this.resolveWorkFolderPath(relativePath),
+      JSON.stringify(data, null, 2),
+      'utf8'
+    );
+    // The new modification time changes the file's hash
+    this.dropCache();
+  }
+
+  // false, with nothing moved, when another file already has the new name
+  moveFile(fromRelativePath: string, toRelativePath: string): boolean {
+    if (fromRelativePath === toRelativePath) return true;
+    if (this.fileExists(toRelativePath)) return false;
+    fs.renameSync(
+      this.resolveWorkFolderPath(fromRelativePath),
+      this.resolveWorkFolderPath(toRelativePath)
+    );
+    this.dropCache();
+    return true;
+  }
+
+  deleteFile(relativePath: string): void {
+    runWithFallback(() => fs.unlinkSync(this.resolveWorkFolderPath(relativePath)), undefined);
+    this.dropCache();
+  }
+
+  fileExists(relativePath: string): boolean {
+    return runWithFallback(() => fs.existsSync(this.resolveWorkFolderPath(relativePath)), false);
   }
 
   // The tracked folder's listing: the cached one, or a fresh scan that is cached until dropped.

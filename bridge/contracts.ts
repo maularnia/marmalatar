@@ -9,7 +9,7 @@
 // to build each contract's version config and reader.
 import { defineVersionedContract, createVersionedReader } from './versioning';
 import { AppSettingsContractV1Schema } from './definitions/appSettings';
-import { ProjectStateV1Schema } from './definitions/projectState';
+import { ProjectStateV1Schema, ProjectStateV2Schema } from './definitions/projectState';
 import { OllamaSettingsV1Schema } from './definitions/ollamaSettings';
 import { LMStudioSettingsV1Schema } from './definitions/lmStudioSettings';
 import { DeepLSettingsV1Schema } from './definitions/deepLSettings';
@@ -27,10 +27,13 @@ export const readAppSettingsContract = createVersionedReader(AppSettingsVersioni
 const ProjectStateVersioning = defineVersionedContract({
   name: 'ProjectState',
   minSupportedVersion: 1,
-  currentVersion: 1,
-  schemas: { 1: ProjectStateV1Schema },
-  transforms: {},
-  current: ProjectStateV1Schema,
+  currentVersion: 2,
+  schemas: { 1: ProjectStateV1Schema, 2: ProjectStateV2Schema },
+  transforms: {
+    // Progress is recomputed from the file the next time the project service reads it
+    1: (data) => ({ ...(data as object), version: 2, translationProgress: 0 }),
+  },
+  current: ProjectStateV2Schema,
 });
 export const readProjectState = createVersionedReader(ProjectStateVersioning);
 

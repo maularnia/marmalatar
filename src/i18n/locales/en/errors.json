@@ -80,16 +80,13 @@
     "workerFailed": "Could not start the spellchecker"
   },
   "project": {
-    "corrupted": "Corrupted project file",
     "invalidFile": "Corrupted data at [{{path}}]: {{message}}",
     "incompatibleVersion": "This project file was created by a newer version of the app and can't be opened here",
     "cannotRead": "Unable to read project file",
-    "cannotSaveWithoutName": "Project name is required",
     "nameRequired": "Project name is required",
     "alreadyExists": "File with the same name already exists",
     "folderNotTracked": "No working folder",
-    "editorStateReadFailed": "Unable to read editor state",
-    "progressPersistFailed": "Unable to save translation progress"
+    "editorStateReadFailed": "Unable to read editor state"
   },
   "createNewProject": {
     "emojiSelectionFailed": "Failed to pick a random project emoji",

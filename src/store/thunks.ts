@@ -3,24 +3,36 @@ import { DEFAULT_PROMPT_TEMPLATE } from '@src/services/ai/config';
 import { TLanguage, TSubtitleLine } from '@src/types';
 import {
   buildProjectEditorStateSaveData,
-  checkFileExists,
-  deleteFile,
+  createGlossaryOnDisk,
+  createProjectOnDisk,
+  createPromptTemplateOnDisk,
+  deleteGlossaryOnDisk,
+  deletePromptTemplateOnDisk,
   getProjectEditorState,
   readGlossaryFile,
   readProjectFile,
   readPromptTemplateFile,
+  renameGlossaryOnDisk,
+  renamePromptTemplateOnDisk,
   selectFolderDialog,
   setTrackedFolder,
-  writeGlossaryFile,
+  updateGlossaryEmojiOnDisk,
+  updateGlossaryLanguagesOnDisk,
+  updateProjectLanguagesOnDisk,
+  updatePromptTemplateEmojiOnDisk,
+  writeGlossaryBody,
+  writeProjectBody,
   writeProjectEditorState,
-  writeProjectSaveData,
-  writePromptTemplateFile,
+  writePromptTemplateBody,
   type TProjectEditorState,
-  type TScannedProjectEntry,
+  type TProjectEntry,
 } from '@src/utils/data/discIO';
-import type { AIGlossaryFileDataType, PromptTemplateFileDataType } from '@src/utils/data/schemas';
+import type {
+  AIGlossaryFileDataType,
+  PromptTemplateFileDataType,
+  TProjectFileData,
+} from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
-import { toSlug } from '@utils/string';
 import type { AppDispatch, RootState } from './root';
 import {
   resetAiPromptEditor,
@@ -35,7 +47,7 @@ import {
 import { refreshSelectedPromptTemplateData } from './slices/aiTranslation';
 import {
   forceRescan,
-  persistProjectProgress,
+  applyProjectEntry,
   refreshGlossaries,
   refreshProjects,
   refreshPromptTemplates,
@@ -87,7 +99,6 @@ const t = i18n.getFixedT(null, 'errors');
 // ── Project ─────────────────────────────────────────────────────────────────
 
 type CreateNewProjectParams = {
-  filePath: string;
   lines: TSubtitleLine[];
   projectName: string;
   sourceLanguage: TLanguage;
@@ -99,6 +110,7 @@ export const createNewProject =
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const projectName = params.projectName.trim();
     if (!projectName) throw new Error(t('project.nameRequired'));
+    const { sourceLanguage, targetLanguage } = params;
 
     dispatch(setCurrentProjectFilePath(null));
     dispatch(resetEditorMemoryState());
@@ -110,41 +122,39 @@ export const createNewProject =
     } catch {
       throw new Error(t('createNewProject.emojiSelectionFailed'));
     }
-    const projectId = crypto.randomUUID();
 
-    applyProjectData(dispatch, {
-      project: {
-        projectId,
-        projectName,
-        emoji,
-        sourceLanguage: params.sourceLanguage,
-        targetLanguage: params.targetLanguage,
-      },
-      editor: {
-        characterPool: [],
-        lines: params.lines,
-      },
-    });
-
-    dispatch(setEditorMode('translate'));
-
-    dispatch(setCurrentProjectFilePath(params.filePath));
+    // The main process names the file and assigns the projectId, so the project exists on disk
+    // before anything is applied to the editor
+    const editor = { characterPool: [], lines: params.lines };
+    let entry: TProjectEntry | null;
     try {
-      await dispatch(saveProjectToDisk(params.filePath));
+      entry = await createProjectOnDisk(
+        { projectName, emoji, sourceLanguage, targetLanguage },
+        { editor }
+      );
     } catch {
       throw new Error(t('createNewProject.fileSaveFailed'));
     }
+    if (!entry) throw new Error(t('project.alreadyExists'));
 
-    const state = getState();
-    if (state.project.projectId) {
-      try {
-        await writeProjectEditorState(
-          state.project.projectId,
-          buildProjectEditorStateSaveData(state)
-        );
-      } catch {
-        throw new Error(t('createNewProject.editorStateSaveFailed'));
-      }
+    applyProjectData(dispatch, {
+      project: {
+        projectId: entry.projectId,
+        projectName: entry.projectName,
+        emoji: entry.emoji,
+        sourceLanguage,
+        targetLanguage,
+      },
+      editor,
+    });
+
+    dispatch(setEditorMode('translate'));
+    dispatch(setCurrentProjectFilePath(entry.filePath));
+
+    try {
+      await writeProjectEditorState(entry.projectId, buildProjectEditorStateSaveData(getState()));
+    } catch {
+      throw new Error(t('createNewProject.editorStateSaveFailed'));
     }
 
     try {
@@ -154,10 +164,30 @@ export const createNewProject =
     }
   };
 
+// Writes the open project's lines and characters to its file. A project without a file yet is
+// skipped: createNewProject creates it. The returned entry carries the progress the main process
+// computed from the new lines.
 export const saveProjectToDisk =
-  (filePath: string) =>
-  async (_dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    await writeProjectSaveData(filePath, getState());
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const state = getState();
+    const { projectId } = state.project;
+    if (!projectId || !selectCurrentProjectFilePath(state)) return;
+    dispatch(applyProjectEntry(await writeProjectBody(projectId, state)));
+  };
+
+export const saveProjectLanguages =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const state = getState();
+    const { projectId, sourceLanguage, targetLanguage } = state.project;
+    if (!projectId || !sourceLanguage || !targetLanguage) return;
+    if (!selectCurrentProjectFilePath(state)) return;
+    dispatch(
+      applyProjectEntry(
+        await updateProjectLanguagesOnDisk(projectId, sourceLanguage, targetLanguage)
+      )
+    );
   };
 
 // Saves the currently open project (if any) before tearing down editor/project state to start a
@@ -165,10 +195,8 @@ export const saveProjectToDisk =
 export const startNewProject =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const currentProjectFilePath = selectCurrentProjectFilePath(state);
-    if (selectIsProjectOpen(state) && currentProjectFilePath) {
-      await dispatch(saveProjectToDisk(currentProjectFilePath));
+    if (selectIsProjectOpen(getState())) {
+      await dispatch(saveProjectToDisk());
     }
     dispatch(resetEditorMemoryState());
     dispatch(resetProject());
@@ -176,11 +204,11 @@ export const startNewProject =
   };
 
 export const loadProjectFromDisk =
-  (filePath: string) =>
+  (project: TProjectEntry) =>
   async (dispatch: AppDispatch): Promise<void> => {
-    let data: TScannedProjectEntry;
+    let data: TProjectFileData;
     try {
-      data = await readProjectFile(filePath);
+      data = await readProjectFile(project.projectId);
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : t('project.cannotRead'));
     }
@@ -201,20 +229,12 @@ export const loadProjectFromDisk =
     // Restore the video that was attached when the project was last saved/closed.
     dispatch(setVideoFilePath(editorState.videoPath));
 
-    dispatch(setCurrentProjectFilePath(filePath));
-
-    // Self-heals the cached progress the moment a project is opened (e.g. if the file
-    // was edited outside the app since the cache was last written).
-    try {
-      await dispatch(persistProjectProgress(data.project.projectId, data.translationProgress));
-    } catch (err) {
-      throw new Error(err instanceof Error ? err.message : t('project.progressPersistFailed'));
-    }
+    dispatch(setCurrentProjectFilePath(project.filePath));
   };
 
 function applyProjectData(
   dispatch: AppDispatch,
-  data: Pick<TScannedProjectEntry, 'project' | 'editor'>
+  data: Pick<TProjectFileData, 'project' | 'editor'>
 ): void {
   dispatch(setProjectId(data.project.projectId));
   dispatch(setProjectName(data.project.projectName));
@@ -253,7 +273,7 @@ export const savePromptTemplate =
     const { currentPromptTemplate, promptTemplateData } = state.aiPromptEditor;
     const folder = selectFolder(state);
     if (!currentPromptTemplate || !folder || !promptTemplateData) return;
-    await writePromptTemplateFile(currentPromptTemplate, promptTemplateData);
+    await writePromptTemplateBody(currentPromptTemplate, promptTemplateData);
     await dispatch(refreshPromptTemplates());
     if (selectSelectedPromptTemplateFileName(state) === currentPromptTemplate) {
       void dispatch(refreshSelectedPromptTemplateData());
@@ -266,7 +286,7 @@ export const deletePromptTemplate =
     const state = getState();
     const folder = selectFolder(state);
     if (!folder) return;
-    await deleteFile(fileName);
+    await deletePromptTemplateOnDisk(fileName);
     await dispatch(refreshPromptTemplates());
     if (state.aiPromptEditor.currentPromptTemplate === fileName) {
       dispatch(resetAiPromptEditor());
@@ -282,19 +302,13 @@ export const renamePromptTemplateFile =
     const trimmed = newTitle.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
-    const newFileName = `${toSlug(trimmed, 'prompt-template')}.mrmlpt`;
-    if (newFileName !== fileName) {
-      const exists = await checkFileExists(newFileName);
-      if (exists) throw new Error(t('promptTemplate.alreadyExists', { title: trimmed }));
-    }
-
-    const data = await readPromptTemplateFile(fileName);
-    if (!data) throw new Error(t('promptTemplate.readFailed'));
-    const updated: PromptTemplateFileDataType = { ...data, title: trimmed };
-    await writePromptTemplateFile(newFileName, updated);
+    const newFileName = await renamePromptTemplateOnDisk(fileName, trimmed);
+    if (!newFileName) throw new Error(t('promptTemplate.alreadyExists', { title: trimmed }));
+    // Re-read: the main process wrote the header
+    const updated = await readPromptTemplateFile(newFileName);
+    if (!updated) throw new Error(t('promptTemplate.readFailed'));
 
     if (newFileName !== fileName) {
-      await deleteFile(fileName);
       const selectedPt = selectSelectedPromptTemplateFileName(state);
       if (selectedPt === fileName) dispatch(setSelectedPromptTemplateFileName(newFileName));
       if (state.aiPromptEditor.currentPromptTemplate === fileName) {
@@ -315,10 +329,9 @@ export const updatePromptTemplateEmoji =
     const folder = selectFolder(state);
     if (!folder) throw new Error(t('shared.folderNotSelected'));
 
-    const data = await readPromptTemplateFile(fileName);
-    if (!data) throw new Error(t('promptTemplate.readFailed'));
-    const updated: PromptTemplateFileDataType = { ...data, emoji };
-    await writePromptTemplateFile(fileName, updated);
+    await updatePromptTemplateEmojiOnDisk(fileName, emoji);
+    const updated = await readPromptTemplateFile(fileName);
+    if (!updated) throw new Error(t('promptTemplate.readFailed'));
 
     if (state.aiPromptEditor.currentPromptTemplate === fileName) {
       dispatch(setPromptTemplateData(updated));
@@ -336,10 +349,6 @@ export const createPromptTemplateFile =
     const trimmed = title.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
-    const fileName = `${toSlug(trimmed, 'prompt-template')}.mrmlpt`;
-    const exists = await checkFileExists(fileName);
-    if (exists) throw new Error(t('promptTemplate.alreadyExists', { title: trimmed }));
-
     const emoji = await pickRandomCreationEmoji();
     const data: PromptTemplateFileDataType = {
       version: 1,
@@ -347,7 +356,8 @@ export const createPromptTemplateFile =
       emoji,
       promptTemplate: DEFAULT_PROMPT_TEMPLATE,
     };
-    await writePromptTemplateFile(fileName, data);
+    const fileName = await createPromptTemplateOnDisk(data);
+    if (!fileName) throw new Error(t('promptTemplate.alreadyExists', { title: trimmed }));
     await dispatch(refreshPromptTemplates());
     await dispatch(openPromptTemplateEditor(fileName));
   };
@@ -392,9 +402,26 @@ export const saveGlossary =
       ...glossaryData,
       list: glossaryData.list.filter((e) => e.original.trim() || e.translation.trim()),
     };
-    await writeGlossaryFile(currentGlossary, dataToSave);
+    await writeGlossaryBody(currentGlossary, dataToSave);
     await dispatch(refreshGlossaries());
     if (selectSelectedGlossaryFileNames(state).includes(currentGlossary)) {
+      dispatch(reconcileGlossarySelectionWithDirection());
+    }
+  };
+
+// Languages are part of the file header, written by the main process. The open editor keeps its
+// unsaved pairs and takes the new languages.
+export const updateGlossaryLanguages =
+  (fileName: string, sourceLanguage: TLanguage, targetLanguage: TLanguage) =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    await updateGlossaryLanguagesOnDisk(fileName, sourceLanguage, targetLanguage);
+    const { currentGlossary, glossaryData } = getState().aiPromptEditor;
+    if (currentGlossary === fileName && glossaryData) {
+      dispatch(setGlossaryData({ ...glossaryData, sourceLanguage, targetLanguage }));
+    }
+    await dispatch(refreshGlossaries());
+    // A selected glossary may no longer match the project's direction
+    if (selectSelectedGlossaryFileNames(getState()).includes(fileName)) {
       dispatch(reconcileGlossarySelectionWithDirection());
     }
   };
@@ -405,7 +432,7 @@ export const deleteGlossary =
     const state = getState();
     const folder = selectFolder(state);
     if (!folder) return;
-    await deleteFile(fileName);
+    await deleteGlossaryOnDisk(fileName);
     await dispatch(refreshGlossaries());
     if (state.aiPromptEditor.currentGlossary === fileName) {
       dispatch(resetAiPromptEditor());
@@ -421,19 +448,13 @@ export const renameGlossaryFile =
     const trimmed = newTitle.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
-    const newFileName = `${toSlug(trimmed, 'glossary')}.mrmlg`;
-    if (newFileName !== fileName) {
-      const exists = await checkFileExists(newFileName);
-      if (exists) throw new Error(t('glossaryFile.alreadyExists', { title: trimmed }));
-    }
-
-    const data = await readGlossaryFile(fileName);
-    if (!data) throw new Error(t('glossaryFile.readFailed'));
-    const updated: AIGlossaryFileDataType = { ...data, title: trimmed };
-    await writeGlossaryFile(newFileName, updated);
+    const newFileName = await renameGlossaryOnDisk(fileName, trimmed);
+    if (!newFileName) throw new Error(t('glossaryFile.alreadyExists', { title: trimmed }));
+    // Re-read: the main process wrote the header
+    const updated = await readGlossaryFile(newFileName);
+    if (!updated) throw new Error(t('glossaryFile.readFailed'));
 
     if (newFileName !== fileName) {
-      await deleteFile(fileName);
       const selectedGlossaries = selectSelectedGlossaryFileNames(state);
       if (selectedGlossaries.includes(fileName)) {
         dispatch(
@@ -460,10 +481,9 @@ export const updateGlossaryEmoji =
     const folder = selectFolder(state);
     if (!folder) throw new Error(t('shared.folderNotSelected'));
 
-    const data = await readGlossaryFile(fileName);
-    if (!data) throw new Error(t('glossaryFile.readFailed'));
-    const updated: AIGlossaryFileDataType = { ...data, emoji };
-    await writeGlossaryFile(fileName, updated);
+    await updateGlossaryEmojiOnDisk(fileName, emoji);
+    const updated = await readGlossaryFile(fileName);
+    if (!updated) throw new Error(t('glossaryFile.readFailed'));
 
     if (state.aiPromptEditor.currentGlossary === fileName) {
       dispatch(setGlossaryData(updated));
@@ -481,10 +501,6 @@ export const createGlossaryFile =
     const trimmed = title.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
-    const fileName = `${toSlug(trimmed, 'glossary')}.mrmlg`;
-    const exists = await checkFileExists(fileName);
-    if (exists) throw new Error(t('glossaryFile.alreadyExists', { title: trimmed }));
-
     const emoji = await pickRandomCreationEmoji();
     const data: AIGlossaryFileDataType = {
       version: 1,
@@ -494,7 +510,8 @@ export const createGlossaryFile =
       targetLanguage: TLanguage.Belarusian,
       list: [],
     };
-    await writeGlossaryFile(fileName, data);
+    const fileName = await createGlossaryOnDisk(data);
+    if (!fileName) throw new Error(t('glossaryFile.alreadyExists', { title: trimmed }));
     await dispatch(refreshGlossaries());
     await dispatch(openAIGlossaryEditor(fileName));
   };
@@ -515,7 +532,7 @@ export const addEntryToGlossary =
     if (!existing) return false;
 
     const updated: AIGlossaryFileDataType = { ...existing, list: [...existing.list, entry] };
-    await writeGlossaryFile(target, updated);
+    await writeGlossaryBody(target, updated);
 
     if (target === currentGlossary) {
       dispatch(setGlossaryData(updated));
@@ -626,9 +643,8 @@ export const pickFolder =
       if (!selected) return false;
 
       const state = getState();
-      const currentProjectFilePath = selectCurrentProjectFilePath(state);
-      if (selectIsProjectOpen(state) && currentProjectFilePath) {
-        await dispatch(saveProjectToDisk(currentProjectFilePath));
+      if (selectIsProjectOpen(state)) {
+        await dispatch(saveProjectToDisk());
       }
 
       const currentOverlay = selectCurrentOverlay(state);

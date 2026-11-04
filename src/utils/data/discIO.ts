@@ -8,15 +8,16 @@ import {
   readGlossaryFileContract,
   type PromptTemplateFileDataType,
   type AIGlossaryFileDataType,
+  type TProjectFileBody,
   type TProjectFileData,
   type TProjectEditorState,
   type TGlossaryEntry,
 } from './schemas';
 import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
+import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
 import type { TPromptTemplateListEntry } from '@bridge/definitions/promptTemplateEntry';
+import { TLanguage } from '@src/types';
 import { parseProjectFile } from './parsers/project';
-import { computeTranslationProgress } from '@utils/translationProgress';
-import { FALLBACK_EMOJI } from '@utils/emoji';
 import { IPC } from '@src/services/ipc/IPC';
 
 export type { TProjectEditorState, TGlossaryEntry };
@@ -25,110 +26,225 @@ export type TPromptTemplateEntry = TPromptTemplateListEntry;
 
 const t = i18n.getFixedT(null, 'errors');
 
-export type TScannedProjectEntry = TProjectFileData & {
-  filePath: string;
-  fileName: string;
-  translationProgress: number;
-};
+// Files in the tracked folder are reached only through the main process's project, prompt template
+// and glossary services, keyed by projectId or file name. The renderer reads whole files but
+// writes only their bodies: headers (names, titles, emoji, languages) change through dedicated
+// calls, and the services compute what derives from the file, such as translation progress.
+// create and rename resolve to null when the file name the title maps to is taken.
 
-// Project/prompt-template/glossary files always live directly in the tracked folder root (no
-// subdirectories) -- the electron side now resolves read/write/delete/exists paths against the
-// tracked folder itself, so only the basename ever needs to cross the bridge.
-function toFileName(filePath: string): string {
-  return filePath.split(/[/\\]/).pop() ?? filePath;
+// ── Projects ─────────────────────────────────────────────────────────────────
+
+export async function readProjectFile(projectId: string): Promise<TProjectFileData> {
+  const raw = await IPC.projects.get(projectId);
+  if (!raw) throw new Error(t('project.cannotRead'));
+  return parseProjectFile(raw);
 }
 
-export async function readProjectFile(filePath: string): Promise<TScannedProjectEntry> {
-  const text = await IPC.files.readFile(toFileName(filePath));
-  if (!text) throw new Error(t('project.cannotRead'));
-
-  const data = parseProjectFile(text);
-  const translationProgress = computeTranslationProgress(data.editor.lines);
-
+function buildProjectBody(state: RootState): TProjectFileBody {
+  const { lines, characterPool } = state.editor;
   return {
-    ...data,
-    filePath,
-    fileName: toFileName(filePath),
-    translationProgress,
+    editor: ProjectSaveV1Schema.shape.editor.parse({ lines, characterPool }),
   };
 }
 
-export async function writeProjectSaveData(filePath: string, state: RootState): Promise<void> {
-  const { editor, project } = state;
-  const { projectId, projectName, emoji, sourceLanguage, targetLanguage } = project;
-  const { lines, characterPool } = editor;
-
-  if (!projectName) {
-    throw new Error(t('project.cannotSaveWithoutName'));
-  }
-
-  const payload = ProjectSaveV1Schema.parse({
-    version: 1,
-    project: {
-      // projectId is always assigned by createNewProject before any save can happen.
-      projectId,
-      projectName,
-      // Defensive fallback only -- emoji is always set by creation/load before any save can happen.
-      emoji: emoji ?? FALLBACK_EMOJI,
-      // sourceLanguage/targetLanguage are always set by the New Project form before any save can happen.
-      sourceLanguage,
-      targetLanguage,
-    },
-    editor: {
-      lines,
-      characterPool,
-    },
-  });
-
-  await IPC.files.writeFile(toFileName(filePath), JSON.stringify(payload, null, 2));
+// The updated list entry, with the progress the main process computed from the new lines
+export async function writeProjectBody(
+  projectId: string,
+  state: RootState
+): Promise<TProjectEntry> {
+  return IPC.projects.set(projectId, buildProjectBody(state));
 }
 
-export function buildProjectEditorStateSaveData(state: RootState): TProjectEditorState {
-  return ProjectEditorStateSchema.parse({
+type TProjectHeaderInput = {
+  projectName: string;
+  emoji: string;
+  sourceLanguage: TLanguage;
+  targetLanguage: TLanguage;
+};
+
+// The main process names the file and assigns the projectId. null when the name is taken.
+export async function createProjectOnDisk(
+  header: TProjectHeaderInput,
+  body: TProjectFileBody
+): Promise<TProjectEntry | null> {
+  return IPC.projects.create(header, body);
+}
+
+export async function renameProjectOnDisk(
+  projectId: string,
+  projectName: string
+): Promise<TProjectEntry | null> {
+  return IPC.projects.rename(projectId, projectName);
+}
+
+export async function updateProjectEmojiOnDisk(
+  projectId: string,
+  emoji: string
+): Promise<TProjectEntry> {
+  return IPC.projects.setEmoji(projectId, emoji);
+}
+
+export async function updateProjectLanguagesOnDisk(
+  projectId: string,
+  sourceLanguage: TLanguage,
+  targetLanguage: TLanguage
+): Promise<TProjectEntry> {
+  return IPC.projects.setLanguages(projectId, sourceLanguage, targetLanguage);
+}
+
+// The project's device state goes with it: the main process drops a project's entry once its
+// file is gone
+export async function deleteProjectOnDisk(projectId: string): Promise<void> {
+  await IPC.projects.delete(projectId);
+}
+
+export async function listProjects(): Promise<TProjectEntry[]> {
+  return IPC.projects.list();
+}
+
+// ── Per-project editor state ────────────────────────────────────────────────
+
+export function buildProjectEditorStateSaveData(state: RootState): TProjectStatePrefs {
+  return {
     editorMode: state.project.editorMode,
     isVideoCollapsed: state.editor.isVideoCollapsed,
     videoPath: state.project.videoFilePath,
-  });
+  };
 }
 
-function parseProjectEditorState(raw: unknown): TProjectEditorState {
+export async function getProjectEditorState(projectId: string): Promise<TProjectEditorState> {
+  const raw = await IPC.projects.getState(projectId);
   return ProjectEditorStateSchema.parse(raw && typeof raw === 'object' ? raw : {});
+}
+
+export async function writeProjectEditorState(
+  projectId: string,
+  prefs: TProjectStatePrefs
+): Promise<void> {
+  await IPC.projects.setState(projectId, prefs);
+}
+
+// ── Prompt templates ─────────────────────────────────────────────────────────
+
+export async function listPromptTemplates(): Promise<TPromptTemplateEntry[]> {
+  return IPC.promptTemplates.list();
 }
 
 export async function readPromptTemplateFile(
   fileName: string
 ): Promise<PromptTemplateFileDataType | null> {
-  const text = await IPC.files.readFile(fileName);
-  if (!text) return null;
+  const raw = await IPC.promptTemplates.get(fileName);
+  if (!raw) return null;
   try {
-    return readPromptTemplateFileContract(JSON.parse(text));
+    return readPromptTemplateFileContract(raw);
   } catch {
     return null;
   }
 }
 
-export async function writePromptTemplateFile(
+export async function writePromptTemplateBody(
   fileName: string,
-  data: PromptTemplateFileDataType
+  { promptTemplate }: PromptTemplateFileDataType
 ): Promise<void> {
-  await IPC.files.writeFile(fileName, JSON.stringify(data, null, 2));
+  await IPC.promptTemplates.set(fileName, { promptTemplate });
+}
+
+// The new file name, or null when it's taken
+export async function createPromptTemplateOnDisk({
+  title,
+  emoji,
+  promptTemplate,
+}: PromptTemplateFileDataType): Promise<string | null> {
+  const entry = await IPC.promptTemplates.create({ title, emoji }, { promptTemplate });
+  return entry?.fileName ?? null;
+}
+
+// The new file name, or null when it's taken
+export async function renamePromptTemplateOnDisk(
+  fileName: string,
+  title: string
+): Promise<string | null> {
+  const entry = await IPC.promptTemplates.rename(fileName, title);
+  return entry?.fileName ?? null;
+}
+
+export async function updatePromptTemplateEmojiOnDisk(
+  fileName: string,
+  emoji: string
+): Promise<void> {
+  await IPC.promptTemplates.setEmoji(fileName, emoji);
+}
+
+export async function deletePromptTemplateOnDisk(fileName: string): Promise<void> {
+  await IPC.promptTemplates.delete(fileName);
+}
+
+// ── AI glossaries ────────────────────────────────────────────────────────────
+
+// A glossary whose languages this build doesn't know is left out
+export async function listGlossaries(): Promise<TGlossaryEntry[]> {
+  const entries = await IPC.glossaries.list();
+  return entries.flatMap((entry) => {
+    const parsed = GlossaryListEntrySchema.safeParse(entry);
+    return parsed.success ? [parsed.data] : [];
+  });
 }
 
 export async function readGlossaryFile(fileName: string): Promise<AIGlossaryFileDataType | null> {
-  const text = await IPC.files.readFile(fileName);
-  if (!text) return null;
+  const raw = await IPC.glossaries.get(fileName);
+  if (!raw) return null;
   try {
-    return readGlossaryFileContract(JSON.parse(text));
+    return readGlossaryFileContract(raw);
   } catch {
     return null;
   }
 }
 
-export async function writeGlossaryFile(
+export async function writeGlossaryBody(
   fileName: string,
-  data: AIGlossaryFileDataType
+  { list }: Pick<AIGlossaryFileDataType, 'list'>
 ): Promise<void> {
-  await IPC.files.writeFile(fileName, JSON.stringify(data, null, 2));
+  await IPC.glossaries.set(fileName, { list });
+}
+
+// The new file name, or null when it's taken
+export async function createGlossaryOnDisk({
+  title,
+  emoji,
+  sourceLanguage,
+  targetLanguage,
+  list,
+}: AIGlossaryFileDataType): Promise<string | null> {
+  const entry = await IPC.glossaries.create(
+    { title, emoji, sourceLanguage, targetLanguage },
+    { list }
+  );
+  return entry?.fileName ?? null;
+}
+
+// The new file name, or null when it's taken
+export async function renameGlossaryOnDisk(
+  fileName: string,
+  title: string
+): Promise<string | null> {
+  const entry = await IPC.glossaries.rename(fileName, title);
+  return entry?.fileName ?? null;
+}
+
+export async function updateGlossaryEmojiOnDisk(fileName: string, emoji: string): Promise<void> {
+  await IPC.glossaries.setEmoji(fileName, emoji);
+}
+
+export async function updateGlossaryLanguagesOnDisk(
+  fileName: string,
+  sourceLanguage: TLanguage,
+  targetLanguage: TLanguage
+): Promise<void> {
+  await IPC.glossaries.setLanguages(fileName, sourceLanguage, targetLanguage);
+}
+
+export async function deleteGlossaryOnDisk(fileName: string): Promise<void> {
+  await IPC.glossaries.delete(fileName);
 }
 
 // ── Working folder ──────────────────────────────────────────────────────────
@@ -145,118 +261,9 @@ export async function selectFolderDialog(): Promise<string | null> {
   return IPC.files.selectFolder();
 }
 
-// ── Generic file helpers ────────────────────────────────────────────────────
-// filePath/fileName below are resolved against the tracked folder on the electron side -- see
-// toFileName's comment. checkExternalPathExists is the one exception (used only for video paths,
-// which live outside the tracked folder).
-
-export async function checkFileExists(fileName: string): Promise<boolean> {
-  return IPC.files.checkFileExists(fileName);
-}
-
+// Video paths live outside the tracked folder, wherever the user picked the video from
 export async function checkExternalPathExists(absolutePath: string): Promise<boolean> {
   return IPC.files.checkExternalPathExists(absolutePath);
-}
-
-export async function deleteFile(fileName: string): Promise<void> {
-  await IPC.files.deleteFile(fileName);
-}
-
-// ── Projects ─────────────────────────────────────────────────────────────────
-
-// Lists come from the main process, which keeps them in line with the tracked folder: it reads
-// only files that changed since the last listing.
-export async function listProjects(): Promise<TProjectEntry[]> {
-  return IPC.projects.list();
-}
-
-export async function updateProjectProgress(
-  projectId: string,
-  translationProgress: number
-): Promise<void> {
-  await IPC.projects.updateProgress(projectId, translationProgress);
-}
-
-export async function renameProjectFileOnDisk(
-  filePath: string,
-  newFilePath: string,
-  projectName: string
-): Promise<{ project: TProjectFileData['project'] }> {
-  const text = await IPC.files.readFile(toFileName(filePath));
-  if (!text) throw new Error(t('project.cannotRead'));
-
-  let data: Record<string, unknown>;
-  try {
-    data = JSON.parse(text) as Record<string, unknown>;
-  } catch {
-    throw new Error(t('project.corrupted'));
-  }
-  const projectData = data.project as TProjectFileData['project'];
-  projectData.projectName = projectName;
-
-  await IPC.files.writeFile(toFileName(newFilePath), JSON.stringify(data, null, 2));
-  if (newFilePath !== filePath) {
-    await IPC.files.deleteFile(toFileName(filePath));
-  }
-
-  return { project: projectData };
-}
-
-export async function updateProjectEmojiOnDisk(
-  filePath: string,
-  emoji: string
-): Promise<{ project: TProjectFileData['project'] }> {
-  const text = await IPC.files.readFile(toFileName(filePath));
-  if (!text) throw new Error(t('project.cannotRead'));
-
-  let data: Record<string, unknown>;
-  try {
-    data = JSON.parse(text) as Record<string, unknown>;
-  } catch {
-    throw new Error(t('project.corrupted'));
-  }
-  const projectData = data.project as TProjectFileData['project'];
-  projectData.emoji = emoji;
-
-  await IPC.files.writeFile(toFileName(filePath), JSON.stringify(data, null, 2));
-
-  return { project: projectData };
-}
-
-// The project's device state goes with it: the main process drops a project's entry once its
-// file is gone
-export async function deleteProjectFileOnDisk(filePath: string): Promise<void> {
-  await IPC.files.deleteFile(toFileName(filePath));
-}
-
-// ── Prompt templates ─────────────────────────────────────────────────────────
-
-export async function listPromptTemplates(): Promise<TPromptTemplateEntry[]> {
-  return IPC.promptTemplates.list();
-}
-
-// ── AI glossaries ────────────────────────────────────────────────────────────
-
-// A glossary whose languages this build doesn't know is left out
-export async function listGlossaries(): Promise<TGlossaryEntry[]> {
-  const entries = await IPC.glossaries.list();
-  return entries.flatMap((entry) => {
-    const parsed = GlossaryListEntrySchema.safeParse(entry);
-    return parsed.success ? [parsed.data] : [];
-  });
-}
-
-// ── Per-project editor state ────────────────────────────────────────────────
-
-export async function getProjectEditorState(projectId: string): Promise<TProjectEditorState> {
-  return parseProjectEditorState(await IPC.projects.getState(projectId));
-}
-
-export async function writeProjectEditorState(
-  projectId: string,
-  editorState: TProjectEditorState
-): Promise<void> {
-  await IPC.projects.setState(projectId, editorState);
 }
 
 // ── Media cache ──────────────────────────────────────────────────────────────

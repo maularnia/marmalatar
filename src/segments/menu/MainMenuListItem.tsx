@@ -11,7 +11,6 @@ import Emoji from '@ui-toolkit/Emoji';
 import EmoPicker from '@ui-toolkit/EmoPicker';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
-import { toSlug } from '@utils/string';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoader } from '../dialogs/loader/useLoader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
@@ -28,8 +27,8 @@ type MainMenuListItemProps = {
   isDisabled?: boolean;
   color?: TColor;
   progress?: number;
-  fileExtension: string;
-  slugFallback: string;
+  // The file name the main process gives a file with this title, from bridge/fileNames.ts
+  toFileName: (title: string) => string;
   existingFileNames: string[];
   emoji?: string;
   compact?: boolean;
@@ -44,14 +43,13 @@ function validate(
   draft: string,
   fileName: string | null,
   existingFileNames: string[],
-  fileExtension: string,
-  slugFallback: string
+  toFileName: (title: string) => string
 ): string | null {
   const trimmed = draft.trim();
   if (!trimmed) return t('shared.nameEmpty');
   if (trimmed.length > MAX_NAME_LENGTH)
     return t('mainMenuListItem.nameTooLong', { maxLength: MAX_NAME_LENGTH });
-  const newFileName = `${toSlug(trimmed, slugFallback)}${fileExtension}`;
+  const newFileName = toFileName(trimmed);
   if (newFileName !== fileName && existingFileNames.includes(newFileName)) {
     return t('mainMenuListItem.nameAlreadyExists');
   }
@@ -66,8 +64,7 @@ export function MainMenuListItem({
   isDisabled,
   color,
   progress,
-  fileExtension,
-  slugFallback,
+  toFileName,
   compact,
   existingFileNames,
   emoji,
@@ -114,7 +111,7 @@ export function MainMenuListItem({
 
   const handleChange = (value: string) => {
     setDraftValue(value);
-    setError(validate(value, fileName, existingFileNames, fileExtension, slugFallback));
+    setError(validate(value, fileName, existingFileNames, toFileName));
   };
 
   const handleDiscard = () => {
@@ -129,13 +126,7 @@ export function MainMenuListItem({
   };
 
   const handleCommit = async () => {
-    const validationError = validate(
-      draftValue,
-      fileName,
-      existingFileNames,
-      fileExtension,
-      slugFallback
-    );
+    const validationError = validate(draftValue, fileName, existingFileNames, toFileName);
     if (validationError) {
       setError(validationError);
       return;

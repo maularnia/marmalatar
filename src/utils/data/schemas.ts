@@ -2,17 +2,29 @@ import { z } from 'zod';
 import { TLanguage } from '@src/types';
 import { ThemeColors } from '@src/theme/utils';
 import { defineVersionedContract, createVersionedReader } from '@bridge/versioning';
-import { ProjectStateV1Schema } from '@bridge/definitions/projectState';
-import type { TGlossaryListEntry } from '@bridge/definitions/glossaryEntry';
+import { ProjectStateV2Schema } from '@bridge/definitions/projectState';
+import {
+  GlossaryFileHeaderSchema,
+  GlossaryPairSchema,
+  type TGlossaryListEntry,
+} from '@bridge/definitions/glossaryEntry';
+import {
+  ProjectFileBodySchema,
+  ProjectFileHeaderSchema,
+  ProjectLineSchema,
+} from '@bridge/definitions/projectEntry';
+import {
+  PromptTemplateFileBodySchema,
+  PromptTemplateFileHeaderSchema,
+} from '@bridge/definitions/promptTemplateEntry';
 
 const LanguageCodeSchema = z.enum(Object.values(TLanguage) as [TLanguage, ...TLanguage[]]);
 
-const PromptTemplateFileV1Schema = z.object({
-  version: z.literal(1).default(1),
-  title: z.string(),
-  emoji: z.string(),
-  promptTemplate: z.string().optional(),
-});
+// File schemas are composed from the bridge's header and body schemas, with values only this app
+// knows (languages, theme colors) narrowed
+const PromptTemplateFileV1Schema = PromptTemplateFileHeaderSchema.merge(
+  PromptTemplateFileBodySchema
+);
 export type PromptTemplateFileDataType = z.infer<typeof PromptTemplateFileV1Schema>;
 
 const PromptTemplateFileVersioning = defineVersionedContract({
@@ -25,18 +37,10 @@ const PromptTemplateFileVersioning = defineVersionedContract({
 });
 export const readPromptTemplateFileContract = createVersionedReader(PromptTemplateFileVersioning);
 
-const AIGlossaryEntrySchema = z.object({
-  original: z.string(),
-  translation: z.string(),
-});
-
-const AIGlossaryFileV1Schema = z.object({
-  version: z.literal(1).default(1),
-  title: z.string(),
-  emoji: z.string(),
+const AIGlossaryFileV1Schema = GlossaryFileHeaderSchema.extend({
   sourceLanguage: LanguageCodeSchema,
   targetLanguage: LanguageCodeSchema,
-  list: z.array(AIGlossaryEntrySchema),
+  list: z.array(GlossaryPairSchema),
 });
 export type AIGlossaryFileDataType = z.infer<typeof AIGlossaryFileV1Schema>;
 
@@ -50,16 +54,6 @@ const AIGlossaryFileVersioning = defineVersionedContract({
 });
 export const readGlossaryFileContract = createVersionedReader(AIGlossaryFileVersioning);
 
-const TranslationLineSchema = z.object({
-  line_no: z.number(),
-  start_time: z.number(),
-  end_time: z.number(),
-  input: z.string(),
-  output: z.string(),
-  character: z.string().optional(),
-  completed: z.boolean().optional(),
-});
-
 const CharacterPoolItemSchema = z.object({
   name: z.string(),
   color: z.enum(ThemeColors),
@@ -68,20 +62,20 @@ const CharacterPoolItemSchema = z.object({
 // The file mirrors the store directly: `project`/`editor` sections match the
 // `project`/`editor` redux slices 1:1 (only the subset of each slice that's
 // actual project content, not session/device-specific UI state).
-export const ProjectSaveV1Schema = z.object({
-  version: z.literal(1).default(1),
-  project: z.object({
-    projectId: z.string(),
+export const ProjectSaveV1Schema = ProjectFileHeaderSchema.extend({
+  project: ProjectFileHeaderSchema.shape.project.extend({
     projectName: z.string().min(1, 'Project name is required.'),
-    emoji: z.string(),
     sourceLanguage: LanguageCodeSchema,
     targetLanguage: LanguageCodeSchema,
   }),
-  editor: z.object({
-    lines: z.array(TranslationLineSchema),
+  editor: ProjectFileBodySchema.shape.editor.extend({
+    lines: z.array(ProjectLineSchema),
     characterPool: z.array(CharacterPoolItemSchema),
   }),
 });
+
+// The part of the file the renderer writes; the project service owns the rest
+export type TProjectFileBody = Pick<TProjectFileData, 'editor'>;
 
 export type TProjectFileData = z.infer<typeof ProjectSaveV1Schema>;
 
@@ -95,10 +89,11 @@ const ProjectSaveVersioning = defineVersionedContract({
 });
 export const readProjectSaveFile = createVersionedReader(ProjectSaveVersioning);
 
-// Device-specific editor/UI preferences for a project, persisted in electron-store
-// keyed by projectId instead of in the .mrml file (they aren't project content).
-// Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-export const ProjectEditorStateSchema = ProjectStateV1Schema;
+// Device-specific data for a project, persisted in electron-store keyed by projectId instead of in
+// the .mrml file (it isn't project content). Re-exported from the shared bridge contract as-is --
+// no FE-only enums involved. The renderer writes only the preferences in it, see
+// TProjectStatePrefs.
+export const ProjectEditorStateSchema = ProjectStateV2Schema;
 
 export type TProjectEditorState = z.infer<typeof ProjectEditorStateSchema>;
 

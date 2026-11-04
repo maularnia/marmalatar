@@ -18,13 +18,9 @@ export const useDeleteProjectConfirmation = () => {
     dismissButton: { children: t('shared.no') },
   });
   return {
-    confirmDeleteProject: async (
-      filePath: string,
-      projectName: string,
-      projectId: string
-    ): Promise<boolean> => {
+    confirmDeleteProject: async (projectName: string, projectId: string): Promise<boolean> => {
       if (!(await confirm({ projectName }))) return false;
-      await dispatch(deleteProjectFile(filePath));
+      await dispatch(deleteProjectFile(projectId));
       if (projectId === currentProjectId) {
         dispatch(resetProject());
         navigate('/');

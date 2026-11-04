@@ -1,25 +1,37 @@
+import { randomUUID } from 'crypto';
 import type { IpcMainInvokeEvent } from 'electron';
 import { z } from 'zod';
-import { ProjectStateV1Schema, type ProjectState } from '../../../bridge/definitions/projectState';
+import { readProjectState } from '../../../bridge/contracts';
 import {
+  ProjectFileBodySchema,
   ProjectFileHeaderSchema,
+  type TProjectCreateInput,
+  type TProjectFileBody,
+  type TProjectFileHeader,
   type TProjectListEntry,
 } from '../../../bridge/definitions/projectEntry';
-import { readProjectState } from '../../../bridge/contracts';
+import {
+  ProjectStateV2Schema,
+  type ProjectState,
+  type TProjectStatePrefs,
+} from '../../../bridge/definitions/projectState';
+import { PROJECT_EXTENSION, toProjectFileName } from '../../../bridge/fileNames';
 import { readJsonFile } from '../../utils/readJsonFile';
 import { runWithFallback } from '../../utils/runWithFallback';
 import { normalizeEntries } from '../scanner/normalizeEntries';
+import type { TScanEntry } from '../scanner/scanFolder';
 import { ScannerService, scanLegacyTrackedFolder } from '../scanner/ScannerService';
 import { readLegacyEntries } from '../service/readLegacyEntries';
 import { Service } from '../service/Service';
 import type { TVersioning } from '../service/storeVersioning';
 
-const EXTENSION = '.mrml';
+type THeader = TProjectFileHeader['project'];
 
-type TProjectEntry = TProjectListEntry & {
+type TProjectEntry = Omit<TProjectListEntry, 'translationProgress'> & {
   fileHash: string;
-  // Device-specific editor state (editor mode, video collapsed, video path). Kept here rather than
-  // in the .mrml file because it isn't project content.
+  // Device-specific state (editor mode, video collapsed, video path) and the progress computed
+  // from the file. Kept here rather than in the .mrml file because it isn't project content.
+  // Stored as written, possibly by an older build: read it through readState.
   state: ProjectState;
 };
 
@@ -29,17 +41,89 @@ type TProjectData = {
   scanHash: string;
 };
 
-// Version 0 kept list metadata in the scanner's folderScanCache.projects, keyed by filePath
+// Version 0 kept list metadata in the scanner's folderScanCache.projects, keyed by filePath. Only
+// the order and the projectId are taken from it: the cache has no languages, so the header and
+// progress are read from the file itself.
 const LegacyProjectCacheEntrySchema = z.object({
   filePath: z.string(),
-  translationProgress: z.number().catch(0),
-  project: z.object({ projectId: z.string(), projectName: z.string(), emoji: z.string() }),
+  project: z.object({ projectId: z.string() }),
 });
 
-const DEFAULT_STATE: ProjectState = ProjectStateV1Schema.parse({});
+// What the list needs from a .mrml file. Lines that don't parse count as no progress rather than
+// dropping the project from the list: the renderer reports the broken file when it's opened.
+const ProjectListFileSchema = ProjectFileHeaderSchema.extend({
+  editor: z
+    .object({ lines: z.array(z.object({ completed: z.boolean().optional() })) })
+    .catch({ lines: [] }),
+});
 
-function toListEntry({ fileHash: _, state: __, ...entry }: TProjectEntry): TProjectListEntry {
-  return entry;
+// Share of lines marked completed, 0..100
+function computeTranslationProgress(lines: readonly { completed?: boolean }[]): number {
+  if (!lines.length) return 0;
+  return (lines.filter((line) => Boolean(line.completed)).length / lines.length) * 100;
+}
+
+type TExtracted = { header: THeader; translationProgress: number };
+
+function extractProjectFile(file: TScanEntry): TExtracted | null {
+  const data = readJsonFile(file.filePath, ProjectListFileSchema);
+  if (!data) return null;
+  return {
+    header: data.project,
+    translationProgress: computeTranslationProgress(data.editor.lines),
+  };
+}
+
+const DEFAULT_STATE: ProjectState = ProjectStateV2Schema.parse({});
+
+// The stored state brought up to the current contract version
+function readState(state: ProjectState | undefined): ProjectState {
+  return state ? runWithFallback(() => readProjectState(state), DEFAULT_STATE) : DEFAULT_STATE;
+}
+
+function buildEntry(
+  file: TScanEntry,
+  { header, translationProgress }: TExtracted,
+  // The entry stored under the same projectId, so a re-saved or renamed file keeps what the file
+  // doesn't hold
+  previous:
+    | (Pick<TProjectEntry, 'state'> & Partial<Pick<TProjectEntry, 'order' | 'hidden'>>)
+    | undefined,
+  order: number
+): TProjectEntry {
+  return {
+    ...header,
+    fileName: file.fileName,
+    filePath: file.filePath,
+    fileHash: file.fileHash,
+    order: previous?.order ?? order,
+    hidden: previous?.hidden ?? false,
+    state: { ...readState(previous?.state), translationProgress },
+  };
+}
+
+function toListEntry({ fileHash: _, state, ...entry }: TProjectEntry): TProjectListEntry {
+  return {
+    ...entry,
+    translationProgress: readState(state).translationProgress,
+  };
+}
+
+function headerOf(entry: TProjectEntry): THeader {
+  const { projectId, projectName, emoji, sourceLanguage, targetLanguage } = entry;
+  return { projectId, projectName, emoji, sourceLanguage, targetLanguage };
+}
+
+// The whole .mrml file. The header comes from the project service, the body from the renderer.
+// Both are validated, so a stale list entry can't write a file the list would then drop.
+function assembleFile(
+  header: THeader,
+  body: TProjectFileBody
+): TProjectFileHeader & TProjectFileBody {
+  return {
+    ...ProjectFileHeaderSchema.parse({ project: header }),
+    ...ProjectFileBodySchema.parse(body),
+  };
 }
 
 export class ProjectService extends Service<TProjectData> {
@@ -59,23 +143,16 @@ export class ProjectService extends Service<TProjectData> {
         LegacyProjectCacheEntrySchema
       ).forEach((legacy, index) => {
         const file = filesByPath.get(legacy.filePath);
-        const { projectId, projectName, emoji } = legacy.project;
-        if (file?.extension !== EXTENSION || projectId in list) return;
+        if (file?.extension !== PROJECT_EXTENSION) return;
+        const extracted = extractProjectFile(file);
+        const { projectId } = legacy.project;
+        // A file that changed since the cache was written may hold another project by now
+        if (!extracted || extracted.header.projectId !== projectId || projectId in list) return;
         const legacyState = legacyStates[projectId];
-        list[projectId] = {
-          projectId,
-          fileName: file.fileName,
-          filePath: file.filePath,
-          fileHash: file.fileHash,
-          projectName,
-          emoji,
-          translationProgress: legacy.translationProgress,
-          order: index,
-          hidden: false,
-          state: legacyState
-            ? runWithFallback(() => readProjectState(legacyState), DEFAULT_STATE)
-            : DEFAULT_STATE,
-        };
+        const state = legacyState
+          ? runWithFallback(() => readProjectState(legacyState), DEFAULT_STATE)
+          : DEFAULT_STATE;
+        list[projectId] = buildEntry(file, extracted, { state }, index);
       });
       return { list };
     },
@@ -87,21 +164,85 @@ export class ProjectService extends Service<TProjectData> {
         .sort((a, b) => a.order - b.order)
         .map(toListEntry)
     ),
+    // The whole file as stored. The renderer validates it against its own contract, and reads the
+    // header from it but never writes it.
+    this.handle('get', (_: IpcMainInvokeEvent, projectId: string) => {
+      const entry = this.readList()[projectId];
+      return entry ? ScannerService.getInstance().readFile(entry.fileName) : null;
+    }),
+    // Writes the renderer's body under the listed header. The returned entry carries the progress
+    // computed from the new lines.
+    this.handle('set', (_: IpcMainInvokeEvent, projectId: string, body: TProjectFileBody) => {
+      const entry = this.getEntry(projectId);
+      ScannerService.getInstance().writeFile(entry.fileName, assembleFile(headerOf(entry), body));
+      return this.getListEntry(projectId);
+    }),
+    // The file is named after the project. null when a file with that name already exists.
     this.handle(
-      'get-state',
-      (_: IpcMainInvokeEvent, projectId: string) => this.readList()[projectId]?.state ?? null
-    ),
-    // The file has to be written first: a project the scan doesn't list has no entry to hold it
-    this.handle(
-      'set-state',
-      (_: IpcMainInvokeEvent, projectId: string, projectState: ProjectState) => {
-        this.updateEntry(projectId, { state: ProjectStateV1Schema.parse(projectState) });
+      'create',
+      (_: IpcMainInvokeEvent, input: TProjectCreateInput, body: TProjectFileBody) => {
+        const header: THeader = { ...input, projectId: randomUUID() };
+        ProjectFileHeaderSchema.shape.project.parse(header);
+        const fileName = toProjectFileName(header.projectName);
+        const scanner = ScannerService.getInstance();
+        if (scanner.fileExists(fileName)) return null;
+        scanner.writeFile(fileName, assembleFile(header, body));
+        return this.getListEntry(header.projectId);
       }
     ),
+    // Renames the file along with the project. null when another file already has the new name.
+    this.handle('rename', (_: IpcMainInvokeEvent, projectId: string, projectName: string) => {
+      const entry = this.getEntry(projectId);
+      const fileName = toProjectFileName(projectName);
+      const scanner = ScannerService.getInstance();
+      if (fileName !== entry.fileName && scanner.fileExists(fileName)) return null;
+      this.writeHeader(entry, { projectName });
+      scanner.moveFile(entry.fileName, fileName);
+      return this.getListEntry(projectId);
+    }),
+    this.handle('set-emoji', (_: IpcMainInvokeEvent, projectId: string, emoji: string) => {
+      this.writeHeader(this.getEntry(projectId), { emoji });
+      return this.getListEntry(projectId);
+    }),
+    // Languages live in the file, so they travel with it to another device
     this.handle(
-      'update-progress',
-      (_: IpcMainInvokeEvent, projectId: string, translationProgress: number) => {
-        this.updateEntry(projectId, { translationProgress });
+      'set-languages',
+      (
+        _: IpcMainInvokeEvent,
+        projectId: string,
+        sourceLanguage: string,
+        targetLanguage: string
+      ) => {
+        const entry = this.getEntry(projectId);
+        if (entry.sourceLanguage !== sourceLanguage || entry.targetLanguage !== targetLanguage) {
+          this.writeHeader(entry, { sourceLanguage, targetLanguage });
+        }
+        return this.getListEntry(projectId);
+      }
+    ),
+    // The entry, with its state, goes with the file on the next read
+    this.handle('delete', (_: IpcMainInvokeEvent, projectId: string) => {
+      ScannerService.getInstance().deleteFile(this.getEntry(projectId).fileName);
+    }),
+    this.handle('get-state', (_: IpcMainInvokeEvent, projectId: string) => {
+      const entry = this.readList()[projectId];
+      return entry ? readState(entry.state) : null;
+    }),
+    // Only the renderer's preferences: computed fields such as the progress are kept
+    this.handle(
+      'set-state',
+      (_: IpcMainInvokeEvent, projectId: string, prefs: TProjectStatePrefs) => {
+        const list = this.readList();
+        const entry = list[projectId];
+        if (!entry) throw new Error(`No project with id ${projectId} in the tracked folder`);
+        const { editorMode, isVideoCollapsed, videoPath } = prefs;
+        const state = ProjectStateV2Schema.parse({
+          ...readState(entry.state),
+          editorMode,
+          isVideoCollapsed,
+          videoPath,
+        });
+        this.store.set('list', { ...list, [projectId]: { ...entry, state } });
       }
     ),
   ] as const;
@@ -110,15 +251,27 @@ export class ProjectService extends Service<TProjectData> {
   // and waveforms
   listVideoPaths(): string[] {
     return Object.values(this.readList())
-      .map(({ state }) => state.videoPath)
+      .map((entry) => readState(entry.state).videoPath)
       .filter((videoPath): videoPath is string => Boolean(videoPath));
   }
 
-  private updateEntry(projectId: string, patch: Partial<TProjectEntry>): void {
-    const list = this.readList();
-    const entry = list[projectId];
+  private getEntry(projectId: string): TProjectEntry {
+    const entry = this.readList()[projectId];
     if (!entry) throw new Error(`No project with id ${projectId} in the tracked folder`);
-    this.store.set('list', { ...list, [projectId]: { ...entry, ...patch } });
+    return entry;
+  }
+
+  // Read after a write, so the list already holds the new file and its progress
+  private getListEntry(projectId: string): TProjectListEntry {
+    return toListEntry(this.getEntry(projectId));
+  }
+
+  // Rewrites the file with header fields replaced, keeping the body as stored
+  private writeHeader(entry: TProjectEntry, patch: Partial<Omit<THeader, 'projectId'>>): void {
+    const scanner = ScannerService.getInstance();
+    const body = ProjectFileBodySchema.safeParse(scanner.readFile(entry.fileName));
+    if (!body.success) throw new Error(`Cannot read project file ${entry.fileName}`);
+    scanner.writeFile(entry.fileName, assembleFile({ ...headerOf(entry), ...patch }, body.data));
   }
 
   // The list, renormalized against the scanner's current listing
@@ -127,24 +280,15 @@ export class ProjectService extends Service<TProjectData> {
     let nextOrder = Math.max(-1, ...Object.values(previousList).map(({ order }) => order)) + 1;
     const { list, scanHash, changed } = normalizeEntries({
       scan: ScannerService.getInstance().scan(),
-      extension: EXTENSION,
+      extension: PROJECT_EXTENSION,
       list: previousList,
       scanHash: this.store.get('scanHash'),
-      extract: (file) => readJsonFile(file.filePath, ProjectFileHeaderSchema)?.project ?? null,
-      keyOf: ({ projectId }) => projectId,
-      build: (file, { projectId, projectName, emoji }, previous): TProjectEntry => ({
-        projectId,
-        fileName: file.fileName,
-        filePath: file.filePath,
-        fileHash: file.fileHash,
-        projectName,
-        emoji,
-        // Progress is computed by the renderer from the lines, and stays as last reported
-        translationProgress: previous?.translationProgress ?? 0,
-        order: previous?.order ?? nextOrder++,
-        hidden: previous?.hidden ?? false,
-        state: previous?.state ?? DEFAULT_STATE,
-      }),
+      extract: extractProjectFile,
+      keyOf: ({ header }) => header.projectId,
+      // Every new or changed file is read whole, so the progress is recomputed after each write
+      // and after an edit made outside the app
+      build: (file, extracted, previous) =>
+        buildEntry(file, extracted, previous, previous ? previous.order : nextOrder++),
     });
     if (changed) {
       this.store.set('list', list);

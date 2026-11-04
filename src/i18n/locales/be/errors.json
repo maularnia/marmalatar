@@ -80,16 +80,13 @@
     "workerFailed": "Не атрымалася запусціць праверку правапісу"
   },
   "project": {
-    "corrupted": "Пашкоджаны файл праекту",
     "invalidFile": "Неадпаведнае значэнне поля [{{path}}]: {{message}}",
     "incompatibleVersion": "Праект быў створаны ў навейшай версіі праграмы. Аднавіце праграму каб адчыніць.",
     "cannotRead": "Не атрымалася прачытаць файл",
-    "cannotSaveWithoutName": "Нельга захаваць праект без назвы",
     "nameRequired": "Назву нельга пакінуць пустой",
     "alreadyExists": "Такі файл ужо існуе",
     "folderNotTracked": "Абярыце працоўную папку",
-    "editorStateReadFailed": "Не атрымалася прачытаць стан рэдактара",
-    "progressPersistFailed": "Не атрымалася захаваць прагрэс перакладу"
+    "editorStateReadFailed": "Не атрымалася прачытаць стан рэдактара"
   },
   "createNewProject": {
     "emojiSelectionFailed": "Не атрымалася падабраць эмодзі для праекта",

@@ -3,15 +3,13 @@ import { rootReducer } from './root';
 import type { RootState } from './root';
 import { persistProjectStateMiddleware } from './persistProjectState';
 import { persistEditorStateMiddleware } from './persistEditorState';
-import { persistProjectProgressMiddleware } from './persistProjectProgress';
 
 export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(
       persistProjectStateMiddleware.middleware,
-      persistEditorStateMiddleware.middleware,
-      persistProjectProgressMiddleware.middleware
+      persistEditorStateMiddleware.middleware
     ),
 });
 

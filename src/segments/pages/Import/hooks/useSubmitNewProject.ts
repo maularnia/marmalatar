@@ -28,10 +28,6 @@ export function useSubmitNewProject() {
     async (params: SubmitNewProjectParams) => {
       if (!folder) return;
 
-      const sanitizedName = params.projectName.trim().replace(/[^\w.-]+/g, '_') || 'project';
-      const sanitizedFileName = `${sanitizedName}.mrml`;
-      const filePath = `${folder}/${sanitizedFileName}`;
-
       try {
         await load(
           {
@@ -45,7 +41,7 @@ export function useSubmitNewProject() {
               'Demanding more RAM',
             ],
           },
-          dispatch(createNewProject({ ...params, filePath }))
+          dispatch(createNewProject(params))
         );
         navigate('/workspace');
       } catch (error) {

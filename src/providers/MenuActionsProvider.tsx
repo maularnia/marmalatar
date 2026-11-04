@@ -399,7 +399,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
 
   const handleDeleteProject = useCallback(
     async (filePath: string, title: string, projectId: string) => {
-      if (!(await confirmDeleteProject(filePath, title, projectId))) {
+      if (!(await confirmDeleteProject(title, projectId))) {
         // Dismissed -- focus goes back to the item that was under consideration.
         requestAnimationFrame(() => handleFocusMenuItem(filePath));
         return;

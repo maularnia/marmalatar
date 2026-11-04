@@ -1,9 +1,8 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
-import { ProjectSaveV1Schema } from '@src/utils/data/schemas';
+import { ProjectSaveV1Schema, type TProjectFileBody } from '@src/utils/data/schemas';
 import { AppSettingsSchema, buildAppSettingsSaveData } from '@utils/appSettingsFile';
-import { z } from 'zod';
 import type { AppDispatch, RootState } from './root';
-import { saveProjectToDisk } from './thunks';
+import { saveProjectLanguages, saveProjectToDisk } from './thunks';
 import { IPC } from '@src/services/ipc/IPC';
 
 // `version` is a wire/persistence-only field added by the bridge contract's VersionedSchema base --
@@ -12,39 +11,18 @@ const APP_SETTINGS_KEYS = AppSettingsSchema.keyof().options.filter(
   (key) => key !== 'version'
 ) as (keyof RootState['app'])[];
 
-type PersistedFileShape = z.infer<typeof ProjectSaveV1Schema>;
-type PersistedProjectFields = keyof PersistedFileShape['project'];
-type PersistedEditorFields = keyof PersistedFileShape['editor'];
+type PersistedEditorFields = keyof TProjectFileBody['editor'];
 
-// Derived directly from ProjectSaveV1Schema instead of hand-maintained, so the file
-// schema and what's watched for autosave can never silently drift apart -- the
-// `satisfies` clause fails to compile if the schema names a field that doesn't
-// exist on the matching redux slice.
-const AUTO_SAVE_WATCHED_PATHS = {
-  project: Object.keys(ProjectSaveV1Schema.shape.project.shape) as PersistedProjectFields[],
-  editor: Object.keys(ProjectSaveV1Schema.shape.editor.shape) as PersistedEditorFields[],
-} as const satisfies {
-  project: readonly (keyof RootState['project'])[];
-  editor: readonly (keyof RootState['editor'])[];
-};
-
-type AutoSaveWatchedPathsType = typeof AUTO_SAVE_WATCHED_PATHS;
+// Only the file body: the header (name, emoji, languages) is written by the main process through
+// its own calls. Derived from the body schema instead of hand-maintained, so the file schema and
+// what's watched for autosave can never silently drift apart -- the `satisfies` clause fails to
+// compile if the schema names a field that doesn't exist on the editor slice.
+const AUTO_SAVE_WATCHED_EDITOR_FIELDS = Object.keys(
+  ProjectSaveV1Schema.shape.editor.shape
+) as PersistedEditorFields[] satisfies readonly (keyof RootState['editor'])[];
 
 function hasAutoSaveStateChanged(prev: RootState, next: RootState): boolean {
-  for (const [sliceKey, props] of Object.entries(AUTO_SAVE_WATCHED_PATHS) as [
-    keyof AutoSaveWatchedPathsType,
-    readonly string[],
-  ][]) {
-    for (const prop of props) {
-      if (
-        prev[sliceKey][prop as keyof (typeof prev)[typeof sliceKey]] !==
-        next[sliceKey][prop as keyof (typeof next)[typeof sliceKey]]
-      ) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return AUTO_SAVE_WATCHED_EDITOR_FIELDS.some((field) => prev.editor[field] !== next.editor[field]);
 }
 
 export const persistProjectStateMiddleware = createListenerMiddleware();
@@ -57,11 +35,28 @@ persistProjectStateMiddleware.startListening({
     api.cancelActiveListeners();
     await api.delay(1500);
 
-    const state = api.getState() as RootState;
-    const { projectId, currentProjectFilePath: filePath } = state.project;
-    if (!projectId || !filePath) return;
+    // Skips a project that has no file yet
+    await (api.dispatch as AppDispatch)(saveProjectToDisk());
+  },
+});
 
-    await (api.dispatch as AppDispatch)(saveProjectToDisk(filePath));
+// Languages are part of the file header, so they go through their own call. Rare enough that a
+// file write per change is fine; the main process skips the write when nothing changed, which is
+// the case right after a project is loaded or created.
+persistProjectStateMiddleware.startListening({
+  predicate: (_action, currentState, previousState) => {
+    const prev = (previousState as RootState).project;
+    const next = (currentState as RootState).project;
+    return (
+      prev.sourceLanguage !== next.sourceLanguage || prev.targetLanguage !== next.targetLanguage
+    );
+  },
+
+  effect: async (_action, api) => {
+    api.cancelActiveListeners();
+    // Swapping the direction changes both languages in two actions: write once
+    await api.delay(100);
+    await (api.dispatch as AppDispatch)(saveProjectLanguages());
   },
 });
 

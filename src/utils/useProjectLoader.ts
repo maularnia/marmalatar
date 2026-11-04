@@ -46,7 +46,7 @@ export function useProjectLoader() {
         preview: string | null
       ) {
         try {
-          await dispatch(loadProjectFromDisk(proj.filePath));
+          await dispatch(loadProjectFromDisk(proj));
         } catch (error) {
           emitProjectLoadFailedMessage(pushMessage, toErrorMessage(error));
           return;
