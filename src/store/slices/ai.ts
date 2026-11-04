@@ -109,7 +109,7 @@ const aiSlice = createSlice({
   },
   extraReducers(builder) {
     builder.addMatcher(
-      isAnyOf(workingFolder.setFolder, prompt.setSelectedPromptTemplateFileName),
+      isAnyOf(workingFolder.folderChanged, prompt.setSelectedPromptTemplateFileName),
       (state) => {
         activeController?.cancel();
         activeController = null;

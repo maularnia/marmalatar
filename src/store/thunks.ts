@@ -89,9 +89,8 @@ export const initWorkingFolder =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
     try {
-      const savedFolder = await workingFolder.getTrackedFolder();
+      const savedFolder = await dispatch(workingFolder.loadTrackedFolder());
       if (!savedFolder) return;
-      dispatch(workingFolder.setFolder(savedFolder));
       // The main process keeps the last listing, so no live scan is needed at startup
       await dispatch(refreshAll());
     } finally {
@@ -121,8 +120,7 @@ export const pickFolder =
         await dispatch(glossaries.save());
       }
 
-      await workingFolder.setTrackedFolder(selected);
-      dispatch(workingFolder.setFolder(selected));
+      await dispatch(workingFolder.setTrackedFolder(selected));
 
       dispatch(editor.resetMemoryState());
       dispatch(overlays.closeAll());

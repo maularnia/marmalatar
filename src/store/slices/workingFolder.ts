@@ -1,6 +1,7 @@
 import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IPC } from '@src/services/ipc/IPC';
+import type { AppDispatch } from '@store/root';
 
 // The tracked folder only. The project, prompt template and glossary lists live in the slices that
 // own those files (project, aiPromptEditor); refreshing all of them at once is in thunks.ts, since
@@ -8,11 +9,11 @@ import { IPC } from '@src/services/ipc/IPC';
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
 
-async function getTrackedFolder(): Promise<string | null> {
+async function readTrackedFolder(): Promise<string | null> {
   return IPC.files.getTrackedFolder();
 }
 
-async function setTrackedFolder(folder: string): Promise<void> {
+async function saveTrackedFolder(folder: string): Promise<void> {
   await IPC.files.setTrackedFolder(folder);
 }
 
@@ -50,7 +51,9 @@ const workingFolderSlice = createSlice({
   name: 'workingFolder',
   initialState,
   reducers: {
-    setFolder(state, action: PayloadAction<string | null>) {
+    // The store's side of a folder change, for other slices to react to. Change the folder with
+    // setTrackedFolder, which also persists it in the main process.
+    folderChanged(state, action: PayloadAction<string | null>) {
       state.folder = action.payload;
     },
     setInitialized(state, action: PayloadAction<boolean>) {
@@ -67,24 +70,43 @@ const workingFolderSlice = createSlice({
   },
 });
 
-const { setFolder, setInitialized, setIsBusy } = workingFolderSlice.actions;
+const { folderChanged, setInitialized, setIsBusy } = workingFolderSlice.actions;
 
 const { selectFolder, selectInitialized, selectWorkingFolderIsBusy } = workingFolderSlice.selectors;
 
 export default workingFolderSlice.reducer;
+
+// ── Thunks ───────────────────────────────────────────────────────────────────
+
+// Persists the folder in the main process, then puts it in the store
+const setTrackedFolder =
+  (folder: string) =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    await saveTrackedFolder(folder);
+    dispatch(folderChanged(folder));
+  };
+
+// Puts the folder the main process remembers in the store, and returns it. null when none is set.
+const loadTrackedFolder =
+  () =>
+  async (dispatch: AppDispatch): Promise<string | null> => {
+    const folder = await readTrackedFolder();
+    if (folder) dispatch(folderChanged(folder));
+    return folder;
+  };
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const workingFolder = api('workingFolder', {
   checkForeignFileExists,
   cleanupMediaCache,
-  getTrackedFolder,
+  folderChanged,
+  loadTrackedFolder,
   rescanFolder,
   selectFolder,
   selectFolderDialog,
   selectInitialized,
   selectWorkingFolderIsBusy,
-  setFolder,
   setInitialized,
   setIsBusy,
   setTrackedFolder,
