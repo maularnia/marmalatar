@@ -3,9 +3,7 @@ import { TLanguage } from '@src/types';
 import { ThemeColors } from '@src/theme/utils';
 import { defineVersionedContract, createVersionedReader } from '@bridge/versioning';
 import { ProjectStateV1Schema } from '@bridge/definitions/projectState';
-import { ProjectCacheEntryV1Schema as ProjectCacheEntryContractSchema } from '@bridge/definitions/projectCacheEntry';
-import { PromptTemplateCacheEntryV1Schema as PromptTemplateCacheEntryContractSchema } from '@bridge/definitions/promptTemplateCacheEntry';
-import { GlossaryCacheEntryContractV1Schema } from '@bridge/definitions/glossaryCacheEntry';
+import type { TGlossaryListEntry } from '@bridge/definitions/glossaryEntry';
 
 const LanguageCodeSchema = z.enum(Object.values(TLanguage) as [TLanguage, ...TLanguage[]]);
 
@@ -104,36 +102,14 @@ export const ProjectEditorStateSchema = ProjectStateV1Schema;
 
 export type TProjectEditorState = z.infer<typeof ProjectEditorStateSchema>;
 
-// Lightweight, persisted folder-scan cache: everything the Main Menu list needs to
-// render (name/emoji/progress) without reading any project/prompt-template/glossary
-// file content from disc. Kept alongside other project info (not a separate
-// progress-only bucket) so the Main Menu can hydrate from a single electron-store read.
-// sourceLanguage/targetLanguage are deliberately not cached here -- nothing reads them
-// off the list entry (only the live `project` redux slice, populated on project open,
-// is ever consulted), so caching them would just be dead weight kept in sync for nothing.
-// Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-const ProjectCacheEntrySchema = ProjectCacheEntryContractSchema;
-export type TProjectCacheEntry = z.infer<typeof ProjectCacheEntrySchema>;
-
-// Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-const PromptTemplateCacheEntrySchema = PromptTemplateCacheEntryContractSchema;
-export type TPromptTemplateCacheEntry = z.infer<typeof PromptTemplateCacheEntrySchema>;
-
-// Narrows the bridge contract's loose sourceLanguage/targetLanguage (plain strings) to this
-// app's TLanguage enum.
-const GlossaryCacheEntrySchema = GlossaryCacheEntryContractV1Schema.extend({
+// Narrows the glossary list entry's loose sourceLanguage/targetLanguage (plain strings) to this
+// app's TLanguage enum
+export const GlossaryListEntrySchema = z.object({
+  fileName: z.string(),
+  filePath: z.string(),
+  title: z.string(),
+  emoji: z.string(),
   sourceLanguage: LanguageCodeSchema,
   targetLanguage: LanguageCodeSchema,
-});
-export type TGlossaryCacheEntry = z.infer<typeof GlossaryCacheEntrySchema>;
-
-// Rebuilt (rather than re-exporting the bridge contract's FolderScanResultV1Schema) so its
-// `glossaries` record uses the strict, FE-narrowed GlossaryCacheEntrySchema above.
-export const FolderScanCacheSchema = z.object({
-  folder: z.string(),
-  scannedAt: z.number(),
-  projects: z.record(z.string(), ProjectCacheEntrySchema).catch({}),
-  promptTemplates: z.record(z.string(), PromptTemplateCacheEntrySchema).catch({}),
-  glossaries: z.record(z.string(), GlossaryCacheEntrySchema).catch({}),
-});
-export type TFolderScanCache = z.infer<typeof FolderScanCacheSchema>;
+}) satisfies z.ZodType<TGlossaryListEntry>;
+export type TGlossaryEntry = z.infer<typeof GlossaryListEntrySchema>;

@@ -163,13 +163,13 @@ export default function FileList() {
             <List>
               {projects.length
                 ? projects.map((project) => {
-                    const isActive = project.project.projectId === currentProjectId;
+                    const isActive = project.projectId === currentProjectId;
                     return (
                       <MainMenuListItem
                         key={project.filePath}
                         itemKey={project.filePath}
                         fileName={project.fileName}
-                        title={project.project.projectName}
+                        title={project.projectName}
                         isActive={isActive}
                         isDisabled={listIsDisabled}
                         compact={compact}
@@ -178,7 +178,7 @@ export default function FileList() {
                         fileExtension=".mrml"
                         slugFallback="project"
                         existingFileNames={projectFileNames}
-                        emoji={project.project.emoji}
+                        emoji={project.emoji}
                         onEmojiSelect={(emoji) =>
                           void dispatch(updateProjectEmoji(project.filePath, emoji))
                         }
@@ -187,8 +187,8 @@ export default function FileList() {
                         onDelete={() =>
                           handleDeleteProject(
                             project.filePath,
-                            project.project.projectName,
-                            project.project.projectId
+                            project.projectName,
+                            project.projectId
                           )
                         }
                       />

@@ -15,7 +15,7 @@ import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideo
 import {
   checkExternalPathExists,
   getProjectEditorState,
-  TProjectCacheEntry,
+  TProjectEntry,
 } from '@src/utils/data/discIO';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
@@ -37,9 +37,9 @@ export function useProjectLoader() {
   const { load } = useLoader();
 
   const loadProject = useCallback(
-    async (project: TProjectCacheEntry) => {
+    async (project: TProjectEntry) => {
       async function applyAndNavigate(
-        proj: TProjectCacheEntry,
+        proj: TProjectEntry,
         videoPath: string | null,
         audioPath: string | null,
         peaks: number[],
@@ -65,11 +65,11 @@ export function useProjectLoader() {
       async function offerReselect(bannerKey: string) {
         const result = await selectVideo(t(bannerKey), t('videoSelect.continueWithoutVideoButton'));
         if (!result) {
-          await removeVideoPath(project.project.projectId);
+          await removeVideoPath(project.projectId);
           await applyAndNavigate(project, null, null, [], null);
           return;
         }
-        await persistVideoPath(project.project.projectId, result.videoPath);
+        await persistVideoPath(project.projectId, result.videoPath);
         await applyAndNavigate(
           project,
           result.videoPath,
@@ -81,7 +81,7 @@ export function useProjectLoader() {
 
       let editorState: Awaited<ReturnType<typeof getProjectEditorState>>;
       try {
-        editorState = await getProjectEditorState(project.project.projectId);
+        editorState = await getProjectEditorState(project.projectId);
       } catch (error) {
         emitProjectStateReadFailedMessage(pushMessage, toErrorMessage(error));
         return;

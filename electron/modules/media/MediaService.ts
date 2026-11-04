@@ -2,7 +2,6 @@ import { app, type IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { listFilesByExtension } from '../../utils/listFilesByExtension';
 import { runWithFallback } from '../../utils/runWithFallback';
 import { getFileCacheKey } from '../../utils/fileCacheKey';
 import { ProjectService } from '../project/ProjectService';
@@ -47,25 +46,11 @@ function ffmpegError(context: string, code: number | null, stderr: string): Erro
   );
 }
 
-function readProjectId(mrmlFilePath: string): string | null {
-  return runWithFallback(() => {
-    const raw = JSON.parse(fs.readFileSync(mrmlFilePath, 'utf8')) as {
-      project?: { projectId?: string };
-    };
-    return raw.project?.projectId ?? null;
-  }, null);
-}
-
 // Deletes cached audio/preview/waveform files whose source video isn't referenced by any
-// project's editor state -- resolves projectId -> videoPath entirely from disk/electron-store
-// (not the renderer) so it's correct even if the renderer's in-memory project list is stale.
+// project's editor state -- the project service resolves those from its own list (not the
+// renderer's) so it's correct even if the renderer's in-memory project list is stale.
 function cleanupOrphanedMediaCache(trackedFolder: string): void {
-  const projectService = ProjectService.getInstance();
-  const inUseVideoPaths = listFilesByExtension(trackedFolder, '.mrml')
-    .map(readProjectId)
-    .filter((id): id is string => id !== null)
-    .map((id) => projectService.getProjectState(id)?.videoPath)
-    .filter((p): p is string => Boolean(p));
+  const inUseVideoPaths = ProjectService.getInstance().listVideoPaths();
 
   const keepKeys = new Set<string>();
   for (const videoPath of inUseVideoPaths) {

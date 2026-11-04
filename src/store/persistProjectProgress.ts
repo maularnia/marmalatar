@@ -17,11 +17,12 @@ persistProjectProgressMiddleware.startListening({
     await api.delay(400);
 
     const state = api.getState() as RootState;
-    const { projectId, currentProjectFilePath: filePath } = state.project;
-    if (!projectId || !filePath) return;
+    const { projectId, currentProjectFilePath } = state.project;
+    // A project that hasn't been saved yet has no file, so the main process has no entry for it
+    if (!projectId || !currentProjectFilePath) return;
 
     await (api.dispatch as AppDispatch)(
-      persistProjectProgress(filePath, selectTranslationProgress(state))
+      persistProjectProgress(projectId, selectTranslationProgress(state))
     );
   },
 });

@@ -36,15 +36,13 @@ import { refreshSelectedPromptTemplateData } from './slices/aiTranslation';
 import {
   forceRescan,
   persistProjectProgress,
-  removeGlossaryFromCache,
-  removePromptTemplateFromCache,
+  refreshGlossaries,
+  refreshProjects,
+  refreshPromptTemplates,
   selectFolder,
   selectGlossaryItems,
   setFolder,
   setIsBusy,
-  upsertGlossaryInCache,
-  upsertProjectInCache,
-  upsertPromptTemplateInCache,
 } from './slices/disc';
 import {
   clearFileData,
@@ -150,15 +148,7 @@ export const createNewProject =
     }
 
     try {
-      await dispatch(
-        upsertProjectInCache({
-          version: 1,
-          filePath: params.filePath,
-          fileName: params.filePath.split(/[/\\]/).pop()!,
-          translationProgress: 0,
-          project: { projectId, projectName, emoji },
-        })
-      );
+      await dispatch(refreshProjects());
     } catch {
       throw new Error(t('createNewProject.cacheUpdateFailed'));
     }
@@ -216,7 +206,7 @@ export const loadProjectFromDisk =
     // Self-heals the cached progress the moment a project is opened (e.g. if the file
     // was edited outside the app since the cache was last written).
     try {
-      await dispatch(persistProjectProgress(data.filePath, data.translationProgress));
+      await dispatch(persistProjectProgress(data.project.projectId, data.translationProgress));
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : t('project.progressPersistFailed'));
     }
@@ -264,14 +254,7 @@ export const savePromptTemplate =
     const folder = selectFolder(state);
     if (!currentPromptTemplate || !folder || !promptTemplateData) return;
     await writePromptTemplateFile(currentPromptTemplate, promptTemplateData);
-    await dispatch(
-      upsertPromptTemplateInCache({
-        version: 1,
-        fileName: currentPromptTemplate,
-        title: promptTemplateData.title,
-        emoji: promptTemplateData.emoji,
-      })
-    );
+    await dispatch(refreshPromptTemplates());
     if (selectSelectedPromptTemplateFileName(state) === currentPromptTemplate) {
       void dispatch(refreshSelectedPromptTemplateData());
     }
@@ -284,7 +267,7 @@ export const deletePromptTemplate =
     const folder = selectFolder(state);
     if (!folder) return;
     await deleteFile(fileName);
-    await dispatch(removePromptTemplateFromCache(fileName));
+    await dispatch(refreshPromptTemplates());
     if (state.aiPromptEditor.currentPromptTemplate === fileName) {
       dispatch(resetAiPromptEditor());
     }
@@ -322,12 +305,7 @@ export const renamePromptTemplateFile =
       dispatch(setPromptTemplateData(updated));
     }
 
-    await dispatch(
-      upsertPromptTemplateInCache(
-        { version: 1, fileName: newFileName, title: trimmed, emoji: updated.emoji },
-        newFileName !== fileName ? fileName : undefined
-      )
-    );
+    await dispatch(refreshPromptTemplates());
   };
 
 export const updatePromptTemplateEmoji =
@@ -346,14 +324,7 @@ export const updatePromptTemplateEmoji =
       dispatch(setPromptTemplateData(updated));
     }
 
-    await dispatch(
-      upsertPromptTemplateInCache({
-        version: 1,
-        fileName,
-        title: updated.title,
-        emoji: updated.emoji,
-      })
-    );
+    await dispatch(refreshPromptTemplates());
   };
 
 export const createPromptTemplateFile =
@@ -377,7 +348,7 @@ export const createPromptTemplateFile =
       promptTemplate: DEFAULT_PROMPT_TEMPLATE,
     };
     await writePromptTemplateFile(fileName, data);
-    await dispatch(upsertPromptTemplateInCache({ version: 1, fileName, title: trimmed, emoji }));
+    await dispatch(refreshPromptTemplates());
     await dispatch(openPromptTemplateEditor(fileName));
   };
 
@@ -422,16 +393,7 @@ export const saveGlossary =
       list: glossaryData.list.filter((e) => e.original.trim() || e.translation.trim()),
     };
     await writeGlossaryFile(currentGlossary, dataToSave);
-    await dispatch(
-      upsertGlossaryInCache({
-        version: 1,
-        fileName: currentGlossary,
-        title: dataToSave.title,
-        emoji: dataToSave.emoji,
-        sourceLanguage: dataToSave.sourceLanguage,
-        targetLanguage: dataToSave.targetLanguage,
-      })
-    );
+    await dispatch(refreshGlossaries());
     if (selectSelectedGlossaryFileNames(state).includes(currentGlossary)) {
       dispatch(reconcileGlossarySelectionWithDirection());
     }
@@ -444,7 +406,7 @@ export const deleteGlossary =
     const folder = selectFolder(state);
     if (!folder) return;
     await deleteFile(fileName);
-    await dispatch(removeGlossaryFromCache(fileName));
+    await dispatch(refreshGlossaries());
     if (state.aiPromptEditor.currentGlossary === fileName) {
       dispatch(resetAiPromptEditor());
     }
@@ -488,19 +450,7 @@ export const renameGlossaryFile =
       dispatch(setGlossaryData(updated));
     }
 
-    await dispatch(
-      upsertGlossaryInCache(
-        {
-          version: 1,
-          fileName: newFileName,
-          title: trimmed,
-          emoji: updated.emoji,
-          sourceLanguage: updated.sourceLanguage,
-          targetLanguage: updated.targetLanguage,
-        },
-        newFileName !== fileName ? fileName : undefined
-      )
-    );
+    await dispatch(refreshGlossaries());
   };
 
 export const updateGlossaryEmoji =
@@ -519,16 +469,7 @@ export const updateGlossaryEmoji =
       dispatch(setGlossaryData(updated));
     }
 
-    await dispatch(
-      upsertGlossaryInCache({
-        version: 1,
-        fileName,
-        title: updated.title,
-        emoji: updated.emoji,
-        sourceLanguage: updated.sourceLanguage,
-        targetLanguage: updated.targetLanguage,
-      })
-    );
+    await dispatch(refreshGlossaries());
   };
 
 export const createGlossaryFile =
@@ -554,16 +495,7 @@ export const createGlossaryFile =
       list: [],
     };
     await writeGlossaryFile(fileName, data);
-    await dispatch(
-      upsertGlossaryInCache({
-        version: 1,
-        fileName,
-        title: trimmed,
-        emoji,
-        sourceLanguage: data.sourceLanguage,
-        targetLanguage: data.targetLanguage,
-      })
-    );
+    await dispatch(refreshGlossaries());
     await dispatch(openAIGlossaryEditor(fileName));
   };
 

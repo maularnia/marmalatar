@@ -5,7 +5,7 @@ import i18n from '@src/i18n';
 import { emitGlossaryPairAddedMessage, emitGlossaryPairDiscardedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { ThemeColors } from '@src/theme/utils';
-import { TGlossaryFileEntry } from '@src/utils/data/discIO';
+import { TGlossaryEntry } from '@src/utils/data/discIO';
 
 const t = i18n.getFixedT(null, 'dialogs');
 
@@ -19,7 +19,7 @@ type TAddToGlossaryResult = {
 type TAddToGlossaryProps = {
   defaultOriginal?: string;
   defaultTranslation?: string;
-  glossaryOptions?: TGlossaryFileEntry[];
+  glossaryOptions?: TGlossaryEntry[];
 };
 
 export function useAddToGlossaryDialog() {

@@ -43,6 +43,8 @@ Bridge - contains contracts for BE and FE to ensure them for both sides.
 - A service's static `serviceName` names both its store segment and its IPC channel prefix. `this.handle('get-tracked-folder', fn)` registers `scanner.getTrackedFolder`, and every `this.handle` result goes into the service's `handlers` list
 - `this.store` (`ServiceStore`) reads and writes only the service's own segment. Services never touch each other's data directly, only through methods the owning service exposes
 - `ElectronAPI` (exported from `electron/main.ts`) is derived from the `SERVICES` list, so a new handler shows up on `window.electronAPI.<service>.<handler>` with its types. Preload builds that object from handler names main passes in, so it needs no edits
+- `ScannerService` owns the tracked folder and its file listing (name, path, extension, hash of path + modification time), never file contents. It caches the listing until it drops it itself: on folder change, on its own `writeFile`/`deleteFile`, and on `scanner.dropCache` (the Rescan button)
+- The project, prompt template and glossary services keep their own `list` in their segment and renormalize it against `scanner.scan()` on every read and write (`scanner/normalizeEntries.ts`): unchanged files are matched by hash, only new or changed files are read, and entries whose file is gone are dropped. Projects are keyed by the `projectId` inside the file, so a rename keeps order, hidden, state and progress
 - Store layout is versioned as a whole (`electron/modules/service/storeVersioning.ts`). Raising `STORE_VERSION` requires a step in every service's `versioning`
 
 ## UI structure (src)

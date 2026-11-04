@@ -2,19 +2,21 @@ import type { IPCSegment, TBridgeCall } from './IPCSegment';
 import { IPCDeepl } from './segments/deepl';
 import { IPCEncryption } from './segments/encryption';
 import { IPCFiles } from './segments/files';
+import { IPCGlossaries } from './segments/glossaries';
 import { IPCLmStudio } from './segments/lmStudio';
 import { IPCMedia } from './segments/media';
-import { IPCProjectState } from './segments/projectState';
-import { IPCScanCache } from './segments/scanCache';
+import { IPCProjects } from './segments/projects';
+import { IPCPromptTemplates } from './segments/promptTemplates';
 import { IPCSettings } from './segments/settings';
 
 // Every segment IPC exposes. Adding a class here is all it takes: IPC's type is derived from this
 // list, so the new segment shows up as a typed property.
 const SEGMENTS = [
   IPCSettings,
-  IPCProjectState,
-  IPCScanCache,
   IPCFiles,
+  IPCProjects,
+  IPCPromptTemplates,
+  IPCGlossaries,
   IPCMedia,
   IPCLmStudio,
   IPCDeepl,

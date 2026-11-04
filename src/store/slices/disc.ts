@@ -4,24 +4,17 @@ import {
   checkFileExists,
   cleanupMediaCache,
   deleteProjectFileOnDisk,
-  getFolderScanCache,
   getTrackedFolder,
-  removeGlossaryCacheEntry,
-  removeProjectCacheEntry,
-  removePromptTemplateCacheEntry,
+  listGlossaries,
+  listProjects,
+  listPromptTemplates,
   renameProjectFileOnDisk,
-  scanGlossaryFiles,
-  scanProjectFileHeaders,
-  scanPromptTemplateFiles,
-  setFolderScanCache,
-  updateProjectCacheProgress,
+  rescanFolder,
   updateProjectEmojiOnDisk,
-  upsertGlossaryCacheEntry,
-  upsertProjectCacheEntry,
-  upsertPromptTemplateCacheEntry,
-  type TProjectCacheEntry,
+  updateProjectProgress,
+  type TGlossaryEntry,
+  type TProjectEntry,
   type TPromptTemplateEntry,
-  type TGlossaryFileEntry,
 } from '@src/utils/data/discIO';
 import i18n from '@src/i18n';
 import {
@@ -43,9 +36,9 @@ const t = i18n.getFixedT(null, 'errors');
 type DiscState = {
   folder: string | null;
   initialized: boolean;
-  projects: TProjectCacheEntry[];
+  projects: TProjectEntry[];
   promptTemplateItems: TPromptTemplateEntry[];
-  glossaryItems: TGlossaryFileEntry[];
+  glossaryItems: TGlossaryEntry[];
   isBusy: boolean;
 };
 
@@ -68,13 +61,13 @@ const discSlice = createSlice({
     setInitialized(state, action: PayloadAction<boolean>) {
       state.initialized = action.payload;
     },
-    setProjects(state, action: PayloadAction<TProjectCacheEntry[]>) {
+    setProjects(state, action: PayloadAction<TProjectEntry[]>) {
       state.projects = action.payload;
     },
     setPromptTemplateItems(state, action: PayloadAction<TPromptTemplateEntry[]>) {
       state.promptTemplateItems = action.payload;
     },
-    setGlossaryItems(state, action: PayloadAction<TGlossaryFileEntry[]>) {
+    setGlossaryItems(state, action: PayloadAction<TGlossaryEntry[]>) {
       state.glossaryItems = action.payload;
     },
     setIsBusy(state, action: PayloadAction<boolean>) {
@@ -108,54 +101,68 @@ export default discSlice.reducer;
 
 // ── Thunks ───────────────────────────────────────────────────────────────────
 
-// The only thunk that does a live filesystem scan -- restricted to the two explicit
-// user actions (folder select, manual rescan) per design. Refreshes the file list
-// (names/emoji/languages) for projects/prompt-templates/glossaries and persists the
-// result as the folder-scan cache; previously-known project progress is preserved
-// rather than recomputed (progress only ever updates on project-open/line-completed).
-export const forceRescan =
+// The lists come from the main process, which renormalizes them against the tracked folder on
+// every read, so after any write the renderer just reads them again.
+export const refreshProjects =
+  () =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    dispatch(setProjects(await listProjects()));
+  };
+
+export const refreshPromptTemplates =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const folder = selectFolder(getState());
-    if (!folder) {
+    const promptTemplateItems = await listPromptTemplates();
+    dispatch(setPromptTemplateItems(promptTemplateItems));
+    const selectedTemplate = selectSelectedPromptTemplateFileName(getState());
+    if (selectedTemplate && !promptTemplateItems.some((i) => i.fileName === selectedTemplate)) {
+      dispatch(setSelectedPromptTemplateFileName(null));
+    }
+  };
+
+export const refreshGlossaries =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const glossaryItems = await listGlossaries();
+    dispatch(setGlossaryItems(glossaryItems));
+    const selectedGlossaries = selectSelectedGlossaryFileNames(getState());
+    const stillValidGlossaries = selectedGlossaries.filter((fn) =>
+      glossaryItems.some((i) => i.fileName === fn)
+    );
+    if (stillValidGlossaries.length !== selectedGlossaries.length) {
+      dispatch(setSelectedGlossaryFileNames(stillValidGlossaries));
+    }
+  };
+
+const refreshAll =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    if (!selectFolder(getState())) {
       dispatch(setProjects([]));
       dispatch(setPromptTemplateItems([]));
       dispatch(setGlossaryItems([]));
       return;
     }
+    await Promise.all([
+      dispatch(refreshProjects()),
+      dispatch(refreshPromptTemplates()),
+      dispatch(refreshGlossaries()),
+    ]);
+  };
+
+// The only thunk that makes the main process scan the folder again -- restricted to the two
+// explicit user actions (folder select, manual rescan) per design. Anything else reads the cached
+// listing, so files changed outside the app show up only after one of these.
+export const forceRescan =
+  () =>
+  async (dispatch: AppDispatch): Promise<void> => {
     dispatch(setIsBusy(true));
     try {
-      const previousProgress = new Map(
-        selectProjects(getState()).map((p) => [p.filePath, p.translationProgress])
-      );
-      const [projects, promptTemplateItems, glossaryItems] = await Promise.all([
-        scanProjectFileHeaders(previousProgress),
-        scanPromptTemplateFiles(),
-        scanGlossaryFiles(),
-      ]);
-      dispatch(setProjects(projects));
-      dispatch(setPromptTemplateItems(promptTemplateItems));
-      dispatch(setGlossaryItems(glossaryItems));
-
-      const selectedTemplate = selectSelectedPromptTemplateFileName(getState());
-      if (selectedTemplate && !promptTemplateItems.some((i) => i.fileName === selectedTemplate)) {
-        dispatch(setSelectedPromptTemplateFileName(null));
-      }
-      const selectedGlossaries = selectSelectedGlossaryFileNames(getState());
-      const stillValidGlossaries = selectedGlossaries.filter((fn) =>
-        glossaryItems.some((i) => i.fileName === fn)
-      );
-      if (stillValidGlossaries.length !== selectedGlossaries.length) {
-        dispatch(setSelectedGlossaryFileNames(stillValidGlossaries));
-      }
-
-      await setFolderScanCache({
-        folder,
-        scannedAt: Date.now(),
-        projects: Object.fromEntries(projects.map((p) => [p.filePath, p])),
-        promptTemplates: Object.fromEntries(promptTemplateItems.map((i) => [i.fileName, i])),
-        glossaries: Object.fromEntries(glossaryItems.map((i) => [i.fileName, i])),
-      });
+      await rescanFolder();
+      await dispatch(refreshAll());
+      // Best-effort housekeeping side effect of scanning -- not awaited (so it can't slow down the
+      // scan) and not surfaced as a toast (it isn't a user-initiated action).
+      void cleanupMediaCache().catch(() => {});
     } finally {
       dispatch(setIsBusy(false));
     }
@@ -168,102 +175,24 @@ export const initDisc =
       const savedFolder = await getTrackedFolder();
       if (!savedFolder) return;
       dispatch(setFolder(savedFolder));
-
-      const cache = await getFolderScanCache();
-      if (cache && cache.folder === savedFolder) {
-        dispatch(setProjects(Object.values(cache.projects)));
-        dispatch(setPromptTemplateItems(Object.values(cache.promptTemplates)));
-        dispatch(setGlossaryItems(Object.values(cache.glossaries)));
-      } else {
-        // No cache yet (first launch after this shipped) or the tracked folder changed
-        // out-of-band -- bootstrap once with a live scan, then persist it.
-        await dispatch(forceRescan());
-      }
+      // The main process keeps the last listing, so no live scan is needed at startup
+      await dispatch(refreshAll());
     } finally {
       dispatch(setInitialized(true));
     }
   };
 
-export const upsertProjectInCache =
-  (entry: TProjectCacheEntry, previousFilePath?: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const items = selectProjects(getState());
-    const filtered = items.filter(
-      (p) => p.filePath !== previousFilePath && p.filePath !== entry.filePath
-    );
-    dispatch(setProjects([...filtered, entry]));
-    if (previousFilePath && previousFilePath !== entry.filePath) {
-      await removeProjectCacheEntry(previousFilePath);
-    }
-    await upsertProjectCacheEntry(entry);
-  };
-
-const removeProjectFromCache =
-  (filePath: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    dispatch(setProjects(selectProjects(getState()).filter((p) => p.filePath !== filePath)));
-    await removeProjectCacheEntry(filePath);
-  };
-
 export const persistProjectProgress =
-  (filePath: string, translationProgress: number) =>
+  (projectId: string, translationProgress: number) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const items = selectProjects(getState());
-    const idx = items.findIndex((p) => p.filePath === filePath);
+    const idx = items.findIndex((p) => p.projectId === projectId);
     if (idx >= 0 && items[idx].translationProgress !== translationProgress) {
       const next = [...items];
       next[idx] = { ...next[idx], translationProgress };
       dispatch(setProjects(next));
     }
-    await updateProjectCacheProgress(filePath, translationProgress);
-  };
-
-export const upsertPromptTemplateInCache =
-  (entry: TPromptTemplateEntry, previousFileName?: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const items = selectPromptTemplateItems(getState());
-    const filtered = items.filter(
-      (i) => i.fileName !== previousFileName && i.fileName !== entry.fileName
-    );
-    dispatch(setPromptTemplateItems([...filtered, entry]));
-    if (previousFileName && previousFileName !== entry.fileName) {
-      await removePromptTemplateCacheEntry(previousFileName);
-    }
-    await upsertPromptTemplateCacheEntry(entry);
-  };
-
-export const removePromptTemplateFromCache =
-  (fileName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    dispatch(
-      setPromptTemplateItems(
-        selectPromptTemplateItems(getState()).filter((i) => i.fileName !== fileName)
-      )
-    );
-    await removePromptTemplateCacheEntry(fileName);
-  };
-
-export const upsertGlossaryInCache =
-  (entry: TGlossaryFileEntry, previousFileName?: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const items = selectGlossaryItems(getState());
-    const filtered = items.filter(
-      (i) => i.fileName !== previousFileName && i.fileName !== entry.fileName
-    );
-    dispatch(setGlossaryItems([...filtered, entry]));
-    if (previousFileName && previousFileName !== entry.fileName) {
-      await removeGlossaryCacheEntry(previousFileName);
-    }
-    await upsertGlossaryCacheEntry(entry);
-  };
-
-export const removeGlossaryFromCache =
-  (fileName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    dispatch(
-      setGlossaryItems(selectGlossaryItems(getState()).filter((i) => i.fileName !== fileName))
-    );
-    await removeGlossaryCacheEntry(fileName);
+    await updateProjectProgress(projectId, translationProgress);
   };
 
 export const renameProjectFile =
@@ -290,23 +219,7 @@ export const renameProjectFile =
       dispatch(setProjectName(trimmed));
     }
 
-    const previous = selectProjects(getState()).find((p) => p.filePath === filePath);
-    await dispatch(
-      upsertProjectInCache(
-        {
-          version: 1,
-          filePath: newFilePath,
-          fileName: newFileName,
-          translationProgress: previous?.translationProgress ?? 0,
-          project: {
-            projectId: project.projectId,
-            projectName: project.projectName,
-            emoji: project.emoji,
-          },
-        },
-        filePath
-      )
-    );
+    await dispatch(refreshProjects());
   };
 
 export const updateProjectEmoji =
@@ -318,31 +231,16 @@ export const updateProjectEmoji =
       dispatch(setProjectEmoji(emoji));
     }
 
-    const previous = selectProjects(getState()).find((p) => p.filePath === filePath);
-    await dispatch(
-      upsertProjectInCache({
-        version: 1,
-        filePath,
-        fileName: filePath.split(/[/\\]/).pop()!,
-        translationProgress: previous?.translationProgress ?? 0,
-        project: {
-          projectId: project.projectId,
-          projectName: project.projectName,
-          emoji: project.emoji,
-        },
-      })
-    );
+    await dispatch(refreshProjects());
   };
 
 export const deleteProjectFile =
   (filePath: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     dispatch(setIsBusy(true));
     try {
-      const projectId = selectProjects(getState()).find((p) => p.filePath === filePath)?.project
-        .projectId;
-      await deleteProjectFileOnDisk(filePath, projectId);
-      await dispatch(removeProjectFromCache(filePath));
+      await deleteProjectFileOnDisk(filePath);
+      await dispatch(refreshProjects());
       void cleanupMediaCache().catch(() => {});
     } finally {
       dispatch(setIsBusy(false));

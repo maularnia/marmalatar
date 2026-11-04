@@ -371,10 +371,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
       case 'project': {
         const project = fromCurrentStore(selectProjects).find((p) => p.filePath === key);
         if (!project) return;
-        void handleOpenProject(
-          project,
-          project.project.projectId === fromCurrentStore(selectProjectId)
-        );
+        void handleOpenProject(project, project.projectId === fromCurrentStore(selectProjectId));
         break;
       }
       case 'promptTemplate': {
@@ -451,11 +448,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
     if (kind === 'project') {
       const project = fromCurrentStore(selectProjects).find((p) => p.filePath === key);
       if (!project) return;
-      void handleDeleteProject(
-        project.filePath,
-        project.project.projectName,
-        project.project.projectId
-      );
+      void handleDeleteProject(project.filePath, project.projectName, project.projectId);
     } else if (kind === 'promptTemplate') {
       const item = fromCurrentStore(selectPromptTemplateItems).find((c) => c.fileName === key);
       if (!item) return;

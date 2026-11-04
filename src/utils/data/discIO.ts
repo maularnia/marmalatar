@@ -3,26 +3,25 @@ import type { RootState } from '@store/root';
 import {
   ProjectSaveV1Schema,
   ProjectEditorStateSchema,
-  FolderScanCacheSchema,
+  GlossaryListEntrySchema,
   readPromptTemplateFileContract,
   readGlossaryFileContract,
   type PromptTemplateFileDataType,
   type AIGlossaryFileDataType,
   type TProjectFileData,
   type TProjectEditorState,
-  type TProjectCacheEntry,
-  type TPromptTemplateCacheEntry,
-  type TGlossaryCacheEntry,
-  type TFolderScanCache,
+  type TGlossaryEntry,
 } from './schemas';
+import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
+import type { TPromptTemplateListEntry } from '@bridge/definitions/promptTemplateEntry';
 import { parseProjectFile } from './parsers/project';
 import { computeTranslationProgress } from '@utils/translationProgress';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 import { IPC } from '@src/services/ipc/IPC';
 
-export type { TProjectCacheEntry, TFolderScanCache, TProjectEditorState };
-export type TPromptTemplateEntry = TPromptTemplateCacheEntry;
-export type TGlossaryFileEntry = TGlossaryCacheEntry;
+export type { TProjectEditorState, TGlossaryEntry };
+export type TProjectEntry = TProjectListEntry;
+export type TPromptTemplateEntry = TPromptTemplateListEntry;
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -37,23 +36,6 @@ export type TScannedProjectEntry = TProjectFileData & {
 // tracked folder itself, so only the basename ever needs to cross the bridge.
 function toFileName(filePath: string): string {
   return filePath.split(/[/\\]/).pop() ?? filePath;
-}
-
-function toProjectCacheEntry(
-  full: TScannedProjectEntry,
-  translationProgress: number
-): TProjectCacheEntry {
-  return {
-    version: 1,
-    filePath: full.filePath,
-    fileName: full.fileName,
-    translationProgress,
-    project: {
-      projectId: full.project.projectId,
-      projectName: full.project.projectName,
-      emoji: full.project.emoji,
-    },
-  };
 }
 
 export async function readProjectFile(filePath: string): Promise<TScannedProjectEntry> {
@@ -182,30 +164,17 @@ export async function deleteFile(fileName: string): Promise<void> {
 
 // ── Projects ─────────────────────────────────────────────────────────────────
 
-// Rescan-only header scan: reads/parses every project file (unavoidable -- name/emoji/
-// languages live inside the same JSON blob as the lines) but discards `lines`/`characterPool`
-// after extracting the header, and keeps each project's previously-cached progress instead
-// of recomputing it -- a rescan only ever refreshes the file list, never progress.
-export async function scanProjectFileHeaders(
-  previousProgressByFilePath: ReadonlyMap<string, number>
-): Promise<TProjectCacheEntry[]> {
-  const filePaths = await IPC.files.listMrmlFiles();
-  const results = await Promise.all(
-    filePaths.map(async (fp) => {
-      try {
-        const full = await readProjectFile(fp);
-        return toProjectCacheEntry(full, previousProgressByFilePath.get(fp) ?? 0);
-      } catch {
-        return null;
-      }
-    })
-  );
+// Lists come from the main process, which keeps them in line with the tracked folder: it reads
+// only files that changed since the last listing.
+export async function listProjects(): Promise<TProjectEntry[]> {
+  return IPC.projects.list();
+}
 
-  // Best-effort housekeeping side effect of scanning -- not awaited (so it can't slow down the
-  // scan) and not surfaced as a toast (it isn't a user-initiated action).
-  void cleanupMediaCache().catch(() => {});
-
-  return results.filter((p): p is TProjectCacheEntry => p !== null);
+export async function updateProjectProgress(
+  projectId: string,
+  translationProgress: number
+): Promise<void> {
+  await IPC.projects.updateProgress(projectId, translationProgress);
 }
 
 export async function renameProjectFileOnDisk(
@@ -254,70 +223,40 @@ export async function updateProjectEmojiOnDisk(
   return { project: projectData };
 }
 
-export async function deleteProjectFileOnDisk(
-  filePath: string,
-  projectId?: string | null
-): Promise<void> {
+// The project's device state goes with it: the main process drops a project's entry once its
+// file is gone
+export async function deleteProjectFileOnDisk(filePath: string): Promise<void> {
   await IPC.files.deleteFile(toFileName(filePath));
-  if (projectId) await IPC.projectState.remove(projectId);
 }
 
 // ── Prompt templates ─────────────────────────────────────────────────────────
 
-export async function scanPromptTemplateFiles(): Promise<TPromptTemplateEntry[]> {
-  const paths = await IPC.files.listPromptTemplateFiles();
-  const items: TPromptTemplateEntry[] = [];
-  for (const p of paths) {
-    const basename = toFileName(p);
-    const text = await IPC.files.readFile(basename);
-    if (!text) continue;
-    try {
-      const data = readPromptTemplateFileContract(JSON.parse(text));
-      items.push({ version: 1, fileName: basename, title: data.title, emoji: data.emoji });
-    } catch {
-      /* skip invalid */
-    }
-  }
-  return items;
+export async function listPromptTemplates(): Promise<TPromptTemplateEntry[]> {
+  return IPC.promptTemplates.list();
 }
 
 // ── AI glossaries ────────────────────────────────────────────────────────────
 
-export async function scanGlossaryFiles(): Promise<TGlossaryFileEntry[]> {
-  const paths = await IPC.files.listAIGlossaryFiles();
-  const items: TGlossaryFileEntry[] = [];
-  for (const p of paths) {
-    const basename = toFileName(p);
-    const text = await IPC.files.readFile(basename);
-    if (!text) continue;
-    try {
-      const data = readGlossaryFileContract(JSON.parse(text));
-      items.push({
-        version: 1,
-        fileName: basename,
-        title: data.title,
-        emoji: data.emoji,
-        sourceLanguage: data.sourceLanguage,
-        targetLanguage: data.targetLanguage,
-      });
-    } catch {
-      /* skip invalid */
-    }
-  }
-  return items;
+// A glossary whose languages this build doesn't know is left out
+export async function listGlossaries(): Promise<TGlossaryEntry[]> {
+  const entries = await IPC.glossaries.list();
+  return entries.flatMap((entry) => {
+    const parsed = GlossaryListEntrySchema.safeParse(entry);
+    return parsed.success ? [parsed.data] : [];
+  });
 }
 
 // ── Per-project editor state ────────────────────────────────────────────────
 
 export async function getProjectEditorState(projectId: string): Promise<TProjectEditorState> {
-  return parseProjectEditorState(await IPC.projectState.get(projectId));
+  return parseProjectEditorState(await IPC.projects.getState(projectId));
 }
 
 export async function writeProjectEditorState(
   projectId: string,
   editorState: TProjectEditorState
 ): Promise<void> {
-  await IPC.projectState.set(projectId, editorState);
+  await IPC.projects.setState(projectId, editorState);
 }
 
 // ── Media cache ──────────────────────────────────────────────────────────────
@@ -326,51 +265,9 @@ export async function cleanupMediaCache(): Promise<void> {
   await IPC.media.cleanupCache();
 }
 
-// ── Folder-scan cache ───────────────────────────────────────────────────────
+// ── Rescan ───────────────────────────────────────────────────────────────────
 
-export async function getFolderScanCache(): Promise<TFolderScanCache | null> {
-  const raw = await IPC.scanCache.get();
-  if (!raw) return null;
-  const result = FolderScanCacheSchema.safeParse(raw);
-  return result.success ? result.data : null;
-}
-
-export async function setFolderScanCache(cache: TFolderScanCache): Promise<void> {
-  // The FE's own TFolderScanCache has no top-level `version` (it's rebuilt locally rather than
-  // re-exporting the bridge contract -- see schemas.ts), so it's added here at the one place that
-  // actually crosses into the versioned bridge contract.
-  await IPC.scanCache.set({ version: 1, ...cache });
-}
-
-export async function upsertProjectCacheEntry(entry: TProjectCacheEntry): Promise<void> {
-  await IPC.scanCache.upsertProject(entry);
-}
-
-export async function removeProjectCacheEntry(filePath: string): Promise<void> {
-  await IPC.scanCache.removeProject(filePath);
-}
-
-export async function updateProjectCacheProgress(
-  filePath: string,
-  translationProgress: number
-): Promise<void> {
-  await IPC.scanCache.updateProjectProgress(filePath, translationProgress);
-}
-
-export async function upsertPromptTemplateCacheEntry(
-  entry: TPromptTemplateCacheEntry
-): Promise<void> {
-  await IPC.scanCache.upsertPromptTemplate(entry);
-}
-
-export async function removePromptTemplateCacheEntry(fileName: string): Promise<void> {
-  await IPC.scanCache.removePromptTemplate(fileName);
-}
-
-export async function upsertGlossaryCacheEntry(entry: TGlossaryCacheEntry): Promise<void> {
-  await IPC.scanCache.upsertGlossary(entry);
-}
-
-export async function removeGlossaryCacheEntry(fileName: string): Promise<void> {
-  await IPC.scanCache.removeGlossary(fileName);
+// Makes the next list read scan the tracked folder again, picking up files changed outside the app
+export async function rescanFolder(): Promise<void> {
+  await IPC.files.rescan();
 }
