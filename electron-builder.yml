@@ -31,10 +31,6 @@ linux:
   maintainer: Maularnia <mauliarnia.by@gmail.com>
   category: TextEditor
   syncDesktopName: true
-publish:
-  provider: github
-  owner: maularnia
-  repo: marmalatar
 electronFuses:
   runAsNode: false
   enableCookieEncryption: true
@@ -42,3 +38,6 @@ electronFuses:
   enableNodeCliInspectArguments: false
   enableEmbeddedAsarIntegrityValidation: true
   onlyLoadAppFromAsar: true
+# No update feed: without this, electron-builder infers one from the git remote and ships an
+# app-update.yml that nothing reads anymore
+publish: null

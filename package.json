@@ -28,7 +28,6 @@
     "classnames": "^2.5.1",
     "deepl-node": "^1.27.0",
     "electron-store": "^11.0.2",
-    "electron-updater": "^6.8.9",
     "emoji-picker-element": "^1.29.1",
     "ffmpeg-static": "^5.3.0",
     "ffprobe-static": "^3.1.0",

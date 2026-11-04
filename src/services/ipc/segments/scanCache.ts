@@ -4,13 +4,13 @@ import { IPCSegment } from '../IPCSegment';
 export class IPCScanCache extends IPCSegment {
   static readonly segmentName = 'scanCache';
 
-  readonly get = this.bridgeCall('getFolderScanCache');
-  readonly set = this.bridgeCall('setFolderScanCache');
-  readonly upsertProject = this.bridgeCall('upsertProjectCacheEntry');
-  readonly removeProject = this.bridgeCall('removeProjectCacheEntry');
-  readonly updateProjectProgress = this.bridgeCall('updateProjectCacheProgress');
-  readonly upsertPromptTemplate = this.bridgeCall('upsertPromptTemplateCacheEntry');
-  readonly removePromptTemplate = this.bridgeCall('removePromptTemplateCacheEntry');
-  readonly upsertGlossary = this.bridgeCall('upsertGlossaryCacheEntry');
-  readonly removeGlossary = this.bridgeCall('removeGlossaryCacheEntry');
+  readonly get = this.bridgeCall('scanner', 'getFolderScanCache');
+  readonly set = this.bridgeCall('scanner', 'setFolderScanCache');
+  readonly upsertProject = this.bridgeCall('project', 'upsertCacheEntry');
+  readonly removeProject = this.bridgeCall('project', 'removeCacheEntry');
+  readonly updateProjectProgress = this.bridgeCall('project', 'updateCacheProgress');
+  readonly upsertPromptTemplate = this.bridgeCall('promptTemplate', 'upsertCacheEntry');
+  readonly removePromptTemplate = this.bridgeCall('promptTemplate', 'removeCacheEntry');
+  readonly upsertGlossary = this.bridgeCall('glossary', 'upsertCacheEntry');
+  readonly removeGlossary = this.bridgeCall('glossary', 'removeCacheEntry');
 }

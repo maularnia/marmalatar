@@ -4,9 +4,9 @@ import { IPCSegment } from '../IPCSegment';
 export class IPCDeepl extends IPCSegment {
   static readonly segmentName = 'deepl';
 
-  readonly getApiKey = this.bridgeCall('getDeepLApiKey');
-  readonly setApiKey = this.bridgeCall('setDeepLApiKey');
-  readonly ping = this.bridgeCall('deeplPing');
-  readonly listGlossaries = this.bridgeCall('deeplListGlossaries');
-  readonly translate = this.bridgeCall('deeplTranslate');
+  readonly getApiKey = this.bridgeCall('deepl', 'getApiKey');
+  readonly setApiKey = this.bridgeCall('deepl', 'setApiKey');
+  readonly ping = this.bridgeCall('deepl', 'ping');
+  readonly listGlossaries = this.bridgeCall('deepl', 'listGlossaries');
+  readonly translate = this.bridgeCall('deepl', 'translate');
 }

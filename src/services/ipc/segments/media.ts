@@ -4,9 +4,9 @@ import { IPCSegment } from '../IPCSegment';
 export class IPCMedia extends IPCSegment {
   static readonly segmentName = 'media';
 
-  readonly extractWaveformPeaks = this.bridgeCall('extractWaveformPeaks');
-  readonly generateThumbnail = this.bridgeCall('generateThumbnail');
-  readonly extractAudio = this.bridgeCall('extractAudio');
-  readonly listAudioTracks = this.bridgeCall('listAudioTracks');
-  readonly cleanupCache = this.bridgeCall('cleanupCache');
+  readonly extractWaveformPeaks = this.bridgeCall('media', 'extractWaveformPeaks');
+  readonly generateThumbnail = this.bridgeCall('media', 'generateThumbnail');
+  readonly extractAudio = this.bridgeCall('media', 'extractAudio');
+  readonly listAudioTracks = this.bridgeCall('media', 'listAudioTracks');
+  readonly cleanupCache = this.bridgeCall('media', 'cleanupCache');
 }

@@ -99,6 +99,26 @@ export default tseslint.config(
     },
   },
 
+  // The one exception to the src/electron split: the renderer's window.electronAPI type is derived
+  // from the main-process services. Type-only, so no main-process code reaches the renderer bundle.
+  {
+    files: ['src/electron.d.ts'],
+    rules: {
+      'import-x/no-restricted-paths': [
+        'error',
+        {
+          zones: [
+            {
+              target: './src',
+              from: '.',
+              except: ['./src', './bridge', './node_modules', './electron'],
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   {
     files: ['src/theme/themes/*.ts', 'src/theme/variables/globals.ts'],
     rules: {

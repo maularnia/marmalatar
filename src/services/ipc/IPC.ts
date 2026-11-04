@@ -66,9 +66,11 @@ class IPCService extends SegmentProperties {
 
   // `window.electronAPI` is read at call time, not when the segment is created, so the bridge can
   // be swapped (e.g. in a test harness) after IPC was imported.
-  private readonly bridgeCall: TBridgeCall = (name) =>
+  private readonly bridgeCall: TBridgeCall = (service, handler) =>
     ((...args: unknown[]) =>
-      (window.electronAPI[name] as (...callArgs: unknown[]) => unknown)(...args)) as never;
+      (window.electronAPI[service][handler] as (...callArgs: unknown[]) => unknown)(
+        ...args
+      )) as never;
 
   private constructor() {
     super();

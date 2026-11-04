@@ -37,6 +37,14 @@ Bridge - contains contracts for BE and FE to ensure them for both sides.
 - BE is not allowed to import from FE and the other way around.
 - Shared BE and FE files must be hosted at brdige folder
 
+### Electron (main process)
+
+- `electron/modules/*/*Service.ts` - one `Service` subclass per area (scanner, project, settings, media, deepl...). Each is a singleton initialized once in `electron/main.ts`; other services reach it with `XService.getInstance()`
+- A service's static `serviceName` names both its store segment and its IPC channel prefix. `this.handle('get-tracked-folder', fn)` registers `scanner.getTrackedFolder`, and every `this.handle` result goes into the service's `handlers` list
+- `this.store` (`ServiceStore`) reads and writes only the service's own segment. Services never touch each other's data directly, only through methods the owning service exposes
+- `ElectronAPI` (exported from `electron/main.ts`) is derived from the `SERVICES` list, so a new handler shows up on `window.electronAPI.<service>.<handler>` with its types. Preload builds that object from handler names main passes in, so it needs no edits
+- Store layout is versioned as a whole (`electron/modules/service/storeVersioning.ts`). Raising `STORE_VERSION` requires a step in every service's `versioning`
+
 ## UI structure (src)
 
 root folder `src`.

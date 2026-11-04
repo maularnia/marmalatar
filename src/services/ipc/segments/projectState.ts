@@ -4,7 +4,7 @@ import { IPCSegment } from '../IPCSegment';
 export class IPCProjectState extends IPCSegment {
   static readonly segmentName = 'projectState';
 
-  readonly get = this.bridgeCall('getProjectState');
-  readonly set = this.bridgeCall('setProjectState');
-  readonly remove = this.bridgeCall('removeProjectState');
+  readonly get = this.bridgeCall('project', 'getState');
+  readonly set = this.bridgeCall('project', 'setState');
+  readonly remove = this.bridgeCall('project', 'removeState');
 }

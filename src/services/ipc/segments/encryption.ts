@@ -4,5 +4,5 @@ import { IPCSegment } from '../IPCSegment';
 export class IPCEncryption extends IPCSegment {
   static readonly segmentName = 'encryption';
 
-  readonly isAvailable = this.bridgeCall('isEncryptionAvailable');
+  readonly isAvailable = this.bridgeCall('encryption', 'isAvailable');
 }

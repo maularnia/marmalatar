@@ -1,5 +1,3 @@
-import { decryptSecret, encryptSecret, type TStoredSecret } from '../encryption/encryption';
-import type Store from 'electron-store';
 import * as deepl from 'deepl-node';
 import type {
   DeepLGlossaryOption,
@@ -77,24 +75,4 @@ export async function translateWithDeepL({
   }
 
   return lines.map((line, i) => ({ line: line.line, text: results[i]?.text ?? '' }));
-}
-
-// ── Encrypted API key persistence ───────────────────────────────────────────
-// Stored inside the app's existing electron-store config, not a separate file -- the protection
-// comes from OS-level encryption (see ../encryption/encryption.ts), not from file location.
-const DEEPL_API_KEY_STORE_KEY = 'deeplApiKeyEncrypted';
-
-export function getDeepLApiKey(appStore: Store): string {
-  const stored = appStore.get(DEEPL_API_KEY_STORE_KEY) as TStoredSecret | undefined;
-  if (!stored?.value) return '';
-  // Unreadable ciphertext forces the user to enter the key again
-  return decryptSecret(stored) ?? '';
-}
-
-export function setDeepLApiKey(appStore: Store, apiKey: string): void {
-  if (!apiKey) {
-    appStore.delete(DEEPL_API_KEY_STORE_KEY);
-    return;
-  }
-  appStore.set(DEEPL_API_KEY_STORE_KEY, encryptSecret(apiKey));
 }

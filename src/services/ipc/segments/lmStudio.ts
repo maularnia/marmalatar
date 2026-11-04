@@ -4,9 +4,9 @@ import { IPCSegment } from '../IPCSegment';
 export class IPCLmStudio extends IPCSegment {
   static readonly segmentName = 'lmStudio';
 
-  readonly ping = this.bridgeCall('lmStudioPing');
-  readonly listModels = this.bridgeCall('lmStudioListModels');
-  readonly translate = this.bridgeCall('lmStudioTranslate');
-  readonly cancel = this.bridgeCall('lmStudioCancel');
-  readonly tokenize = this.bridgeCall('lmStudioTokenize');
+  readonly ping = this.bridgeCall('lmStudio', 'ping');
+  readonly listModels = this.bridgeCall('lmStudio', 'listModels');
+  readonly translate = this.bridgeCall('lmStudio', 'translate');
+  readonly cancel = this.bridgeCall('lmStudio', 'cancel');
+  readonly tokenize = this.bridgeCall('lmStudio', 'tokenize');
 }

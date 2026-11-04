@@ -6,9 +6,9 @@ import { runWithFallback } from '../../utils/runWithFallback';
 import type { TAudioTrack } from '../../../bridge/definitions/audioTrack';
 
 // Reading media file metadata with ffprobe. Nothing here decodes or writes media -- that's ffmpeg,
-// in mediaIpc.ts.
+// in MediaService.ts.
 
-// Same reasoning as ffmpegPath in mediaIpc.ts. ffprobe-static holds one binary per platform and
+// Same reasoning as ffmpegPath in MediaService.ts. ffprobe-static holds one binary per platform and
 // arch, and electron-builder.yml copies only the current one into the packaged app.
 // In development __dirname is the bundled out/main, not this source file's folder.
 const ffprobeBinaryName = process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe';

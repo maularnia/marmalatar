@@ -4,8 +4,8 @@ import { IPCSegment } from '../IPCSegment';
 export class IPCSettings extends IPCSegment {
   static readonly segmentName = 'settings';
 
-  readonly getAppSettings = this.bridgeCall('getAppSettings');
-  readonly setAppSettings = this.bridgeCall('setAppSettings');
-  readonly getIntegrationSettings = this.bridgeCall('getIntegrationSettings');
-  readonly setIntegrationSettings = this.bridgeCall('setIntegrationSettings');
+  readonly getAppSettings = this.bridgeCall('settings', 'get');
+  readonly setAppSettings = this.bridgeCall('settings', 'set');
+  readonly getIntegrationSettings = this.bridgeCall('integrations', 'getSettings');
+  readonly setIntegrationSettings = this.bridgeCall('integrations', 'setSettings');
 }
