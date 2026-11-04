@@ -13,7 +13,10 @@ import {
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectResolvedGlossaryEntries } from '@store/slices/aiPromptEditor';
+import {
+  refreshResolvedGlossaryEntries,
+  selectResolvedGlossaryEntries,
+} from '@store/slices/aiPromptEditor';
 import {
   applySelectedPromptTemplateFileName,
   estimateContextWindowUsage,
@@ -26,7 +29,6 @@ import {
   setContextWindowEstimateStatus,
 } from '@store/slices/aiTranslation';
 import { selectGlossaryItems, selectPromptTemplateItems } from '@store/slices/disc';
-import { refreshResolvedGlossaryEntries } from '@store/thunks';
 import {
   FormSectionEntry,
   FormsRow,

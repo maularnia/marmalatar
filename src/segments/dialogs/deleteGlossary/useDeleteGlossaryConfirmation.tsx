@@ -3,7 +3,7 @@ import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { useAppDispatch } from '@store/hooks';
 import { closeOverlays } from '@store/slices/overlays';
-import { deleteGlossary } from '@store/thunks';
+import { deleteGlossary } from '@store/slices/aiPromptEditor';
 import { DeleteGlossaryDialog } from './DeleteGlossaryDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');

@@ -2,8 +2,7 @@ import { useConfirm } from '@providers/ConfirmationProvider/ConfirmationProvider
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { deleteProjectFile } from '@store/slices/disc';
-import { resetProject, selectProjectId } from '@store/slices/project';
+import { deleteProjectFile, resetProject, selectProjectId } from '@store/slices/project';
 import { useNavigate } from 'react-router-dom';
 import { DeleteProjectDialog } from './DeleteProjectDialog';
 

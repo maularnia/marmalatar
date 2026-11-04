@@ -10,7 +10,7 @@ import {
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { reconcileGlossarySelectionWithDirection } from '@src/store/thunks';
+import { reconcileGlossarySelectionWithDirection } from '@store/slices/aiPromptEditor';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 

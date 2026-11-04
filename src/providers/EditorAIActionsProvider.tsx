@@ -36,7 +36,7 @@ import {
   startAutomatedTranslation,
 } from '@store/slices/aiTranslation';
 import { selectGlossaryItems } from '@store/slices/disc';
-import { addEntryToGlossary } from '@store/thunks';
+import { addEntryToGlossary } from '@store/slices/aiPromptEditor';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize } from '@ui-toolkit/Tag';

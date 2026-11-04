@@ -1,10 +1,7 @@
 import { emitVideoPathRemovalFailedMessage, emitVideoPathSaveFailedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import {
-  cleanupMediaCache,
-  getProjectEditorState,
-  writeProjectEditorState,
-} from '@src/utils/data/discIO';
+import { cleanupMediaCache } from '@store/slices/disc';
+import { getProjectEditorState, writeProjectEditorState } from '@store/slices/project';
 import { useCallback } from 'react';
 
 export function usePersistVideoPath() {

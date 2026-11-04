@@ -8,28 +8,27 @@ import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from 
 import { useMenuRefs } from '@providers/MenuRefsProvider';
 import i18n from '@src/i18n';
 import { selectIntegrationIsConfigured } from '@src/store/slices/app';
-import { selectProjectId } from '@src/store/slices/project';
+import { renameProjectFile, selectProjectId, updateProjectEmoji } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectCurrentGlossary, selectCurrentPromptTemplate } from '@store/slices/aiPromptEditor';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import {
-  renameProjectFile,
-  selectDiscIsBusy,
-  selectFolder,
-  selectGlossaryItems,
-  selectProjects,
-  selectPromptTemplateItems,
-  updateProjectEmoji,
-} from '@store/slices/disc';
 import {
   createGlossaryFile,
   createPromptTemplateFile,
   renameGlossaryFile,
   renamePromptTemplateFile,
+  selectCurrentGlossary,
+  selectCurrentPromptTemplate,
   updateGlossaryEmoji,
   updatePromptTemplateEmoji,
-} from '@store/thunks';
+} from '@store/slices/aiPromptEditor';
+import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import {
+  selectDiscIsBusy,
+  selectFolder,
+  selectGlossaryItems,
+  selectProjects,
+  selectPromptTemplateItems,
+} from '@store/slices/disc';
 import H from '@ui-toolkit/H';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';

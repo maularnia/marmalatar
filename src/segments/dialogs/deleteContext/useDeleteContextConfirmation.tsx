@@ -3,7 +3,7 @@ import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { useAppDispatch } from '@store/hooks';
 import { closeOverlays } from '@store/slices/overlays';
-import { deletePromptTemplate } from '@store/thunks';
+import { deletePromptTemplate } from '@store/slices/aiPromptEditor';
 import { DeleteContextDialog } from './DeleteContextDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');

@@ -1,34 +1,64 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { AppDispatch, RootState } from '@store/root';
-import {
-  cleanupMediaCache,
-  deleteProjectOnDisk,
-  getTrackedFolder,
-  listGlossaries,
-  listProjects,
-  listPromptTemplates,
-  renameProjectOnDisk,
-  rescanFolder,
-  updateProjectEmojiOnDisk,
-  type TGlossaryEntry,
-  type TProjectEntry,
-  type TPromptTemplateEntry,
-} from '@src/utils/data/discIO';
-import i18n from '@src/i18n';
+import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
+import type { TPromptTemplateListEntry } from '@bridge/definitions/promptTemplateEntry';
+import { GlossaryListEntrySchema, type TGlossaryEntry } from '@src/utils/data/schemas';
+import { IPC } from '@src/services/ipc/IPC';
 import {
   selectSelectedPromptTemplateFileName,
   selectSelectedGlossaryFileNames,
   setSelectedPromptTemplateFileName,
   setSelectedGlossaryFileNames,
 } from '@store/slices/prompt';
-import {
-  selectProjectId,
-  setCurrentProjectFilePath,
-  setProjectEmoji,
-  setProjectName,
-} from '@store/slices/project';
 
-const t = i18n.getFixedT(null, 'errors');
+export type { TGlossaryEntry };
+export type TProjectEntry = TProjectListEntry;
+export type TPromptTemplateEntry = TPromptTemplateListEntry;
+
+// ── IPC ──────────────────────────────────────────────────────────────────────
+
+async function listProjects(): Promise<TProjectEntry[]> {
+  return IPC.projects.list();
+}
+
+async function listPromptTemplates(): Promise<TPromptTemplateEntry[]> {
+  return IPC.promptTemplates.list();
+}
+
+// A glossary whose languages this build doesn't know is left out
+async function listGlossaries(): Promise<TGlossaryEntry[]> {
+  const entries = await IPC.glossaries.list();
+  return entries.flatMap((entry) => {
+    const parsed = GlossaryListEntrySchema.safeParse(entry);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
+async function getTrackedFolder(): Promise<string | null> {
+  return IPC.files.getTrackedFolder();
+}
+
+export async function setTrackedFolder(folder: string): Promise<void> {
+  await IPC.files.setTrackedFolder(folder);
+}
+
+export async function selectFolderDialog(): Promise<string | null> {
+  return IPC.files.selectFolder();
+}
+
+// Video paths live outside the tracked folder, wherever the user picked the video from
+export async function checkExternalPathExists(absolutePath: string): Promise<boolean> {
+  return IPC.files.checkExternalPathExists(absolutePath);
+}
+
+export async function cleanupMediaCache(): Promise<void> {
+  await IPC.media.cleanupCache();
+}
+
+// Makes the next list read scan the tracked folder again, picking up files changed outside the app
+async function rescanFolder(): Promise<void> {
+  await IPC.files.rescan();
+}
 
 type DiscState = {
   folder: string | null;
@@ -67,6 +97,13 @@ const discSlice = createSlice({
     setGlossaryItems(state, action: PayloadAction<TGlossaryEntry[]>) {
       state.glossaryItems = action.payload;
     },
+    // Replaces one project's list item with the entry the main process returned after a write, so
+    // the menu shows what the file now holds (name, emoji, progress) without listing the folder
+    // again
+    setProjectEntry(state, action: PayloadAction<TProjectEntry>) {
+      const idx = state.projects.findIndex((p) => p.projectId === action.payload.projectId);
+      if (idx >= 0) state.projects[idx] = action.payload;
+    },
     setIsBusy(state, action: PayloadAction<boolean>) {
       state.isBusy = action.payload;
     },
@@ -83,7 +120,7 @@ const discSlice = createSlice({
 
 const { setInitialized, setProjects, setPromptTemplateItems, setGlossaryItems } = discSlice.actions;
 
-export const { setFolder, setIsBusy } = discSlice.actions;
+export const { setFolder, setProjectEntry, setIsBusy } = discSlice.actions;
 
 export const {
   selectFolder,
@@ -176,62 +213,5 @@ export const initDisc =
       await dispatch(refreshAll());
     } finally {
       dispatch(setInitialized(true));
-    }
-  };
-
-// Replaces one project's list item with the entry the main process returned after a write, so the
-// menu shows what the file now holds (name, emoji, progress) without listing the folder again
-export const applyProjectEntry =
-  (entry: TProjectEntry) =>
-  (dispatch: AppDispatch, getState: () => RootState): void => {
-    const items = selectProjects(getState());
-    const idx = items.findIndex((p) => p.projectId === entry.projectId);
-    if (idx < 0) return;
-    const next = [...items];
-    next[idx] = entry;
-    dispatch(setProjects(next));
-  };
-
-export const renameProjectFile =
-  (projectId: string, newName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const folder = selectFolder(getState());
-    if (!folder) throw new Error(t('project.folderNotTracked'));
-    const trimmed = newName.trim();
-    if (!trimmed) throw new Error(t('shared.nameEmpty'));
-
-    const entry = await renameProjectOnDisk(projectId, trimmed);
-    if (!entry) throw new Error(t('project.alreadyExists'));
-
-    if (projectId === selectProjectId(getState())) {
-      dispatch(setCurrentProjectFilePath(entry.filePath));
-      dispatch(setProjectName(entry.projectName));
-    }
-
-    dispatch(applyProjectEntry(entry));
-  };
-
-export const updateProjectEmoji =
-  (projectId: string, emoji: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const entry = await updateProjectEmojiOnDisk(projectId, emoji);
-
-    if (projectId === selectProjectId(getState())) {
-      dispatch(setProjectEmoji(entry.emoji));
-    }
-
-    dispatch(applyProjectEntry(entry));
-  };
-
-export const deleteProjectFile =
-  (projectId: string) =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    dispatch(setIsBusy(true));
-    try {
-      await deleteProjectOnDisk(projectId);
-      await dispatch(refreshProjects());
-      void cleanupMediaCache().catch(() => {});
-    } finally {
-      dispatch(setIsBusy(false));
     }
   };

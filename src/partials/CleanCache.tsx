@@ -1,7 +1,7 @@
 import { useMessageHelmet } from '@providers/MessageHelmetProvider';
 import { emitCacheCleanupFailedMessage, emitCacheCleanupSuccessMessage } from '@src/messages';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
-import { cleanupMediaCache } from '@src/utils/data/discIO';
+import { cleanupMediaCache } from '@store/slices/disc';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';

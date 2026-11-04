@@ -10,7 +10,10 @@ import { useProjectLoader } from '@src/utils/useProjectLoader';
 import { useAppDispatch } from '@store/hooks';
 import { fromCurrentStore } from '@store/store';
 import {
+  openAIGlossaryEditor,
+  openPromptTemplateEditor,
   resetAiPromptEditor,
+  saveGlossary,
   selectCurrentGlossary,
   selectCurrentPromptTemplate,
 } from '@store/slices/aiPromptEditor';
@@ -22,15 +25,8 @@ import {
   selectPromptTemplateItems,
 } from '@store/slices/disc';
 import { closeOverlays, selectCurrentOverlay } from '@store/slices/overlays';
-import { selectProjectId } from '@store/slices/project';
-import {
-  openAIGlossaryEditor,
-  openPromptTemplateEditor,
-  openSettingsOverlay,
-  saveGlossary,
-  savePromptTemplate,
-  startNewProject,
-} from '@store/thunks';
+import { selectProjectId, startNewProject } from '@store/slices/project';
+import { openSettingsOverlay, savePromptTemplate } from '@store/thunks';
 import { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';

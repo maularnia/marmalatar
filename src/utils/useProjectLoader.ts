@@ -12,15 +12,11 @@ import {
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
-import {
-  checkExternalPathExists,
-  getProjectEditorState,
-  TProjectEntry,
-} from '@src/utils/data/discIO';
+import { checkExternalPathExists, TProjectEntry } from '@store/slices/disc';
+import { getProjectEditorState, loadProjectFromDisk } from '@store/slices/project';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
 import { useAppDispatch } from '@store/hooks';
-import { loadProjectFromDisk } from '@store/thunks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';

@@ -31,11 +31,11 @@ import { selectFolder, setFolder } from '@store/slices/disc';
 import { selectSelectedIntegrationId, setSelectedIntegration } from '@store/slices/app';
 import { addTranslatedLine, selectLines } from '@store/slices/editor';
 import {
+  readPromptTemplateFile,
   selectResolvedGlossaryEntries,
   setResolvedGlossaryEntries,
 } from '@store/slices/aiPromptEditor';
 import { setProjectSourceLanguage, setProjectTargetLanguage } from '@store/slices/project';
-import { readPromptTemplateFile } from '@src/utils/data/discIO';
 
 // Only used within this slice (bulk-translate cancellation), so it lives here rather than in
 // services/ai/clients.ts.

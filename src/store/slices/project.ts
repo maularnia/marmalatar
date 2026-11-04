@@ -1,5 +1,126 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TLanguage } from '@src/types';
+import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
+import i18n from '@src/i18n';
+import { IPC } from '@src/services/ipc/IPC';
+import { TLanguage, TSubtitleLine } from '@src/types';
+import { parseProjectFile } from '@src/utils/data/parsers/project';
+import {
+  ProjectEditorStateSchema,
+  ProjectSaveV1Schema,
+  type TProjectEditorState,
+  type TProjectFileBody,
+  type TProjectFileData,
+} from '@src/utils/data/schemas';
+import { pickRandomCreationEmoji } from '@src/utils/emoji';
+import type { AppDispatch, RootState } from '@store/root';
+import { reconcileGlossarySelectionWithDirection } from '@store/slices/aiPromptEditor';
+import {
+  cleanupMediaCache,
+  refreshProjects,
+  selectFolder,
+  setIsBusy,
+  setProjectEntry,
+  type TProjectEntry,
+} from '@store/slices/disc';
+import {
+  clearFileData,
+  resetEditorMemoryState,
+  setCharacterPool,
+  setLines,
+  setTotalLinesToTranslate,
+  setVideoCollapsed,
+} from '@store/slices/editor';
+import { setFrozenLineNumbers } from '@store/slices/prompt';
+
+export type { TProjectEditorState };
+
+const t = i18n.getFixedT(null, 'errors');
+
+// ── IPC ──────────────────────────────────────────────────────────────────────
+
+// Files in the tracked folder are reached only through the main process's project, prompt template
+// and glossary services, keyed by projectId or file name. The renderer reads whole files but
+// writes only their bodies: headers (names, titles, emoji, languages) change through dedicated
+// calls, and the services compute what derives from the file, such as translation progress.
+// create and rename resolve to null when the file name the title maps to is taken.
+
+async function readProjectFile(projectId: string): Promise<TProjectFileData> {
+  const raw = await IPC.projects.get(projectId);
+  if (!raw) throw new Error(t('project.cannotRead'));
+  return parseProjectFile(raw);
+}
+
+function buildProjectBody(state: RootState): TProjectFileBody {
+  const { lines, characterPool } = state.editor;
+  return {
+    editor: ProjectSaveV1Schema.shape.editor.parse({ lines, characterPool }),
+  };
+}
+
+// The updated list entry, with the progress the main process computed from the new lines
+async function writeProjectBody(projectId: string, state: RootState): Promise<TProjectEntry> {
+  return IPC.projects.set(projectId, buildProjectBody(state));
+}
+
+type TProjectHeaderInput = {
+  projectName: string;
+  emoji: string;
+  sourceLanguage: TLanguage;
+  targetLanguage: TLanguage;
+};
+
+// The main process names the file and assigns the projectId. null when the name is taken.
+async function createProjectOnDisk(
+  header: TProjectHeaderInput,
+  body: TProjectFileBody
+): Promise<TProjectEntry | null> {
+  return IPC.projects.create(header, body);
+}
+
+async function renameProjectOnDisk(
+  projectId: string,
+  projectName: string
+): Promise<TProjectEntry | null> {
+  return IPC.projects.rename(projectId, projectName);
+}
+
+async function updateProjectEmojiOnDisk(projectId: string, emoji: string): Promise<TProjectEntry> {
+  return IPC.projects.setEmoji(projectId, emoji);
+}
+
+async function updateProjectLanguagesOnDisk(
+  projectId: string,
+  sourceLanguage: TLanguage,
+  targetLanguage: TLanguage
+): Promise<TProjectEntry> {
+  return IPC.projects.setLanguages(projectId, sourceLanguage, targetLanguage);
+}
+
+// The project's device state goes with it: the main process drops a project's entry once its
+// file is gone
+async function deleteProjectOnDisk(projectId: string): Promise<void> {
+  await IPC.projects.delete(projectId);
+}
+
+export function buildProjectEditorStateSaveData(state: RootState): TProjectStatePrefs {
+  return {
+    editorMode: state.project.editorMode,
+    isVideoCollapsed: state.editor.isVideoCollapsed,
+    videoPath: state.project.videoFilePath,
+  };
+}
+
+export async function getProjectEditorState(projectId: string): Promise<TProjectEditorState> {
+  const raw = await IPC.projects.getState(projectId);
+  return ProjectEditorStateSchema.parse(raw && typeof raw === 'object' ? raw : {});
+}
+
+export async function writeProjectEditorState(
+  projectId: string,
+  prefs: TProjectStatePrefs
+): Promise<void> {
+  await IPC.projects.setState(projectId, prefs);
+}
 
 type ProjectState = {
   currentProjectFilePath: string | null;
@@ -68,11 +189,10 @@ const projectSlice = createSlice({
   },
 });
 
+const { setCurrentProjectFilePath, setProjectId, setProjectName, setProjectEmoji } =
+  projectSlice.actions;
+
 export const {
-  setCurrentProjectFilePath,
-  setProjectId,
-  setProjectName,
-  setProjectEmoji,
   setVideoFilePath,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
@@ -80,8 +200,9 @@ export const {
   resetProject,
 } = projectSlice.actions;
 
+const { selectCurrentProjectFilePath } = projectSlice.selectors;
+
 export const {
-  selectCurrentProjectFilePath,
   selectProjectId,
   selectProjectName,
   selectVideoFilePath,
@@ -93,3 +214,200 @@ export const {
 } = projectSlice.selectors;
 
 export default projectSlice.reducer;
+
+// ── Thunks ───────────────────────────────────────────────────────────────────
+
+type CreateNewProjectParams = {
+  lines: TSubtitleLine[];
+  projectName: string;
+  sourceLanguage: TLanguage;
+  targetLanguage: TLanguage;
+};
+
+export const createNewProject =
+  (params: CreateNewProjectParams) =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const projectName = params.projectName.trim();
+    if (!projectName) throw new Error(t('project.nameRequired'));
+    const { sourceLanguage, targetLanguage } = params;
+
+    dispatch(setCurrentProjectFilePath(null));
+    dispatch(resetEditorMemoryState());
+    dispatch(setVideoCollapsed(false));
+
+    let emoji: string;
+    try {
+      emoji = await pickRandomCreationEmoji();
+    } catch {
+      throw new Error(t('createNewProject.emojiSelectionFailed'));
+    }
+
+    // The main process names the file and assigns the projectId, so the project exists on disk
+    // before anything is applied to the editor
+    const editor = { characterPool: [], lines: params.lines };
+    let entry: TProjectEntry | null;
+    try {
+      entry = await createProjectOnDisk(
+        { projectName, emoji, sourceLanguage, targetLanguage },
+        { editor }
+      );
+    } catch {
+      throw new Error(t('createNewProject.fileSaveFailed'));
+    }
+    if (!entry) throw new Error(t('project.alreadyExists'));
+
+    applyProjectData(dispatch, {
+      project: {
+        projectId: entry.projectId,
+        projectName: entry.projectName,
+        emoji: entry.emoji,
+        sourceLanguage,
+        targetLanguage,
+      },
+      editor,
+    });
+
+    dispatch(setEditorMode('translate'));
+    dispatch(setCurrentProjectFilePath(entry.filePath));
+
+    try {
+      await writeProjectEditorState(entry.projectId, buildProjectEditorStateSaveData(getState()));
+    } catch {
+      throw new Error(t('createNewProject.editorStateSaveFailed'));
+    }
+
+    try {
+      await dispatch(refreshProjects());
+    } catch {
+      throw new Error(t('createNewProject.cacheUpdateFailed'));
+    }
+  };
+
+// Writes the open project's lines and characters to its file. A project without a file yet is
+// skipped: createNewProject creates it. The returned entry carries the progress the main process
+// computed from the new lines.
+export const saveProjectToDisk =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const state = getState();
+    const { projectId } = state.project;
+    if (!projectId || !selectCurrentProjectFilePath(state)) return;
+    dispatch(setProjectEntry(await writeProjectBody(projectId, state)));
+  };
+
+export const saveProjectLanguages =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const state = getState();
+    const { projectId, sourceLanguage, targetLanguage } = state.project;
+    if (!projectId || !sourceLanguage || !targetLanguage) return;
+    if (!selectCurrentProjectFilePath(state)) return;
+    dispatch(
+      setProjectEntry(await updateProjectLanguagesOnDisk(projectId, sourceLanguage, targetLanguage))
+    );
+  };
+
+// Saves the currently open project (if any) before tearing down editor/project state to start a
+// new one -- no confirmation dialog, the save makes it non-destructive.
+export const startNewProject =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    if (selectIsProjectOpen(getState())) {
+      await dispatch(saveProjectToDisk());
+    }
+    dispatch(resetEditorMemoryState());
+    dispatch(resetProject());
+    dispatch(clearFileData());
+  };
+
+export const loadProjectFromDisk =
+  (project: TProjectEntry) =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    let data: TProjectFileData;
+    try {
+      data = await readProjectFile(project.projectId);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : t('project.cannotRead'));
+    }
+
+    dispatch(setCurrentProjectFilePath(null));
+    dispatch(resetEditorMemoryState());
+
+    applyProjectData(dispatch, data);
+
+    let editorState: TProjectEditorState;
+    try {
+      editorState = await getProjectEditorState(data.project.projectId);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
+    }
+    dispatch(setEditorMode(editorState.editorMode));
+    dispatch(setVideoCollapsed(editorState.isVideoCollapsed));
+    // Restore the video that was attached when the project was last saved/closed.
+    dispatch(setVideoFilePath(editorState.videoPath));
+
+    dispatch(setCurrentProjectFilePath(project.filePath));
+  };
+
+function applyProjectData(
+  dispatch: AppDispatch,
+  data: Pick<TProjectFileData, 'project' | 'editor'>
+): void {
+  dispatch(setProjectId(data.project.projectId));
+  dispatch(setProjectName(data.project.projectName));
+  dispatch(setProjectEmoji(data.project.emoji));
+
+  dispatch(setProjectSourceLanguage(data.project.sourceLanguage));
+  dispatch(setProjectTargetLanguage(data.project.targetLanguage));
+  dispatch(reconcileGlossarySelectionWithDirection());
+  dispatch(setFrozenLineNumbers([]));
+
+  dispatch(setCharacterPool(data.editor.characterPool));
+
+  dispatch(setLines(data.editor.lines));
+  dispatch(setTotalLinesToTranslate(data.editor.lines.length));
+}
+
+export const renameProjectFile =
+  (projectId: string, newName: string) =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const folder = selectFolder(getState());
+    if (!folder) throw new Error(t('project.folderNotTracked'));
+    const trimmed = newName.trim();
+    if (!trimmed) throw new Error(t('shared.nameEmpty'));
+
+    const entry = await renameProjectOnDisk(projectId, trimmed);
+    if (!entry) throw new Error(t('project.alreadyExists'));
+
+    if (projectId === selectProjectId(getState())) {
+      dispatch(setCurrentProjectFilePath(entry.filePath));
+      dispatch(setProjectName(entry.projectName));
+    }
+
+    dispatch(setProjectEntry(entry));
+  };
+
+export const updateProjectEmoji =
+  (projectId: string, emoji: string) =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const entry = await updateProjectEmojiOnDisk(projectId, emoji);
+
+    if (projectId === selectProjectId(getState())) {
+      dispatch(setProjectEmoji(entry.emoji));
+    }
+
+    dispatch(setProjectEntry(entry));
+  };
+
+export const deleteProjectFile =
+  (projectId: string) =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    dispatch(setIsBusy(true));
+    try {
+      await deleteProjectOnDisk(projectId);
+      await dispatch(refreshProjects());
+      void cleanupMediaCache().catch(() => {});
+    } finally {
+      dispatch(setIsBusy(false));
+    }
+  };

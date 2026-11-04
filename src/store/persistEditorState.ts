@@ -1,5 +1,5 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
-import { buildProjectEditorStateSaveData, writeProjectEditorState } from '@src/utils/data/discIO';
+import { buildProjectEditorStateSaveData, writeProjectEditorState } from './slices/project';
 import type { RootState } from './root';
 
 // Device-specific editor/UI preferences (editorMode, isVideoCollapsed, video path) --

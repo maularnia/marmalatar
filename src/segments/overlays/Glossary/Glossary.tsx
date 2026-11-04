@@ -6,12 +6,13 @@ import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import {
+  saveGlossary,
   selectCurrentGlossary,
   selectGlossaryData,
   setGlossaryData,
+  updateGlossaryLanguages,
 } from '@store/slices/aiPromptEditor';
 import { closeOverlays } from '@store/slices/overlays';
-import { saveGlossary, updateGlossaryLanguages } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import {
