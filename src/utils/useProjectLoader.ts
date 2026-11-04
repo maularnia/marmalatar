@@ -131,7 +131,7 @@ export function useProjectLoader() {
 
           let waveformPeaks: number[];
           try {
-            waveformPeaks = await IPC.media.extractWaveformPeaks(audioPath);
+            waveformPeaks = await IPC.media.extractWaveformPeaks(savedPath);
           } catch (error) {
             emitWaveformExtractionFailedMessage(pushMessage, toErrorMessage(error));
             return null;

@@ -127,7 +127,7 @@ export default function VideoSelectDialog({
       if (cancelled) return;
 
       try {
-        const waveformPeaks = await IPC.media.extractWaveformPeaks(audioPath);
+        const waveformPeaks = await IPC.media.extractWaveformPeaks(videoPath);
         if (cancelled) return;
         setWaveformStatus(TWaveformStatus.SUCCESS);
         onValidChange(true);

@@ -138,7 +138,7 @@ export default function VideoFileSelect({
       if (isCancelled) return;
 
       try {
-        const waveformPeaks = await IPC.media.extractWaveformPeaks(audioPath);
+        const waveformPeaks = await IPC.media.extractWaveformPeaks(videoPath);
         if (isCancelled) return;
         setVideoFilePath(videoPath, audioPath);
         setVideoData(previewImage ?? null, waveformPeaks);
