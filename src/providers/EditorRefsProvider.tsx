@@ -1,4 +1,5 @@
 import { selectProjectId } from '@src/store/slices/project';
+import type { TInputColumn } from '@src/types';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppSelector } from '@store/hooks';
@@ -11,8 +12,6 @@ import {
   useEffect,
   useRef,
 } from 'react';
-
-export type TInputColumn = 'source' | 'output' | 'character';
 
 type TRowInputMap = {
   source: HTMLElement | null;

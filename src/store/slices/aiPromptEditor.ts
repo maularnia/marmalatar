@@ -1,22 +1,20 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { TPromptTemplateListEntry } from '@bridge/definitions/promptTemplateEntry';
 import i18n from '@src/i18n';
 import { DEFAULT_PROMPT_TEMPLATE } from '@src/services/ai/config';
 import { IPC } from '@src/services/ipc/IPC';
 import { TLanguage } from '@src/types';
 import {
+  GlossaryListEntrySchema,
   readGlossaryFileContract,
   readPromptTemplateFileContract,
   type AIGlossaryFileDataType,
   type PromptTemplateFileDataType,
+  type TGlossaryEntry,
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import type { AppDispatch, RootState } from '@store/root';
-import {
-  refreshGlossaries,
-  refreshPromptTemplates,
-  selectFolder,
-  selectGlossaryItems,
-} from '@store/slices/disc';
+import { selectFolder } from '@store/slices/workingFolder';
 import {
   closeOverlays,
   selectCurrentOverlay,
@@ -30,6 +28,9 @@ import {
   setSelectedPromptTemplateFileName,
 } from '@store/slices/prompt';
 
+export type { TGlossaryEntry };
+export type TPromptTemplateEntry = TPromptTemplateListEntry;
+
 const t = i18n.getFixedT(null, 'errors');
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
@@ -41,6 +42,19 @@ const t = i18n.getFixedT(null, 'errors');
 // create and rename resolve to null when the file name the title maps to is taken.
 
 // Prompt templates
+
+async function listPromptTemplates(): Promise<TPromptTemplateEntry[]> {
+  return IPC.promptTemplates.list();
+}
+
+// A glossary whose languages this build doesn't know is left out
+async function listGlossaries(): Promise<TGlossaryEntry[]> {
+  const entries = await IPC.glossaries.list();
+  return entries.flatMap((entry) => {
+    const parsed = GlossaryListEntrySchema.safeParse(entry);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
 
 export async function readPromptTemplateFile(
   fileName: string
@@ -142,6 +156,9 @@ async function deleteGlossaryOnDisk(fileName: string): Promise<void> {
 }
 
 type AiPromptEditorState = {
+  // The tracked folder's prompt templates and glossaries, as the main process lists them
+  promptTemplateItems: TPromptTemplateEntry[];
+  glossaryItems: TGlossaryEntry[];
   currentPromptTemplate: string | null;
   promptTemplateData: PromptTemplateFileDataType | null;
   currentGlossary: string | null;
@@ -150,6 +167,8 @@ type AiPromptEditorState = {
 };
 
 const initialState: AiPromptEditorState = {
+  promptTemplateItems: [],
+  glossaryItems: [],
   currentPromptTemplate: null,
   promptTemplateData: null,
   currentGlossary: null,
@@ -161,6 +180,12 @@ const aiPromptEditorSlice = createSlice({
   name: 'aiPromptEditor',
   initialState,
   reducers: {
+    setPromptTemplateItems(state, action: PayloadAction<TPromptTemplateEntry[]>) {
+      state.promptTemplateItems = action.payload;
+    },
+    setGlossaryItems(state, action: PayloadAction<TGlossaryEntry[]>) {
+      state.glossaryItems = action.payload;
+    },
     setCurrentPromptTemplate(state, action: PayloadAction<string | null>) {
       state.currentPromptTemplate = action.payload;
     },
@@ -179,9 +204,15 @@ const aiPromptEditorSlice = createSlice({
     // Resets the editor's own scratch state only -- resolvedGlossaryEntries is the active
     // translation-time glossary cache, not scratch editor state, and is deliberately preserved
     // here (dispatched from opening Settings/Export and switching/deleting projects, none of
-    // which should invalidate a glossary resolution that's still valid).
+    // which should invalidate a glossary resolution that's still valid). The lists are the tracked
+    // folder's, not the editor's, and are kept too.
     resetAiPromptEditor(state): AiPromptEditorState {
-      return { ...initialState, resolvedGlossaryEntries: state.resolvedGlossaryEntries };
+      return {
+        ...initialState,
+        promptTemplateItems: state.promptTemplateItems,
+        glossaryItems: state.glossaryItems,
+        resolvedGlossaryEntries: state.resolvedGlossaryEntries,
+      };
     },
   },
   extraReducers(builder) {
@@ -196,6 +227,8 @@ const aiPromptEditorSlice = createSlice({
     });
   },
   selectors: {
+    selectPromptTemplateItems: (state) => state.promptTemplateItems,
+    selectGlossaryItems: (state) => state.glossaryItems,
     selectCurrentPromptTemplate: (state) => state.currentPromptTemplate,
     selectPromptTemplateData: (state) => state.promptTemplateData,
     selectCurrentGlossary: (state) => state.currentGlossary,
@@ -207,6 +240,8 @@ const aiPromptEditorSlice = createSlice({
 const { setCurrentPromptTemplate, setCurrentGlossary } = aiPromptEditorSlice.actions;
 
 export const {
+  setPromptTemplateItems,
+  setGlossaryItems,
   setPromptTemplateData,
   setGlossaryData,
   setResolvedGlossaryEntries,
@@ -214,6 +249,8 @@ export const {
 } = aiPromptEditorSlice.actions;
 
 export const {
+  selectPromptTemplateItems,
+  selectGlossaryItems,
   selectCurrentPromptTemplate,
   selectPromptTemplateData,
   selectCurrentGlossary,
@@ -222,6 +259,36 @@ export const {
 } = aiPromptEditorSlice.selectors;
 
 export default aiPromptEditorSlice.reducer;
+
+// ── List thunks ──────────────────────────────────────────────────────────────
+
+// The lists come from the main process, which renormalizes them against the tracked folder on
+// every read, so after any write the renderer just reads them again. A selection whose file is gone
+// is dropped.
+export const refreshPromptTemplates =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const promptTemplateItems = await listPromptTemplates();
+    dispatch(setPromptTemplateItems(promptTemplateItems));
+    const selectedTemplate = selectSelectedPromptTemplateFileName(getState());
+    if (selectedTemplate && !promptTemplateItems.some((i) => i.fileName === selectedTemplate)) {
+      dispatch(setSelectedPromptTemplateFileName(null));
+    }
+  };
+
+export const refreshGlossaries =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    const glossaryItems = await listGlossaries();
+    dispatch(setGlossaryItems(glossaryItems));
+    const selectedGlossaries = selectSelectedGlossaryFileNames(getState());
+    const stillValidGlossaries = selectedGlossaries.filter((fn) =>
+      glossaryItems.some((i) => i.fileName === fn)
+    );
+    if (stillValidGlossaries.length !== selectedGlossaries.length) {
+      dispatch(setSelectedGlossaryFileNames(stillValidGlossaries));
+    }
+  };
 
 // ── Prompt template thunks ───────────────────────────────────────────────────
 

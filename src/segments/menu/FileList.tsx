@@ -8,7 +8,12 @@ import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from 
 import { useMenuRefs } from '@providers/MenuRefsProvider';
 import i18n from '@src/i18n';
 import { selectIntegrationIsConfigured } from '@src/store/slices/app';
-import { renameProjectFile, selectProjectId, updateProjectEmoji } from '@src/store/slices/project';
+import {
+  renameProjectFile,
+  selectProjectId,
+  selectProjects,
+  updateProjectEmoji,
+} from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import {
@@ -18,17 +23,13 @@ import {
   renamePromptTemplateFile,
   selectCurrentGlossary,
   selectCurrentPromptTemplate,
+  selectGlossaryItems,
+  selectPromptTemplateItems,
   updateGlossaryEmoji,
   updatePromptTemplateEmoji,
 } from '@store/slices/aiPromptEditor';
 import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import {
-  selectDiscIsBusy,
-  selectFolder,
-  selectGlossaryItems,
-  selectProjects,
-  selectPromptTemplateItems,
-} from '@store/slices/disc';
+import { selectWorkingFolderIsBusy, selectFolder } from '@store/slices/workingFolder';
 import H from '@ui-toolkit/H';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -75,9 +76,9 @@ export default function FileList() {
   const projects = useAppSelector(selectProjects);
   const promptTemplateItems = useAppSelector(selectPromptTemplateItems);
   const glossaryItems = useAppSelector(selectGlossaryItems);
-  const discIsBusy = useAppSelector(selectDiscIsBusy);
+  const workingFolderIsBusy = useAppSelector(selectWorkingFolderIsBusy);
   const translationIsBusy = useAppSelector(selectTranslationIsBusy);
-  const listIsDisabled = discIsBusy || translationIsBusy;
+  const listIsDisabled = workingFolderIsBusy || translationIsBusy;
   const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
   const currentGlossary = useAppSelector(selectCurrentGlossary);
   const { compact, dynamic } = useMenuState();

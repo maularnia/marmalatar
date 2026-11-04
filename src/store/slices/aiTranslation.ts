@@ -27,7 +27,7 @@ import {
   setSelectedGlossaryFileNames,
   setSelectedPromptTemplateFileName,
 } from '@store/slices/prompt';
-import { selectFolder, setFolder } from '@store/slices/disc';
+import { selectFolder, setFolder } from '@store/slices/workingFolder';
 import { selectSelectedIntegrationId, setSelectedIntegration } from '@store/slices/app';
 import { addTranslatedLine, selectLines } from '@store/slices/editor';
 import {

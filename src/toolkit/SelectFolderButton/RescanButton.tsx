@@ -1,5 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { forceRescan, selectDiscIsBusy, selectFolder } from '@store/slices/disc';
+import { selectWorkingFolderIsBusy, selectFolder } from '@store/slices/workingFolder';
+import { forceRescan } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +10,7 @@ export default function RescanButton() {
   const { t } = useTranslation('settings');
   const dispatch = useAppDispatch();
   const folder = useAppSelector(selectFolder);
-  const isBusy = useAppSelector(selectDiscIsBusy);
+  const isBusy = useAppSelector(selectWorkingFolderIsBusy);
 
   return (
     <Button

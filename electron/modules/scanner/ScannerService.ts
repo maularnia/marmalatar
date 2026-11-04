@@ -56,7 +56,7 @@ export class ScannerService extends Service<TScannerData> {
     // Video files live wherever the user picked them from, not inside the tracked folder -- this
     // handler is intentionally not resolved against the tracked folder, used only to check whether a
     // previously-saved video path is still on disk.
-    this.handle('check-external-path-exists', (_: IpcMainInvokeEvent, absolutePath: string) =>
+    this.handle('check-foreign-file-exists', (_: IpcMainInvokeEvent, absolutePath: string) =>
       runWithFallback(() => fs.existsSync(absolutePath), false)
     ),
   ] as const;

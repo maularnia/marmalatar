@@ -1,7 +1,7 @@
 import EditorLayout from '@src/layout/EditorLayout';
 import GeneralLayout from '@src/layout/GeneralLayout';
 import { useAppSelector } from '@store/hooks';
-import { selectFolder, selectInitialized } from '@store/slices/disc';
+import { selectFolder, selectInitialized } from '@store/slices/workingFolder';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import GlobalBackground from './layout/components/GlobalBackground';
 import { StaticPageLayout } from './layout/StaticPageLayout';

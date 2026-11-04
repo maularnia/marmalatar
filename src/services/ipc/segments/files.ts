@@ -10,6 +10,6 @@ export class IPCFiles extends IPCSegment {
   readonly selectFolder = this.bridgeCall('scanner', 'selectFolder');
   // Lists are cached in the main process until this; it picks up files changed outside the app
   readonly rescan = this.bridgeCall('scanner', 'dropCache');
-  readonly checkExternalPathExists = this.bridgeCall('scanner', 'checkExternalPathExists');
+  readonly checkForeignFileExists = this.bridgeCall('scanner', 'checkForeignFileExists');
   readonly getPathFile = (file: File) => window.electronAPI.getPathForFile(file);
 }

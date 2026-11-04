@@ -12,8 +12,8 @@ import {
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
-import { checkExternalPathExists, TProjectEntry } from '@store/slices/disc';
-import { getProjectEditorState, loadProjectFromDisk } from '@store/slices/project';
+import { checkForeignFileExists } from '@store/slices/workingFolder';
+import { getProjectEditorState, loadProjectFromDisk, TProjectEntry } from '@store/slices/project';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
 import { useAppDispatch } from '@store/hooks';
@@ -93,7 +93,7 @@ export function useProjectLoader() {
       // ── Saved path: verify existence, then process via backend ─────────────
       let fileExists: boolean;
       try {
-        fileExists = await checkExternalPathExists(savedPath);
+        fileExists = await checkForeignFileExists(savedPath);
       } catch (error) {
         emitVideoFileCheckFailedMessage(pushMessage, toErrorMessage(error));
         fileExists = false;

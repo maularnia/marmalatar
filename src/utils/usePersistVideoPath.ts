@@ -1,6 +1,6 @@
 import { emitVideoPathRemovalFailedMessage, emitVideoPathSaveFailedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import { cleanupMediaCache } from '@store/slices/disc';
+import { cleanupMediaCache } from '@store/slices/workingFolder';
 import { getProjectEditorState, writeProjectEditorState } from '@store/slices/project';
 import { useCallback } from 'react';
 

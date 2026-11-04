@@ -1,21 +1,27 @@
 import type { AppDispatch, RootState } from './root';
 import {
+  refreshGlossaries,
+  refreshPromptTemplates,
   resetAiPromptEditor,
   saveGlossary,
   selectCurrentGlossary,
   selectCurrentPromptTemplate,
+  setGlossaryItems,
+  setPromptTemplateItems,
   writePromptTemplateBody,
 } from './slices/aiPromptEditor';
 import { refreshSelectedPromptTemplateData } from './slices/aiTranslation';
 import {
-  forceRescan,
-  refreshPromptTemplates,
+  cleanupMediaCache,
+  getTrackedFolder,
+  rescanFolder,
   selectFolder,
   selectFolderDialog,
   setFolder,
+  setInitialized,
   setIsBusy,
   setTrackedFolder,
-} from './slices/disc';
+} from './slices/workingFolder';
 import { resetEditorMemoryState } from './slices/editor';
 import {
   closeOverlays,
@@ -23,7 +29,13 @@ import {
   setCurrentOverlay,
   TOverlay,
 } from './slices/overlays';
-import { resetProject, saveProjectToDisk, selectIsProjectOpen } from './slices/project';
+import {
+  refreshProjects,
+  resetProject,
+  saveProjectToDisk,
+  selectIsProjectOpen,
+  setProjects,
+} from './slices/project';
 import { resetPromptState, selectSelectedPromptTemplateFileName } from './slices/prompt';
 
 // Thunks that span slices which import each other, so they can't live in either slice file
@@ -66,6 +78,56 @@ export const openExportOverlay =
   };
 
 // ── Folder ──────────────────────────────────────────────────────────────────
+
+// The folder's lists live in the slices that own the files (project, aiPromptEditor), and those
+// import the workingFolder slice, so refreshing them all together has to happen here
+const refreshAll =
+  () =>
+  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+    if (!selectFolder(getState())) {
+      dispatch(setProjects([]));
+      dispatch(setPromptTemplateItems([]));
+      dispatch(setGlossaryItems([]));
+      return;
+    }
+    await Promise.all([
+      dispatch(refreshProjects()),
+      dispatch(refreshPromptTemplates()),
+      dispatch(refreshGlossaries()),
+    ]);
+  };
+
+// The only thunk that makes the main process scan the folder again -- restricted to the two
+// explicit user actions (folder select, manual rescan) per design. Anything else reads the cached
+// listing, so files changed outside the app show up only after one of these.
+export const forceRescan =
+  () =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    dispatch(setIsBusy(true));
+    try {
+      await rescanFolder();
+      await dispatch(refreshAll());
+      // Best-effort housekeeping side effect of scanning -- not awaited (so it can't slow down the
+      // scan) and not surfaced as a toast (it isn't a user-initiated action).
+      void cleanupMediaCache().catch(() => {});
+    } finally {
+      dispatch(setIsBusy(false));
+    }
+  };
+
+export const initWorkingFolder =
+  () =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    try {
+      const savedFolder = await getTrackedFolder();
+      if (!savedFolder) return;
+      dispatch(setFolder(savedFolder));
+      // The main process keeps the last listing, so no live scan is needed at startup
+      await dispatch(refreshAll());
+    } finally {
+      dispatch(setInitialized(true));
+    }
+  };
 
 // Saves whatever is open in every slice before switching folders
 

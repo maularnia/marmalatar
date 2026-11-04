@@ -9,7 +9,7 @@ import { ThemeProvider } from '@src/providers/ThemeProvider';
 import { hydrateAppSettings } from '@src/store/slices/app';
 import { parseAppSettings } from '@src/utils/appSettingsFile';
 import { initializeAiIntegration } from '@store/slices/aiTranslation';
-import { initDisc } from '@store/slices/disc';
+import { initWorkingFolder } from '@store/thunks';
 import { store } from '@store/store';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -31,7 +31,7 @@ IPC.settings.getAppSettings().then((raw) => {
     void IPC.settings.setAppSettings(settings);
   }
 
-  void store.dispatch(initDisc());
+  void store.dispatch(initWorkingFolder());
   void store.dispatch(initializeAiIntegration()).catch(() => {});
 
   ReactDOM.createRoot(document.getElementById('root')!).render(

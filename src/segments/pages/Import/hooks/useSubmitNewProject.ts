@@ -2,7 +2,7 @@ import { emitProjectCreationAbortedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import { useAppDispatch, useAppSelector } from '@src/store/hooks';
-import { selectFolder } from '@src/store/slices/disc';
+import { selectFolder } from '@src/store/slices/workingFolder';
 import { createNewProject } from '@store/slices/project';
 import { TLanguage, TSubtitleLine } from '@src/types';
 import { useCallback } from 'react';

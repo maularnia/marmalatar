@@ -1,4 +1,5 @@
-import { TInputColumn, useEditorRefs } from '@providers/EditorRefsProvider';
+import { useEditorRefs } from '@providers/EditorRefsProvider';
+import type { TInputColumn } from '@src/types';
 import { useVideo } from '@providers/VideoProvider';
 import {
   emitAutoMergeCancelledMessage,

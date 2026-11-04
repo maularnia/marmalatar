@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
 import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
 import i18n from '@src/i18n';
 import { IPC } from '@src/services/ipc/IPC';
@@ -14,14 +15,7 @@ import {
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import type { AppDispatch, RootState } from '@store/root';
 import { reconcileGlossarySelectionWithDirection } from '@store/slices/aiPromptEditor';
-import {
-  cleanupMediaCache,
-  refreshProjects,
-  selectFolder,
-  setIsBusy,
-  setProjectEntry,
-  type TProjectEntry,
-} from '@store/slices/disc';
+import { cleanupMediaCache, selectFolder, setIsBusy } from '@store/slices/workingFolder';
 import {
   clearFileData,
   resetEditorMemoryState,
@@ -33,6 +27,7 @@ import {
 import { setFrozenLineNumbers } from '@store/slices/prompt';
 
 export type { TProjectEditorState };
+export type TProjectEntry = TProjectListEntry;
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -43,6 +38,10 @@ const t = i18n.getFixedT(null, 'errors');
 // writes only their bodies: headers (names, titles, emoji, languages) change through dedicated
 // calls, and the services compute what derives from the file, such as translation progress.
 // create and rename resolve to null when the file name the title maps to is taken.
+
+async function listProjects(): Promise<TProjectEntry[]> {
+  return IPC.projects.list();
+}
 
 async function readProjectFile(projectId: string): Promise<TProjectFileData> {
   const raw = await IPC.projects.get(projectId);
@@ -123,6 +122,8 @@ export async function writeProjectEditorState(
 }
 
 type ProjectState = {
+  // The tracked folder's projects, as the main process lists them
+  projects: TProjectEntry[];
   currentProjectFilePath: string | null;
   projectId: string | null;
   projectName: string | null;
@@ -134,6 +135,7 @@ type ProjectState = {
 };
 
 const initialState: ProjectState = {
+  projects: [],
   currentProjectFilePath: null,
   projectId: null,
   projectName: null,
@@ -148,6 +150,16 @@ const projectSlice = createSlice({
   name: 'project',
   initialState,
   reducers: {
+    setProjects(state, action: PayloadAction<TProjectEntry[]>) {
+      state.projects = action.payload;
+    },
+    // Replaces one project's list item with the entry the main process returned after a write, so
+    // the menu shows what the file now holds (name, emoji, progress) without listing the folder
+    // again
+    setProjectEntry(state, action: PayloadAction<TProjectEntry>) {
+      const idx = state.projects.findIndex((p) => p.projectId === action.payload.projectId);
+      if (idx >= 0) state.projects[idx] = action.payload;
+    },
     setCurrentProjectFilePath(state, action: PayloadAction<string | null>) {
       state.currentProjectFilePath = action.payload;
     },
@@ -172,11 +184,14 @@ const projectSlice = createSlice({
     setEditorMode(state, action: PayloadAction<'edit' | 'translate'>) {
       state.editorMode = action.payload;
     },
-    resetProject(): ProjectState {
-      return initialState;
+    // Closes the open project only -- the list is the tracked folder's, not the open project's, and
+    // is deliberately kept
+    resetProject(state): ProjectState {
+      return { ...initialState, projects: state.projects };
     },
   },
   selectors: {
+    selectProjects: (state) => state.projects,
     selectCurrentProjectFilePath: (state) => state.currentProjectFilePath,
     selectProjectId: (state) => state.projectId,
     selectProjectName: (state) => state.projectName,
@@ -189,10 +204,16 @@ const projectSlice = createSlice({
   },
 });
 
-const { setCurrentProjectFilePath, setProjectId, setProjectName, setProjectEmoji } =
-  projectSlice.actions;
+const {
+  setProjectEntry,
+  setCurrentProjectFilePath,
+  setProjectId,
+  setProjectName,
+  setProjectEmoji,
+} = projectSlice.actions;
 
 export const {
+  setProjects,
   setVideoFilePath,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
@@ -203,6 +224,7 @@ export const {
 const { selectCurrentProjectFilePath } = projectSlice.selectors;
 
 export const {
+  selectProjects,
   selectProjectId,
   selectProjectName,
   selectVideoFilePath,
@@ -216,6 +238,14 @@ export const {
 export default projectSlice.reducer;
 
 // ── Thunks ───────────────────────────────────────────────────────────────────
+
+// The list comes from the main process, which renormalizes it against the tracked folder on every
+// read, so after any write the renderer just reads it again.
+export const refreshProjects =
+  () =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    dispatch(setProjects(await listProjects()));
+  };
 
 type CreateNewProjectParams = {
   lines: TSubtitleLine[];

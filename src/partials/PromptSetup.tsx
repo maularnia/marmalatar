@@ -15,6 +15,8 @@ import ProgressBar from '@src/toolkit/ProgressBar';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import {
   refreshResolvedGlossaryEntries,
+  selectGlossaryItems,
+  selectPromptTemplateItems,
   selectResolvedGlossaryEntries,
 } from '@store/slices/aiPromptEditor';
 import {
@@ -28,7 +30,6 @@ import {
   setContextWindowEstimate,
   setContextWindowEstimateStatus,
 } from '@store/slices/aiTranslation';
-import { selectGlossaryItems, selectPromptTemplateItems } from '@store/slices/disc';
 import {
   FormSectionEntry,
   FormsRow,

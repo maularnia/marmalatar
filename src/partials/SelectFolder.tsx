@@ -1,5 +1,5 @@
 import { useAppSelector } from '@src/store/hooks';
-import { selectFolder } from '@src/store/slices/disc';
+import { selectFolder } from '@src/store/slices/workingFolder';
 import { ThemeColors } from '@src/theme/utils';
 import Message, { TMessageSize, TMessageVariant } from '@src/toolkit/Message';
 import { FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';

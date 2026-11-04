@@ -49,6 +49,10 @@ export type TCharacter = {
   color: TColor;
 };
 
+// An editor line's input column. Here rather than in EditorRefsProvider, which reads the project
+// slice, so the editor slice can use it without importing a provider.
+export type TInputColumn = 'source' | 'output' | 'character';
+
 export type TSubtitleLine = {
   line_no: number;
   start_time: number;

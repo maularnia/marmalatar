@@ -1,7 +1,6 @@
 import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 import { TColor, TColorCustom } from '@src/theme/definitions';
-import type { TInputColumn } from '@providers/EditorRefsProvider';
-import { TCharacter, TSubtitleLine } from '@src/types';
+import { TCharacter, TInputColumn, TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { cleanupEntries, TEntryCleanupOptions } from '@utils/data/entryCleanup';
 

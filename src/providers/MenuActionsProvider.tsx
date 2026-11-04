@@ -16,16 +16,13 @@ import {
   saveGlossary,
   selectCurrentGlossary,
   selectCurrentPromptTemplate,
+  selectGlossaryItems,
+  selectPromptTemplateItems,
 } from '@store/slices/aiPromptEditor';
 import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import {
-  selectDiscIsBusy,
-  selectGlossaryItems,
-  selectProjects,
-  selectPromptTemplateItems,
-} from '@store/slices/disc';
+import { selectWorkingFolderIsBusy } from '@store/slices/workingFolder';
 import { closeOverlays, selectCurrentOverlay } from '@store/slices/overlays';
-import { selectProjectId, startNewProject } from '@store/slices/project';
+import { selectProjectId, selectProjects, startNewProject } from '@store/slices/project';
 import { openSettingsOverlay, savePromptTemplate } from '@store/thunks';
 import { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -281,7 +278,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleOpenProject = useCallback(
     async (project: TProjectEntry, isActive: boolean) => {
       const isBusy =
-        fromCurrentStore(selectDiscIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+        fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
       if (isActive || isBusy) return;
       await saveCurrentIfNeeded();
       dispatch(closeOverlays());
@@ -294,7 +291,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleOpenPromptTemplate = useCallback(
     async (fileName: string, title: string) => {
       const isBusy =
-        fromCurrentStore(selectDiscIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+        fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
       if (isBusy) return;
       if (
         fromCurrentStore(selectCurrentOverlay) === 'promptTemplate' &&
@@ -313,7 +310,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleOpenGlossary = useCallback(
     async (fileName: string, title: string) => {
       const isBusy =
-        fromCurrentStore(selectDiscIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+        fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
       if (isBusy) return;
       if (
         fromCurrentStore(selectCurrentOverlay) === 'glossary' &&
@@ -348,7 +345,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
     // ListItem's own onKeyDown), not also open the item.
     if (renamingKey != null) return;
     const focusedItem = getFocusedItem();
-    const isBusy = fromCurrentStore(selectDiscIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+    const isBusy =
+      fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
     if (isBusy || !focusedItem) return;
     const { key, kind } = focusedItem;
     switch (kind) {
@@ -438,7 +436,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
 
   const handleDeleteFocusedItem = useCallback(() => {
     const focusedItem = getFocusedItem();
-    const isBusy = fromCurrentStore(selectDiscIsBusy) || fromCurrentStore(selectTranslationIsBusy);
+    const isBusy =
+      fromCurrentStore(selectWorkingFolderIsBusy) || fromCurrentStore(selectTranslationIsBusy);
     if (isBusy || !focusedItem) return;
     const { key, kind } = focusedItem;
     if (kind === 'project') {

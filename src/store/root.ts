@@ -4,7 +4,7 @@ import appReducer from './slices/app';
 import projectReducer from './slices/project';
 import editorReducer from './slices/editor';
 import promptReducer from './slices/prompt';
-import discReducer from './slices/disc';
+import workingFolderReducer from './slices/workingFolder';
 import aiPromptEditorReducer from './slices/aiPromptEditor';
 import overlaysReducer from './slices/overlays';
 import aiTranslationReducer from './slices/aiTranslation';
@@ -14,7 +14,7 @@ export const rootReducer = combineReducers({
   project: projectReducer,
   editor: editorReducer,
   prompt: promptReducer,
-  disc: discReducer,
+  workingFolder: workingFolderReducer,
   aiPromptEditor: aiPromptEditorReducer,
   overlays: overlaysReducer,
   aiTranslation: aiTranslationReducer,
