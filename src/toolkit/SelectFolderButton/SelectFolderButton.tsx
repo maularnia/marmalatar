@@ -1,6 +1,6 @@
 import { CSSVar } from '@src/theme/utils';
 import { useAppDispatch } from '@store/hooks';
-import { pickFolder } from '@store/thunks';
+import { workingFolderPick } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +19,7 @@ export default function SelectFolderButton() {
   const dispatch = useAppDispatch();
 
   const handleSelectFolder = async () => {
-    const didPickFolder = await dispatch(pickFolder());
+    const didPickFolder = await dispatch(workingFolderPick());
     if (didPickFolder) navigate('/');
   };
 

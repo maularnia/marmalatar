@@ -7,6 +7,7 @@ import { TOverlay } from './slices/overlays';
 import { overlays } from './slices/overlays';
 import { projects } from './slices/project';
 import { prompt } from './slices/prompt';
+import { settings } from './slices/settings';
 
 // Thunks that span slices which import each other, so they can't live in either slice file
 // without an import cycle.
@@ -70,7 +71,7 @@ const refreshAll =
 // The only thunk that makes the main process scan the folder again -- restricted to the two
 // explicit user actions (folder select, manual rescan) per design. Anything else reads the cached
 // listing, so files changed outside the app show up only after one of these.
-export const forceRescan =
+export const workingFolderScan =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
     dispatch(workingFolder.setIsBusy(true));
@@ -85,7 +86,7 @@ export const forceRescan =
     }
   };
 
-export const initWorkingFolder =
+const workingFolderInit =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
     try {
@@ -100,7 +101,7 @@ export const initWorkingFolder =
 
 // Saves whatever is open in every slice before switching folders
 
-export const pickFolder =
+export const workingFolderPick =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<boolean> => {
     dispatch(workingFolder.setIsBusy(true));
@@ -128,9 +129,21 @@ export const pickFolder =
       dispatch(prompt.reset());
       dispatch(aiPromptEditor.reset());
 
-      await dispatch(forceRescan());
+      await dispatch(workingFolderScan());
       return true;
     } finally {
       dispatch(workingFolder.setIsBusy(false));
     }
+  };
+
+// ── App ─────────────────────────────────────────────────────────────────────
+
+// Startup. Settings are awaited, so the first render already has the theme and language; the
+// folder's lists and the AI integration load in the background.
+export const hydrateApp =
+  () =>
+  async (dispatch: AppDispatch): Promise<void> => {
+    await dispatch(settings.load());
+    void dispatch(workingFolderInit());
+    void dispatch(ai.initializeAiIntegration()).catch(() => {});
   };
