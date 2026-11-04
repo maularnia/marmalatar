@@ -11,8 +11,8 @@ export function usePersistVideoPath() {
     async (projectId: string, videoPath: string | null) => {
       if (!videoPath) return;
       try {
-        const current = await projects.getEditorState(projectId);
-        await projects.writeEditorState(projectId, { ...current, videoPath });
+        // A different video also drops the chosen audio track; the main process takes care of it
+        await projects.writeEditorState(projectId, { videoPath });
         void workingFolder.cleanupMediaCache().catch(() => {});
       } catch (err) {
         emitVideoPathSaveFailedMessage(
@@ -27,8 +27,7 @@ export function usePersistVideoPath() {
   const removeVideoPath = useCallback(
     async (projectId: string) => {
       try {
-        const current = await projects.getEditorState(projectId);
-        await projects.writeEditorState(projectId, { ...current, videoPath: null });
+        await projects.writeEditorState(projectId, { videoPath: null });
         void workingFolder.cleanupMediaCache().catch(() => {});
       } catch (err) {
         emitVideoPathRemovalFailedMessage(

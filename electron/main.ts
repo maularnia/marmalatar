@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 import path from 'path';
 import Store from 'electron-store';
 import { DeeplService } from './modules/ai/DeeplService';
@@ -44,7 +44,8 @@ const services = SERVICES.map((ServiceClass) =>
     ipcMain.handle(channel, listener as Parameters<typeof ipcMain.handle>[1])
   )
 );
-migrateStore(appStore, services);
+// Awaited before the first window opens
+const storeMigration = migrateStore(appStore, services);
 
 // Handler names per service, for preload to build window.electronAPI from
 const handlerNames: Record<string, string[]> = Object.fromEntries(
@@ -83,14 +84,22 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
-  createWindow();
+app
+  .whenReady()
+  .then(async () => {
+    Menu.setApplicationMenu(null);
+    await storeMigration;
+    createWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+  })
+  // Without a migrated store there's no window to open; quit rather than linger windowless
+  .catch((error: unknown) => {
+    dialog.showErrorBox('Marmalatar failed to start', String(error));
+    app.exit(1);
   });
-});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

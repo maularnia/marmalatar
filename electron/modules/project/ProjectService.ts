@@ -21,6 +21,7 @@ import { runWithFallback } from '../../utils/runWithFallback';
 import { normalizeEntries } from '../scanner/normalizeEntries';
 import type { TScanEntry } from '../scanner/scanFolder';
 import { ScannerService, scanLegacyTrackedFolder } from '../scanner/ScannerService';
+import { listAudioTracks } from '../media/metadata';
 import { readLegacyEntries } from '../service/readLegacyEntries';
 import { Service } from '../service/Service';
 import type { TVersioning } from '../service/storeVersioning';
@@ -130,7 +131,7 @@ export class ProjectService extends Service<TProjectData> {
   static readonly serviceName = 'project';
 
   readonly versioning: TVersioning<TProjectData> = {
-    0: (store) => {
+    0: async (store) => {
       const scan = scanLegacyTrackedFolder(store);
       if (!scan) return {};
       const filesByPath = new Map(scan.files.map((file) => [file.filePath, file]));
@@ -154,6 +155,16 @@ export class ProjectService extends Service<TProjectData> {
           : DEFAULT_STATE;
         list[projectId] = buildEntry(file, extracted, { state }, index);
       });
+
+      // Version 0 always played the video's first audio stream, so that stays the chosen track
+      await Promise.all(
+        Object.values(list).map(async (entry) => {
+          const { videoPath } = entry.state;
+          if (!videoPath) return;
+          const tracks = await listAudioTracks(videoPath).catch(() => null);
+          entry.state = { ...entry.state, audioTrackId: tracks?.[0]?.id ?? null };
+        })
+      );
       return { list };
     },
   };
@@ -228,19 +239,26 @@ export class ProjectService extends Service<TProjectData> {
       const entry = this.readList()[projectId];
       return entry ? readState(entry.state) : null;
     }),
-    // Only the renderer's preferences: computed fields such as the progress are kept
+    // Only the renderer's preferences, and only those given: the rest, and computed fields such as
+    // the progress, are kept. A different video drops the chosen audio track unless a new one is
+    // given, since track ids belong to one file.
     this.handle(
       'set-state',
-      (_: IpcMainInvokeEvent, projectId: string, prefs: TProjectStatePrefs) => {
+      (_: IpcMainInvokeEvent, projectId: string, prefs: Partial<TProjectStatePrefs>) => {
         const list = this.readList();
         const entry = list[projectId];
         if (!entry) throw new Error(`No project with id ${projectId} in the tracked folder`);
-        const { editorMode, isVideoCollapsed, videoPath } = prefs;
+        const current = readState(entry.state);
+        const { editorMode, isVideoCollapsed, videoPath, audioTrackId } = prefs;
+        const videoChanged = videoPath !== undefined && videoPath !== current.videoPath;
         const state = ProjectStateV2Schema.parse({
-          ...readState(entry.state),
-          editorMode,
-          isVideoCollapsed,
-          videoPath,
+          ...current,
+          ...(editorMode !== undefined && { editorMode }),
+          ...(isVideoCollapsed !== undefined && { isVideoCollapsed }),
+          ...(videoPath !== undefined && { videoPath }),
+          ...(audioTrackId !== undefined
+            ? { audioTrackId }
+            : videoChanged && { audioTrackId: null }),
         });
         this.store.set('list', { ...list, [projectId]: { ...entry, state } });
       }

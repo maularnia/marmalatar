@@ -49,7 +49,7 @@ Bridge - contains contracts for BE and FE to ensure them for both sides.
 - Translation progress is computed by the project service from the file's lines whenever it (re)reads the file, and stored in the project's `state` (`ProjectState` V2). The renderer's `set-state` writes only its preferences (`TProjectStatePrefs`)
 - The project, prompt template and glossary services keep their own `list` in their segment and renormalize it against `scanner.scan()` on every read and write (`scanner/normalizeEntries.ts`): unchanged files are matched by hash, only new or changed files are read, and entries whose file is gone are dropped. Projects are keyed by the `projectId` inside the file, so a rename keeps order, hidden, state and progress
 - `MediaService` keeps metadata per video in its segment (`videos`, keyed by `getFileCacheKey`: path, size, mtime): the thumbnail, the audio tracks ffprobe lists, and per track the converted audio and waveform file names in `{trackedFolder}/.mrmlcache`. It names every cache file itself (`{hash}.jpg`, `{hash}-{trackId}.m4a`, `{hash}-{trackId}.json`), so a changed video gets a fresh entry. `cleanup-cache` drops entries no project's video maps to and every cache file no entry references
-- Store layout is versioned as a whole (`electron/modules/service/storeVersioning.ts`). Raising `STORE_VERSION` requires a step in every service's `versioning`
+- Store layout is versioned as a whole (`electron/modules/service/storeVersioning.ts`). Raising `STORE_VERSION` requires a step in every service's `versioning`. Steps may be async (they can use the same code as the service at runtime, e.g. ffprobe); `main.ts` awaits the migration before opening the window
 
 ## UI structure (src)
 

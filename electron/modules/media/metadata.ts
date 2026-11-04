@@ -1,6 +1,6 @@
 import { app } from 'electron';
 import path from 'path';
-import { spawn, spawnSync } from 'child_process';
+import { spawn } from 'child_process';
 import { z } from 'zod';
 import { runWithFallback } from '../../utils/runWithFallback';
 import type { TAudioTrack } from '../../../bridge/definitions/audioTrack';
@@ -22,33 +22,22 @@ const ffprobePath = app.isPackaged
       ffprobeBinaryName
     );
 
-function ffprobeArgs(args: string[]): string[] {
-  return ['-v', 'error', '-of', 'json', ...args];
-}
-
-function parseFfprobeOutput(stdout: Buffer): unknown {
-  return runWithFallback(() => JSON.parse(stdout.toString('utf8')), null);
-}
-
 // Runs ffprobe and returns its JSON output, or null if it fails. Stdout is collected as Buffers,
 // not strings: decoding each chunk on its own would corrupt a multi-byte character that happens to
 // span two chunks.
 function runFfprobe(args: string[]): Promise<unknown> {
   return new Promise((resolve) => {
-    const proc = spawn(ffprobePath, ffprobeArgs(args), { stdio: ['ignore', 'pipe', 'ignore'] });
+    const proc = spawn(ffprobePath, ['-v', 'error', '-of', 'json', ...args], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
     const chunks: Buffer[] = [];
     proc.stdout?.on('data', (chunk: Buffer) => chunks.push(chunk));
     proc.on('close', (code) => {
-      resolve(code === 0 ? parseFfprobeOutput(Buffer.concat(chunks)) : null);
+      if (code !== 0) return resolve(null);
+      resolve(runWithFallback(() => JSON.parse(Buffer.concat(chunks).toString('utf8')), null));
     });
     proc.on('error', () => resolve(null));
   });
-}
-
-// Blocking variant, for store migrations, which run before any window opens and can't await
-function runFfprobeSync(args: string[]): unknown {
-  const result = spawnSync(ffprobePath, ffprobeArgs(args), { stdio: ['ignore', 'pipe', 'ignore'] });
-  return result.status === 0 ? parseFfprobeOutput(result.stdout) : null;
 }
 
 const FfprobeDurationSchema = z.object({
@@ -77,14 +66,16 @@ const FfprobeAudioStreamsSchema = z.object({
   ),
 });
 
-const AUDIO_STREAMS_ARGS = [
-  '-select_streams',
-  'a',
-  '-show_entries',
-  'stream=index,codec_name,channels,channel_layout,sample_rate,bit_rate:stream_tags=language,title:stream_disposition=default,comment',
-];
-
-function toAudioTracks(output: unknown, filePath: string): TAudioTrack[] {
+// Every audio stream of the file, in file order. Rejects when ffprobe can't read the file, so
+// callers can tell that apart from a file that simply has no audio.
+export async function listAudioTracks(filePath: string): Promise<TAudioTrack[]> {
+  const output = await runFfprobe([
+    '-select_streams',
+    'a',
+    '-show_entries',
+    'stream=index,codec_name,channels,channel_layout,sample_rate,bit_rate:stream_tags=language,title:stream_disposition=default,comment',
+    filePath,
+  ]);
   const parsed = FfprobeAudioStreamsSchema.safeParse(output);
   if (!parsed.success) throw new Error(`Unable to read audio tracks of ${filePath}`);
   return parsed.data.streams.map((stream) => ({
@@ -101,15 +92,4 @@ function toAudioTracks(output: unknown, filePath: string): TAudioTrack[] {
     // test .mp4 with the flag set also came out false
     isCommentary: stream.disposition?.comment === 1,
   }));
-}
-
-// Every audio stream of the file, in file order. Rejects when ffprobe can't read the file, so
-// callers can tell that apart from a file that simply has no audio.
-export async function listAudioTracks(filePath: string): Promise<TAudioTrack[]> {
-  return toAudioTracks(await runFfprobe([...AUDIO_STREAMS_ARGS, filePath]), filePath);
-}
-
-// Blocking variant of listAudioTracks, for store migrations
-export function listAudioTracksSync(filePath: string): TAudioTrack[] {
-  return toAudioTracks(runFfprobeSync([...AUDIO_STREAMS_ARGS, filePath]), filePath);
 }

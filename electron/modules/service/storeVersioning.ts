@@ -9,11 +9,12 @@ const STORE_VERSION = 1;
 type TStoreVersion = 0;
 
 // Turns a service's segment at one version into the segment at the next. Gets the whole store as it
-// is before that step, so a service can pick up data that used to live outside its segment.
+// is before that step, so a service can pick up data that used to live outside its segment. May be
+// async, e.g. to read media files with the same code the service uses at runtime.
 type TVersionStep<TData> = (
   store: Readonly<Record<string, unknown>>,
   segment: Partial<TData>
-) => Partial<TData>;
+) => Partial<TData> | Promise<Partial<TData>>;
 
 export type TVersioning<TData> = { readonly [V in TStoreVersion]: TVersionStep<TData> };
 
@@ -24,9 +25,13 @@ type TVersionedService = {
 
 const VERSION_KEY = 'version';
 
-// Brings the store up to STORE_VERSION, one version at a time. Runs before any window opens, so
-// nothing reads a segment mid-migration.
-export function migrateStore(appStore: Store, services: readonly TVersionedService[]): void {
+// Brings the store up to STORE_VERSION, one version at a time. main.ts awaits it before opening any
+// window, so nothing reads a segment mid-migration. Every service's step for a version runs on the
+// same snapshot, so they run concurrently and are written once all are done.
+export async function migrateStore(
+  appStore: Store,
+  services: readonly TVersionedService[]
+): Promise<void> {
   const stored = appStore.get(VERSION_KEY);
   let version = typeof stored === 'number' ? stored : 0;
   if (version > STORE_VERSION) {
@@ -37,11 +42,15 @@ export function migrateStore(appStore: Store, services: readonly TVersionedServi
 
   for (; version < STORE_VERSION; version++) {
     const snapshot = { ...appStore.store };
-    for (const service of services) {
-      const segment = (snapshot[service.name] as object | undefined) ?? {};
-      const step = service.versioning[version as TStoreVersion];
-      appStore.set(service.name, step(snapshot, segment));
-    }
+    const segments = await Promise.all(
+      services.map((service) =>
+        service.versioning[version as TStoreVersion](
+          snapshot,
+          (snapshot[service.name] as object | undefined) ?? {}
+        )
+      )
+    );
+    services.forEach((service, index) => appStore.set(service.name, segments[index]));
     // Version 0 kept data at top-level keys. Each service has copied what it owns by now, so the
     // old keys go -- left in place, a later service could pick one of their names by accident.
     if (version === 0) {

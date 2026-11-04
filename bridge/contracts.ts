@@ -31,7 +31,7 @@ const ProjectStateVersioning = defineVersionedContract({
   schemas: { 1: ProjectStateV1Schema, 2: ProjectStateV2Schema },
   transforms: {
     // Progress is recomputed from the file the next time the project service reads it
-    1: (data) => ({ ...(data as object), version: 2, translationProgress: 0 }),
+    1: (data) => ({ ...(data as object), version: 2, translationProgress: 0, audioTrackId: null }),
   },
   current: ProjectStateV2Schema,
 });

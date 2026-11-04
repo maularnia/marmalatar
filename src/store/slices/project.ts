@@ -94,7 +94,11 @@ async function deleteProjectOnDisk(projectId: string): Promise<void> {
   await IPC.projects.delete(projectId);
 }
 
-function buildProjectEditorStateSaveData(state: RootState): TProjectStatePrefs {
+// The preferences the store holds. The audio track isn't among them yet, and set-state keeps
+// whatever isn't sent.
+function buildProjectEditorStateSaveData(
+  state: RootState
+): Omit<TProjectStatePrefs, 'audioTrackId'> {
   return {
     editorMode: state.project.editorMode,
     isVideoCollapsed: state.editor.isVideoCollapsed,
@@ -107,9 +111,10 @@ async function getProjectEditorState(projectId: string): Promise<TProjectEditorS
   return ProjectEditorStateSchema.parse(raw && typeof raw === 'object' ? raw : {});
 }
 
+// Writes the given preferences only; the main process keeps the rest
 async function writeProjectEditorState(
   projectId: string,
-  prefs: TProjectStatePrefs
+  prefs: Partial<TProjectStatePrefs>
 ): Promise<void> {
   await IPC.projects.setState(projectId, prefs);
 }

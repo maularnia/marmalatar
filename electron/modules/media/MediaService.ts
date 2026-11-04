@@ -9,7 +9,7 @@ import { ProjectService } from '../project/ProjectService';
 import { ScannerService } from '../scanner/ScannerService';
 import { Service } from '../service/Service';
 import type { TVersioning } from '../service/storeVersioning';
-import { getDuration, listAudioTracks, listAudioTracksSync } from './metadata';
+import { getDuration, listAudioTracks } from './metadata';
 
 // Forge's Vite plugin strips node_modules from the packaged app, so ffmpeg-static's
 // JS (and its own __dirname-based path lookup) isn't available at runtime. The binary
@@ -218,37 +218,44 @@ function toAudioTrack({ cache: _, waveform: __, ...track }: TAudioTrackMeta): TA
 // Version 0 kept no media metadata: cache files were found by the video's key alone, and only the
 // first audio stream was ever converted. This builds an entry for every project video from the
 // files that are already there, so nothing is regenerated after the update.
-function migrateLegacyMedia(store: Readonly<Record<string, unknown>>): Partial<TMediaData> {
+async function migrateV0Media(
+  store: Readonly<Record<string, unknown>>
+): Promise<Partial<TMediaData>> {
   // 1. The cache lives in the tracked folder; without one there's nothing to pick up
   const trackedFolder = store.trackedFolder;
   if (typeof trackedFolder !== 'string' || !fs.existsSync(trackedFolder)) return {};
 
-  // 2. Version 0 kept each project's video path in projectStates, keyed by projectId
+  // 2. Version 0 kept each project's video path in projectStates, keyed by projectId. Skip videos
+  //    that are gone, and ones another project already shares.
   const legacyStates = (store.projectStates ?? {}) as Record<string, { videoPath?: unknown }>;
-  const videos: Record<string, TVideoFileMeta> = {};
-
+  const videoPaths = new Map<string, string>();
   for (const legacyState of Object.values(legacyStates)) {
-    // 3. Skip videos that are gone, and ones another project already shares
     const videoPath = legacyState?.videoPath;
     if (typeof videoPath !== 'string' || !fs.existsSync(videoPath)) continue;
     const hash = runWithFallback(() => getFileCacheKey(videoPath), null);
-    if (!hash || hash in videos) continue;
+    if (hash && !videoPaths.has(hash)) videoPaths.set(hash, videoPath);
+  }
 
-    // 4. Thumbnail: version 0 used the same {hash}.jpg name, so it carries over as is
-    const entry: TVideoFileMeta = { filePath: videoPath };
-    const thumb = `${hash}.jpg`;
-    if (fs.existsSync(path.join(cacheDir(trackedFolder, 'previews'), thumb))) entry.thumb = thumb;
+  const entries = await Promise.all(
+    [...videoPaths].map(async ([hash, videoPath]): Promise<[string, TVideoFileMeta]> => {
+      // 3. Thumbnail: version 0 used the same {hash}.jpg name, so it carries over as is
+      const entry: TVideoFileMeta = { filePath: videoPath };
+      const thumb = `${hash}.jpg`;
+      if (fs.existsSync(path.join(cacheDir(trackedFolder, 'previews'), thumb))) {
+        entry.thumb = thumb;
+      }
 
-    // 5. Converted audio: version 0 wrote {hash}.m4a from the first audio stream (-map 0:a:0).
-    //    The track list is needed to attach it, and listing needs ffprobe -- run blocking, since
-    //    migrations can't await. Without the file, the tracks are listed later, on first use.
-    const audio = `${hash}.m4a`;
-    const audioFile = path.join(cacheDir(trackedFolder, 'audio'), audio);
-    const tracks = fs.existsSync(audioFile)
-      ? runWithFallback(() => listAudioTracksSync(videoPath), null)
-      : null;
+      // 4. Audio tracks, listed the same way the service does at runtime. A file ffprobe can't
+      //    read gets its tracks listed on first use instead.
+      const tracks = await listAudioTracks(videoPath).catch(() => null);
+      if (!tracks) return [hash, entry];
+      entry.audioTracks = tracks;
 
-    if (tracks?.length) {
+      // 5. Converted audio: version 0 wrote {hash}.m4a from the first audio stream (-map 0:a:0)
+      const audio = `${hash}.m4a`;
+      const audioFile = path.join(cacheDir(trackedFolder, 'audio'), audio);
+      if (!tracks.length || !fs.existsSync(audioFile)) return [hash, entry];
+
       // 6. Waveform: version 0 keyed it by the converted audio file, not the video
       const waveformKey = runWithFallback(() => getFileCacheKey(audioFile), null);
       const waveform = waveformKey && `${waveformKey}.json`;
@@ -260,18 +267,17 @@ function migrateLegacyMedia(store: Readonly<Record<string, unknown>>): Partial<T
       entry.audioTracks = tracks.map((track, index) =>
         index === 0 ? { ...track, cache: audio, ...(hasWaveform && { waveform }) } : track
       );
-    }
-
-    videos[hash] = entry;
-  }
-  return { videos };
+      return [hash, entry];
+    })
+  );
+  return { videos: Object.fromEntries(entries) };
 }
 
 export class MediaService extends Service<TMediaData> {
   static readonly serviceName = 'media';
 
   readonly versioning: TVersioning<TMediaData> = {
-    0: (store) => migrateLegacyMedia(store),
+    0: migrateV0Media,
   };
 
   readonly handlers = [
