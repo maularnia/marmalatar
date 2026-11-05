@@ -1,4 +1,5 @@
-import { useVideo } from '@providers/VideoProvider';
+import { useAppSelector } from '@store/hooks';
+import { media } from '@src/services/media';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import ProgressBar, { TProgressBarSize } from '@src/toolkit/ProgressBar';
 import { clamp } from '@src/utils/numbers';
@@ -40,7 +41,7 @@ const SeekTooltip = styled.div`
 `;
 
 export default function VideoProgressBar() {
-  const { videoDurationMs, currentTimeRef, setCurrentTimeMs, seekVideoToMs } = useVideo();
+  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
   const barRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const isSeekingRef = useRef(false);
@@ -48,10 +49,10 @@ export default function VideoProgressBar() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setLocalCurrentTimeMs(currentTimeRef.current);
+      setLocalCurrentTimeMs(media.getCurrentTimeMs());
     }, 100);
     return () => clearInterval(interval);
-  }, [currentTimeRef]);
+  }, []);
 
   function timeFromClientX(clientX: number): number | null {
     const bar = barRef.current;
@@ -80,8 +81,8 @@ export default function VideoProgressBar() {
     const time = timeFromClientX(clientX);
     if (time == null) return;
     setLocalCurrentTimeMs(time);
-    setCurrentTimeMs(time);
-    seekVideoToMs(time);
+    media.setCurrentTimeMs(time);
+    media.seekToMs(time);
   }
 
   useEffect(() => {

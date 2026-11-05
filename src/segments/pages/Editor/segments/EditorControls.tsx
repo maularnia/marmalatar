@@ -1,8 +1,7 @@
-import { useVideo } from '@providers/VideoProvider';
+import { media } from '@src/services/media';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/editor';
 import { glossaries } from '@store/slices/glossary';
-import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
@@ -94,8 +93,8 @@ export function EditorControls() {
   const timeAdjustmentStep = useAppSelector(settings.selectTimeAdjustmentStep);
   const canUndo = useAppSelector(editor.selectCanUndo);
   const canRedo = useAppSelector(editor.selectCanRedo);
-  const { videoDurationMs } = useVideo();
-  const videoPath = useAppSelector(projects.selectVideoFilePath);
+  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
+  const videoPath = useAppSelector(media.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   const earliestStartTime = allLines.length
     ? Math.min(...allLines.map((line) => line.start_time))

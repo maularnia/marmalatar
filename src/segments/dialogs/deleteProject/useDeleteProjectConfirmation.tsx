@@ -20,7 +20,7 @@ export const useDeleteProjectConfirmation = () => {
       if (!(await confirm({ projectName }))) return false;
       await projects.delete(projectId);
       if (projectId === currentProjectId) {
-        projects.reset();
+        projects.close();
         navigate('/');
       }
       return true;

@@ -8,7 +8,7 @@ type PushMessage = (params: TPushMessageParams) => void;
 const t = i18n.getFixedT(null, 'messages');
 const tErrors = i18n.getFixedT(null, 'errors');
 
-// VideoProvider
+// media service
 
 export function emitVideoPlaybackErrorMessage(pushMessage: PushMessage): void {
   pushMessage({
@@ -18,7 +18,7 @@ export function emitVideoPlaybackErrorMessage(pushMessage: PushMessage): void {
   });
 }
 
-// VideoProvider / VideoFileSelect / VideoSelectDialog / useProjectLoader
+// media service / VideoFileSelect / VideoSelectDialog / useProjectLoader
 
 export function emitAudioExtractionFailedMessage(pushMessage: PushMessage, message?: string): void {
   pushMessage({

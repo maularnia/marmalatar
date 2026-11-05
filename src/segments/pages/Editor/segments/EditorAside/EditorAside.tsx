@@ -1,7 +1,6 @@
-import { useVideo } from '@providers/VideoProvider';
+import { media } from '@src/services/media';
 import GeneralSettings from '@src/partials/Settings';
 import { editor } from '@src/services/editor';
-import { projects } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
@@ -61,13 +60,14 @@ export default function EditorAside() {
   const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
     (state) => ({
       translationLines: editor.selectLines(state),
-      activeLineIndex: editor.selectActiveLineIndex(state),
+      activeLineIndex: media.selectActiveLineIndex(state),
       focusedLineIndex: editor.selectFocusedLineIndex(state),
     }),
     shallowEqual
   );
-  const { videoDurationMs, waveformPeaks } = useVideo();
-  const videoFilePath = useAppSelector(projects.selectVideoFilePath);
+  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
+  const waveformPeaks = useAppSelector(media.selectWaveformPeaks);
+  const videoFilePath = useAppSelector(media.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   return (
     <Aside tabIndex={1}>

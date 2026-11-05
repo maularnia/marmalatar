@@ -1,5 +1,5 @@
+import { media } from '@src/services/media';
 import { editor } from '@src/services/editor';
-import { useVideo } from '@providers/VideoProvider';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';
@@ -114,7 +114,6 @@ export default function Waveform({
   onLineTimingChange,
 }: WaveformProps) {
   const { t } = useTranslation('tooltips');
-  const { currentTimeRef, seekVideoToMs } = useVideo();
   const size = useAppSelector(settings.selectScreenSize);
   const theme = useAppSelector(settings.selectCurrentThemeData);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -150,14 +149,14 @@ export default function Waveform({
       if (direction === 0) return;
 
       const step = videoDurationMs * WHEEL_SEEK_STEP_RATIO;
-      const newTime = clamp(currentTimeRef.current + direction * step, 0, videoDurationMs);
+      const newTime = clamp(media.getCurrentTimeMs() + direction * step, 0, videoDurationMs);
       setCurrentTimeMs(newTime);
-      seekVideoToMs(newTime);
+      media.seekToMs(newTime);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
-  }, [videoDurationMs, currentTimeRef, seekVideoToMs]);
+  }, [videoDurationMs]);
 
   function handleEntryPointerDown(lineIndex: number, mode: DragMode, clientX: number) {
     const line = translationLines[lineIndex];
@@ -181,12 +180,12 @@ export default function Waveform({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTimeMs(currentTimeRef.current);
+      setCurrentTimeMs(media.getCurrentTimeMs());
     }, 100);
     return () => {
       clearInterval(interval);
     };
-  }, [currentTimeRef]);
+  }, []);
 
   const cursorX = useMemo(() => {
     if (!videoDurationMs || videoDurationMs <= 0) {
@@ -282,7 +281,7 @@ export default function Waveform({
           videoDurationMs
         );
         setCurrentTimeMs(newTime);
-        seekVideoToMs(newTime);
+        media.seekToMs(newTime);
       }
     };
 
@@ -401,7 +400,7 @@ export default function Waveform({
             if (dragStateRef.current) return;
             waveformDragRef.current = {
               startX: event.clientX,
-              startTimeMs: currentTimeRef.current,
+              startTimeMs: media.getCurrentTimeMs(),
             };
             (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
           }}

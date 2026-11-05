@@ -6,11 +6,11 @@ import type { RootState } from './root';
 // these aren't project content, so they're persisted to electron-store keyed by
 // projectId instead of triggering a .mrml file rewrite (see persistProjectState.ts).
 const EDITOR_STATE_WATCHED_PATHS = {
-  project: ['videoFilePath'],
   editor: ['mode', 'isVideoCollapsed'],
+  media: ['videoFilePath'],
 } as const satisfies {
-  project: readonly (keyof RootState['project'])[];
   editor: readonly (keyof RootState['editor'])[];
+  media: readonly (keyof RootState['media'])[];
 };
 
 type EditorStateWatchedPathsType = typeof EDITOR_STATE_WATCHED_PATHS;

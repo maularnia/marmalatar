@@ -1,5 +1,4 @@
 import { pushMessage } from '@providers/bridges/messages';
-import { playPause, seekToLine } from '@providers/bridges/video';
 import {
   emitAutoMergeCancelledMessage,
   emitAutoMergeFailedMessage,
@@ -30,6 +29,7 @@ import { confirmMerge } from '@src/segments/dialogs/lineMerge/mergeConfirmation'
 import { confirmSplit } from '@src/segments/dialogs/split/splitConfirmation';
 import type { TInputColumn, TSubtitleLine } from '@src/types';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
+import { media } from '@src/services/media';
 import { dispatch, select } from '@store/createApi';
 import { settings } from '@store/slices/settings';
 import {
@@ -58,8 +58,8 @@ import {
 } from './slice';
 
 // The editor service's operations. They read their own state with select(localSelector), not the
-// facade: index.ts builds the facade from this file, so importing it here would be a cycle. Dialogs,
-// toasts and the video player are reached through the bridges in src/providers/bridges.
+// facade: index.ts builds the facade from this file, so importing it here would be a cycle. Dialogs
+// and toasts are reached through the bridges in src/providers/bridges, playback through media.
 
 const lines = (): TSubtitleLine[] => select(selectLines);
 
@@ -209,21 +209,21 @@ export function navigateLine(direction: 'up' | 'down', lineIndex: number | null)
   if (lineIndex == null) {
     if (lineCount === 0) return;
     focusInput(0, column);
-    seekToLine(0);
+    media.seekToLine(0);
     return;
   }
   const targetIndex = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
   if (targetIndex < 0 || targetIndex >= lineCount) return;
   const selectAll = focusedColumn === 'output' && hasSelectedTextInElement(activeElement);
   focusInput(targetIndex, column, selectAll);
-  seekToLine(targetIndex);
+  media.seekToLine(targetIndex);
 }
 
 export function playFocusedLine(): void {
   const focusedLineIndex = select(selectFocusedLineIndex);
   if (focusedLineIndex === null || !lines()[focusedLineIndex]) return;
-  seekToLine(focusedLineIndex);
-  playPause();
+  media.seekToLine(focusedLineIndex);
+  media.playPause();
 }
 
 // ── Line edits ───────────────────────────────────────────────────────────────

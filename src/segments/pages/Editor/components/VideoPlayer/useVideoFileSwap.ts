@@ -1,16 +1,14 @@
-import { useVideo } from '@providers/VideoProvider';
+import { media } from '@src/services/media';
 import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
 import { emitVideoUpdatedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
-import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
 import { useCallback, useRef } from 'react';
 
 export function useVideoFileSwap() {
   const { selectVideo } = useVideoSelectDialog();
   const { persistVideoPath } = usePersistVideoPath();
-  const { setVideoFilePath, setVideoData, videoElementRef, seekToLine } = useVideo();
   const { pushMessage } = useMessageHelmet();
   const busyRef = useRef(false);
 
@@ -24,30 +22,22 @@ export function useVideoFileSwap() {
       const projectId = projects.get.id();
       if (projectId) await persistVideoPath(projectId, result.videoPath);
 
-      const video = videoElementRef.current;
+      const video = media.getVideoElement();
       const onLoadedMetadata = () => {
         video?.removeEventListener('loadedmetadata', onLoadedMetadata);
-        const activeLineIndex = editor.get.activeLineIndex();
-        if (activeLineIndex != null) seekToLine(activeLineIndex);
+        const activeLineIndex = media.get.activeLineIndex();
+        if (activeLineIndex != null) media.seekToLine(activeLineIndex);
       };
       video?.addEventListener('loadedmetadata', onLoadedMetadata);
 
-      setVideoFilePath(result.videoPath, result.audioPath);
-      setVideoData(result.previewImage, result.waveformPeaks);
+      media.loadVideo(result.videoPath, result.audioPath);
+      media.setVideoData({ thumbnail: result.previewImage, waveformPeaks: result.waveformPeaks });
 
       emitVideoUpdatedMessage(pushMessage);
     } finally {
       busyRef.current = false;
     }
-  }, [
-    selectVideo,
-    persistVideoPath,
-    videoElementRef,
-    seekToLine,
-    setVideoFilePath,
-    setVideoData,
-    pushMessage,
-  ]);
+  }, [selectVideo, persistVideoPath, pushMessage]);
 
   return { swapVideo };
 }

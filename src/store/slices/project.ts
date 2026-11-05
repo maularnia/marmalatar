@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { api, dispatch } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
 import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
@@ -18,6 +18,7 @@ import type { AppDispatch } from '@store/root';
 import { glossaries } from '@store/slices/glossary';
 import { workingFolder } from '@store/slices/workingFolder';
 import { editor } from '@src/services/editor';
+import { media } from '@src/services/media';
 
 export type TProjectEntry = TProjectListEntry;
 
@@ -101,7 +102,7 @@ function buildProjectEditorStateSaveData(): Omit<TProjectStatePrefs, 'audioTrack
   return {
     editorMode: editor.get.mode(),
     isVideoCollapsed: editor.get.isVideoCollapsed(),
-    videoPath: projects.get.videoFilePath(),
+    videoPath: media.get.videoFilePath(),
   };
 }
 
@@ -125,7 +126,6 @@ type ProjectState = {
   projectId: string | null;
   projectName: string | null;
   emoji: string | null;
-  videoFilePath: string | null;
   sourceLanguage: TLanguage | null;
   targetLanguage: TLanguage | null;
 };
@@ -136,7 +136,6 @@ const initialState: ProjectState = {
   projectId: null,
   projectName: null,
   emoji: null,
-  videoFilePath: null,
   sourceLanguage: null,
   targetLanguage: null,
 };
@@ -167,9 +166,6 @@ const projectSlice = createSlice({
     setProjectEmoji(state, action: PayloadAction<string | null>) {
       state.emoji = action.payload;
     },
-    setVideoFilePath(state, action: PayloadAction<string | null>) {
-      state.videoFilePath = action.payload;
-    },
     setProjectSourceLanguage(state, action: PayloadAction<TLanguage | null>) {
       state.sourceLanguage = action.payload;
     },
@@ -187,7 +183,6 @@ const projectSlice = createSlice({
     selectCurrentProjectFilePath: (state) => state.currentProjectFilePath,
     selectProjectId: (state) => state.projectId,
     selectProjectName: (state) => state.projectName,
-    selectVideoFilePath: (state) => state.videoFilePath,
     selectProjectSourceLanguage: (state) => state.sourceLanguage,
     selectProjectTargetLanguage: (state) => state.targetLanguage,
     selectIsProjectOpen: (state) => state.projectId !== null,
@@ -202,13 +197,8 @@ const {
   setProjectEmoji,
 } = projectSlice.actions;
 
-const {
-  setProjectList,
-  setVideoFilePath,
-  setProjectSourceLanguage,
-  setProjectTargetLanguage,
-  resetProject,
-} = projectSlice.actions;
+const { setProjectList, setProjectSourceLanguage, setProjectTargetLanguage, resetProject } =
+  projectSlice.actions;
 
 const { selectCurrentProjectFilePath } = projectSlice.selectors;
 
@@ -216,7 +206,6 @@ const {
   selectProjectList,
   selectProjectId,
   selectProjectName,
-  selectVideoFilePath,
   selectProjectSourceLanguage,
   selectProjectTargetLanguage,
   selectIsProjectOpen,
@@ -251,6 +240,7 @@ const createProject =
     dispatch(setCurrentProjectFilePath(null));
     editor.resetMemoryState();
     editor.clearSplitCursor();
+    media.resetPlayback();
     editor.setVideoCollapsed(false);
 
     let emoji: string;
@@ -335,7 +325,8 @@ const startNewProject =
     }
     editor.resetMemoryState();
     editor.clearSplitCursor();
-    dispatch(resetProject());
+    media.resetPlayback();
+    closeProject();
     editor.clearFileData();
   };
 
@@ -352,6 +343,7 @@ const loadProjectFromDisk =
     dispatch(setCurrentProjectFilePath(null));
     editor.resetMemoryState();
     editor.clearSplitCursor();
+    media.resetPlayback();
 
     applyProjectData(dispatch, data);
 
@@ -364,7 +356,7 @@ const loadProjectFromDisk =
     editor.setMode(editorState.editorMode);
     editor.setVideoCollapsed(editorState.isVideoCollapsed);
     // Restore the video that was attached when the project was last saved/closed.
-    dispatch(setVideoFilePath(editorState.videoPath));
+    media.setVideoFilePath(editorState.videoPath);
 
     dispatch(setCurrentProjectFilePath(project.filePath));
   };
@@ -432,15 +424,19 @@ const deleteProject =
     }
   };
 
+// Closes the open project and its video. The project list is the tracked folder's and stays.
+function closeProject(): void {
+  dispatch(resetProject());
+  media.clearVideo();
+}
+
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const projects = api('project', {
   actions: {
-    resetProject,
     setProjectList,
     setProjectSourceLanguage,
     setProjectTargetLanguage,
-    setVideoFilePath,
   },
   thunks: {
     createProject,
@@ -461,10 +457,10 @@ export const projects = api('project', {
     selectProjectName,
     selectProjectSourceLanguage,
     selectProjectTargetLanguage,
-    selectVideoFilePath,
   },
   functions: {
     buildProjectEditorStateSaveData,
+    closeProject,
     getProjectEditorState,
     writeProjectEditorState,
   },

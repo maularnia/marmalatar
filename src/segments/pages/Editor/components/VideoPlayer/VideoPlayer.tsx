@@ -1,4 +1,4 @@
-import { useVideo } from '@providers/VideoProvider';
+import { media } from '@src/services/media';
 import { useSelectAudioTrackDialog } from '@src/segments/dialogs/selectAudioTrack/useSelectAudioTrackDialog';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/editor';
@@ -13,7 +13,8 @@ import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import classNames from 'classnames';
-import { Fragment, useEffect } from 'react';
+import { Fragment, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useVideoFileSwap } from './useVideoFileSwap';
@@ -134,17 +135,16 @@ type VideoPlayerProps = {
 
 export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: VideoPlayerProps) {
   const { t } = useTranslation('editor');
-  const {
-    videoElementRef,
-    registerVideoElementRef,
-    audioElementRef,
-    registerAudioElementRef,
-    setCurrentTimeMs,
-    reportVideoUnplayable,
-  } = useVideo();
+  const navigate = useNavigate();
+  // An unplayable video closes the project: the editor can't be used in sync with it
+  const reportVideoUnplayable = useCallback(() => {
+    media.reportVideoUnplayable();
+    projects.close();
+    navigate('/');
+  }, [navigate]);
   const lines = useAppSelector(editor.selectLines);
-  const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
-  const videoFilePath = useAppSelector(projects.selectVideoFilePath);
+  const activeLineIndex = useAppSelector(media.selectActiveLineIndex);
+  const videoFilePath = useAppSelector(media.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   const { selectAudioTrack } = useSelectAudioTrackDialog();
   const characterPool = useAppSelector(editor.selectCharacterPool);
@@ -166,11 +166,11 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       : [];
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
-    const video = videoElementRef.current;
+    const video = media.getVideoElement();
     const emitCurrentTime = () => {
       if (!video) return;
-      setCurrentTimeMs(video.currentTime * 1000);
-      const audio = audioElementRef.current;
+      media.setCurrentTimeMs(video.currentTime * 1000);
+      const audio = media.getAudioElement();
       if (
         audio &&
         Math.abs(audio.currentTime - video.currentTime) > AUDIO_VIDEO_DRIFT_THRESHOLD_S
@@ -219,7 +219,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       reportVideoUnplayable();
     };
 
-    const audio = audioElementRef.current;
+    const audio = media.getAudioElement();
     const handleAudioError = () => {
       const err = audio?.error;
       if (!err || err.code === MediaError.MEDIA_ERR_ABORTED) return;
@@ -245,14 +245,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       video.removeEventListener('error', handleError);
       audio?.removeEventListener('error', handleAudioError);
     };
-  }, [
-    setCurrentTimeMs,
-    videoElementRef,
-    audioElementRef,
-    onPlaybackPause,
-    onPlaybackResume,
-    reportVideoUnplayable,
-  ]);
+  }, [onPlaybackPause, onPlaybackResume, reportVideoUnplayable]);
 
   return (
     <VideoStage className={classNames({ isCollapsed: effectiveCollapsed })} tabIndex={1}>
@@ -346,8 +339,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       </TopBar>
       {videoFilePath ? (
         <VideoPlayerShell $hidden={effectiveCollapsed}>
-          <Video ref={registerVideoElementRef} playsInline muted />
-          <Audio ref={registerAudioElementRef} />
+          <Video ref={media.registerVideoElement} playsInline muted />
+          <Audio ref={media.registerAudioElement} />
           <BottomPanel>
             <VideoProgressBar />
           </BottomPanel>

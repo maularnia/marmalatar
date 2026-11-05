@@ -1,4 +1,5 @@
-import { useVideo } from '@providers/VideoProvider';
+import { useAppSelector } from '@store/hooks';
+import { media } from '@src/services/media';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
@@ -374,7 +375,7 @@ export default function EditorTableLine({
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
   const { zoneRef } = useKeystrokeZone();
-  const { videoDurationMs } = useVideo();
+  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
   const sourceLanguage = useSelector(projects.selectSourceLanguage);
   const targetLanguage = useSelector(projects.selectTargetLanguage);
   const isTranslationBusy = useSelector(ai.selectIsBusy);

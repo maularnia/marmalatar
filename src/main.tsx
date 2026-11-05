@@ -1,7 +1,6 @@
 import { ConfirmationProvider } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { GlobalKeystrokeDispatcher } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { PopperPortalProvider } from '@providers/PopperPortalProvider';
-import { VideoProvider } from '@providers/VideoProvider';
 import AppErrorBoundary from '@src/layout/components/AppErrorBoundary';
 import { LocaleProvider } from '@src/providers/LocaleProvider';
 import { ThemeProvider } from '@src/providers/ThemeProvider';
@@ -31,9 +30,7 @@ void app.hydrate().then(() => {
                     <PopperPortalProvider>
                       <GlobalKeystrokeDispatcher>
                         <ConfirmationProvider>
-                          <VideoProvider>
-                            <App />
-                          </VideoProvider>
+                          <App />
                         </ConfirmationProvider>
                       </GlobalKeystrokeDispatcher>
                     </PopperPortalProvider>

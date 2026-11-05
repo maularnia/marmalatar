@@ -1,5 +1,5 @@
+import { media } from '@src/services/media';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
-import { useVideo } from '@providers/VideoProvider';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/editor';
 import { TSubtitleLine } from '@src/types';
@@ -49,7 +49,7 @@ function buildCacheKey(props: LineRenderKeyProps): string {
 }
 
 export function useLineFingerprint() {
-  const { videoDurationMs } = useVideo();
+  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
 
   const { isCtrlPressed, isAltPressed, isCtrlAltPressed, isAltShiftPressed } = useEditorKeystroke();
 
@@ -70,7 +70,7 @@ export function useLineFingerprint() {
       translationIsBusy: ai.selectIsBusy(state),
       characterOptions: editor.selectCharacterPool(state),
       focusedLineIndex: editor.selectFocusedLineIndex(state),
-      activeLineIndex: editor.selectActiveLineIndex(state),
+      activeLineIndex: media.selectActiveLineIndex(state),
       editorMode: editor.selectMode(state),
     }),
     shallowEqual

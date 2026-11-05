@@ -1,7 +1,7 @@
+import { media } from '@src/services/media';
 import { VideoFileProcessingStatusToMessage, VideoFilesProcessingStatusToColor } from '@src/consts';
 import { emitAudioExtractionFailedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import { useVideo } from '@src/providers/VideoProvider';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';
 import { TWaveformStatus } from '@src/types';
@@ -53,7 +53,6 @@ export default function VideoFileSelect({
 }: VideoFileSelectProps) {
   const { t } = useTranslation('errors');
   const { t: tImport } = useTranslation(['import', 'app']);
-  const { setVideoData, setVideoFilePath } = useVideo();
   const { pushMessage } = useMessageHelmet();
   const [waveformStatus, setWaveformStatus] = useState<TWaveformStatus>(TWaveformStatus.IDLE);
   useEffect(() => {
@@ -67,14 +66,14 @@ export default function VideoFileSelect({
 
     if (!enabled) {
       setWaveformStatus(TWaveformStatus.IDLE);
-      setVideoFilePath(null);
+      media.loadVideo(null);
       onError(null);
       return;
     }
 
     if (!value) {
       setWaveformStatus(TWaveformStatus.IDLE);
-      setVideoFilePath(null);
+      media.loadVideo(null);
       onError(t('videoFileSelect.fileRequired'));
       return;
     }
@@ -96,7 +95,7 @@ export default function VideoFileSelect({
       } catch {
         if (isCancelled) return;
         setWaveformStatus(TWaveformStatus.UNSUPPORTED_VIDEO);
-        setVideoFilePath(null);
+        media.loadVideo(null);
         onError(t('videoFileSelect.unsupportedVideoCodec'));
         return;
       }
@@ -118,7 +117,7 @@ export default function VideoFileSelect({
       } catch (error) {
         if (isCancelled) return;
         setWaveformStatus(TWaveformStatus.AUDIO_EXTRACTION_FAILED);
-        setVideoFilePath(null);
+        media.loadVideo(null);
         onError(t('videoFileSelect.audioExtractionFailed'));
         emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
         return;
@@ -131,7 +130,7 @@ export default function VideoFileSelect({
       } catch {
         if (isCancelled) return;
         setWaveformStatus(TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO);
-        setVideoFilePath(null);
+        media.loadVideo(null);
         onError(t('videoFileSelect.unplayableConvertedAudio'));
         return;
       }
@@ -140,14 +139,14 @@ export default function VideoFileSelect({
       try {
         const waveformPeaks = await IPC.media.extractWaveformPeaks(videoPath);
         if (isCancelled) return;
-        setVideoFilePath(videoPath, audioPath);
-        setVideoData(previewImage ?? null, waveformPeaks);
+        media.loadVideo(videoPath, audioPath);
+        media.setVideoData({ thumbnail: previewImage ?? null, waveformPeaks: waveformPeaks });
         setWaveformStatus(TWaveformStatus.SUCCESS);
         onError(null);
       } catch (error) {
         if (isCancelled) return;
         setWaveformStatus(TWaveformStatus.ERROR);
-        setVideoFilePath(null);
+        media.loadVideo(null);
         onError(t('videoFileSelect.processingFailed'));
         emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
       }

@@ -8,6 +8,7 @@ import workingFolderReducer from './slices/workingFolder';
 import glossaryReducer from './slices/glossary';
 import overlaysReducer from './slices/overlays';
 import { aiReducer } from '@src/services/ai';
+import { mediaReducer } from '@src/services/media';
 
 export const rootReducer = combineReducers({
   settings: settingsReducer,
@@ -18,6 +19,7 @@ export const rootReducer = combineReducers({
   glossary: glossaryReducer,
   overlays: overlaysReducer,
   ai: aiReducer,
+  media: mediaReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

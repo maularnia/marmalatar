@@ -1,4 +1,4 @@
-import { useVideo } from '@providers/VideoProvider';
+import { media } from '@src/services/media';
 import {
   emitAudioExtractionFailedMessage,
   emitProjectLoadedMessage,
@@ -25,7 +25,6 @@ import { IPC } from '@src/services/ipc/IPC';
 export function useProjectLoader() {
   const { t } = useTranslation(['dialogs', 'messages']);
   const navigate = useNavigate();
-  const { setVideoData, setVideoFilePath, resetCurrentTime } = useVideo();
   const { pushMessage } = useMessageHelmet();
   const { selectVideo } = useVideoSelectDialog();
   const { persistVideoPath, removeVideoPath } = usePersistVideoPath();
@@ -47,9 +46,9 @@ export function useProjectLoader() {
           return;
         }
 
-        setVideoFilePath(videoPath, audioPath ?? undefined);
-        setVideoData(preview, peaks);
-        resetCurrentTime();
+        media.loadVideo(videoPath, audioPath ?? undefined);
+        media.setVideoData({ thumbnail: preview, waveformPeaks: peaks });
+        media.resetPlayback();
 
         emitProjectLoadedMessage(pushMessage);
         navigate('/workspace');
@@ -160,18 +159,7 @@ export function useProjectLoader() {
         result.previewImage
       );
     },
-    [
-      navigate,
-      setVideoFilePath,
-      setVideoData,
-      resetCurrentTime,
-      pushMessage,
-      selectVideo,
-      load,
-      persistVideoPath,
-      removeVideoPath,
-      t,
-    ]
+    [navigate, pushMessage, selectVideo, load, persistVideoPath, removeVideoPath, t]
   );
 
   return { loadProject };

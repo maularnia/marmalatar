@@ -86,7 +86,7 @@ const workingFolderPick =
 
       editor.resetMemoryState();
       overlays.closeAll();
-      projects.reset();
+      projects.close();
       editor.setFrozenLineNumbers([]);
       promptTemplates.setSelectedFileName(null);
       glossaries.setSelectedFileNames([]);

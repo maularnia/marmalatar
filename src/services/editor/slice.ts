@@ -8,7 +8,6 @@ import { cleanupEntries, TEntryCleanupOptions } from '@utils/data/entryCleanup';
 
 type EditorSliceState = {
   // Editor UI memory (not persisted)
-  activeLineIndex: number | null;
   focusedLineIndex: number | null;
   focusedColumn: TInputColumn | null;
   renderEpoch: number;
@@ -136,7 +135,6 @@ function splitLineTimingsInHalf(line: TSubtitleLine): {
 // ─── Initial state ────────────────────────────────────────────────────────────
 
 const initialState: EditorSliceState = {
-  activeLineIndex: null,
   focusedLineIndex: null,
   focusedColumn: null,
   renderEpoch: 0,
@@ -158,9 +156,6 @@ const editorSlice = createSlice({
   initialState,
   reducers: {
     // Editor UI memory
-    setActiveLineIndex(state, action: PayloadAction<number | null>) {
-      state.activeLineIndex = action.payload;
-    },
     setFocusedLineIndex(state, action: PayloadAction<number | null>) {
       const lineIndex = action.payload;
       state.focusedLineIndex =
@@ -181,7 +176,6 @@ const editorSlice = createSlice({
       state.textSelection = action.payload;
     },
     resetEditorMemoryState(state) {
-      state.activeLineIndex = initialState.activeLineIndex;
       state.focusedLineIndex = initialState.focusedLineIndex;
       state.focusedColumn = initialState.focusedColumn;
       // Drop any stale render cache
@@ -607,7 +601,6 @@ const editorSlice = createSlice({
   },
   selectors: {
     // Editor UI memory
-    selectActiveLineIndex: (state) => state.activeLineIndex,
     selectFocusedLineIndex: (state) => state.focusedLineIndex,
     selectFocusedColumn: (state) => state.focusedColumn,
     selectRenderEpoch: (state) => state.renderEpoch,
@@ -628,7 +621,6 @@ const editorSlice = createSlice({
 
 export const {
   // Editor UI memory
-  setActiveLineIndex,
   setFocusedLineIndex,
   setFocusedColumn,
   incrementRenderEpoch,
@@ -667,7 +659,6 @@ export const {
 } = editorSlice.actions;
 
 export const {
-  selectActiveLineIndex,
   selectFocusedLineIndex,
   selectFocusedColumn,
   selectRenderEpoch,

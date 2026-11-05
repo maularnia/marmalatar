@@ -1,5 +1,5 @@
+import { media } from '@src/services/media';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
-import { useVideo } from '@providers/VideoProvider';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/editor';
 import { TShade } from '@src/theme/definitions';
@@ -87,9 +87,8 @@ const overscrollAmount = 300;
 const estimatedRowHeight = 100;
 export default function Editor() {
   const { t } = useTranslation('tooltips');
-  const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
+  const activeLineIndex = useAppSelector(media.selectActiveLineIndex);
   const focusedLineIndex = useAppSelector(editor.selectFocusedLineIndex);
-  const { seekToLine, handlePause } = useVideo();
   const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
   const focusedItemIndex = focusedLineIndex ?? -1;
   const { isAltShiftPressed } = useEditorKeystroke();
@@ -168,8 +167,8 @@ export default function Editor() {
         isFrozen={isFrozen}
         onFocus={() => {
           editor.focusLine(lineIndex);
-          seekToLine(lineIndex);
-          handlePause();
+          media.seekToLine(lineIndex);
+          media.pause();
         }}
         onCharacterChange={(character) =>
           editor.updateTranslationCharacter({ lineIndex, character })
