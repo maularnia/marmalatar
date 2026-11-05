@@ -26,9 +26,18 @@ type EditorSliceState = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function addToHistory(past: TSubtitleLine[][], lines: TSubtitleLine[]): TSubtitleLine[][] {
-  const next = [...past, lines];
-  return next.length > 5 ? next.slice(next.length - 5) : next;
+const HISTORY_LIMIT = 5;
+
+function pushCapped(stack: TSubtitleLine[][], lines: TSubtitleLine[]): TSubtitleLine[][] {
+  const next = [...stack, lines];
+  return next.length > HISTORY_LIMIT ? next.slice(next.length - HISTORY_LIMIT) : next;
+}
+
+// Records the current lines as an undo step, before an edit. The edit makes whatever was undone
+// unreachable, so the redo stack is always cleared.
+function addToHistory(state: EditorSliceState): void {
+  state.past = pushCapped(state.past, current(state.lines));
+  state.future = [];
 }
 
 function shiftLines(lines: TSubtitleLine[], deltaMs: number): TSubtitleLine[] {
@@ -185,15 +194,14 @@ const editorSlice = createSlice({
       if (action.payload === 'backward') {
         if (state.past.length === 0) return;
         const snapshot = current(state.past[state.past.length - 1]);
-        const updatedFuture = [...state.future, current(state.lines)];
-        state.future =
-          updatedFuture.length > 5 ? updatedFuture.slice(updatedFuture.length - 5) : updatedFuture;
+        state.future = pushCapped(state.future, current(state.lines));
         state.lines = snapshot;
         state.past = state.past.slice(0, -1);
       } else {
         if (state.future.length === 0) return;
         const snapshot = current(state.future[state.future.length - 1]);
-        state.past = addToHistory([...state.past], current(state.lines));
+        // Not addToHistory: redoing must keep the rest of the redo stack
+        state.past = pushCapped(state.past, current(state.lines));
         state.lines = snapshot;
         state.future = state.future.slice(0, -1);
       }
@@ -208,8 +216,7 @@ const editorSlice = createSlice({
       const index = state.lines.findIndex((l) => l.line_no === line.line_no);
       if (index < 0) return;
       if (!skipHistory) {
-        state.past = addToHistory([...state.past], current(state.lines));
-        state.future = [];
+        addToHistory(state);
       }
       state.lines[index] = {
         ...state.lines[index],
@@ -224,8 +231,7 @@ const editorSlice = createSlice({
     ) {
       const line = state.lines[action.payload.lineIndex];
       if (line) {
-        state.past = addToHistory([...state.past], current(state.lines));
-        state.future = [];
+        addToHistory(state);
         line.character = action.payload.character;
         state.characterPool = rebuildCharacterPool(state.characterPool, current(state.lines));
       }
@@ -233,16 +239,14 @@ const editorSlice = createSlice({
     updateTranslatedText(state, action: PayloadAction<{ lineIndex: number; text: string }>) {
       const line = state.lines[action.payload.lineIndex];
       if (line) {
-        state.past = addToHistory([...state.past], current(state.lines));
-        state.future = [];
+        addToHistory(state);
         line.output = action.payload.text;
       }
     },
     updateSourceText(state, action: PayloadAction<{ lineIndex: number; text: string }>) {
       const line = state.lines[action.payload.lineIndex];
       if (line) {
-        state.past = addToHistory([...state.past], current(state.lines));
-        state.future = [];
+        addToHistory(state);
         line.input = action.payload.text;
       }
     },
@@ -254,8 +258,7 @@ const editorSlice = createSlice({
       const line = state.lines[lineIndex];
       if (line) {
         if (!skipHistory) {
-          state.past = addToHistory([...state.past], current(state.lines));
-          state.future = [];
+          addToHistory(state);
         }
         line.completed = completed;
       }
@@ -289,8 +292,7 @@ const editorSlice = createSlice({
       newLines[targetIndex] = mergedLine;
       newLines.splice(removedIndex, 1);
 
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines = renormalizeLineNumbers(newLines);
       state.totalLinesToTranslate = state.lines.length;
     },
@@ -299,20 +301,17 @@ const editorSlice = createSlice({
       if (requestedAmount === 0 || state.lines.length === 0) return;
       const earliestStartTime = Math.min(...state.lines.map((line) => line.start_time));
       const actualShift = Math.min(requestedAmount, Math.max(0, earliestStartTime));
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines = shiftLines(state.lines, -actualShift);
     },
     shiftAllLinesLater(state, action: PayloadAction<number>) {
       const requestedAmount = Math.max(0, action.payload);
       if (requestedAmount === 0) return;
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines = shiftLines(state.lines, requestedAmount);
     },
     removeLine(state, action: PayloadAction<number>) {
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       const newLines = [...state.lines];
       newLines.splice(action.payload, 1);
       state.lines = renormalizeLineNumbers(newLines);
@@ -328,8 +327,7 @@ const editorSlice = createSlice({
     ) {
       const line = state.lines[action.payload.lineIndex];
       if (line) {
-        state.past = addToHistory([...state.past], current(state.lines));
-        state.future = [];
+        addToHistory(state);
         Object.assign(
           line,
           clampLineTiming(line, action.payload.startTime, action.payload.endTime)
@@ -372,8 +370,7 @@ const editorSlice = createSlice({
         newLines[lineIndex] = { ...line, start_time: secondStart };
         newLines.splice(lineIndex, 0, newLine);
       }
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines = renormalizeLineNumbers(newLines);
       state.totalLinesToTranslate = state.lines.length;
       state.renderEpoch += 1;
@@ -462,8 +459,7 @@ const editorSlice = createSlice({
 
       if (newLines === null) return;
 
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines = renormalizeLineNumbers(newLines);
       state.totalLinesToTranslate = state.lines.length;
       state.renderEpoch += 1;
@@ -531,8 +527,7 @@ const editorSlice = createSlice({
 
       if (!hasMerge) return;
 
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines = newLines.map((line, index) => ({ ...line, line_no: index + 1 }));
       state.totalLinesToTranslate = state.lines.length;
       state.renderEpoch += 1;
@@ -542,8 +537,7 @@ const editorSlice = createSlice({
       action: PayloadAction<{ targetColumn: 'source' | 'output'; options: TEntryCleanupOptions }>
     ) {
       const { targetColumn, options } = action.payload;
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
 
       const getText = (line: TSubtitleLine): string =>
         (targetColumn === 'source' ? line.input : line.output) ?? '';
@@ -562,8 +556,7 @@ const editorSlice = createSlice({
     },
     copyAllSourceToOutput(state, action: PayloadAction<{ overrideExisting: boolean }>) {
       const { overrideExisting } = action.payload;
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines.forEach((line) => {
         if (overrideExisting || !line.output?.trim()) {
           line.output = line.input ?? '';
@@ -571,8 +564,7 @@ const editorSlice = createSlice({
       });
     },
     completeAllTranslatedLines(state) {
-      state.past = addToHistory([...state.past], current(state.lines));
-      state.future = [];
+      addToHistory(state);
       state.lines.forEach((line) => {
         if (line.output?.trim()) line.completed = true;
       });
