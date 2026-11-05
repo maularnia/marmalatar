@@ -1,8 +1,8 @@
 import { useAppSelector } from '@store/hooks';
 import { media } from '@src/services/media';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { editor } from '@src/services/editor';
-import { projects } from '@src/store/slices/project';
+import { editor } from '@src/services/project';
+import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';

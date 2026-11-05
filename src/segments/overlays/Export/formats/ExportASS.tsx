@@ -1,4 +1,4 @@
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { exportAsAss } from '@src/utils/data/parsers/ass';
 import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';

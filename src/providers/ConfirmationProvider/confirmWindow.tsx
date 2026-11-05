@@ -2,13 +2,14 @@ import i18n from '@src/i18n';
 import { ComponentType } from 'react';
 import {
   TConfirmationContext,
+  TInfoWindow,
   TConfirmationHookProps,
   TConfirmationWindowProps,
   TConfirmWindow,
   TWindowID,
 } from './types';
 
-export const ERROR_CONFIRM_DESTROYED = i18n.getFixedT(
+const ERROR_CONFIRM_DESTROYED = i18n.getFixedT(
   null,
   'errors'
 )('confirmationProvider.confirmDestroyed');
@@ -91,5 +92,51 @@ export function createConfirmWindow<T extends TConfirmationWindowProps>(
       if (windowId) getContext().destroyWindow(windowId);
       destroyed = true;
     },
+  };
+}
+
+const DEFAULT_INFO_WINDOW_DELAY = 300;
+const DEFAULT_INFO_WINDOW_MIN_LIFE_TIME = 1000;
+
+/**
+ * Window logic shared by `useInfoWindow` (hook) and the bridge's `createInfoWindow` (for services):
+ * a window without actions, shown while a promise runs. Registered with the provider on first use.
+ */
+export function createInfoWindow<T extends Record<string, unknown>>(
+  getContext: () => TConfirmationContext,
+  Content: ComponentType<T>
+): TInfoWindow<T> {
+  let windowId: TWindowID | undefined;
+  const getId = (): TWindowID => (windowId ??= getContext().registerWindow());
+
+  return {
+    show: (props, promise, options) => {
+      const id = getId();
+      const context = getContext();
+      const {
+        animate,
+        delay = DEFAULT_INFO_WINDOW_DELAY,
+        minLifeTime = DEFAULT_INFO_WINDOW_MIN_LIFE_TIME,
+      } = options ?? {};
+      // Stays undefined until the window has actually appeared
+      let minLifeTimeElapsed: Promise<void> | undefined;
+      const openWindow = () => {
+        context.open(id, { Content: () => <Content {...props} />, animate });
+        minLifeTimeElapsed = new Promise((resolve) => setTimeout(resolve, minLifeTime));
+      };
+      // Without a delay the window has to open synchronously: a timer would leave a gap in which
+      // the UI isn't blocked yet.
+      const delayTimeout = delay > 0 ? setTimeout(openWindow, delay) : undefined;
+      if (delay <= 0) openWindow();
+      // `finally` waits for the callback, so callers also continue only once the window is closing
+      // -- with the original promise's result or rejection left untouched.
+      return promise.finally(async () => {
+        clearTimeout(delayTimeout);
+        if (!minLifeTimeElapsed) return;
+        await minLifeTimeElapsed;
+        context.close(id);
+      });
+    },
+    close: () => getContext().close(getId()),
   };
 }

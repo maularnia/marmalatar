@@ -1,7 +1,7 @@
 import { media } from '@src/services/media';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';

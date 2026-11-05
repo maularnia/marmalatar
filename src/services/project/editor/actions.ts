@@ -98,8 +98,19 @@ export function registerLineInput(
   lineInputs.set(lineIndex, row);
 }
 
-export function getLineInput(lineIndex: number, column: TInputColumn): HTMLElement | null {
+function getLineInput(lineIndex: number, column: TInputColumn): HTMLElement | null {
   return lineInputs.get(lineIndex)?.[column] ?? null;
+}
+
+/** The text selected inside a line's source input, or null when the selection is empty or lies
+ * elsewhere. */
+export function getSourceSelection(lineIndex: number): string | null {
+  const sourceInput = getLineInput(lineIndex, 'source');
+  if (!sourceInput) return null;
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null;
+  if (!sourceInput.contains(selection.getRangeAt(0).commonAncestorContainer)) return null;
+  return selection.toString() || null;
 }
 
 // ── Split cursor ─────────────────────────────────────────────────────────────

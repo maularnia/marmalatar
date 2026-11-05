@@ -1,7 +1,7 @@
 import KeystrokeZone, {
   useKeystrokeZone,
 } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
 import { ai } from '@src/services/ai';
 import { glossaries } from '@store/slices/glossary';
@@ -626,7 +626,8 @@ function EditorShortcuts() {
     event.preventDefault();
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
-    glossaries.addEntryFromLineSelection(lineIndex);
+    const selectedText = editor.getSourceSelection(lineIndex);
+    if (selectedText) void glossaries.addEntryFromText(selectedText);
   });
 
   useGuardedKeystroke('insertLineBefore', () => {

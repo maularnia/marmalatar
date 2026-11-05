@@ -1,5 +1,5 @@
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { useAppSelector } from '@store/hooks';
 import { cloneElement, type ReactElement, type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { shallowEqual } from 'react-redux';

@@ -1,5 +1,21 @@
 import { api } from '@store/createApi';
 import {
+  buildProjectEditorStateSaveData,
+  closeProject,
+  createProject,
+  deleteProject,
+  openProject,
+  refreshProjects,
+  removeProjectVideoPath,
+  renameProject,
+  saveProjectLanguages,
+  saveProjectToDisk,
+  saveProjectVideoPath,
+  startNewProject,
+  updateProjectEmoji,
+  writeProjectEditorState,
+} from './actions';
+import {
   adjustEndTime,
   adjustEntryTime,
   adjustStartTime,
@@ -12,7 +28,7 @@ import {
   focusEditor,
   focusInput,
   focusLine,
-  getLineInput,
+  getSourceSelection,
   insertLine,
   mergeLines,
   navigateLine,
@@ -27,7 +43,7 @@ import {
   toggleCompleted,
   toggleEditMode,
   undoRedo,
-} from './actions';
+} from './editor/actions';
 import {
   addFrozenLine,
   addTranslatedLine,
@@ -66,7 +82,60 @@ import {
   updateSourceText,
   updateTranslatedText,
   updateTranslationCharacter,
+} from './editor/slice';
+
+import {
+  selectCurrentProjectFilePath,
+  selectIsProjectOpen,
+  selectProjectId,
+  selectProjectList,
+  selectProjectName,
+  selectProjectSourceLanguage,
+  selectProjectTargetLanguage,
+  setProjectList,
+  setProjectSourceLanguage,
+  setProjectTargetLanguage,
 } from './slice';
+
+// The project service: the tracked folder's projects and the open one -- its file, device
+// preferences, and the open/create/start-new/delete flows -- plus its editor (editor/). This file
+// is its only entry point and builds both facades: `projects` and `editor`.
+
+export { default as projectReducer } from './slice';
+export type { TProjectEntry } from './slice';
+
+export const projects = api('project', {
+  actions: {
+    setProjectList,
+    setProjectSourceLanguage,
+    setProjectTargetLanguage,
+  },
+  selectors: {
+    selectCurrentProjectFilePath,
+    selectIsProjectOpen,
+    selectProjectId,
+    selectProjectList,
+    selectProjectName,
+    selectProjectSourceLanguage,
+    selectProjectTargetLanguage,
+  },
+  functions: {
+    buildProjectEditorStateSaveData,
+    closeProject,
+    createProject,
+    deleteProject,
+    openProject,
+    refreshProjects,
+    removeProjectVideoPath,
+    renameProject,
+    saveProjectLanguages,
+    saveProjectToDisk,
+    saveProjectVideoPath,
+    startNewProject,
+    updateProjectEmoji,
+    writeProjectEditorState,
+  },
+});
 
 // The editor service: the open project's lines with their undo history, focus and navigation, line
 // edits, timing, bulk operations, the edit/translate mode, and the rendered line inputs. This file
@@ -76,7 +145,7 @@ import {
 // the running AI job, ask for confirmation, edit, refocus and report. The slice's reducers behind
 // them are named as events (linesMerged) and stay internal.
 
-export { default as editorReducer } from './slice';
+export { default as editorReducer } from './editor/slice';
 
 export const editor = api('editor', {
   actions: {
@@ -133,7 +202,7 @@ export const editor = api('editor', {
     focusEditor,
     focusInput,
     focusLine,
-    getLineInput,
+    getSourceSelection,
     insertLine,
     mergeLines,
     navigateLine,

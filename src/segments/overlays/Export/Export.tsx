@@ -1,9 +1,9 @@
 import { exporterList } from './formats/list';
 import { ExportFormatlabels, ExportFormats, FrameRate } from './types';
 import Overlay from '@src/segments/overlays/Overlay';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { overlays } from '@src/store/slices/overlays';
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import { LANGUAGE_LABELS, TCharacter } from '@src/types';
 import { useAppSelector } from '@store/hooks';

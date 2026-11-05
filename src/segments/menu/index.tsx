@@ -1,6 +1,4 @@
-import { MenuActionsProvider } from '@providers/MenuActionsProvider';
 import { MenuKeystrokeProvider } from '@providers/MenuKeystrokeProvider';
-import { MenuRefsProvider } from '@providers/MenuRefsProvider';
 import { TShade } from '@src/theme/definitions';
 import { menuExpandDelay, menuHoverExpand, menuWidthDuration } from '@src/toolkit/motion/menu';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
@@ -117,19 +115,15 @@ export default function MainMenu() {
         />
       )}
       <Content>
-        <MenuRefsProvider>
-          <MenuActionsProvider>
-            <MenuKeystrokeProvider>
-              <Header>
-                <MenuLogo />
-                <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-              </Header>
-              <Scroll>
-                <FileList />
-              </Scroll>
-            </MenuKeystrokeProvider>
-          </MenuActionsProvider>
-        </MenuRefsProvider>
+        <MenuKeystrokeProvider>
+          <Header>
+            <MenuLogo />
+            <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+          </Header>
+          <Scroll>
+            <FileList />
+          </Scroll>
+        </MenuKeystrokeProvider>
         <SidebarBottom></SidebarBottom>
       </Content>
       {dynamic && !compact && <Hr orientation={THrOrient.VERTICAL} variant={THrVariant.DIMMED} />}

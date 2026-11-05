@@ -1,4 +1,4 @@
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import {
   DEFAULT_CSV_COLUMN_FORMULA,

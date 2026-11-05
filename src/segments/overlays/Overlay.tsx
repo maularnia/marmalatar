@@ -1,4 +1,4 @@
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { appearRightEase } from '@src/toolkit/motion/transitions';

@@ -1,5 +1,4 @@
-import { SETTINGS_KEY } from '@providers/MenuActionsProvider';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
+import { menu, SETTINGS_KEY } from '@src/services/menu';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { overlays } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
@@ -48,16 +47,15 @@ export default function MenuLogo() {
   const { t } = useTranslation('menu');
   const { dynamic, compact } = useMenuState();
   const overlay = useAppSelector(overlays.selectCurrent);
-  const { registerMenuItemRef } = useMenuRefs();
   const { zoneRef } = useKeystrokeZone();
   const setSettingsRef = useCallback(
     (el: HTMLDivElement | null) => {
-      registerMenuItemRef(SETTINGS_KEY, el);
+      menu.registerItem(SETTINGS_KEY, el);
       // Seeds the menu zone's fallback focus target -- always-mounted, so ctrl+N has somewhere
       // reliable to go even before anything in the menu has ever been focused.
       zoneRef.current = el;
     },
-    [registerMenuItemRef, zoneRef]
+    [zoneRef]
   );
   return (
     <Root className={classNames({ dynamic })}>

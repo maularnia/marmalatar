@@ -1,7 +1,7 @@
 import { media } from '@src/services/media';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { TSubtitleLine } from '@src/types';
 import { useAppSelector } from '@store/hooks';
 import { ai } from '@src/services/ai';

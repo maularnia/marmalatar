@@ -1,7 +1,7 @@
 import { aiClients } from '@src/services/ai/connector/clients';
 import type { AiClient } from '@src/services/ai/connector/types';
 import { settings } from '@src/store/slices/settings';
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';

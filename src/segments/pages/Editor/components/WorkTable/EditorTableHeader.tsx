@@ -1,7 +1,7 @@
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import Select from '@ui-toolkit/Select/Select';
 import { useAppSelector } from '@src/store/hooks';
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';

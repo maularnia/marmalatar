@@ -1,6 +1,6 @@
 import { media } from '@src/services/media';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
 import { useAppSelector } from '@store/hooks';
 import { RefObject, useEffect, useRef } from 'react';

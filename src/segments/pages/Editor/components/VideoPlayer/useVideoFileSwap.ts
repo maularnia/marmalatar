@@ -1,14 +1,11 @@
 import { media } from '@src/services/media';
-import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideoSelectDialog';
+import { selectVideo } from '@src/segments/dialogs/videoSelect/videoSelection';
 import { emitVideoUpdatedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { useCallback, useRef } from 'react';
 
 export function useVideoFileSwap() {
-  const { selectVideo } = useVideoSelectDialog();
-  const { persistVideoPath } = usePersistVideoPath();
   const { pushMessage } = useMessageHelmet();
   const busyRef = useRef(false);
 
@@ -20,7 +17,7 @@ export function useVideoFileSwap() {
       if (!result) return;
 
       const projectId = projects.get.id();
-      if (projectId) await persistVideoPath(projectId, result.videoPath);
+      if (projectId) await projects.saveVideoPath(projectId, result.videoPath);
 
       const video = media.getVideoElement();
       const onLoadedMetadata = () => {
@@ -37,7 +34,7 @@ export function useVideoFileSwap() {
     } finally {
       busyRef.current = false;
     }
-  }, [selectVideo, persistVideoPath, pushMessage]);
+  }, [pushMessage]);
 
   return { swapVideo };
 }

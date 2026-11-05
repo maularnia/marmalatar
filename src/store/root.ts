@@ -1,14 +1,15 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import type { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit';
 import settingsReducer from './slices/settings';
-import projectReducer from './slices/project';
-import { editorReducer } from '@src/services/editor';
+import { projectReducer } from '@src/services/project';
+import { editorReducer } from '@src/services/project';
 import { promptReducer } from '@src/services/prompt';
 import workingFolderReducer from './slices/workingFolder';
 import glossaryReducer from './slices/glossary';
 import overlaysReducer from './slices/overlays';
 import { aiReducer } from '@src/services/ai';
 import { mediaReducer } from '@src/services/media';
+import { menuReducer } from '@src/services/menu';
 
 export const rootReducer = combineReducers({
   settings: settingsReducer,
@@ -20,6 +21,7 @@ export const rootReducer = combineReducers({
   overlays: overlaysReducer,
   ai: aiReducer,
   media: mediaReducer,
+  menu: menuReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

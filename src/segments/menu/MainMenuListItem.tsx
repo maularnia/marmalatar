@@ -1,5 +1,5 @@
-import { useMenuActions } from '@providers/MenuActionsProvider';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
+import { menu } from '@src/services/menu';
+import { useAppSelector } from '@store/hooks';
 import i18n from '@src/i18n';
 import { emitFileProcessingFailedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
@@ -74,9 +74,7 @@ export function MainMenuListItem({
   onDelete,
   onDiscard,
 }: MainMenuListItemProps) {
-  const { renamingKey, handleStartRenaming, handleStopRenaming, handleFocusMenuItem } =
-    useMenuActions();
-  const { registerMenuItemRef } = useMenuRefs();
+  const renamingKey = useAppSelector(menu.selectRenamingKey);
   const isEditing = fileName === null || renamingKey === itemKey;
   const [draftValue, setDraftValue] = useState(title);
   const [error, setError] = useState<string | null>(null);
@@ -87,8 +85,8 @@ export function MainMenuListItem({
   const { load } = useLoader();
 
   const setItemRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(itemKey, el),
-    [itemKey, registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(itemKey, el),
+    [itemKey]
   );
 
   useEffect(() => {
@@ -104,10 +102,10 @@ export function MainMenuListItem({
     // Rename just ended (commit or cancel) -- the contentEditable it was in is gone, so the row
     // itself should regain focus rather than leaving focus wherever the browser defaults it to.
     if (wasEditingRef.current && !isEditing) {
-      handleFocusMenuItem(itemKey);
+      menu.focusItem(itemKey);
     }
     wasEditingRef.current = isEditing;
-  }, [isEditing, itemKey, handleFocusMenuItem]);
+  }, [isEditing, itemKey]);
 
   const handleChange = (value: string) => {
     setDraftValue(value);
@@ -121,7 +119,7 @@ export function MainMenuListItem({
     } else {
       setDraftValue(title);
       setError(null);
-      handleStopRenaming(itemKey);
+      menu.stopRenaming(itemKey);
     }
   };
 
@@ -141,7 +139,7 @@ export function MainMenuListItem({
     try {
       await load({ messages: [label] }, onCommit(fileName, draftValue));
       setError(null);
-      handleStopRenaming(itemKey);
+      menu.stopRenaming(itemKey);
     } catch (e) {
       const msg = e instanceof Error ? e.message : t('mainMenuListItem.unreachableCommitError');
       setError(msg);
@@ -189,7 +187,7 @@ export function MainMenuListItem({
                 color={ThemeColors.TEXT}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleStartRenaming(itemKey);
+                  menu.startRenaming(itemKey);
                 }}
               />
             </Tooltip>

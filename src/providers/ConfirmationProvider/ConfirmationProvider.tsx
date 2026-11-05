@@ -15,7 +15,6 @@ import {
   createContext,
   PropsWithChildren,
   ReactNode,
-  RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -25,9 +24,8 @@ import {
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { ConfirmationKeyhubProvider } from './ConfirmationKeyhubProvider';
-import { createConfirmWindow, ERROR_CONFIRM_DESTROYED } from './confirmWindow';
+import { createConfirmWindow, createInfoWindow } from './confirmWindow';
 import {
-  TConfirmationHookProps,
   TConfirmationContext,
   TInternalConfirmationWindowProps,
   TUseConfirm,
@@ -261,51 +259,11 @@ export function ConfirmationProvider({ children }: PropsWithChildren) {
   );
 }
 
-const DEFAULT_INFO_WINDOW_DELAY = 300;
-const DEFAULT_INFO_WINDOW_MIN_LIFE_TIME = 1000;
-
 export function useInfoWindow<T extends Record<string, unknown>>(Content: ComponentType<T>) {
   const confirmationContext = useContext(ConfirmationContext);
-  const currentWindowRef: RefObject<TWindowID | null> = useRef(
-    confirmationContext.registerWindow()
-  );
-  return {
-    show: <R,>(
-      props: T,
-      promise: Promise<R>,
-      options?: Pick<TConfirmationHookProps, 'animate' | 'delay' | 'minLifeTime'>
-    ): Promise<R> => {
-      if (!currentWindowRef.current) throw new Error(ERROR_CONFIRM_DESTROYED);
-      const id = currentWindowRef.current;
-      const {
-        animate,
-        delay = DEFAULT_INFO_WINDOW_DELAY,
-        minLifeTime = DEFAULT_INFO_WINDOW_MIN_LIFE_TIME,
-      } = options ?? {};
-      // Stays undefined until the window has actually appeared
-      let minLifeTimeElapsed: Promise<void> | undefined;
-      const openWindow = () => {
-        confirmationContext.open(id, { Content: () => <Content {...props} />, animate });
-        minLifeTimeElapsed = new Promise((resolve) => setTimeout(resolve, minLifeTime));
-      };
-      // Without a delay the window has to open synchronously: a timer would leave a gap in which
-      // the UI isn't blocked yet.
-      const delayTimeout = delay > 0 ? setTimeout(openWindow, delay) : undefined;
-      if (delay <= 0) openWindow();
-      // `finally` waits for the callback, so callers also continue only once the window is closing
-      // -- with the original promise's result or rejection left untouched.
-      return promise.finally(async () => {
-        clearTimeout(delayTimeout);
-        if (!minLifeTimeElapsed) return;
-        await minLifeTimeElapsed;
-        confirmationContext.close(id);
-      });
-    },
-    close: () => {
-      if (!currentWindowRef.current) throw new Error(ERROR_CONFIRM_DESTROYED);
-      confirmationContext.close(currentWindowRef.current);
-    },
-  };
+  // Created once: the context value is stable, and the window registers itself on first use.
+  const [infoWindow] = useState(() => createInfoWindow(() => confirmationContext, Content));
+  return infoWindow;
 }
 
 export const useConfirm: TUseConfirm = (Content, confirmProps) => {

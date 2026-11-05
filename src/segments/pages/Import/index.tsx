@@ -1,3 +1,4 @@
+import { projects } from '@src/services/project';
 import SubtitleFileSelect from '@src/segments/pages/Import/components/SubtitleFileSelect';
 import { TLanguage, TSubtitleLine } from '@src/types';
 import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
@@ -24,7 +25,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import VideoFileSelect from './components/VideoFileSelect';
-import { useSubmitNewProject } from './hooks/useSubmitNewProject';
 
 type TImportFormValues = {
   subtitlesFile: File | null;
@@ -38,7 +38,6 @@ type TImportFormValues = {
 export default function PageImport() {
   const { t } = useTranslation(['errors', 'import']);
   const languageOptions = useLanguageOptions();
-  const { submitNewProject } = useSubmitNewProject();
 
   const {
     control,
@@ -89,7 +88,7 @@ export default function PageImport() {
     if (!formValid || !cleanedLines.length || !trimmedProjectName) return;
 
     const baseLines = cleanedLines.map((line) => ({ ...line, output: '' }));
-    await submitNewProject({
+    await projects.create({
       lines: baseLines,
       projectName: trimmedProjectName,
       sourceLanguage: values.sourceLanguage,

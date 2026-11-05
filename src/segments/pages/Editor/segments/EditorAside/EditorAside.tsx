@@ -1,6 +1,6 @@
 import { media } from '@src/services/media';
 import GeneralSettings from '@src/partials/Settings';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';

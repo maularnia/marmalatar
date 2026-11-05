@@ -1,6 +1,6 @@
 import { media } from '@src/services/media';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { glossaries } from '@store/slices/glossary';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';

@@ -60,3 +60,14 @@ export type TUseConfirm = <T extends TConfirmationWindowProps>(
   Content: ComponentType<T>,
   props?: TConfirmationHookProps
 ) => TConfirmWindow<T>;
+
+export type TInfoWindow<T> = {
+  /** Shows the window while `promise` runs and resolves or rejects with it, once the window is
+   * closing. */
+  show: <R>(
+    props: T,
+    promise: Promise<R>,
+    options?: Pick<TConfirmationHookProps, 'animate' | 'delay' | 'minLifeTime'>
+  ) => Promise<R>;
+  close: () => void;
+};

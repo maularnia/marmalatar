@@ -2,13 +2,12 @@ import {
   CREATE_GLOSSARY_KEY,
   CREATE_PROJECT_KEY,
   CREATE_PROMPT_TEMPLATE_KEY,
-  useMenuActions,
-} from '@providers/MenuActionsProvider';
+  menu,
+} from '@src/services/menu';
 import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
 import i18n from '@src/i18n';
 import { settings } from '@src/store/slices/settings';
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
 import { promptTemplates } from '@src/services/prompt';
@@ -69,34 +68,20 @@ export default function FileList() {
   const currentProjectId = useAppSelector(projects.selectId);
   const integrationIsConfigured = useAppSelector(settings.selectIntegrationIsConfigured);
 
-  const {
-    isCreatingPromptTemplate,
-    handleSetIsCreatingPromptTemplate,
-    isCreatingGlossary,
-    handleSetIsCreatingGlossary,
-    handleOpenProject,
-    handleOpenPromptTemplate,
-    handleOpenGlossary,
-    handleStartNewProject,
-    handleDeleteProject,
-    handleDeletePromptTemplate,
-    handleDeleteGlossary,
-    handleCancelCreatingPromptTemplate,
-    handleCancelCreatingGlossary,
-  } = useMenuActions();
-  const { registerMenuItemRef } = useMenuRefs();
+  const isCreatingPromptTemplate = useAppSelector(menu.selectIsCreatingPromptTemplate);
+  const isCreatingGlossary = useAppSelector(menu.selectIsCreatingGlossary);
 
   const setCreateProjectRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_PROJECT_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROJECT_KEY, el),
+    []
   );
   const setCreatePromptTemplateRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_PROMPT_TEMPLATE_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROMPT_TEMPLATE_KEY, el),
+    []
   );
   const setCreateGlossaryRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_GLOSSARY_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(CREATE_GLOSSARY_KEY, el),
+    []
   );
 
   const projectFileNames = useMemo(() => projectList.map((p) => p.fileName), [projectList]);
@@ -117,7 +102,7 @@ export default function FileList() {
       await promptTemplates.rename(fileName, newTitle);
     } else {
       await promptTemplates.create(newTitle);
-      handleSetIsCreatingPromptTemplate(false);
+      menu.setIsCreatingPromptTemplate(false);
     }
   };
 
@@ -126,7 +111,7 @@ export default function FileList() {
       await glossaries.rename(fileName, newTitle);
     } else {
       await glossaries.create(newTitle);
-      handleSetIsCreatingGlossary(false);
+      menu.setIsCreatingGlossary(false);
     }
   };
 
@@ -166,15 +151,9 @@ export default function FileList() {
                         onEmojiSelect={(emoji) =>
                           void projects.updateEmoji(project.projectId, emoji)
                         }
-                        onClick={() => void handleOpenProject(project, isActive)}
+                        onClick={() => void menu.openProject(project)}
                         onCommit={handleCommitProject}
-                        onDelete={() =>
-                          handleDeleteProject(
-                            project.filePath,
-                            project.projectName,
-                            project.projectId
-                          )
-                        }
+                        onDelete={() => menu.deleteProject(project)}
                       />
                     );
                   })
@@ -184,7 +163,7 @@ export default function FileList() {
                 icon={TIcon.PLUS}
                 compact={compact}
                 color={ThemeColors.ACCENT1}
-                onClick={handleStartNewProject}
+                onClick={menu.startNewProject}
               >
                 {tMenu('fileList.createButton')}
               </ListItem>
@@ -222,9 +201,9 @@ export default function FileList() {
                         onEmojiSelect={(newEmoji) =>
                           void promptTemplates.updateEmoji(fileName, newEmoji)
                         }
-                        onClick={() => void handleOpenPromptTemplate(fileName, title)}
+                        onClick={() => void menu.openPromptTemplate(fileName, title)}
                         onCommit={handleCommitPromptTemplate}
-                        onDelete={() => handleDeletePromptTemplate(fileName, title)}
+                        onDelete={() => menu.deletePromptTemplate(fileName, title)}
                       />
                     );
                   })
@@ -238,7 +217,7 @@ export default function FileList() {
                   toFileName={toPromptTemplateFileName}
                   existingFileNames={promptTemplateFileNames}
                   onCommit={handleCommitPromptTemplate}
-                  onDiscard={handleCancelCreatingPromptTemplate}
+                  onDiscard={menu.cancelCreatingPromptTemplate}
                 />
               )}
               {!isCreatingPromptTemplate && (
@@ -247,7 +226,7 @@ export default function FileList() {
                   icon={TIcon.PLUS}
                   color={ThemeColors.ACCENT2}
                   compact={compact}
-                  onClick={() => handleSetIsCreatingPromptTemplate(true)}
+                  onClick={() => menu.setIsCreatingPromptTemplate(true)}
                 >
                   {tMenu('fileList.createButton')}
                 </ListItem>
@@ -284,9 +263,9 @@ export default function FileList() {
                           onEmojiSelect={(newEmoji) =>
                             void glossaries.updateEmoji(fileName, newEmoji)
                           }
-                          onClick={() => void handleOpenGlossary(fileName, title)}
+                          onClick={() => void menu.openGlossary(fileName, title)}
                           onCommit={handleCommitGlossary}
-                          onDelete={() => handleDeleteGlossary(fileName, title)}
+                          onDelete={() => menu.deleteGlossary(fileName, title)}
                         />
                       );
                     })
@@ -301,13 +280,13 @@ export default function FileList() {
                   toFileName={toGlossaryFileName}
                   existingFileNames={glossaryFileNames}
                   onCommit={handleCommitGlossary}
-                  onDiscard={handleCancelCreatingGlossary}
+                  onDiscard={menu.cancelCreatingGlossary}
                 />
               )}
               {!isCreatingGlossary && (
                 <ListItem
                   ref={setCreateGlossaryRef}
-                  onClick={() => handleSetIsCreatingGlossary(true)}
+                  onClick={() => menu.setIsCreatingGlossary(true)}
                   color={ThemeColors.ACCENT2}
                   icon={TIcon.PLUS}
                   compact={compact}

@@ -1,5 +1,5 @@
 import { media } from '@src/services/media';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';

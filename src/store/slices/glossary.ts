@@ -22,7 +22,6 @@ import {
 } from '@src/messages';
 import { askForGlossaryPair } from '@src/segments/dialogs/addToGlossary/addToGlossaryDialog';
 import { emitGlossaryPairSavedMessage } from '@src/segments/dialogs/addToGlossary/glossaryEntryAddedMessage';
-import { editor } from '@src/services/editor';
 import { select } from '@store/createApi';
 
 // Everything about glossaries in one place: the tracked folder's glossary files, the glossary open
@@ -600,17 +599,6 @@ async function addGlossaryEntryFromText(text: string): Promise<void> {
   }
 }
 
-/** `addEntryFromText` with the text selected in a line's source input; does nothing when the
- * selection is empty or lies elsewhere. */
-function addGlossaryEntryFromLineSelection(lineIndex: number): void {
-  const sourceInput = editor.getLineInput(lineIndex, 'source');
-  if (!sourceInput) return;
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
-  if (!sourceInput.contains(selection.getRangeAt(0).commonAncestorContainer)) return;
-  void addGlossaryEntryFromText(selection.toString());
-}
-
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const glossaries = api('glossary', {
@@ -649,7 +637,6 @@ export const glossaries = api('glossary', {
     selectSelectedGlossaryFileNames,
   },
   functions: {
-    addGlossaryEntryFromLineSelection,
     addGlossaryEntryFromText,
     registerGlossaryPairInput,
   },

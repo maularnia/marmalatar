@@ -18,7 +18,7 @@ export function emitVideoPlaybackErrorMessage(pushMessage: PushMessage): void {
   });
 }
 
-// media service / VideoFileSelect / VideoSelectDialog / useProjectLoader
+// media service / VideoFileSelect / VideoSelectDialog / projects.open
 
 export function emitAudioExtractionFailedMessage(pushMessage: PushMessage, message?: string): void {
   pushMessage({
@@ -98,7 +98,7 @@ export function emitSpellcheckUnavailableMessage(pushMessage: PushMessage, messa
   });
 }
 
-// usePersistVideoPath
+// projects.saveVideoPath / removeVideoPath
 
 export function emitVideoPathSaveFailedMessage(pushMessage: PushMessage, message: string): void {
   pushMessage({
@@ -116,7 +116,7 @@ export function emitVideoPathRemovalFailedMessage(pushMessage: PushMessage, mess
   });
 }
 
-// useSubmitNewProject
+// projects.create
 
 export function emitProjectCreationAbortedMessage(
   pushMessage: PushMessage,
@@ -129,7 +129,7 @@ export function emitProjectCreationAbortedMessage(
   });
 }
 
-// useProjectLoader
+// projects.open
 
 export function emitVideoFileMissingMessage(pushMessage: PushMessage): void {
   pushMessage({

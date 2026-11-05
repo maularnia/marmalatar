@@ -1,6 +1,6 @@
 import { useAppSelector } from '@store/hooks';
 import { ai } from '@src/services/ai';
-import { projects } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { getErrorMessage } from '@src/utils/errors';

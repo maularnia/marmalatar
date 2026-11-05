@@ -2,7 +2,7 @@ import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { ProjectSaveV1Schema, type TProjectFileBody } from '@src/utils/data/schemas';
 import { AppSettingsSchema, buildAppSettingsSaveData } from '@utils/appSettingsFile';
 import type { RootState } from './root';
-import { projects } from './slices/project';
+import { projects } from '@src/services/project';
 import { IPC } from '@src/services/ipc/IPC';
 
 // `version` is a wire/persistence-only field added by the bridge contract's VersionedSchema base --

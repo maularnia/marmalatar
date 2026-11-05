@@ -4,10 +4,10 @@ import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from './slices/glossary';
 import { ai } from '@src/services/ai';
 import { workingFolder } from './slices/workingFolder';
-import { editor } from '@src/services/editor';
+import { editor } from '@src/services/project';
 import { TOverlay } from './slices/overlays';
 import { overlays } from './slices/overlays';
-import { projects } from './slices/project';
+import { projects } from '@src/services/project';
 import { settings } from './slices/settings';
 
 // Thunks that span slices which import each other, so they can't live in either slice file

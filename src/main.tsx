@@ -1,6 +1,7 @@
 import { ConfirmationProvider } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { GlobalKeystrokeDispatcher } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { PopperPortalProvider } from '@providers/PopperPortalProvider';
+import { NavigationBridge } from '@providers/bridges/NavigationBridge';
 import AppErrorBoundary from '@src/layout/components/AppErrorBoundary';
 import { LocaleProvider } from '@src/providers/LocaleProvider';
 import { ThemeProvider } from '@src/providers/ThemeProvider';
@@ -22,6 +23,7 @@ void app.hydrate().then(() => {
     <React.StrictMode>
       <AppErrorBoundary>
         <MemoryRouter>
+          <NavigationBridge />
           <Provider store={store}>
             <MessageHelmetProvider>
               <LocaleProvider>
