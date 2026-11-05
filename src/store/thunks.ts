@@ -1,5 +1,5 @@
 import { api } from './createApi';
-import type { AppDispatch, RootState } from './root';
+import type { AppDispatch } from './root';
 import { aiPromptEditor, glossaries, promptTemplates } from './slices/aiPromptEditor';
 import { ai } from './slices/ai';
 import { workingFolder } from './slices/workingFolder';
@@ -17,19 +17,17 @@ import { settings } from './slices/settings';
 
 // Lives here because it refreshes the translation's selected template (the ai slice), and the
 // ai slice imports aiPromptEditor
-const savePromptTemplate =
-  () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const { currentPromptTemplate, promptTemplateData } = state.aiPromptEditor;
-    const folder = workingFolder.selectFolder(state);
-    if (!currentPromptTemplate || !folder || !promptTemplateData) return;
-    await promptTemplates.writeBody(currentPromptTemplate, promptTemplateData);
-    await promptTemplates.refresh();
-    if (prompt.selectSelectedPromptTemplateFileName(state) === currentPromptTemplate) {
-      void ai.refreshSelectedPromptTemplateData();
-    }
-  };
+const savePromptTemplate = () => async (): Promise<void> => {
+  const currentPromptTemplate = promptTemplates.get.current();
+  const promptTemplateData = promptTemplates.get.data();
+  const folder = workingFolder.get.folder();
+  if (!currentPromptTemplate || !folder || !promptTemplateData) return;
+  await promptTemplates.writeBody(currentPromptTemplate, promptTemplateData);
+  await promptTemplates.refresh();
+  if (prompt.get.selectedPromptTemplateFileName() === currentPromptTemplate) {
+    void ai.refreshSelectedPromptTemplateData();
+  }
+};
 
 // ── Overlays ────────────────────────────────────────────────────────────────
 
@@ -81,21 +79,20 @@ const workingFolderScan =
 
 const workingFolderPick =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<boolean> => {
+  async (dispatch: AppDispatch): Promise<boolean> => {
     workingFolder.setIsBusy(true);
     try {
       const selected = await workingFolder.selectFolderDialog();
       if (!selected) return false;
 
-      const state = getState();
-      if (projects.selectIsOpen(state)) {
+      if (projects.get.isOpen()) {
         await projects.saveToDisk();
       }
 
-      const currentOverlay = overlays.selectCurrent(state);
-      if (currentOverlay === TOverlay.PROMPT_TEMPLATE && promptTemplates.selectCurrent(state)) {
+      const currentOverlay = overlays.get.current();
+      if (currentOverlay === TOverlay.PROMPT_TEMPLATE && promptTemplates.get.current()) {
         await dispatch(savePromptTemplate());
-      } else if (currentOverlay === TOverlay.GLOSSARY && glossaries.selectCurrent(state)) {
+      } else if (currentOverlay === TOverlay.GLOSSARY && glossaries.get.current()) {
         await glossaries.save();
       }
 

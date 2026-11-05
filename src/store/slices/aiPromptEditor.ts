@@ -299,22 +299,20 @@ const initializePromptTemplateEditor =
 
 const deletePromptTemplate =
   (fileName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) return;
     await deletePromptTemplateOnDisk(fileName);
     await dispatch(refreshPromptTemplates());
-    if (state.aiPromptEditor.currentPromptTemplate === fileName) {
+    if (promptTemplates.get.current() === fileName) {
       dispatch(resetAiPromptEditor());
     }
   };
 
 const renamePromptTemplate =
   (fileName: string, newTitle: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('shared.folderNotSelected'));
     const trimmed = newTitle.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
@@ -326,13 +324,13 @@ const renamePromptTemplate =
     if (!updated) throw new Error(t('promptTemplate.readFailed'));
 
     if (newFileName !== fileName) {
-      const selectedPt = prompt.selectSelectedPromptTemplateFileName(state);
+      const selectedPt = prompt.get.selectedPromptTemplateFileName();
       if (selectedPt === fileName) prompt.setSelectedPromptTemplateFileName(newFileName);
-      if (state.aiPromptEditor.currentPromptTemplate === fileName) {
+      if (promptTemplates.get.current() === fileName) {
         dispatch(setCurrentPromptTemplate(newFileName));
         dispatch(setPromptTemplateData(updated));
       }
-    } else if (state.aiPromptEditor.currentPromptTemplate === fileName) {
+    } else if (promptTemplates.get.current() === fileName) {
       dispatch(setPromptTemplateData(updated));
     }
 
@@ -341,16 +339,15 @@ const renamePromptTemplate =
 
 const updatePromptTemplateEmoji =
   (fileName: string, emoji: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('shared.folderNotSelected'));
 
     await updatePromptTemplateEmojiOnDisk(fileName, emoji);
     const updated = await readPromptTemplateFile(fileName);
     if (!updated) throw new Error(t('promptTemplate.readFailed'));
 
-    if (state.aiPromptEditor.currentPromptTemplate === fileName) {
+    if (promptTemplates.get.current() === fileName) {
       dispatch(setPromptTemplateData(updated));
     }
 
@@ -359,9 +356,8 @@ const updatePromptTemplateEmoji =
 
 const createPromptTemplate =
   (title: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('shared.folderNotSelected'));
     const trimmed = title.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
@@ -381,11 +377,10 @@ const createPromptTemplate =
 
 const openPromptTemplateEditor =
   (filename: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
+  async (dispatch: AppDispatch): Promise<void> => {
     if (
-      overlays.selectCurrent(state) === TOverlay.PROMPT_TEMPLATE &&
-      selectCurrentPromptTemplate(state) === filename
+      overlays.get.current() === TOverlay.PROMPT_TEMPLATE &&
+      promptTemplates.get.current() === filename
     ) {
       return;
     }
@@ -410,10 +405,10 @@ const initializeGlossaryEditor =
 
 const saveGlossary =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const { currentGlossary, glossaryData } = state.aiPromptEditor;
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const currentGlossary = glossaries.get.current();
+    const glossaryData = glossaries.get.data();
+    const folder = workingFolder.get.folder();
     if (!currentGlossary || !folder || !glossaryData) return;
     const dataToSave: AIGlossaryFileDataType = {
       ...glossaryData,
@@ -421,7 +416,7 @@ const saveGlossary =
     };
     await writeGlossaryBody(currentGlossary, dataToSave);
     await dispatch(refreshGlossaries());
-    if (prompt.selectSelectedGlossaryFileNames(state).includes(currentGlossary)) {
+    if (prompt.get.selectedGlossaryFileNames().includes(currentGlossary)) {
       dispatch(reconcileGlossarySelectionWithDirection());
     }
   };
@@ -430,9 +425,10 @@ const saveGlossary =
 // unsaved pairs and takes the new languages.
 const updateGlossaryLanguages =
   (fileName: string, sourceLanguage: TLanguage, targetLanguage: TLanguage) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     await updateGlossaryLanguagesOnDisk(fileName, sourceLanguage, targetLanguage);
-    const { currentGlossary, glossaryData } = getState().aiPromptEditor;
+    const currentGlossary = glossaries.get.current();
+    const glossaryData = glossaries.get.data();
     if (currentGlossary === fileName && glossaryData) {
       dispatch(setGlossaryData({ ...glossaryData, sourceLanguage, targetLanguage }));
     }
@@ -445,22 +441,20 @@ const updateGlossaryLanguages =
 
 const deleteGlossary =
   (fileName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) return;
     await deleteGlossaryOnDisk(fileName);
     await dispatch(refreshGlossaries());
-    if (state.aiPromptEditor.currentGlossary === fileName) {
+    if (glossaries.get.current() === fileName) {
       dispatch(resetAiPromptEditor());
     }
   };
 
 const renameGlossary =
   (fileName: string, newTitle: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('shared.folderNotSelected'));
     const trimmed = newTitle.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
@@ -472,17 +466,17 @@ const renameGlossary =
     if (!updated) throw new Error(t('glossaryFile.readFailed'));
 
     if (newFileName !== fileName) {
-      const selectedGlossaries = prompt.selectSelectedGlossaryFileNames(state);
+      const selectedGlossaries = prompt.get.selectedGlossaryFileNames();
       if (selectedGlossaries.includes(fileName)) {
         prompt.setSelectedGlossaryFileNames(
           selectedGlossaries.map((fn) => (fn === fileName ? newFileName : fn))
         );
       }
-      if (state.aiPromptEditor.currentGlossary === fileName) {
+      if (glossaries.get.current() === fileName) {
         dispatch(setCurrentGlossary(newFileName));
         dispatch(setGlossaryData(updated));
       }
-    } else if (state.aiPromptEditor.currentGlossary === fileName) {
+    } else if (glossaries.get.current() === fileName) {
       dispatch(setGlossaryData(updated));
     }
 
@@ -491,16 +485,15 @@ const renameGlossary =
 
 const updateGlossaryEmoji =
   (fileName: string, emoji: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('shared.folderNotSelected'));
 
     await updateGlossaryEmojiOnDisk(fileName, emoji);
     const updated = await readGlossaryFile(fileName);
     if (!updated) throw new Error(t('glossaryFile.readFailed'));
 
-    if (state.aiPromptEditor.currentGlossary === fileName) {
+    if (glossaries.get.current() === fileName) {
       dispatch(setGlossaryData(updated));
     }
 
@@ -509,9 +502,8 @@ const updateGlossaryEmoji =
 
 const createGlossary =
   (title: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('shared.folderNotSelected'));
     const trimmed = title.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
@@ -533,10 +525,10 @@ const createGlossary =
 
 const addGlossaryEntry =
   (entry: { original: string; translation: string }, targetFileName?: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<boolean> => {
-    const state = getState();
-    const { currentGlossary, glossaryData } = state.aiPromptEditor;
-    const folder = workingFolder.selectFolder(state);
+  async (dispatch: AppDispatch): Promise<boolean> => {
+    const currentGlossary = glossaries.get.current();
+    const glossaryData = glossaries.get.data();
+    const folder = workingFolder.get.folder();
     if (!folder) return false;
 
     const target = targetFileName ?? currentGlossary;
@@ -564,7 +556,7 @@ const addGlossaryEntry =
 // regardless of what the UI selection currently looks like. The AI clients themselves stay
 // language-agnostic -- they only ever see the already-filtered `glossaryEntries` pairs.
 function selectDirectionMatchedGlossaryFileNames(state: RootState): string[] {
-  const selectedFileNames = prompt.selectSelectedGlossaryFileNames(state);
+  const selectedFileNames = prompt.get.selectedGlossaryFileNames();
   // Read straight from the state rather than through the project slice's selectors: the project
   // slice imports this one (to reconcile on load), so importing it back would be a cycle
   const { sourceLanguage, targetLanguage } = state.project;
@@ -583,9 +575,8 @@ function selectDirectionMatchedGlossaryFileNames(state: RootState): string[] {
 const refreshResolvedGlossaryEntries =
   () =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const matchedFileNames = selectDirectionMatchedGlossaryFileNames(state);
-    const folder = workingFolder.selectFolder(state);
+    const matchedFileNames = selectDirectionMatchedGlossaryFileNames(getState());
+    const folder = workingFolder.get.folder();
     if (!folder || !matchedFileNames.length) {
       dispatch(setResolvedGlossaryEntries([]));
       return;
@@ -609,9 +600,8 @@ const refreshResolvedGlossaryEntries =
 const reconcileGlossarySelectionWithDirection =
   () =>
   (dispatch: AppDispatch, getState: () => RootState): void => {
-    const state = getState();
-    const currentFileNames = prompt.selectSelectedGlossaryFileNames(state);
-    const matchedFileNames = selectDirectionMatchedGlossaryFileNames(state);
+    const currentFileNames = prompt.get.selectedGlossaryFileNames();
+    const matchedFileNames = selectDirectionMatchedGlossaryFileNames(getState());
     if (matchedFileNames.length !== currentFileNames.length) {
       prompt.setSelectedGlossaryFileNames(matchedFileNames);
     }
@@ -620,12 +610,8 @@ const reconcileGlossarySelectionWithDirection =
 
 const openGlossaryEditor =
   (filename: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    if (
-      overlays.selectCurrent(state) === TOverlay.GLOSSARY &&
-      selectCurrentGlossary(state) === filename
-    ) {
+  async (dispatch: AppDispatch): Promise<void> => {
+    if (overlays.get.current() === TOverlay.GLOSSARY && glossaries.get.current() === filename) {
       return;
     }
     overlays.setCurrent(TOverlay.GLOSSARY);

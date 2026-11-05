@@ -42,10 +42,9 @@ persistEditorStateMiddleware.startListening({
     api.cancelActiveListeners();
     await api.delay(1500);
 
-    const state = api.getState() as RootState;
-    const projectId = state.project.projectId;
+    const projectId = projects.get.id();
     if (!projectId) return;
 
-    await projects.writeEditorState(projectId, projects.buildEditorStateSaveData(state));
+    await projects.writeEditorState(projectId, projects.buildEditorStateSaveData());
   },
 });

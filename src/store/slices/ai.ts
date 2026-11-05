@@ -1,6 +1,6 @@
 import { api } from '@store/createApi';
 import { createSlice, isAnyOf, PayloadAction } from '@reduxjs/toolkit';
-import type { AppDispatch, RootState } from '@store/root';
+import type { AppDispatch } from '@store/root';
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
 import { aiClients } from '@src/services/ai/clients';
 import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/config';
@@ -143,6 +143,7 @@ const aiSlice = createSlice({
     selectIntegrationPingError: (state) => state.integrationPingError,
     selectContextWindowEstimate: (state) => state.contextWindowEstimate,
     selectContextWindowEstimateStatus: (state) => state.contextWindowEstimateStatus,
+    selectSelectedPromptTemplateData: (state) => state.selectedPromptTemplateData,
   },
 });
 
@@ -158,6 +159,7 @@ const {
   selectIntegrationPingError,
   selectContextWindowEstimate,
   selectContextWindowEstimateStatus,
+  selectSelectedPromptTemplateData,
 } = aiSlice.selectors;
 
 export default aiSlice.reducer;
@@ -177,24 +179,24 @@ function requireAiClient() {
 // clients that don't support context (e.g. DeepL is a dedicated NMT model, not a general LLM, and
 // never needs a system prompt to function) -- matches EditorAIActionsProvider's UI-level
 // isPromptTemplateSelected() check, which reads client?.supportsContext the same way.
-function requirePromptTemplateSelected(state: RootState): void {
+function requirePromptTemplateSelected(): void {
   const client = getWiredAiClient();
   if (!client?.supportsContext) return;
-  if (!prompt.selectSelectedPromptTemplateFileName(state)) {
+  if (!prompt.get.selectedPromptTemplateFileName()) {
     throw new Error(t('aiTranslation.noPromptTemplateSelected'));
   }
 }
 
-function buildContext(state: RootState): TranslationRequestContext {
-  const { project, ai } = state;
-  const { selectedPromptTemplateData } = ai;
+function buildContext(): TranslationRequestContext {
+  const sourceLanguage = projects.get.sourceLanguage();
+  const targetLanguage = projects.get.targetLanguage();
   return {
-    sourceLanguageCode: project.sourceLanguage ?? undefined,
-    targetLanguageCode: project.targetLanguage ?? undefined,
-    sourceLanguage: project.sourceLanguage ? LANGUAGE_LABELS[project.sourceLanguage] : undefined,
-    targetLanguage: project.targetLanguage ? LANGUAGE_LABELS[project.targetLanguage] : undefined,
-    glossaryEntries: glossaries.selectResolvedEntries(state),
-    promptTemplate: selectedPromptTemplateData?.promptTemplate ?? undefined,
+    sourceLanguageCode: sourceLanguage ?? undefined,
+    targetLanguageCode: targetLanguage ?? undefined,
+    sourceLanguage: sourceLanguage ? LANGUAGE_LABELS[sourceLanguage] : undefined,
+    targetLanguage: targetLanguage ? LANGUAGE_LABELS[targetLanguage] : undefined,
+    glossaryEntries: glossaries.get.resolvedEntries(),
+    promptTemplate: ai.get.selectedPromptTemplateData()?.promptTemplate ?? undefined,
   };
 }
 
@@ -206,10 +208,9 @@ function buildContext(state: RootState): TranslationRequestContext {
 // callers that need a loading indicator (like applySelectedPromptTemplateFileName) wrap it.
 const refreshSelectedPromptTemplateData =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const folder = workingFolder.selectFolder(state);
-    const fileName = prompt.selectSelectedPromptTemplateFileName(state);
+  async (dispatch: AppDispatch): Promise<void> => {
+    const folder = workingFolder.get.folder();
+    const fileName = prompt.get.selectedPromptTemplateFileName();
     if (!folder || !fileName) {
       dispatch(setSelectedPromptTemplateData(null));
       return;
@@ -233,20 +234,18 @@ const applySelectedPromptTemplateFileName =
 
 const startAutomatedTranslation =
   (lineIndex: number) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
+  async (dispatch: AppDispatch): Promise<void> => {
+    if (ai.get.isBusy()) return;
 
-    if (state.ai.isBusy) return;
+    requirePromptTemplateSelected();
 
-    requirePromptTemplateSelected(state);
-
-    const lines = editor.selectLines(state);
+    const lines = editor.get.lines();
     const line = lines[lineIndex];
     if (!line) return;
-    if (state.prompt.frozenLineNumbers.includes(line.line_no)) return;
+    if (prompt.get.frozenLineNumbers().includes(line.line_no)) return;
 
     const client = requireAiClient();
-    const context = buildContext(state);
+    const context = buildContext();
 
     dispatch(setTranslationIsBusy(true));
     prompt.addFrozenLine(line.line_no);
@@ -276,10 +275,8 @@ type BulkCallbackParams = {
 
 const startAutomatedBulkTranslation =
   (params: BulkCallbackParams) =>
-  (dispatch: AppDispatch, getState: () => RootState): void => {
-    const state = getState();
-
-    requirePromptTemplateSelected(state);
+  (dispatch: AppDispatch): void => {
+    requirePromptTemplateSelected();
 
     activeController?.cancel();
     activeController = null;
@@ -287,14 +284,14 @@ const startAutomatedBulkTranslation =
     dispatch(setTranslationIsBusy(true));
 
     const client = requireAiClient();
-    const context = buildContext(state);
+    const context = buildContext();
     const jobId = Date.now();
 
     const controller = client.bulkTranslate({
       lines: params.lines,
       context,
       onChunkStart: (payload) => {
-        const cur = getState().ai.currentBulkJob;
+        const cur = ai.get.currentBulkJob();
         if (cur?.id === jobId) {
           dispatch(
             setCurrentBulkJob({
@@ -309,7 +306,7 @@ const startAutomatedBulkTranslation =
         params.onChunkStart?.(payload);
       },
       onProgress: (progress) => {
-        const cur = getState().ai.currentBulkJob;
+        const cur = ai.get.currentBulkJob();
         if (cur?.id === jobId) {
           dispatch(
             setCurrentBulkJob({
@@ -383,18 +380,17 @@ const cancelAutomatedBulkTranslation =
 // share a caller to hand a return value back to.
 const estimateContextWindowUsage =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     const requestId = ++estimateRequestId;
-    const state = getState();
     const client = getWiredAiClient();
 
-    if (!client?.evaluateContext || !prompt.selectSelectedPromptTemplateFileName(state)) {
+    if (!client?.evaluateContext || !prompt.get.selectedPromptTemplateFileName()) {
       dispatch(setContextWindowEstimate(null));
       dispatch(setContextWindowEstimateStatus('idle'));
       return;
     }
 
-    const lines = editor.selectLines(state);
+    const lines = editor.get.lines();
     if (!lines.length) {
       dispatch(setContextWindowEstimate(null));
       dispatch(setContextWindowEstimateStatus('idle'));
@@ -406,13 +402,13 @@ const estimateContextWindowUsage =
     // places (PromptSetupRow's own effect, and each SettingsForm's commit effect, which also
     // fires on mount), so this guard has to live here to be authoritative regardless of which of
     // them triggered it.
-    if (state.ai.contextWindowEstimateStatus === 'success') return;
+    if (ai.get.contextWindowEstimateStatus() === 'success') return;
 
     dispatch(setContextWindowEstimateStatus('estimating'));
     try {
       const result = await client.evaluateContext({
         lines,
-        context: buildContext(state),
+        context: buildContext(),
       });
       if (requestId !== estimateRequestId) return;
       dispatch(setContextWindowEstimate(result));
@@ -488,6 +484,7 @@ export const ai = api('translation', {
     selectCurrentBulkJob,
     selectIntegrationConnected,
     selectIntegrationPingError,
+    selectSelectedPromptTemplateData,
     selectTranslationIsBusy,
   },
 });

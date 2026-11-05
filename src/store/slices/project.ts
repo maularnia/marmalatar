@@ -14,7 +14,7 @@ import {
   type TProjectFileData,
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
-import type { AppDispatch, RootState } from '@store/root';
+import type { AppDispatch } from '@store/root';
 import { glossaries } from '@store/slices/aiPromptEditor';
 import { workingFolder } from '@store/slices/workingFolder';
 import { editor } from '@store/slices/editor';
@@ -42,16 +42,18 @@ async function readProjectFile(projectId: string): Promise<TProjectFileData> {
   return parseProjectFile(raw);
 }
 
-function buildProjectBody(state: RootState): TProjectFileBody {
-  const { lines, characterPool } = state.editor;
+function buildProjectBody(): TProjectFileBody {
   return {
-    editor: ProjectSaveV1Schema.shape.editor.parse({ lines, characterPool }),
+    editor: ProjectSaveV1Schema.shape.editor.parse({
+      lines: editor.get.lines(),
+      characterPool: editor.get.characterPool(),
+    }),
   };
 }
 
 // The updated list entry, with the progress the main process computed from the new lines
-async function writeProjectBody(projectId: string, state: RootState): Promise<TProjectEntry> {
-  return IPC.projects.set(projectId, buildProjectBody(state));
+async function writeProjectBody(projectId: string): Promise<TProjectEntry> {
+  return IPC.projects.set(projectId, buildProjectBody());
 }
 
 type TProjectHeaderInput = {
@@ -96,13 +98,11 @@ async function deleteProjectOnDisk(projectId: string): Promise<void> {
 
 // The preferences the store holds. The audio track isn't among them yet, and set-state keeps
 // whatever isn't sent.
-function buildProjectEditorStateSaveData(
-  state: RootState
-): Omit<TProjectStatePrefs, 'audioTrackId'> {
+function buildProjectEditorStateSaveData(): Omit<TProjectStatePrefs, 'audioTrackId'> {
   return {
-    editorMode: state.project.editorMode,
-    isVideoCollapsed: state.editor.isVideoCollapsed,
-    videoPath: state.project.videoFilePath,
+    editorMode: projects.get.editorMode(),
+    isVideoCollapsed: editor.get.isVideoCollapsed(),
+    videoPath: projects.get.videoFilePath(),
   };
 }
 
@@ -254,7 +254,7 @@ type CreateNewProjectParams = {
 
 const createProject =
   (params: CreateNewProjectParams) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     const projectName = params.projectName.trim();
     if (!projectName) throw new Error(t('project.nameRequired'));
     const { sourceLanguage, targetLanguage } = params;
@@ -299,7 +299,7 @@ const createProject =
     dispatch(setCurrentProjectFilePath(entry.filePath));
 
     try {
-      await writeProjectEditorState(entry.projectId, buildProjectEditorStateSaveData(getState()));
+      await writeProjectEditorState(entry.projectId, buildProjectEditorStateSaveData());
     } catch {
       throw new Error(t('createNewProject.editorStateSaveFailed'));
     }
@@ -316,20 +316,20 @@ const createProject =
 // computed from the new lines.
 const saveProjectToDisk =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const { projectId } = state.project;
-    if (!projectId || !selectCurrentProjectFilePath(state)) return;
-    dispatch(setProjectEntry(await writeProjectBody(projectId, state)));
+  async (dispatch: AppDispatch): Promise<void> => {
+    const projectId = projects.get.id();
+    if (!projectId || !projects.get.currentFilePath()) return;
+    dispatch(setProjectEntry(await writeProjectBody(projectId)));
   };
 
 const saveProjectLanguages =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const state = getState();
-    const { projectId, sourceLanguage, targetLanguage } = state.project;
+  async (dispatch: AppDispatch): Promise<void> => {
+    const projectId = projects.get.id();
+    const sourceLanguage = projects.get.sourceLanguage();
+    const targetLanguage = projects.get.targetLanguage();
     if (!projectId || !sourceLanguage || !targetLanguage) return;
-    if (!selectCurrentProjectFilePath(state)) return;
+    if (!projects.get.currentFilePath()) return;
     dispatch(
       setProjectEntry(await updateProjectLanguagesOnDisk(projectId, sourceLanguage, targetLanguage))
     );
@@ -339,8 +339,8 @@ const saveProjectLanguages =
 // new one -- no confirmation dialog, the save makes it non-destructive.
 const startNewProject =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    if (selectIsProjectOpen(getState())) {
+  async (dispatch: AppDispatch): Promise<void> => {
+    if (projects.get.isOpen()) {
       await dispatch(saveProjectToDisk());
     }
     editor.resetMemoryState();
@@ -398,7 +398,7 @@ function applyProjectData(
 
 const renameProject =
   (projectId: string, newName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('project.folderNotTracked'));
     const trimmed = newName.trim();
@@ -407,7 +407,7 @@ const renameProject =
     const entry = await renameProjectOnDisk(projectId, trimmed);
     if (!entry) throw new Error(t('project.alreadyExists'));
 
-    if (projectId === selectProjectId(getState())) {
+    if (projectId === projects.get.id()) {
       dispatch(setCurrentProjectFilePath(entry.filePath));
       dispatch(setProjectName(entry.projectName));
     }
@@ -417,10 +417,10 @@ const renameProject =
 
 const updateProjectEmoji =
   (projectId: string, emoji: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     const entry = await updateProjectEmojiOnDisk(projectId, emoji);
 
-    if (projectId === selectProjectId(getState())) {
+    if (projectId === projects.get.id()) {
       dispatch(setProjectEmoji(entry.emoji));
     }
 
@@ -463,6 +463,7 @@ export const projects = api('project', {
     updateProjectEmoji,
   },
   selectors: {
+    selectCurrentProjectFilePath,
     selectEditorMode,
     selectIsEditMode,
     selectIsProjectOpen,
