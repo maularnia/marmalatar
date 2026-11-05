@@ -4,7 +4,7 @@ import {
   TranslationBatchResult,
   TranslationProgressSnapshot,
   TranslationRequestContext,
-} from '@src/services/ai/types';
+} from '@src/services/ai/connector/types';
 
 type LMStudioInputLine = {
   line: number;

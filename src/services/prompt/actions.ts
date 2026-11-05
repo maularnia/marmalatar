@@ -1,5 +1,5 @@
 import i18n from '@src/i18n';
-import { DEFAULT_PROMPT_TEMPLATE } from '@src/services/ai/config';
+import { DEFAULT_PROMPT_TEMPLATE } from '@src/services/ai/connector/config';
 import { IPC } from '@src/services/ipc/IPC';
 import {
   readPromptTemplateFileContract,

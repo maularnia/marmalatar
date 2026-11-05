@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { RootState } from '@store/root';
 import { TThemeSelection } from '@src/types';
-import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/config';
+import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
 import { SUPPORTED_UI_LOCALES } from '@src/i18n/locales';
 import { AppSettingsContractV1Schema } from '@bridge/definitions/appSettings';
 import {

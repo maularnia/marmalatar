@@ -3,7 +3,7 @@ import KeystrokeZone, {
 } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/editor';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
-import { ai } from '@store/slices/ai';
+import { ai } from '@src/services/ai';
 import { glossaries } from '@store/slices/glossary';
 import { createContext, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
 import {

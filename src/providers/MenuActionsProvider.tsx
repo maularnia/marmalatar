@@ -9,7 +9,7 @@ import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useProjectLoader } from '@src/utils/useProjectLoader';
 import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from '@store/slices/glossary';
-import { ai } from '@store/slices/ai';
+import { ai } from '@src/services/ai';
 import { workingFolder } from '@store/slices/workingFolder';
 import { overlays } from '@store/slices/overlays';
 import { projects } from '@store/slices/project';

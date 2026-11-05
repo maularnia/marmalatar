@@ -7,7 +7,7 @@ import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
-import { ai } from '@store/slices/ai';
+import { ai } from '@src/services/ai';
 import { settings } from '@store/slices/settings';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';

@@ -3,8 +3,8 @@ import {
   TranslationBatchController,
   TranslationBatchResult,
   TranslationProgressSnapshot,
-} from '@src/services/ai/types';
-import { AgentJob } from '@src/services/ai/agentJob';
+} from '@src/services/ai/connector/types';
+import { AgentJob } from '@src/services/ai/connector/agentJob';
 import { DeepLOutputLine, DeepLTranslateBulkParams, DeepLTranslationParams } from './types';
 import { IPC } from '@src/services/ipc/IPC';
 

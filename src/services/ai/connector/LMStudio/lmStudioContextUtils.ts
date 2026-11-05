@@ -1,4 +1,4 @@
-import { TranslationRequestContext } from '@src/services/ai/types';
+import { TranslationRequestContext } from '@src/services/ai/connector/types';
 import { buildCsvTable } from '@utils/csvUtils';
 
 export function buildLMStudioSystemPrompt(context?: TranslationRequestContext): string {

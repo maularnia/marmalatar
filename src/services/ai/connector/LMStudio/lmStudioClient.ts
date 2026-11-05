@@ -1,7 +1,10 @@
-import { AiClient, TranslationRequestContext } from '@src/services/ai/types';
+import { AiClient, TranslationRequestContext } from '@src/services/ai/connector/types';
 import { TSubtitleLine } from '@src/types';
 import i18n from '@src/i18n';
-import { resolveBatchSize, selectRepresentativeLines } from '@src/services/ai/batchingUtils';
+import {
+  resolveBatchSize,
+  selectRepresentativeLines,
+} from '@src/services/ai/connector/batchingUtils';
 import {
   pingLMStudioEndpoint,
   tokenizeWithLMStudio,

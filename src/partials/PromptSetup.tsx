@@ -1,5 +1,5 @@
-import { aiClients } from '@src/services/ai/clients';
-import type { AiClient } from '@src/services/ai/types';
+import { aiClients } from '@src/services/ai/connector/clients';
+import type { AiClient } from '@src/services/ai/connector/types';
 import { settings } from '@src/store/slices/settings';
 import { projects } from '@src/store/slices/project';
 import { promptTemplates } from '@src/services/prompt';
@@ -7,7 +7,7 @@ import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
 import { useAppSelector } from '@store/hooks';
 import { glossaries } from '@store/slices/glossary';
-import { ai } from '@store/slices/ai';
+import { ai } from '@src/services/ai';
 import {
   FormSectionEntry,
   FormsRow,

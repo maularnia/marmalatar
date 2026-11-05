@@ -1,4 +1,4 @@
-import { HttpStatusError } from '@src/services/ai/types';
+import { HttpStatusError } from '@src/services/ai/connector/types';
 
 const HTTP_STATUS_MESSAGES: Record<number, string> = {
   400: 'The request was invalid.',

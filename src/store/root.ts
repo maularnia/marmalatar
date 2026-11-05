@@ -7,7 +7,7 @@ import { promptReducer } from '@src/services/prompt';
 import workingFolderReducer from './slices/workingFolder';
 import glossaryReducer from './slices/glossary';
 import overlaysReducer from './slices/overlays';
-import aiReducer from './slices/ai';
+import { aiReducer } from '@src/services/ai';
 
 export const rootReducer = combineReducers({
   settings: settingsReducer,

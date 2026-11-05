@@ -1,5 +1,5 @@
 import { useAppSelector } from '@store/hooks';
-import { ai } from '@store/slices/ai';
+import { ai } from '@src/services/ai';
 import { projects } from '@src/store/slices/project';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
@@ -14,7 +14,7 @@ import TextInput from '@ui-toolkit/TextInput';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/types';
+import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/connector/types';
 import {
   DEEPL_FORMALITY_OPTIONS,
   DEEPL_LANGUAGES_WITHOUT_FORMALITY_SUPPORT,
@@ -38,7 +38,7 @@ import {
   ConnectionStatusToColor,
   DEFAULT_LINES_PER_REQUEST,
   getLinesPerRequestOptions,
-} from '@src/services/ai/config';
+} from '@src/services/ai/connector/config';
 import { useLanguageLabels } from '@src/utils/languageLabels';
 import { IPC } from '@src/services/ipc/IPC';
 

@@ -6,7 +6,7 @@ import i18n from '@src/i18n';
 import { IPC } from '@src/services/ipc/IPC';
 import type { AppDispatch } from '@store/root';
 import { parseAppSettings, type PersistedAppSettings } from '@utils/appSettingsFile';
-import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/config';
+import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
 import type { TUiLocale } from '@src/i18n/locales';
 import {
   AI_INTEGRATION_ENABLED_DEFAULT,

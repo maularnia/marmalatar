@@ -4,18 +4,18 @@ import {
   TranslationBatchResult,
   TranslationProgressSnapshot,
   TranslationRequestContext,
-} from '@src/services/ai/types';
+} from '@src/services/ai/connector/types';
 import {
   buildLMStudioPlainTextInstructions,
   buildLMStudioSystemPrompt,
 } from './lmStudioContextUtils';
-import { resolvePromptTemplate } from '@src/services/ai/context';
-import { AgentJob } from '@src/services/ai/agentJob';
-import { BATCH_TRANSLATION_JSON_SCHEMA } from '@src/services/ai/config';
+import { resolvePromptTemplate } from '@src/services/ai/connector/context';
+import { AgentJob } from '@src/services/ai/connector/agentJob';
+import { BATCH_TRANSLATION_JSON_SCHEMA } from '@src/services/ai/connector/config';
 import {
   buildStructuredBatchInstructions,
   buildStructuredBatchUserMessage,
-} from '@src/services/ai/batchingUtils';
+} from '@src/services/ai/connector/batchingUtils';
 import {
   LMStudioModelOption,
   LMStudioOutputLine,

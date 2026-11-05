@@ -1,7 +1,7 @@
 import PromptSetupRow from '@src/partials/PromptSetup';
 import { settings } from '@src/store/slices/settings';
 import { useAppSelector } from '@store/hooks';
-import { ai } from '@store/slices/ai';
+import { ai } from '@src/services/ai';
 import { FormRoot, FormsContent } from '@ui-toolkit/forms';
 
 export default function AiTranslationStatusPanel() {

@@ -1,6 +1,6 @@
-import { AiClient, TranslationRequestContext } from '@src/services/ai/types';
+import { AiClient, TranslationRequestContext } from '@src/services/ai/connector/types';
 import i18n from '@src/i18n';
-import { resolveBatchSize } from '@src/services/ai/batchingUtils';
+import { resolveBatchSize } from '@src/services/ai/connector/batchingUtils';
 import { translateBatchWithDeepL, translateWithDeepL } from './translateWithDeepL';
 import {
   DEEPL_LANGUAGES_WITHOUT_FORMALITY_SUPPORT,

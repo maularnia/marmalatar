@@ -3,7 +3,7 @@ import {
   TranslationBatchCallbacks,
   TranslationBatchResult,
   TranslationProgressSnapshot,
-} from '@src/services/ai/types';
+} from '@src/services/ai/connector/types';
 
 type DeepLInputLine = {
   line: number;

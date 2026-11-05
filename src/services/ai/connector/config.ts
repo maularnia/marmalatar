@@ -1,5 +1,5 @@
-// Consolidated constants for the src/services/ai/ root (provider-specific constants stay in
-// each provider's own consts.ts, e.g. Ollama/consts.ts, LMStudio/consts.ts).
+// Consolidated constants for the AI connectors in src/services/ai/connector (provider-specific
+// constants stay in each provider's own consts.ts, e.g. Ollama/consts.ts, LMStudio/consts.ts).
 import { TOptionSelect } from '@ui-toolkit/Select/Select';
 import { ThemeColors } from '@src/theme/utils';
 import type { TColor } from '@src/theme/definitions';

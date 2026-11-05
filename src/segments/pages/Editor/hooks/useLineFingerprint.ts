@@ -4,7 +4,7 @@ import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/editor';
 import { TSubtitleLine } from '@src/types';
 import { useAppSelector } from '@store/hooks';
-import { ai } from '@store/slices/ai';
+import { ai } from '@src/services/ai';
 import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
