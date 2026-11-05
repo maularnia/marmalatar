@@ -62,8 +62,8 @@ root folder `src`.
 - src/providers - business logic core of the application.
 - src/segments - logical chunks/groups of components grouped by functional similarity (dialogs, menu, overlays, pages/views)
 - src/services - pure services providing utility functions for providers to perform specific set of tasks (spellchecking/ai-translations) `spellcheck` runs dictionary parsing and text checks in one Web Worker shared by every editor, because that work is too slow for the UI thread. Suggestions take seconds per word, so they're only requested for the word the caret is on. `ipc` is the renderer's only way to reach the main process: consumers use the `IPC` singleton (`IPC.projects.get(...)`), whose properties are `IPCSegment` subclasses from `ipc/segments`, one per theme. ESLint forbids `window.electronAPI` and direct segment imports anywhere else.
-- src/services/<domain> - domain services, one folder each, replacing a slice file in `src/store/slices` (prompt is the first; the other slices haven't moved yet). `slice.ts` defines the slice (state, reducers, extraReducers, selectors); `actions.ts` holds the operations as plain (async) functions, not thunks, plus IPC wrappers; they go into the facade's `functions` group; `index.ts` builds the facade with `api()` and is the only entry point from outside (`import { promptTemplates, promptReducer } from '@src/services/prompt'`). Imports run index → actions → slice: actions use `dispatch` and `select(localSelector)` exported from `createApi.ts` with their own slice's actions and selectors, never their own facade, which would be a cycle; other domains are reached through their facades
-- src/store - application store and store-slices. Each slice exposes its selectors, actions and thunks only through domain facades built at the bottom of the slice file with `api(keyword, { actions, thunks, selectors, functions })` (`src/store/createApi.ts`): `glossaries` (glossary.ts), `promptTemplates` (`src/services/prompt`), `projects`, `workingFolder`, `overlays`, `ai`, `settings`, `editor`. A member's key is its name with the keyword taken out (`selectGlossaryItems` → `glossaries.selectItems`, `refreshPromptTemplates` → `promptTemplates.refresh`), so name declarations to read well once it's gone (`createGlossary`, not `createGlossaryFile`). `api()` throws on load if two members land on the same key. Actions and thunks dispatch themselves on the app store (`editor.mergeLines(...)`, never `dispatch(editor.mergeLines(...))`, which would dispatch twice); each selector also gets a reader of the current state under `get` (`glossaries.get.items()`, the `select` prefix dropped). `store.ts` hands the store to `connectApi`. `thunks.ts` exposes its thunks as the `app` facade (`app.hydrate()`, `app.workingFolderPick()`). Inside a slice file code uses local names for its actions and selectors; everywhere else, other slices included, uses the facade. Store code reads the current state through `get` too, the slice's own facade included (`promptTemplates.get.current()`), instead of `const state = getState()` snapshots; `getState()` stays only where a snapshot is the point (before/after comparisons in middleware) or a facade can't be imported without a cycle. Thunks that would make slices import each other stay plain exports of `thunks.ts`
+- src/services/<domain> - domain services, one folder each, replacing a slice file in `src/store/slices` (`prompt` and `editor` so far; the other slices haven't moved yet). `slice.ts` defines the slice (state, reducers, extraReducers, selectors); `actions.ts` holds the operations as plain (async) functions, not thunks, plus IPC wrappers; they go into the facade's `functions` group; `index.ts` builds the facade with `api()` and is the only entry point from outside (`import { promptTemplates, promptReducer } from '@src/services/prompt'`). Imports run index → actions → slice: actions use `dispatch` and `select(localSelector)` exported from `createApi.ts` with their own slice's actions and selectors, never their own facade, which would be a cycle; other domains are reached through their facades. When the owner's facade can't be imported without a cycle (the ai, project and glossary slices import the editor), read its raw state with a local structural type (`select((state: TBulkJobState) => state.ai.currentBulkJob?.running)`) and say why in a comment. Operations reach dialogs, toasts and video through `src/providers/bridges`, never through hooks
+- src/store - application store and store-slices. Each slice exposes its selectors, actions and thunks only through domain facades built at the bottom of the slice file with `api(keyword, { actions, thunks, selectors, functions })` (`src/store/createApi.ts`): `glossaries` (glossary.ts), `promptTemplates` (`src/services/prompt`), `editor` (`src/services/editor`), `projects`, `workingFolder`, `overlays`, `ai`, `settings`. A member's key is its name with the keyword taken out (`selectGlossaryItems` → `glossaries.selectItems`, `refreshPromptTemplates` → `promptTemplates.refresh`), so name declarations to read well once it's gone (`createGlossary`, not `createGlossaryFile`). `api()` throws on load if two members land on the same key. Actions and thunks dispatch themselves on the app store (`editor.mergeLines(...)`, never `dispatch(editor.mergeLines(...))`, which would dispatch twice); each selector also gets a reader of the current state under `get` (`glossaries.get.items()`, the `select` prefix dropped). `store.ts` hands the store to `connectApi`. `thunks.ts` exposes its thunks as the `app` facade (`app.hydrate()`, `app.workingFolderPick()`). Inside a slice file code uses local names for its actions and selectors; everywhere else, other slices included, uses the facade. Store code reads the current state through `get` too, the slice's own facade included (`promptTemplates.get.current()`), instead of `const state = getState()` snapshots; `getState()` stays only where a snapshot is the point (before/after comparisons in middleware) or a facade can't be imported without a cycle. Thunks that would make slices import each other stay plain exports of `thunks.ts`
 - src/theme - theme service. Extracted to a separate folder due to scale and complexity
 - src/toolkit - UI atomic compoenet library of genreal purpose. Inputs, Icons, Selects, Tags...
 - src/utils - commonly used general-perpose utility functions or set of functions split into files by theme.
@@ -77,32 +77,35 @@ They sit in the middle between store/services and pure UI view components or pro
 
 Flat files in `src/providers`, with a subfolder only when a provider needs companion files (`ConfirmationProvider/`, `GlobalKeystroke/`, each with its own `types.ts`).
 
-Feature domains (Editor, Menu) are split into layers. Each layer consumes the one before it through its hook:
+The Menu domain is split into layers. Each layer consumes the one before it through its hook:
 
 1. `*RefsProvider` - DOM element registries (no React state, no re-renders)
 2. `*ActionsProvider` - `handle*` business logic: reads refs and the store, dispatches, opens dialogs, emits messages
 3. `*KeystrokeProvider` - maps keys to actions and holds no business logic
 
-`EditorStateProvider` only composes the Refs and Actions layers. The Keystroke layer is mounted separately, deeper in the tree.
+The editor and glossary have no Refs or Actions providers: their logic lives in their services, with DOM registries as module-level state next to it. Only their Keystroke providers remain.
+
+Bridges (`src/providers/bridges`) hand provider APIs to code outside React, the services. `ConfirmationProvider`, `MessageHelmetProvider` and `VideoProvider` register into them on mount, and calling one before that throws:
+- `confirmation` - `createConfirm(Content, props)`, the module-level counterpart of `useConfirm`. Dialogs opened by services export plain functions built on it next to the dialog (`confirmMerge` in `dialogs/lineMerge/mergeConfirmation.tsx`)
+- `messages` - `pushMessage`, passed to `emit*Message`
+- `video` - `playPause`, `seekToLine`
 
 Mount points:
 
 - App-wide, in this order (`src/main.tsx`): `MessageHelmetProvider` > `LocaleProvider` > `ThemeProvider` > `MenuStateProvider` > `PopperPortalProvider` > `GlobalKeystrokeDispatcher` > `ConfirmationProvider` > `VideoProvider`. The order matters: each one may use the ones above it.
-- Editor: `EditorStateProvider` in `src/layout/GeneralLayout.tsx`, `EditorKeystrokeProvider` in `src/layout/EditorLayout.tsx`
+- Editor: `EditorKeystrokeProvider` in `src/layout/EditorLayout.tsx`
 - Menu: `MenuRefsProvider` > `MenuActionsProvider` > `MenuKeystrokeProvider` in `src/segments/menu/index.tsx`
 - Glossary: `GlossaryKeystrokeProvider` in `src/segments/overlays/Glossary/Glossary.tsx`
 
 ### Files
 
 Editor:
-- `EditorStateProvider` - composes `EditorRefsProvider`, `EditorActionsProvider`, `EditorAIActionsProvider`
-- `EditorRefsProvider` - input elements per line and column (`source`/`output`/`character`), plus the split cursor offset, which resets when the project changes
-- `EditorActionsProvider` - focus and line navigation, line insert/split/merge/remove, timing adjustments including shifting all lines, undo/redo, bulk operations (auto-merge, cleanup, copy all), edit mode toggle, playing from the focused line
-- `EditorAIActionsProvider` - single-line and bulk AI translation, add text or the current selection to a glossary
-- `EditorKeystrokeProvider` - editor shortcuts, plus `useEditorKeystroke` exposing which modifier keys are held. Shortcuts are skipped while an AI translation is running
+- No Refs/Actions providers: everything editor is the `editor` service in `src/services/editor` -- lines and undo history, focus and line navigation (`editor.focusInput`, `navigateLine`, `focus`), line insert/split/merge/remove, timing adjustments including shifting all lines, undo/redo, bulk operations (auto-merge, cleanup, copy all, complete all), the edit/translate mode (`editor.toggleEditMode`, `get.isEditMode`), playing from the focused line. The line inputs live in a module-level registry (`editor.registerLineInput`), as does the split cursor offset (`editor.setSplitCursor`), which the project service clears when the open project changes
+- AI translation is `ai.translateLine` / `ai.translateUntranslatedLines`; adding text or the current selection to a glossary is `glossaries.addEntryFromText` / `addEntryFromLineSelection`
+- `EditorKeystrokeProvider` - editor shortcuts, calling `editor.*`, `ai.*` and `glossaries.*`, plus `useEditorKeystroke` exposing which modifier keys are held. Shortcuts are skipped while an AI translation is running
 
 Glossary:
-- No Refs/Actions providers: everything glossary is the `glossaries` service in `src/store/slices/glossary.ts` -- the folder's glossary files, the open glossary's pairs, the translation's selection and resolved entries, and the editor's pair focus (`glossaries.focusPairInput`, `movePairFocus`, `insertPair`, `deletePair`). Focus lives in the store, as in the editor; the pair input elements live in a module-level registry next to it (`glossaries.registerPairInput`), since DOM elements aren't state. Deleting a pair asks first through `useDeleteGlossaryEntryConfirmation().confirmAndDeletePair`, because dialogs come from hooks
+- No Refs/Actions providers: everything glossary is the `glossaries` service in `src/store/slices/glossary.ts` -- the folder's glossary files, the open glossary's pairs, the translation's selection and resolved entries, and the editor's pair focus (`glossaries.focusPairInput`, `movePairFocus`, `insertPair`, `deletePair`). Focus lives in the store, as in the editor; the pair input elements live in a module-level registry next to it (`glossaries.registerPairInput`), since DOM elements aren't state. Deleting a pair asks first through `useDeleteGlossaryEntryConfirmation().confirmAndDeletePair`
 - `GlossaryKeystrokeProvider` - glossary shortcuts, calling `glossaries.*`
 
 Menu:
@@ -119,9 +122,9 @@ Keystrokes:
 - `ScopedKeyHubProvider` - scopes `react-keyhub` to a wrapper DOM node. Used by `KeystrokeZone` (`src/layout/components/KeystrokeZone`), not mounted directly
 
 Dialogs and messages:
-- `ConfirmationProvider/ConfirmationProvider` - dialog host, `useConfirm` and `useInfoWindow`
+- `ConfirmationProvider/ConfirmationProvider` - dialog host, `useConfirm` and `useInfoWindow`. The window logic `useConfirm` and the bridge's `createConfirm` share is in `confirmWindow.tsx`
 - `ConfirmationProvider/ConfirmationKeyhubProvider` - `y`/`n`/`esc` on the open dialog, with its own `EventBus` scoped to the dialog element
-- `MessageHelmetProvider` - toasts through `useMessageHelmet().pushMessage`
+- `MessageHelmetProvider` - toasts through `useMessageHelmet().pushMessage` (or the messages bridge outside React)
 - `PopperPortalProvider` - shared portal root for overlays, read with `usePopperPortal`
 
 Side effects only, no context:
@@ -143,7 +146,7 @@ Reading state:
 
 Actions:
 - Public functions are named `handle*`, including ones that only set state (`handleSetIsCreatingGlossary`). Exposed state keeps its own name
-- Confirmations come from `use*Confirmation` hooks in `src/segments/dialogs/*`, and check `selectAskBefore*` settings where they exist
+- Confirmations come from `use*Confirmation` hooks in `src/segments/dialogs/*` (services use the plain `confirm*` functions next to them), and check `selectAskBefore*` settings where they exist
 - `src/segments/dialogs` is the only part of `src/segments` that providers may import from. A hook needed by a provider that isn't a dialog goes in `src/utils` (`useProjectLoader`)
 - User feedback goes through `emit*Message(pushMessage, ...)` from `src/messages.ts`, never through direct `pushMessage` text
 
@@ -152,13 +155,13 @@ Refs:
 
 Keystrokes:
 - Declare shortcuts as a module-level object with `satisfies ShortcutSettings`, and wrap `useShortcut` in a local hook typed to its keys
-- Shortcut handlers only resolve the target (the focused line or pair), call `preventDefault` and call a `handle*` action. Reading the store for that is fine, but dispatching, editing data and navigation rules belong in the Actions layer
+- Shortcut handlers only resolve the target (the focused line or pair), call `preventDefault` and call an action (a `handle*` from the Actions layer, or a service operation such as `editor.mergeLines`). Reading the store for that is fine, but dispatching, editing data and navigation rules belong in the Actions layer or the service
 - Wrap the tree in `KeystrokeZone`. Handlers live in a child component that returns `null` (`EditorShortcuts`, `MenuShortcuts`, `GlossaryShortcuts`), because `useShortcut` needs the `KeyHubProvider` that `KeystrokeZone` creates
 - Keep `scope: ShortcutScope.GLOBAL` in zone shortcuts: scoping comes from the zone's DOM target, and `KeystrokeZone` pauses the shortcuts while focus is outside it
 - Only `GlobalKeystrokeDispatcher` may target `document`. Pausing is keyed by a `source` string so independent callers can't un-pause each other. `ConfirmationProvider` uses this to block global shortcuts while a dialog is open
 
 Dialogs:
-- `useConfirm(...).confirm()` resolves `true` or `false`. Dismissing is not an error, and the promise rejects only on real failures
+- `useConfirm(...).confirm()` (and `createConfirm(...).confirm()`) resolves `true` or `false`. Dismissing is not an error, and the promise rejects only on real failures
 - `confirm()` resolves after the exit animation finishes (immediately for `animate: false` windows), so callers can safely move focus afterwards
 
 

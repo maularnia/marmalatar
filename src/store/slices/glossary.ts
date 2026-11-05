@@ -14,12 +14,21 @@ import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import type { AppDispatch, RootState } from '@store/root';
 import { overlays, TOverlay } from '@store/slices/overlays';
 import { workingFolder } from '@store/slices/workingFolder';
+import { pushMessage } from '@providers/bridges/messages';
+import {
+  emitAddGlossaryEntryErrorMessage,
+  emitGlossaryEntrySaveFailedMessage,
+  emitNoMatchingGlossariesMessage,
+} from '@src/messages';
+import { askForGlossaryPair } from '@src/segments/dialogs/addToGlossary/addToGlossaryDialog';
+import { emitGlossaryPairSavedMessage } from '@src/segments/dialogs/addToGlossary/glossaryEntryAddedMessage';
+import { editor } from '@src/services/editor';
+import { select } from '@store/createApi';
 
 // Everything about glossaries in one place: the tracked folder's glossary files, the glossary open
 // in the editor overlay (its pairs, which pair input has focus), and the glossaries the translation
 // uses (the selection, and the entries resolved from it for the AI request).
 
-export type { TGlossaryEntry };
 export type TGlossaryPairColumn = 'original' | 'translation';
 
 const t = i18n.getFixedT(null, 'errors');
@@ -552,6 +561,55 @@ const deleteGlossaryPair =
       dispatch(focusGlossaryPairInput(targetIndex, column, false));
     });
   };
+// ── Adding entries from the editor ───────────────────────────────────────────
+
+/** Asks for a pair prefilled with `text` and a glossary of the project's language direction to
+ * add it to, then adds it, reporting the outcome through toasts. */
+async function addGlossaryEntryFromText(text: string): Promise<void> {
+  const original = text.trim();
+  if (!original) return;
+
+  // Raw state, as in selectDirectionMatchedGlossaryFileNames: the project slice imports this one
+  const { sourceLanguage, targetLanguage } = select((state: RootState) => state.project);
+  const matching = glossaries.get
+    .items()
+    .filter((g) => g.sourceLanguage === sourceLanguage && g.targetLanguage === targetLanguage);
+  if (!matching.length) {
+    emitNoMatchingGlossariesMessage(pushMessage);
+    return;
+  }
+
+  try {
+    const result = await askForGlossaryPair({
+      defaultOriginal: original,
+      glossaryOptions: matching,
+    });
+    if (!result) return;
+    const [pairOriginal, pairTranslation] = result.pair;
+    const added = await glossaries.addEntry(
+      { original: pairOriginal, translation: pairTranslation },
+      result.glossaryFileName
+    );
+    if (added) emitGlossaryPairSavedMessage(pairOriginal, pairTranslation);
+    else emitGlossaryEntrySaveFailedMessage(pushMessage);
+  } catch (e) {
+    emitAddGlossaryEntryErrorMessage(
+      pushMessage,
+      e instanceof Error ? e.message : 'Critical unexpected error white adding entry to a glossary'
+    );
+  }
+}
+
+/** `addEntryFromText` with the text selected in a line's source input; does nothing when the
+ * selection is empty or lies elsewhere. */
+function addGlossaryEntryFromLineSelection(lineIndex: number): void {
+  const sourceInput = editor.getLineInput(lineIndex, 'source');
+  if (!sourceInput) return;
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+  if (!sourceInput.contains(selection.getRangeAt(0).commonAncestorContainer)) return;
+  void addGlossaryEntryFromText(selection.toString());
+}
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
@@ -591,6 +649,8 @@ export const glossaries = api('glossary', {
     selectSelectedGlossaryFileNames,
   },
   functions: {
+    addGlossaryEntryFromLineSelection,
+    addGlossaryEntryFromText,
     registerGlossaryPairInput,
   },
 });

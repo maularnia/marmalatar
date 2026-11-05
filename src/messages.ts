@@ -1,5 +1,5 @@
 import i18n from '@src/i18n';
-import type { TPushMessageParams } from '@src/providers/MessageHelmetProvider';
+import type { TPushMessageParams } from '@src/providers/bridges/messages';
 import { TMessageType } from '@src/types';
 import type { ReactNode } from 'react';
 
@@ -28,7 +28,7 @@ export function emitAudioExtractionFailedMessage(pushMessage: PushMessage, messa
   });
 }
 
-// useAddToGlossaryDialog
+// askForGlossaryPair
 
 export function emitGlossaryPairAddedMessage(
   pushMessage: PushMessage,
@@ -209,7 +209,7 @@ export function emitCacheCleanupFailedMessage(pushMessage: PushMessage): void {
   });
 }
 
-// EditorAIActionsProvider
+// ai.translateLine / translateUntranslatedLines, glossaries.addEntryFromText
 
 export function emitNoPromptTemplateMessage(pushMessage: PushMessage): void {
   pushMessage({
@@ -283,7 +283,7 @@ export function emitAddGlossaryEntryErrorMessage(pushMessage: PushMessage, messa
   });
 }
 
-// EditorActionsProvider
+// editor service
 
 export function emitCopyOperationCancelledMessage(pushMessage: PushMessage): void {
   pushMessage({

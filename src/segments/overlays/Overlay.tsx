@@ -1,4 +1,4 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
+import { editor } from '@src/services/editor';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { appearRightEase } from '@src/toolkit/motion/transitions';
@@ -60,12 +60,11 @@ type OverlayProps = PropsWithChildren<{
 }>;
 
 export default function Overlay({ onClose, children }: OverlayProps) {
-  const { handleFocusEditor } = useEditorActions();
   return (
     <OverlayRoot>
       <OverlayBackdrop onClick={onClose} />
       <OverlayInner>
-        <FocusTrap active onUnmount={handleFocusEditor}>
+        <FocusTrap active onUnmount={editor.focus}>
           <>
             {children}
             <OverlayButton

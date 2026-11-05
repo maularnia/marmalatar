@@ -1,7 +1,7 @@
 import { exporterList } from './formats/list';
 import { ExportFormatlabels, ExportFormats, FrameRate } from './types';
 import Overlay from '@src/segments/overlays/Overlay';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { overlays } from '@src/store/slices/overlays';
 import { projects } from '@src/store/slices/project';
 import { ThemeColors } from '@src/theme/utils';
@@ -39,7 +39,7 @@ export default function Export() {
   const translationLines = useAppSelector(editor.selectLines);
   const characterPool = useAppSelector(editor.selectCharacterPool);
   const targetLanguage = useAppSelector(projects.selectTargetLanguage);
-  const isEditMode = useAppSelector(projects.selectIsEditMode);
+  const isEditMode = useAppSelector(editor.selectIsEditMode);
 
   const formatOptions = Object.values(ExportFormats).map((format) => ({
     value: format,

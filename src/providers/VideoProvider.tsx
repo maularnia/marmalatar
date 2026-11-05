@@ -1,7 +1,8 @@
 import { emitAudioExtractionFailedMessage, emitVideoPlaybackErrorMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
+import { registerVideoBridge } from '@src/providers/bridges/video';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
@@ -12,6 +13,7 @@ import {
   RefObject,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -229,6 +231,11 @@ export function VideoProvider({ children }: PropsWithChildren) {
     projects.reset();
     navigate('/');
   }, [navigate, pushMessage]);
+
+  useEffect(
+    () => registerVideoBridge({ playPause: handlePlayPause, seekToLine }),
+    [handlePlayPause, seekToLine]
+  );
 
   const value = useMemoizedObject<TVideoContext>({
     videoDurationMs,

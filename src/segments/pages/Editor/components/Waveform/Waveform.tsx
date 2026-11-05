@@ -1,4 +1,4 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
+import { editor } from '@src/services/editor';
 import { useVideo } from '@providers/VideoProvider';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
@@ -115,7 +115,6 @@ export default function Waveform({
 }: WaveformProps) {
   const { t } = useTranslation('tooltips');
   const { currentTimeRef, seekVideoToMs } = useVideo();
-  const { handleChangeFocusedLine, handleChangeFocusedColumn } = useEditorActions();
   const size = useAppSelector(settings.selectScreenSize);
   const theme = useAppSelector(settings.selectCurrentThemeData);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -290,8 +289,8 @@ export default function Waveform({
     const handlePointerUp = () => {
       if (dragStateRef.current && !dragStateRef.current.hasMoved) {
         const lineIndex = dragStateRef.current.lineIndex;
-        handleChangeFocusedLine(lineIndex);
-        requestAnimationFrame(() => handleChangeFocusedColumn(lineIndex, 'output', false));
+        editor.focusLine(lineIndex);
+        requestAnimationFrame(() => editor.focusInput(lineIndex, 'output', false));
       }
       dragStateRef.current = null;
       setDragLineIndex(null);

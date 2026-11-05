@@ -5,6 +5,7 @@ import { TMessageType } from '@src/types';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
+import { registerMessagesBridge, TPushMessageParams } from '@src/providers/bridges/messages';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import classNames from 'classnames';
@@ -15,6 +16,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -27,12 +29,6 @@ type TMessageItem = {
   type: TMessageType;
   message: ReactNode;
   title: string;
-};
-
-export type TPushMessageParams = {
-  type: TMessageType;
-  title: string;
-  message?: ReactNode;
 };
 
 type TMessageHelmetContext = {
@@ -119,6 +115,8 @@ export function MessageHelmetProvider({ children }: PropsWithChildren) {
     },
     [dismiss]
   );
+
+  useEffect(() => registerMessagesBridge(pushMessage), [pushMessage]);
 
   const value = useMemoizedObject<TMessageHelmetContext>({ pushMessage });
 

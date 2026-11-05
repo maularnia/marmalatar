@@ -1,12 +1,10 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
-import { useEditorAIActions } from '@providers/EditorAIActionsProvider';
-import { useEditorRefs } from '@providers/EditorRefsProvider';
 import KeystrokeZone, {
   useKeystrokeZone,
 } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
 import { ai } from '@store/slices/ai';
+import { glossaries } from '@store/slices/glossary';
 import { createContext, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
 import {
   ShortcutScope,
@@ -450,7 +448,6 @@ function EditorKeystrokeOuter({ children }: PropsWithChildren) {
 // Registers useShortcut handlers -- must render as KeystrokeZone's child so these hooks run inside
 // the KeyHubProvider context KeystrokeZone creates for `shortcuts`.
 function EditorShortcuts() {
-  const { splitCursorRef } = useEditorRefs();
   const { zoneRef, setFocusOverride } = useKeystrokeZone();
 
   // AI-translation-in-flight gating -- orthogonal to focus containment, which KeystrokeZone's own
@@ -465,33 +462,7 @@ function EditorShortcuts() {
     });
   };
 
-  const {
-    handleChangeFocusedColumn,
-    handleSetFocusedLineAndColumn,
-    handleSwitchColumn,
-    handleNavigateLine,
-    handleCopySourceToOutput,
-    handleInsertLine,
-    handleSplitLine,
-    handleAdjustStartTime,
-    handleAdjustEndTime,
-    handleAdjustEntryTime,
-    handleMergeLines,
-    handleToggleCompleted,
-    handleRemoveLine,
-    handleUndoRedo,
-    handleAutoMerge,
-    handleCleanup,
-    handleCopyAllSourceToOutput,
-    handleCompleteAllTranslatedLines,
-    handleToggleEditMode,
-    handleShiftAllLines,
-    handlePlayFocusedLine,
-  } = useEditorActions();
-  const { handleAiTranslate, handleAiTranslateBulk, handleAddSelectionToGlossary } =
-    useEditorAIActions();
-
-  // ctrl+2's real target: prefer the already-focused line (with handleChangeFocusedColumn's
+  // ctrl+2's real target: prefer the already-focused line (with editor.focusInput's
   // richer cursor/scroll treatment) and only fall back to the zone's own ref (row 0's output
   // column, seeded by EditorTableLine, or whatever was last focused) when nothing was focused yet.
   // Registered once -- the closure below reads focus state fresh from the store when it actually
@@ -502,18 +473,18 @@ function EditorShortcuts() {
       const focusedColumn = editor.get.focusedColumn();
       if (
         focusedLineIndex !== null &&
-        handleChangeFocusedColumn(focusedLineIndex, focusedColumn ?? 'output')
+        editor.focusInput(focusedLineIndex, focusedColumn ?? 'output')
       )
         return;
       const el = zoneRef.current;
       if (!el) return;
       focusContentEditableToEnd(el);
       el.scrollIntoView({ block: 'nearest' });
-      handleSetFocusedLineAndColumn(0, 'output');
+      editor.setFocusedLineAndColumn(0, 'output');
     };
     setFocusOverride(focusOverride);
     return () => setFocusOverride(undefined);
-  }, [handleChangeFocusedColumn, handleSetFocusedLineAndColumn, zoneRef, setFocusOverride]);
+  }, [zoneRef, setFocusOverride]);
 
   const getKeystrokeLineIndex = () => {
     const focusedLineIndex = editor.get.focusedLineIndex();
@@ -525,90 +496,90 @@ function EditorShortcuts() {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleSplitLine(lineIndex, splitCursorRef.current);
+    void editor.splitLine(lineIndex);
   });
 
   useGuardedKeystroke('copySourceToOutput', () => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
-    handleCopySourceToOutput(lineIndex);
+    void editor.copySourceToOutput(lineIndex);
   });
 
   useGuardedKeystroke('aiTranslation', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleAiTranslate(lineIndex);
+    void ai.translateLine(lineIndex);
   });
 
   useGuardedKeystroke('adjustStartTimeLeft', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleAdjustStartTime(lineIndex, 'earlier');
+    editor.adjustStartTime(lineIndex, 'earlier');
   });
 
   useGuardedKeystroke('adjustStartTimeRight', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleAdjustStartTime(lineIndex, 'later');
+    editor.adjustStartTime(lineIndex, 'later');
   });
 
   useGuardedKeystroke('adjustEndTimeLeft', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleAdjustEndTime(lineIndex, 'earlier');
+    editor.adjustEndTime(lineIndex, 'earlier');
   });
 
   useGuardedKeystroke('adjustEndTimeRight', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleAdjustEndTime(lineIndex, 'later');
+    editor.adjustEndTime(lineIndex, 'later');
   });
 
   useGuardedKeystroke('adjustEntryTimeLeft', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleAdjustEntryTime(lineIndex, 'earlier');
+    editor.adjustEntryTime(lineIndex, 'earlier');
   });
 
   useGuardedKeystroke('adjustEntryTimeRight', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleAdjustEntryTime(lineIndex, 'later');
+    editor.adjustEntryTime(lineIndex, 'later');
   });
 
   useGuardedKeystroke('mergeToTop', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleMergeLines(lineIndex, 'up');
+    void editor.mergeLines(lineIndex, 'up');
   });
 
   useGuardedKeystroke('mergeToBottom', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleMergeLines(lineIndex, 'down');
+    void editor.mergeLines(lineIndex, 'down');
   });
 
   useGuardedKeystroke('toggleComplete', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleToggleCompleted(lineIndex);
+    editor.toggleCompleted(lineIndex);
   });
 
   const handleDeleteLineKeystroke = (event: KeyboardEvent) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
-    handleRemoveLine(lineIndex);
+    void editor.removeLine(lineIndex);
   };
 
   useGuardedKeystroke('deleteLine', handleDeleteLineKeystroke);
@@ -619,95 +590,95 @@ function EditorShortcuts() {
     const focusedColumn = editor.get.focusedColumn();
     if (focusedColumn === 'source') return;
     const target = focusedColumn === 'character' ? 'source' : 'character';
-    handleSwitchColumn(target, lineIndex);
+    editor.switchColumn(target, lineIndex);
   });
 
   useGuardedKeystroke('focusTranslationInput', () => {
     const lineIndex = getKeystrokeLineIndex();
     const focusedColumn = editor.get.focusedColumn();
     const target = focusedColumn === 'source' ? 'character' : 'output';
-    handleSwitchColumn(target, lineIndex);
+    editor.switchColumn(target, lineIndex);
   });
 
   useGuardedKeystroke('moveToPreviousLine', () => {
     const lineIndex = getKeystrokeLineIndex();
-    handleNavigateLine('up', lineIndex);
+    editor.navigateLine('up', lineIndex);
   });
 
   useGuardedKeystroke('moveToNextLine', () => {
     const lineIndex = getKeystrokeLineIndex();
-    handleNavigateLine('down', lineIndex);
+    editor.navigateLine('down', lineIndex);
   });
 
   useGuardedKeystroke('historyBack', () => {
-    handleUndoRedo('backward');
+    editor.undoRedo('backward');
   });
 
   useGuardedKeystroke('historyForward', () => {
-    handleUndoRedo('forward');
+    editor.undoRedo('forward');
   });
 
   useGuardedKeystroke('playbackToggle', () => {
-    handlePlayFocusedLine();
+    editor.playFocusedLine();
   });
 
   useGuardedKeystroke('addToGlossary', (event) => {
     event.preventDefault();
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
-    handleAddSelectionToGlossary(lineIndex);
+    glossaries.addEntryFromLineSelection(lineIndex);
   });
 
   useGuardedKeystroke('insertLineBefore', () => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
-    handleInsertLine(lineIndex, 'before');
+    editor.insertLine(lineIndex, 'before');
   });
 
   useGuardedKeystroke('insertLineAfter', () => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
-    handleInsertLine(lineIndex, 'after');
+    editor.insertLine(lineIndex, 'after');
   });
 
   useGuardedKeystroke('shiftAllLinesEarlier', (event) => {
     event.preventDefault();
-    handleShiftAllLines('earlier');
+    editor.shiftAllLines('earlier');
   });
 
   useGuardedKeystroke('shiftAllLinesLater', (event) => {
     event.preventDefault();
-    handleShiftAllLines('later');
+    editor.shiftAllLines('later');
   });
 
   useGuardedKeystroke('aiTranslationBulk', (event) => {
     event.preventDefault();
-    handleAiTranslateBulk();
+    ai.translateUntranslatedLines();
   });
 
   useGuardedKeystroke('autoMergeLines', (event) => {
     event.preventDefault();
-    void handleAutoMerge();
+    void editor.autoMerge();
   });
 
   useGuardedKeystroke('cleanup', (event) => {
     event.preventDefault();
-    void handleCleanup();
+    void editor.cleanup();
   });
 
   useGuardedKeystroke('copyAllSourceToOutput', (event) => {
     event.preventDefault();
-    void handleCopyAllSourceToOutput();
+    void editor.copyAllSourceToOutput();
   });
 
   useGuardedKeystroke('completeAllTranslatedLines', (event) => {
     event.preventDefault();
-    handleCompleteAllTranslatedLines();
+    editor.completeAllTranslatedLines();
   });
 
   useGuardedKeystroke('toggleEditMode', (event) => {
     event.preventDefault();
-    handleToggleEditMode();
+    editor.toggleEditMode();
   });
 
   return null;

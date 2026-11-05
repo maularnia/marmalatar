@@ -1,6 +1,6 @@
 import { useGlobalKeystrokePause } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { usePopperPortal } from '@providers/PopperPortalProvider';
-import i18n from '@src/i18n';
+import { registerConfirmationBridge } from '@providers/bridges/confirmation';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { appearDownSpring, appearUpSpring } from '@src/toolkit/motion/transitions';
 import Button from '@ui-toolkit/Button/Button';
@@ -18,12 +18,14 @@ import {
   RefObject,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { ConfirmationKeyhubProvider } from './ConfirmationKeyhubProvider';
+import { createConfirmWindow, ERROR_CONFIRM_DESTROYED } from './confirmWindow';
 import {
   TConfirmationHookProps,
   TConfirmationContext,
@@ -231,6 +233,8 @@ export function ConfirmationProvider({ children }: PropsWithChildren) {
     open,
     close,
   });
+  useEffect(() => registerConfirmationBridge(value), [value]);
+
   const rerenderWindows = () => setOpenWindows((prev) => [...prev]);
   return (
     <ConfirmationContext.Provider value={value}>
@@ -256,11 +260,6 @@ export function ConfirmationProvider({ children }: PropsWithChildren) {
     </ConfirmationContext.Provider>
   );
 }
-
-const ERROR_CONFIRM_DESTROYED = i18n.getFixedT(
-  null,
-  'errors'
-)('confirmationProvider.confirmDestroyed');
 
 const DEFAULT_INFO_WINDOW_DELAY = 300;
 const DEFAULT_INFO_WINDOW_MIN_LIFE_TIME = 1000;
@@ -311,80 +310,9 @@ export function useInfoWindow<T extends Record<string, unknown>>(Content: Compon
 
 export const useConfirm: TUseConfirm = (Content, confirmProps) => {
   const confirmationContext = useContext(ConfirmationContext);
-  const currentWindowRef: RefObject<TWindowID | null> = useRef(
-    confirmationContext.registerWindow()
+  // Created once: the context value is stable, and the window registers itself on first use.
+  const [confirmWindow] = useState(() =>
+    createConfirmWindow(() => confirmationContext, Content, confirmProps)
   );
-  return {
-    // Resolves `true` on confirm, `false` on dismiss -- dismissal is an expected, non-error
-    // outcome, so it's never surfaced as a rejection. The promise only ever rejects for genuine
-    // failures (e.g. `ERROR_CONFIRM_DESTROYED`), letting callers propagate those without having to
-    // first sniff the rejection reason to tell a cancel apart from a real error.
-    confirm: (userProps, validate = () => true, overrides) =>
-      new Promise<boolean>((resolve, reject) => {
-        if (!currentWindowRef.current) {
-          reject(ERROR_CONFIRM_DESTROYED);
-          return;
-        }
-        // `animate: false` windows have no exit transition at all (see Confirmation's `.attrs`
-        // gating) -- nothing for AnimatePresence's onExitComplete to ever fire for, so finalize
-        // immediately for those instead of registering a pending callback.
-        const resolvedAnimate = overrides?.animate ?? confirmProps?.animate;
-        let outcome: 'confirm' | 'dismiss' | null = null;
-        const finalize = () => {
-          if (outcome === 'confirm') resolve(true);
-          else if (outcome === 'dismiss') resolve(false);
-        };
-        confirmationContext.open(currentWindowRef.current, {
-          Content: ({ onValidChange }) => (
-            <Content
-              {...userProps}
-              onValidChange={(isValid) => {
-                onValidChange?.(isValid);
-                userProps.onValidChange?.(isValid);
-              }}
-            />
-          ),
-          onConfirm: () => {
-            if (!currentWindowRef.current) {
-              reject(ERROR_CONFIRM_DESTROYED);
-              return;
-            }
-            if (!validate()) return;
-            outcome = 'confirm';
-            confirmationContext.close(
-              currentWindowRef.current,
-              resolvedAnimate === false ? undefined : finalize
-            );
-            if (resolvedAnimate === false) finalize();
-          },
-          onDismiss: () => {
-            if (!currentWindowRef.current) {
-              reject(ERROR_CONFIRM_DESTROYED);
-              return;
-            }
-            outcome = 'dismiss';
-            confirmationContext.close(
-              currentWindowRef.current,
-              resolvedAnimate === false ? undefined : finalize
-            );
-            if (resolvedAnimate === false) finalize();
-          },
-          ...(confirmProps ? confirmProps : {}),
-          ...(overrides ? overrides : {}),
-        });
-      }),
-    close: () => {
-      if (!currentWindowRef.current) {
-        throw new Error(ERROR_CONFIRM_DESTROYED);
-      }
-      confirmationContext.close(currentWindowRef.current);
-    },
-    destroy: () => {
-      if (!currentWindowRef.current) {
-        throw new Error(ERROR_CONFIRM_DESTROYED);
-      }
-      confirmationContext.destroyWindow(currentWindowRef.current);
-      currentWindowRef.current = null;
-    },
-  };
+  return confirmWindow;
 };

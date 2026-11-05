@@ -305,8 +305,8 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   const handleStartNewProject = useCallback(() => {
     if (projects.get.id()) {
       // No confirmation -- the current project is saved to disk first, so this is non-destructive.
-      // Editor refs (line-index-keyed input map, split cursor) are reset by EditorRefsProvider
-      // itself, reacting to the projectId change this dispatch causes.
+      // The editor's split cursor is cleared by projects.startNew; its line inputs clean
+      // themselves as the rows unmount.
       void (async () => {
         await projects.startNew();
         navigate('/intro/import');

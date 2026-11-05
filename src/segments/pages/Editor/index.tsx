@@ -1,9 +1,7 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/store/slices/editor';
-import { projects } from '@src/store/slices/project';
+import { editor } from '@src/services/editor';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
@@ -91,12 +89,11 @@ export default function Editor() {
   const { t } = useTranslation('tooltips');
   const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
   const focusedLineIndex = useAppSelector(editor.selectFocusedLineIndex);
-  const { handleChangeFocusedLine, handleFocusEditor, handleMergeLines } = useEditorActions();
   const { seekToLine, handlePause } = useVideo();
   const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
   const focusedItemIndex = focusedLineIndex ?? -1;
   const { isAltShiftPressed } = useEditorKeystroke();
-  const isEditMode = useAppSelector(projects.selectIsEditMode);
+  const isEditMode = useAppSelector(editor.selectIsEditMode);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -113,9 +110,9 @@ export default function Editor() {
   // This route element remounts fresh every time a project is opened (navigating away from
   // /workspace unmounts it) -- so a mount-only focus here means the editor always grabs focus as
   // soon as a project opens, landing on the first line's first available input via
-  // handleFocusEditor's own fallback (same "steal focus on mount" hook the static pages use, just
+  // editor.focus's own fallback (same "steal focus on mount" hook the static pages use, just
   // given the editor's own richer target instead of a container to search).
-  useAutoFocusFirst(handleFocusEditor);
+  useAutoFocusFirst(editor.focus);
 
   // The focused line must never be thrown out by virtualization -- otherwise scrolling it
   // off-screen (e.g. via ctrl+2/arrow navigation) would unmount it out from under its own focus.
@@ -170,7 +167,7 @@ export default function Editor() {
         isMergeMaster={isFocused && isAltShiftPressed}
         isFrozen={isFrozen}
         onFocus={() => {
-          handleChangeFocusedLine(lineIndex);
+          editor.focusLine(lineIndex);
           seekToLine(lineIndex);
           handlePause();
         }}
@@ -183,8 +180,8 @@ export default function Editor() {
             editor.setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true });
         }}
         onSourceTextChange={(text) => editor.updateSourceText({ lineIndex, text })}
-        onMergeUpClick={() => handleMergeLines(lineIndex, 'up')}
-        onMergeDownClick={() => handleMergeLines(lineIndex, 'down')}
+        onMergeUpClick={() => editor.mergeLines(lineIndex, 'up')}
+        onMergeDownClick={() => editor.mergeLines(lineIndex, 'down')}
       />
     );
 

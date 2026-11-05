@@ -1,6 +1,6 @@
 import { useVideo } from '@providers/VideoProvider';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
 import { TScreenSize } from '@src/theme/types';
 import { useAppSelector } from '@store/hooks';

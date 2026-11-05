@@ -4,7 +4,7 @@ import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from './slices/glossary';
 import { ai } from './slices/ai';
 import { workingFolder } from './slices/workingFolder';
-import { editor } from './slices/editor';
+import { editor } from '@src/services/editor';
 import { TOverlay } from './slices/overlays';
 import { overlays } from './slices/overlays';
 import { projects } from './slices/project';

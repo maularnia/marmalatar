@@ -2,7 +2,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 import type { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit';
 import settingsReducer from './slices/settings';
 import projectReducer from './slices/project';
-import editorReducer from './slices/editor';
+import { editorReducer } from '@src/services/editor';
 import { promptReducer } from '@src/services/prompt';
 import workingFolderReducer from './slices/workingFolder';
 import glossaryReducer from './slices/glossary';

@@ -1,7 +1,6 @@
-import { useEditorRefs } from '@providers/EditorRefsProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
@@ -374,13 +373,12 @@ export default function EditorTableLine({
   panelNode,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
-  const { splitCursorRef, registerLineInputRef } = useEditorRefs();
   const { zoneRef } = useKeystrokeZone();
   const { videoDurationMs } = useVideo();
   const sourceLanguage = useSelector(projects.selectSourceLanguage);
   const targetLanguage = useSelector(projects.selectTargetLanguage);
   const isTranslationBusy = useSelector(ai.selectIsBusy);
-  const isEditMode = useSelector(projects.selectIsEditMode);
+  const isEditMode = useSelector(editor.selectIsEditMode);
   const checkGrammar = useSelector(settings.selectCheckGrammar);
 
   const isNegativeStart = startTime < 0;
@@ -453,24 +451,24 @@ export default function EditorTableLine({
     const preRange = document.createRange();
     preRange.selectNodeContents(input);
     preRange.setEnd(range.startContainer, range.startOffset);
-    splitCursorRef.current = preRange.toString().length;
+    editor.setSplitCursor(preRange.toString().length);
   };
 
   const characterInputRef = useRef<CharacterSelectorHandle>(null);
 
   useEffect(() => {
-    registerLineInputRef(lineIndex, 'source', sourceInputRef.current);
-    registerLineInputRef(lineIndex, 'output', translatedInputRef.current);
-    registerLineInputRef(lineIndex, 'character', characterInputRef.current?.inputRef ?? null);
+    editor.registerLineInput(lineIndex, 'source', sourceInputRef.current);
+    editor.registerLineInput(lineIndex, 'output', translatedInputRef.current);
+    editor.registerLineInput(lineIndex, 'character', characterInputRef.current?.inputRef ?? null);
     // Seeds the editor zone's fallback focus target with line 0's output column -- kept fresh on
     // every (re)mount of that specific row, including a full remount on project switch.
     if (lineIndex === 0) zoneRef.current = translatedInputRef.current;
     return () => {
-      registerLineInputRef(lineIndex, 'source', null);
-      registerLineInputRef(lineIndex, 'output', null);
-      registerLineInputRef(lineIndex, 'character', null);
+      editor.registerLineInput(lineIndex, 'source', null);
+      editor.registerLineInput(lineIndex, 'output', null);
+      editor.registerLineInput(lineIndex, 'character', null);
     };
-  }, [lineIndex, registerLineInputRef, isEditMode, zoneRef]);
+  }, [lineIndex, isEditMode, zoneRef]);
 
   return (
     <Line

@@ -17,7 +17,7 @@ import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import type { AppDispatch } from '@store/root';
 import { glossaries } from '@store/slices/glossary';
 import { workingFolder } from '@store/slices/workingFolder';
-import { editor } from '@store/slices/editor';
+import { editor } from '@src/services/editor';
 
 export type TProjectEntry = TProjectListEntry;
 
@@ -99,7 +99,7 @@ async function deleteProjectOnDisk(projectId: string): Promise<void> {
 // whatever isn't sent.
 function buildProjectEditorStateSaveData(): Omit<TProjectStatePrefs, 'audioTrackId'> {
   return {
-    editorMode: projects.get.editorMode(),
+    editorMode: editor.get.mode(),
     isVideoCollapsed: editor.get.isVideoCollapsed(),
     videoPath: projects.get.videoFilePath(),
   };
@@ -128,7 +128,6 @@ type ProjectState = {
   videoFilePath: string | null;
   sourceLanguage: TLanguage | null;
   targetLanguage: TLanguage | null;
-  editorMode: 'edit' | 'translate';
 };
 
 const initialState: ProjectState = {
@@ -140,7 +139,6 @@ const initialState: ProjectState = {
   videoFilePath: null,
   sourceLanguage: null,
   targetLanguage: null,
-  editorMode: 'translate',
 };
 
 const projectSlice = createSlice({
@@ -178,9 +176,6 @@ const projectSlice = createSlice({
     setProjectTargetLanguage(state, action: PayloadAction<TLanguage | null>) {
       state.targetLanguage = action.payload;
     },
-    setEditorMode(state, action: PayloadAction<'edit' | 'translate'>) {
-      state.editorMode = action.payload;
-    },
     // Closes the open project only -- the list is the tracked folder's, not the open project's, and
     // is deliberately kept
     resetProject(state): ProjectState {
@@ -195,8 +190,6 @@ const projectSlice = createSlice({
     selectVideoFilePath: (state) => state.videoFilePath,
     selectProjectSourceLanguage: (state) => state.sourceLanguage,
     selectProjectTargetLanguage: (state) => state.targetLanguage,
-    selectEditorMode: (state) => state.editorMode,
-    selectIsEditMode: (state) => state.editorMode === 'edit',
     selectIsProjectOpen: (state) => state.projectId !== null,
   },
 });
@@ -214,7 +207,6 @@ const {
   setVideoFilePath,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
-  setEditorMode,
   resetProject,
 } = projectSlice.actions;
 
@@ -227,8 +219,6 @@ const {
   selectVideoFilePath,
   selectProjectSourceLanguage,
   selectProjectTargetLanguage,
-  selectEditorMode,
-  selectIsEditMode,
   selectIsProjectOpen,
 } = projectSlice.selectors;
 
@@ -260,6 +250,7 @@ const createProject =
 
     dispatch(setCurrentProjectFilePath(null));
     editor.resetMemoryState();
+    editor.clearSplitCursor();
     editor.setVideoCollapsed(false);
 
     let emoji: string;
@@ -294,7 +285,7 @@ const createProject =
       editor: editorData,
     });
 
-    dispatch(setEditorMode('translate'));
+    editor.setMode('translate');
     dispatch(setCurrentProjectFilePath(entry.filePath));
 
     try {
@@ -343,6 +334,7 @@ const startNewProject =
       await dispatch(saveProjectToDisk());
     }
     editor.resetMemoryState();
+    editor.clearSplitCursor();
     dispatch(resetProject());
     editor.clearFileData();
   };
@@ -359,6 +351,7 @@ const loadProjectFromDisk =
 
     dispatch(setCurrentProjectFilePath(null));
     editor.resetMemoryState();
+    editor.clearSplitCursor();
 
     applyProjectData(dispatch, data);
 
@@ -368,7 +361,7 @@ const loadProjectFromDisk =
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
     }
-    dispatch(setEditorMode(editorState.editorMode));
+    editor.setMode(editorState.editorMode);
     editor.setVideoCollapsed(editorState.isVideoCollapsed);
     // Restore the video that was attached when the project was last saved/closed.
     dispatch(setVideoFilePath(editorState.videoPath));
@@ -444,7 +437,6 @@ const deleteProject =
 export const projects = api('project', {
   actions: {
     resetProject,
-    setEditorMode,
     setProjectList,
     setProjectSourceLanguage,
     setProjectTargetLanguage,
@@ -463,8 +455,6 @@ export const projects = api('project', {
   },
   selectors: {
     selectCurrentProjectFilePath,
-    selectEditorMode,
-    selectIsEditMode,
     selectIsProjectOpen,
     selectProjectId,
     selectProjectList,

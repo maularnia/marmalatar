@@ -23,9 +23,19 @@ import i18n from '@src/i18n';
 import { promptTemplates } from '@src/services/prompt';
 import { workingFolder } from '@store/slices/workingFolder';
 import { settings } from '@store/slices/settings';
-import { editor } from '@store/slices/editor';
+import { editor } from '@src/services/editor';
 import { glossaries } from '@store/slices/glossary';
 import { projects } from '@store/slices/project';
+import { pushMessage } from '@providers/bridges/messages';
+import {
+  emitAiTranslationJobDoneMessage,
+  emitAiTranslationJobFailedMessage,
+  emitBulkTranslationFailedMessage,
+  emitNoPromptTemplateMessage,
+  emitTranslationCancelledMessage,
+  emitUnableToTranslateLineMessage,
+} from '@src/messages';
+import { confirmTranslationOverride } from '@src/segments/dialogs/translationOverrride/translationOverrideConfirmation';
 
 // Only used within this slice (bulk-translate cancellation), so it lives here rather than in
 // services/ai/clients.ts.
@@ -177,7 +187,7 @@ function requireAiClient() {
 // Shared between single-line and bulk translation -- both require a prompt template the same
 // way, so both must surface the exact same error when one isn't selected. Skipped entirely for
 // clients that don't support context (e.g. DeepL is a dedicated NMT model, not a general LLM, and
-// never needs a system prompt to function) -- matches EditorAIActionsProvider's UI-level
+// never needs a system prompt to function) -- matches translateLine's UI-level
 // isPromptTemplateSelected() check, which reads client?.supportsContext the same way.
 function requirePromptTemplateSelected(): void {
   const client = getWiredAiClient();
@@ -463,6 +473,101 @@ const initializeAiIntegration =
 // ── API ──────────────────────────────────────────────────────────────────────
 
 // Keyed on "translation", so the facade reads ai.startAutomated, ai.selectIsBusy
+// ── Operations ───────────────────────────────────────────────────────────────
+
+// The user-facing translate operations: they check the setup, ask before overwriting, and report
+// through toasts, where the thunks above throw.
+
+const tDialogs = i18n.getFixedT(null, 'dialogs');
+
+function isPromptTemplateSelected(): boolean {
+  const selectedIntegrationId = settings.get.selectedIntegrationId();
+  const client = selectedIntegrationId
+    ? aiClients[selectedIntegrationId as keyof typeof aiClients]
+    : undefined;
+  if (client?.supportsContext && !promptTemplates.get.selectedFileName()) {
+    emitNoPromptTemplateMessage(pushMessage);
+    return false;
+  }
+  return true;
+}
+
+/** Translates one line, asking first when it already has a translation (or when settings say to
+ * always ask). */
+async function translateLine(lineIndex: number): Promise<void> {
+  if (!isPromptTemplateSelected()) return;
+
+  const line = editor.get.lines()[lineIndex];
+  const outputNotEmpty = Boolean(line?.output?.trim());
+  if (outputNotEmpty || settings.get.askBeforeAITranslate()) {
+    let confirmed: boolean;
+    try {
+      confirmed = await confirmTranslationOverride({
+        text: outputNotEmpty
+          ? tDialogs('translationOverride.bodyHasContent')
+          : tDialogs('translationOverride.bodyWillTranslate'),
+      });
+    } catch {
+      emitUnableToTranslateLineMessage(pushMessage);
+      return;
+    }
+    if (!confirmed) {
+      emitTranslationCancelledMessage(pushMessage);
+      return;
+    }
+  }
+
+  try {
+    await ai.startAutomated(lineIndex);
+    emitAiTranslationJobDoneMessage(pushMessage);
+  } catch (err) {
+    emitAiTranslationJobFailedMessage(
+      pushMessage,
+      err instanceof Error
+        ? err.message
+        : 'Unexpected critical error while performing AI translation'
+    );
+  }
+}
+
+/** Translates every line without a translation in one bulk job, writing each chunk's results as
+ * they arrive. */
+function translateUntranslatedLines(): void {
+  if (!settings.get.selectedIntegrationId()) return;
+  if (!isPromptTemplateSelected()) return;
+  const translationLines = editor.get.lines();
+  const autoMarkLinesCompleted = settings.get.autoMarkLinesCompleted();
+  const lines = translationLines.filter((line) => !line.output);
+  if (!lines.length) return;
+  try {
+    ai.startAutomatedBulk({
+      lines,
+      onChunkTranslated: ({ results }) => {
+        results.forEach(({ line, translatedText }) => {
+          const lineIndex = translationLines.indexOf(line);
+          if (lineIndex >= 0) {
+            editor.updateTranslatedText({ lineIndex, text: translatedText });
+            if (autoMarkLinesCompleted)
+              editor.setLineCompleted({
+                lineIndex,
+                completed: Boolean(translatedText),
+                skipHistory: true,
+              });
+          }
+        });
+      },
+      onChunkError: ({ error }) => {
+        emitBulkTranslationFailedMessage(pushMessage, error.message);
+      },
+    });
+  } catch (err) {
+    emitBulkTranslationFailedMessage(
+      pushMessage,
+      err instanceof Error ? err.message : 'How did you get here? [UNREACHABLE 02]'
+    );
+  }
+}
+
 export const ai = api('translation', {
   actions: {
     setContextWindowEstimate,
@@ -486,5 +591,9 @@ export const ai = api('translation', {
     selectIntegrationPingError,
     selectSelectedPromptTemplateData,
     selectTranslationIsBusy,
+  },
+  functions: {
+    translateLine,
+    translateUntranslatedLines,
   },
 });

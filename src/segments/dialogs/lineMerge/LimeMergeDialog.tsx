@@ -1,29 +1,26 @@
 import { TConfirmationWindowProps } from '@src/providers/ConfirmationProvider/types';
-import { editor } from '@src/store/slices/editor';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppSelector } from '@store/hooks';
 import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { DialogBodyStandard, DialogContent, DialogTitle, DialogTitleContent } from '../partials';
 
+type TMergedLine = { lineNo: number; text: string };
+
+// The lines are passed in rather than read from the editor store: the editor service opens this
+// dialog, so importing its facade here would be an import cycle.
 export type LineMergeDialogProps = {
-  mergeMasterLineNo: number;
-  targetLineNo: number;
+  /** In display order (the earlier line first). */
+  lines: [TMergedLine, TMergedLine];
 } & TConfirmationWindowProps;
 
 const LineNumberTag = styled(Tag)`
   vertical-align: middle;
   margin-right: ${CSSVar('size6')};
 `;
-export function LimeMergeDialog({ mergeMasterLineNo, targetLineNo }: LineMergeDialogProps) {
+export function LimeMergeDialog({ lines: [firstLine, secondLine] }: LineMergeDialogProps) {
   const { t } = useTranslation('dialogs');
-  const lines = useAppSelector(editor.selectLines);
-  const masterLine = lines[mergeMasterLineNo - 1];
-  const targetLine = lines[targetLineNo - 1];
-  const firstLine = mergeMasterLineNo < targetLineNo ? masterLine : targetLine;
-  const secondLine = mergeMasterLineNo < targetLineNo ? targetLine : masterLine;
   return (
     <DialogBodyStandard>
       <DialogTitle>
@@ -37,9 +34,9 @@ export function LimeMergeDialog({ mergeMasterLineNo, targetLineNo }: LineMergeDi
             size={TTagSize.SMALL}
             color={ThemeColors.ACCENT1}
           >
-            {firstLine?.line_no}
+            {firstLine.lineNo}
           </LineNumberTag>{' '}
-          {firstLine?.output || firstLine?.input}
+          {firstLine.text}
         </P>
         <P>
           <LineNumberTag
@@ -48,9 +45,9 @@ export function LimeMergeDialog({ mergeMasterLineNo, targetLineNo }: LineMergeDi
             size={TTagSize.SMALL}
             color={ThemeColors.ACCENT1}
           >
-            {secondLine?.line_no}
+            {secondLine.lineNo}
           </LineNumberTag>{' '}
-          {secondLine?.output || secondLine?.input}
+          {secondLine.text}
         </P>
       </DialogContent>
     </DialogBodyStandard>

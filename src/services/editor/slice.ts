@@ -1,4 +1,3 @@
-import { api } from '@store/createApi';
 import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 import { TColor, TColorCustom } from '@src/theme/definitions';
 import { TCharacter, TInputColumn, TSubtitleLine } from '@src/types';
@@ -22,9 +21,12 @@ type EditorSliceState = {
   characterPool: TCharacter[];
   // Lines AI translation skips, by line number
   frozenLineNumbers: number[];
-  // Video UI (persisted)
+  // Device preferences, persisted per project (see persistEditorState.ts)
   isVideoCollapsed: boolean;
+  mode: TEditorMode;
 };
+
+type TEditorMode = 'edit' | 'translate';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -146,6 +148,7 @@ const initialState: EditorSliceState = {
   characterPool: [],
   frozenLineNumbers: [],
   isVideoCollapsed: false,
+  mode: 'translate',
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -266,7 +269,7 @@ const editorSlice = createSlice({
         line.completed = completed;
       }
     },
-    mergeLines(state, action: PayloadAction<{ lineIndex: number; direction: 'up' | 'down' }>) {
+    linesMerged(state, action: PayloadAction<{ lineIndex: number; direction: 'up' | 'down' }>) {
       const { lineIndex, direction } = action.payload;
       const mergeWithPrevious = direction === 'up';
       const partnerIndex = mergeWithPrevious ? lineIndex - 1 : lineIndex + 1;
@@ -313,7 +316,7 @@ const editorSlice = createSlice({
       addToHistory(state);
       state.lines = shiftLines(state.lines, requestedAmount);
     },
-    removeLine(state, action: PayloadAction<number>) {
+    lineRemoved(state, action: PayloadAction<number>) {
       addToHistory(state);
       const newLines = [...state.lines];
       newLines.splice(action.payload, 1);
@@ -344,8 +347,12 @@ const editorSlice = createSlice({
       state.totalLinesToTranslate = initialState.totalLinesToTranslate;
       state.characterPool = initialState.characterPool;
       state.isVideoCollapsed = initialState.isVideoCollapsed;
+      state.mode = initialState.mode;
     },
-    insertLine(state, action: PayloadAction<{ lineIndex: number; position: 'before' | 'after' }>) {
+    lineInserted(
+      state,
+      action: PayloadAction<{ lineIndex: number; position: 'before' | 'after' }>
+    ) {
       const { lineIndex, position } = action.payload;
       const line = state.lines[lineIndex];
       if (!line) return;
@@ -378,7 +385,7 @@ const editorSlice = createSlice({
       state.totalLinesToTranslate = state.lines.length;
       state.renderEpoch += 1;
     },
-    splitLine(
+    lineSplit(
       state,
       action: PayloadAction<{
         lineIndex: number;
@@ -557,7 +564,7 @@ const editorSlice = createSlice({
       state.totalLinesToTranslate = state.lines.length;
       if (countChanged) state.renderEpoch += 1;
     },
-    copyAllSourceToOutput(state, action: PayloadAction<{ overrideExisting: boolean }>) {
+    allSourceCopiedToOutput(state, action: PayloadAction<{ overrideExisting: boolean }>) {
       const { overrideExisting } = action.payload;
       addToHistory(state);
       state.lines.forEach((line) => {
@@ -566,7 +573,7 @@ const editorSlice = createSlice({
         }
       });
     },
-    completeAllTranslatedLines(state) {
+    allTranslatedLinesCompleted(state) {
       addToHistory(state);
       state.lines.forEach((line) => {
         if (line.output?.trim()) line.completed = true;
@@ -578,9 +585,12 @@ const editorSlice = createSlice({
       state.characterPool = action.payload;
     },
 
-    // Video UI (persisted)
+    // Device preferences
     setVideoCollapsed(state, action: PayloadAction<boolean>) {
       state.isVideoCollapsed = action.payload;
+    },
+    setEditorMode(state, action: PayloadAction<TEditorMode>) {
+      state.mode = action.payload;
     },
     // Frozen lines
     setFrozenLineNumbers(state, action: PayloadAction<number[]>) {
@@ -610,11 +620,13 @@ const editorSlice = createSlice({
     selectCharacterPool: (state) => state.characterPool,
     // Video UI
     selectIsVideoCollapsed: (state) => state.isVideoCollapsed,
+    selectEditorMode: (state) => state.mode,
+    selectIsEditMode: (state) => state.mode === 'edit',
     selectFrozenLineNumbers: (state) => state.frozenLineNumbers,
   },
 });
 
-const {
+export const {
   // Editor UI memory
   setActiveLineIndex,
   setFocusedLineIndex,
@@ -630,30 +642,31 @@ const {
   updateTranslatedText,
   updateSourceText,
   setLineCompleted,
-  mergeLines,
-  insertLine,
-  splitLine,
+  linesMerged,
+  lineInserted,
+  lineSplit,
   shiftAllLinesEarlier,
   shiftAllLinesLater,
-  removeLine,
+  lineRemoved,
   setTotalLinesToTranslate,
   clearFileData,
   updateLineTiming,
   autoMergeAdjacentLines,
   cleanupLines,
-  copyAllSourceToOutput,
-  completeAllTranslatedLines,
+  allSourceCopiedToOutput,
+  allTranslatedLinesCompleted,
   // Character pool
   setCharacterPool,
-  // Video UI
+  // Device preferences
   setVideoCollapsed,
+  setEditorMode,
   // Frozen lines
   setFrozenLineNumbers,
   addFrozenLine,
   removeFrozenLine,
 } = editorSlice.actions;
 
-const {
+export const {
   selectActiveLineIndex,
   selectFocusedLineIndex,
   selectFocusedColumn,
@@ -664,58 +677,9 @@ const {
   selectCanRedo,
   selectCharacterPool,
   selectIsVideoCollapsed,
+  selectEditorMode,
+  selectIsEditMode,
   selectFrozenLineNumbers,
 } = editorSlice.selectors;
 
 export default editorSlice.reducer;
-
-// ── API ──────────────────────────────────────────────────────────────────────
-
-export const editor = api('editor', {
-  actions: {
-    addFrozenLine,
-    removeFrozenLine,
-    setFrozenLineNumbers,
-    addTranslatedLine,
-    autoMergeAdjacentLines,
-    cleanupLines,
-    clearFileData,
-    completeAllTranslatedLines,
-    copyAllSourceToOutput,
-    incrementRenderEpoch,
-    insertLine,
-    mergeLines,
-    removeLine,
-    resetEditorMemoryState,
-    restoreHistory,
-    setActiveLineIndex,
-    setCharacterPool,
-    setFocusedColumn,
-    setFocusedLineIndex,
-    setLineCompleted,
-    setLines,
-    setTextSelection,
-    setTotalLinesToTranslate,
-    setVideoCollapsed,
-    shiftAllLinesEarlier,
-    shiftAllLinesLater,
-    splitLine,
-    updateLineTiming,
-    updateSourceText,
-    updateTranslatedText,
-    updateTranslationCharacter,
-  },
-  selectors: {
-    selectFrozenLineNumbers,
-    selectActiveLineIndex,
-    selectCanRedo,
-    selectCanUndo,
-    selectCharacterPool,
-    selectFocusedColumn,
-    selectFocusedLineIndex,
-    selectIsVideoCollapsed,
-    selectLines,
-    selectRenderEpoch,
-    selectTextSelection,
-  },
-});

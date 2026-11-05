@@ -45,10 +45,7 @@ export type TConfirmationWindowProps = {
   onValidChange?: (isValid: boolean) => void;
 };
 
-export type TUseConfirm = <T extends TConfirmationWindowProps>(
-  Content: ComponentType<T>,
-  props?: TConfirmationHookProps
-) => {
+export type TConfirmWindow<T extends TConfirmationWindowProps> = {
   /** Resolves `true` if confirmed, `false` if dismissed. Only rejects for genuine failures. */
   confirm: (
     props: T,
@@ -58,3 +55,8 @@ export type TUseConfirm = <T extends TConfirmationWindowProps>(
   close: () => void;
   destroy: () => void;
 };
+
+export type TUseConfirm = <T extends TConfirmationWindowProps>(
+  Content: ComponentType<T>,
+  props?: TConfirmationHookProps
+) => TConfirmWindow<T>;

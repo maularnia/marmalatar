@@ -1,4 +1,3 @@
-import { EditorStateProvider } from '@providers/EditorStateProvider';
 import { TShade } from '@src/theme/definitions';
 import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
@@ -51,17 +50,15 @@ const RootContent = styled.div`
 export default function GeneralLayout() {
   const { dynamic, setCompact } = useMenuState();
   return (
-    <EditorStateProvider>
-      <Root className={classNames({ dynamic })}>
-        <RootMenu onMouseEnter={() => setCompact(false)} onMouseLeave={() => setCompact(true)}>
-          <MainMenu />
-        </RootMenu>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.VERTICAL} />
-        <RootContent>
-          <Outlet />
-          <Overlays />
-        </RootContent>
-      </Root>
-    </EditorStateProvider>
+    <Root className={classNames({ dynamic })}>
+      <RootMenu onMouseEnter={() => setCompact(false)} onMouseLeave={() => setCompact(true)}>
+        <MainMenu />
+      </RootMenu>
+      <Hr variant={THrVariant.DIMMED} orientation={THrOrient.VERTICAL} />
+      <RootContent>
+        <Outlet />
+        <Overlays />
+      </RootContent>
+    </Root>
   );
 }

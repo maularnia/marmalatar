@@ -3,7 +3,7 @@ import { useVideoSelectDialog } from '@src/segments/dialogs/videoSelect/useVideo
 import { emitVideoUpdatedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
 import { useCallback, useRef } from 'react';
 

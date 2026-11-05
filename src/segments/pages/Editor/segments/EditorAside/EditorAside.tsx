@@ -1,6 +1,6 @@
 import { useVideo } from '@providers/VideoProvider';
 import GeneralSettings from '@src/partials/Settings';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
@@ -57,7 +57,7 @@ const AsideVideoWrapper = styled.div``;
 
 export default function EditorAside() {
   const { t } = useTranslation(['editorAside', 'app']);
-  const isEditMode = useAppSelector(projects.selectIsEditMode);
+  const isEditMode = useAppSelector(editor.selectIsEditMode);
   const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
     (state) => ({
       translationLines: editor.selectLines(state),

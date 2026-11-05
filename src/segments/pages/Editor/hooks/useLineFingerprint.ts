@@ -1,8 +1,7 @@
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { useVideo } from '@providers/VideoProvider';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/store/slices/editor';
-import { projects } from '@src/store/slices/project';
+import { editor } from '@src/services/editor';
 import { TSubtitleLine } from '@src/types';
 import { useAppSelector } from '@store/hooks';
 import { ai } from '@store/slices/ai';
@@ -72,7 +71,7 @@ export function useLineFingerprint() {
       characterOptions: editor.selectCharacterPool(state),
       focusedLineIndex: editor.selectFocusedLineIndex(state),
       activeLineIndex: editor.selectActiveLineIndex(state),
-      editorMode: projects.selectEditorMode(state),
+      editorMode: editor.selectMode(state),
     }),
     shallowEqual
   );

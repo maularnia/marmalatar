@@ -49,8 +49,8 @@ export type TCharacter = {
   color: TColor;
 };
 
-// An editor line's input column. Here rather than in EditorRefsProvider, which reads the project
-// slice, so the editor slice can use it without importing a provider.
+// An editor line's input column. Here rather than in the editor service, so UI types and dialogs can
+// use it without importing the service.
 export type TInputColumn = 'source' | 'output' | 'character';
 
 export type TSubtitleLine = {

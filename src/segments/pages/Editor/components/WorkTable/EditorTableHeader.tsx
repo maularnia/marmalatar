@@ -1,3 +1,4 @@
+import { editor } from '@src/services/editor';
 import Select from '@ui-toolkit/Select/Select';
 import { useAppSelector } from '@src/store/hooks';
 import { projects } from '@src/store/slices/project';
@@ -43,7 +44,7 @@ export const EditorTableHeader = () => {
   const languageOptions = useLanguageOptions();
   const sourceLanguage = useAppSelector(projects.selectSourceLanguage);
   const targetLanguage = useAppSelector(projects.selectTargetLanguage);
-  const isEditMode = useAppSelector(projects.selectIsEditMode);
+  const isEditMode = useAppSelector(editor.selectIsEditMode);
   return (
     <Row>
       <Cell>

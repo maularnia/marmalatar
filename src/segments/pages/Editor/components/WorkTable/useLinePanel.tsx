@@ -1,13 +1,11 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { useAppSelector } from '@store/hooks';
 import { cloneElement, type ReactElement, type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { shallowEqual } from 'react-redux';
 import { EditorTableLinePanel } from './WorkTableLine/EditorTableLinePanel';
 
 export function useLinePanel() {
-  const { handleRemoveLine, handleToggleCompleted } = useEditorActions();
   const { translationLines, autoMarkLinesCompleted, focusedLineIndex } = useAppSelector(
     (state) => ({
       translationLines: editor.selectLines(state),
@@ -35,17 +33,11 @@ export function useLinePanel() {
       <EditorTableLinePanel
         isCompleted={Boolean(focusedLine.completed)}
         isCompletedToggleHidden={autoMarkLinesCompleted}
-        onRemove={() => handleRemoveLine(focusedLineIndex)}
-        onToggleCompleted={() => handleToggleCompleted(focusedLineIndex)}
+        onRemove={() => editor.removeLine(focusedLineIndex)}
+        onToggleCompleted={() => editor.toggleCompleted(focusedLineIndex)}
       />
     );
-  }, [
-    focusedLineIndex,
-    focusedLine,
-    autoMarkLinesCompleted,
-    handleRemoveLine,
-    handleToggleCompleted,
-  ]);
+  }, [focusedLineIndex, focusedLine, autoMarkLinesCompleted]);
 
   const injectPanel = (baseNode: ReactElement): ReactElement => {
     if (

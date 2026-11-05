@@ -1,7 +1,7 @@
 import { useVideo } from '@providers/VideoProvider';
 import { useSelectAudioTrackDialog } from '@src/segments/dialogs/selectAudioTrack/useSelectAudioTrackDialog';
 import { settings } from '@src/store/slices/settings';
-import { editor } from '@src/store/slices/editor';
+import { editor } from '@src/services/editor';
 import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
