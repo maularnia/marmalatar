@@ -24,7 +24,6 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { MainMenuListItem } from './MainMenuListItem';
-import { useMenuState } from '../../providers/MenuStateProvider';
 
 const Section = styled.div`
   display: flex;
@@ -68,6 +67,8 @@ export default function FileList() {
     integrationIsConfigured,
     isCreatingPromptTemplate,
     isCreatingGlossary,
+    compact,
+    dynamic,
   ] = useAppSelectors(
     workingFolder.selectFolder,
     projects.selectList,
@@ -80,10 +81,11 @@ export default function FileList() {
     ai.selectIsBusy,
     settings.selectIntegrationIsConfigured,
     menu.selectIsCreatingPromptTemplate,
-    menu.selectIsCreatingGlossary
+    menu.selectIsCreatingGlossary,
+    menu.selectIsCompact,
+    menu.selectIsDynamic
   );
   const listIsDisabled = workingFolderIsBusy || translationIsBusy;
-  const { compact, dynamic } = useMenuState();
 
   const setCreateProjectRef = useCallback(
     (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROJECT_KEY, el),

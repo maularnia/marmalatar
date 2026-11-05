@@ -7,9 +7,7 @@ import {
 } from 'react-keyhub';
 import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { menu } from '@src/services/menu';
-import { useAppSelectors } from '@store/hooks';
-import { useMenuState } from '@providers/MenuStateProvider';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { PropsWithChildren } from 'react';
 
 const myShortcuts = {
   previousMenuItem: {
@@ -101,20 +99,6 @@ export function MenuKeystrokeProvider({ children }: PropsWithChildren) {
 // mouseleave. Lives here (outside KeystrokeZone's own KeyHubProvider subtree) since it doesn't
 // need shortcut context, unlike <MenuShortcuts/> below.
 function MenuKeystrokeBody({ children }: PropsWithChildren) {
-  const [renamingKey, isCreatingPromptTemplate, isCreatingGlossary] = useAppSelectors(
-    menu.selectRenamingKey,
-    menu.selectIsCreatingPromptTemplate,
-    menu.selectIsCreatingGlossary
-  );
-  const { setStaleOpen } = useMenuState();
-
-  const [isFocusWithin, setIsFocusWithin] = useState(false);
-  const staleOpen =
-    isFocusWithin || renamingKey != null || isCreatingPromptTemplate || isCreatingGlossary;
-  useEffect(() => {
-    setStaleOpen(staleOpen);
-  }, [staleOpen, setStaleOpen]);
-
   return (
     <KeystrokeZone
       shortcuts={myShortcuts}
@@ -127,7 +111,7 @@ function MenuKeystrokeBody({ children }: PropsWithChildren) {
         ignoreInputFields: false,
         ignoreModifierOnlyEvents: true,
       }}
-      onFocusWithinChange={setIsFocusWithin}
+      onFocusWithinChange={menu.setFocusWithin}
       hint={{ corner: 'bottom-left' }}
     >
       <MenuShortcuts />

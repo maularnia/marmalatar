@@ -1,3 +1,4 @@
+import { useAppSelectors } from '@store/hooks';
 import { MenuKeystrokeProvider } from '@providers/MenuKeystrokeProvider';
 import { TShade } from '@src/theme/definitions';
 import { menuExpandDelay, menuHoverExpand, menuWidthDuration } from '@src/toolkit/motion/menu';
@@ -7,7 +8,7 @@ import classNames from 'classnames';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useMenuState } from '../../providers/MenuStateProvider';
+import { menu } from '@src/services/menu';
 import FileList from './FileList';
 import MenuLogo from './MenuLogo';
 
@@ -89,7 +90,7 @@ const Content = styled.div`
   overflow: hidden;
 `;
 export default function MainMenu() {
-  const { dynamic, compact } = useMenuState();
+  const [dynamic, compact] = useAppSelectors(menu.selectIsDynamic, menu.selectIsCompact);
 
   // Root's own width switches instantly (no transition) -- only Backdrop animates. Expanding waits
   // out the same delay Backdrop's "in" variant does (see MENU_EXPAND_DELAY_MS); collapsing is

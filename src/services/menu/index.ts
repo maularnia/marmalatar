@@ -19,6 +19,10 @@ import {
   stopRenaming,
 } from './actions';
 import {
+  selectIsMenuCompact,
+  selectIsMenuDynamic,
+  setMenuFocusWithin,
+  setMenuPointerOutside,
   selectIsCreatingGlossary,
   selectIsCreatingPromptTemplate,
   selectMenuRenamingKey,
@@ -43,10 +47,14 @@ export const menu = api('menu', {
   actions: {
     setIsCreatingGlossary,
     setIsCreatingPromptTemplate,
+    setMenuFocusWithin,
+    setMenuPointerOutside,
   },
   selectors: {
     selectIsCreatingGlossary,
     selectIsCreatingPromptTemplate,
+    selectIsMenuCompact,
+    selectIsMenuDynamic,
     selectMenuRenamingKey,
   },
   functions: {

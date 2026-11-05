@@ -5,7 +5,8 @@ import styled from 'styled-components';
 import { Outlet } from 'react-router-dom';
 import MainMenu from '../segments/menu';
 import Overlays from '../segments/overlays/Overlays';
-import { useMenuState } from '../providers/MenuStateProvider';
+import { menu } from '@src/services/menu';
+import { useAppSelector } from '@store/hooks';
 import classNames from 'classnames';
 
 const Root = styled.div`
@@ -48,10 +49,13 @@ const RootContent = styled.div`
 `;
 
 export default function GeneralLayout() {
-  const { dynamic, setCompact } = useMenuState();
+  const dynamic = useAppSelector(menu.selectIsDynamic);
   return (
     <Root className={classNames({ dynamic })}>
-      <RootMenu onMouseEnter={() => setCompact(false)} onMouseLeave={() => setCompact(true)}>
+      <RootMenu
+        onMouseEnter={() => menu.setPointerOutside(false)}
+        onMouseLeave={() => menu.setPointerOutside(true)}
+      >
         <MainMenu />
       </RootMenu>
       <Hr variant={THrVariant.DIMMED} orientation={THrOrient.VERTICAL} />

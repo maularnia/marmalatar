@@ -14,7 +14,6 @@ import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import './assets/index.css';
 import './assets/variables.css';
-import { MenuStateProvider } from './providers/MenuStateProvider';
 import { MessageHelmetProvider } from './providers/MessageHelmetProvider';
 
 // Resolve persisted settings before mounting
@@ -28,15 +27,13 @@ void app.hydrate().then(() => {
             <MessageHelmetProvider>
               <LocaleProvider>
                 <ThemeProvider>
-                  <MenuStateProvider>
-                    <PopperPortalProvider>
-                      <GlobalKeystrokeDispatcher>
-                        <ConfirmationProvider>
-                          <App />
-                        </ConfirmationProvider>
-                      </GlobalKeystrokeDispatcher>
-                    </PopperPortalProvider>
-                  </MenuStateProvider>
+                  <PopperPortalProvider>
+                    <GlobalKeystrokeDispatcher>
+                      <ConfirmationProvider>
+                        <App />
+                      </ConfirmationProvider>
+                    </GlobalKeystrokeDispatcher>
+                  </PopperPortalProvider>
                 </ThemeProvider>
               </LocaleProvider>
             </MessageHelmetProvider>

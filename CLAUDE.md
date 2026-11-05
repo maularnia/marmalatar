@@ -93,7 +93,7 @@ Bridges (`src/providers/bridges`) hand provider APIs to code outside React, the 
 
 Mount points:
 
-- App-wide, in this order (`src/main.tsx`): `MessageHelmetProvider` > `LocaleProvider` > `ThemeProvider` > `MenuStateProvider` > `PopperPortalProvider` > `GlobalKeystrokeDispatcher` > `ConfirmationProvider`. The order matters: each one may use the ones above it.
+- App-wide, in this order (`src/main.tsx`): `MessageHelmetProvider` > `LocaleProvider` > `ThemeProvider` > `PopperPortalProvider` > `GlobalKeystrokeDispatcher` > `ConfirmationProvider`. The order matters: each one may use the ones above it.
 - Editor: `EditorKeystrokeProvider` in `src/layout/EditorLayout.tsx`
 - Menu: `MenuKeystrokeProvider` in `src/segments/menu/index.tsx`
 - Glossary: `GlossaryKeystrokeProvider` in `src/segments/overlays/Glossary/Glossary.tsx`
@@ -113,8 +113,7 @@ Glossary:
 - `GlossaryKeystrokeProvider` - glossary shortcuts, calling `glossaries.*`
 
 Menu:
-- `MenuStateProvider` - sidebar compact/expanded state
-- No Refs/Actions providers: everything menu is the `menu` service in `src/services/menu` -- the renaming key and "creating" flags in its slice; the item elements in a module-level registry (`menu.registerItem`); combined keyboard navigation across all menu items, rename, and open, create and delete for projects, prompt templates and glossaries in its actions
+- No Refs/Actions/State providers: everything menu is the `menu` service in `src/services/menu` -- the renaming key, "creating" flags and the sidebar's collapse state (`menu.selectIsCompact`, `selectIsDynamic`; held open while the pointer is over it, an item has focus or a rename/create is in progress) in its slice; the item elements in a module-level registry (`menu.registerItem`); combined keyboard navigation across all menu items, rename, and open, create and delete for projects, prompt templates and glossaries in its actions
 - `MenuKeystrokeProvider` - menu shortcuts calling `menu.*`, keeps the sidebar expanded while focus is inside it or a rename/create is in progress
 
 Media:

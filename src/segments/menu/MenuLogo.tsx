@@ -3,7 +3,7 @@ import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/Keystroke
 import { overlays } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
@@ -13,7 +13,6 @@ import classNames from 'classnames';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useMenuState } from '../../providers/MenuStateProvider';
 import ThemeSelector from './ThemeSelector';
 
 const PanelSwitch = styled.div`
@@ -45,8 +44,11 @@ const Root = styled.div`
 `;
 export default function MenuLogo() {
   const { t } = useTranslation('menu');
-  const { dynamic, compact } = useMenuState();
-  const overlay = useAppSelector(overlays.selectCurrent);
+  const [overlay, dynamic, compact] = useAppSelectors(
+    overlays.selectCurrent,
+    menu.selectIsDynamic,
+    menu.selectIsCompact
+  );
   const { zoneRef } = useKeystrokeZone();
   const setSettingsRef = useCallback(
     (el: HTMLDivElement | null) => {
