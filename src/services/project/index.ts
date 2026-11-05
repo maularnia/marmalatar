@@ -1,3 +1,4 @@
+import { folder } from '@src/services/folder';
 import { Service } from '@src/services/Service';
 import {
   buildProjectEditorStateSaveData,
@@ -102,6 +103,7 @@ import {
 // is its only entry point and builds both facades: `projects` and `editor`.
 
 export { default as projectReducer } from './slice';
+export { projectAutosaveMiddleware } from './autosave';
 export type { TProjectEntry } from './slice';
 
 export const projects = new Service('project', {
@@ -136,6 +138,9 @@ export const projects = new Service('project', {
     writeProjectEditorState,
   },
 });
+
+// The folder can't import this service, so it hands every listing over through its scan event
+folder.onScanComplete(() => refreshProjects());
 
 // The editor service: the open project's lines with their undo history, focus and navigation, line
 // edits, timing, bulk operations, the edit/translate mode, and the rendered line inputs. This file

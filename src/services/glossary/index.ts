@@ -1,3 +1,4 @@
+import { folder } from '@src/services/folder';
 import { Service } from '@src/services/Service';
 import {
   addGlossaryEntry,
@@ -82,3 +83,6 @@ export const glossaries = new Service('glossary', {
     updateGlossaryLanguages,
   },
 });
+
+// The folder can't import this service, so it hands every listing over through its scan event
+folder.onScanComplete(() => refreshGlossaries());

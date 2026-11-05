@@ -19,7 +19,7 @@ import { PROJECT_EXTENSION, toProjectFileName } from '../../../bridge/fileNames'
 import { readJsonFile } from '../../utils/readJsonFile';
 import { runWithFallback } from '../../utils/runWithFallback';
 import { normalizeEntries } from '../scanner/normalizeEntries';
-import type { TScanEntry } from '../scanner/scanFolder';
+import type { TScanEntry } from '../../../bridge/definitions/scan';
 import { ScannerService, scanLegacyTrackedFolder } from '../scanner/ScannerService';
 import { listAudioTracks } from '../media/metadata';
 import { readLegacyEntries } from '../service/readLegacyEntries';

@@ -1,6 +1,7 @@
 import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TLanguage } from '@src/types';
+import { folder } from '@src/services/folder';
 
 export type TProjectEntry = TProjectListEntry;
 
@@ -62,6 +63,16 @@ const projectSlice = createSlice({
     resetProject(state): ProjectState {
       return { ...initialState, projects: state.projects };
     },
+  },
+  extraReducers(builder) {
+    // Another folder: the open project belonged to the old one. The list is refreshed by the scan.
+    builder.addCase(
+      folder.pathChanged,
+      (state): ProjectState => ({
+        ...initialState,
+        projects: state.projects,
+      })
+    );
   },
   selectors: {
     selectProjectList: (state) => state.projects,

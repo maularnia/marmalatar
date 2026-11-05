@@ -1,23 +1,8 @@
 import { createHash } from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import type { TScanEntry, TScanResult } from '../../../bridge/definitions/scan';
 import { runWithFallback } from '../../utils/runWithFallback';
-
-export type TScanEntry = {
-  fileName: string;
-  filePath: string;
-  // With the dot, as path.extname gives it: '.mrml'
-  extension: string;
-  // Changes when the file is renamed, moved or saved, so services re-read only those files
-  fileHash: string;
-};
-
-export type TScanResult = {
-  // Changes when any file is added, removed or changed, so services can skip a whole rescan
-  hash: string;
-  // Sorted by fileName
-  files: TScanEntry[];
-};
 
 function sha1(text: string): string {
   return createHash('sha1').update(text).digest('hex');

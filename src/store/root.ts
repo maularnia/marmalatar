@@ -1,5 +1,4 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import type { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit';
 import { settingsReducer } from '@src/services/settings';
 import { projectReducer } from '@src/services/project';
 import { editorReducer } from '@src/services/project';
@@ -23,4 +22,3 @@ export const rootReducer = combineReducers({
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
-export type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction>;

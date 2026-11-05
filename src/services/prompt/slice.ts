@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { TPromptTemplateListEntry } from '@bridge/definitions/promptTemplateEntry';
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
+import { folder } from '@src/services/folder';
 
 export type TPromptTemplateEntry = TPromptTemplateListEntry;
 
@@ -56,6 +57,13 @@ const promptSlice = createSlice({
         isSelected: boolean;
       }>
     ) {},
+  },
+  extraReducers(builder) {
+    // Another folder: the open and the selected template were the old folder's files
+    builder.addCase(folder.pathChanged, (state) => {
+      clearEditor(state);
+      state.selectedPromptTemplateFileName = null;
+    });
   },
   selectors: {
     selectPromptTemplateItems: (state) => state.promptTemplateItems,

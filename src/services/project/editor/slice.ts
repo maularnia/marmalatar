@@ -3,6 +3,7 @@ import { TColor, TColorCustom } from '@src/theme/definitions';
 import { TCharacter, TInputColumn, TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { cleanupEntries, TEntryCleanupOptions } from '@utils/data/entryCleanup';
+import { folder } from '@src/services/folder';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,7 +21,7 @@ type EditorSliceState = {
   characterPool: TCharacter[];
   // Lines AI translation skips, by line number
   frozenLineNumbers: number[];
-  // Device preferences, persisted per project (see persistEditorState.ts)
+  // Device preferences, persisted per project (see project/autosave.ts)
   isVideoCollapsed: boolean;
   mode: TEditorMode;
 };
@@ -598,6 +599,16 @@ const editorSlice = createSlice({
     removeFrozenLine(state, action: PayloadAction<number>) {
       state.frozenLineNumbers = state.frozenLineNumbers.filter((no) => no !== action.payload);
     },
+  },
+  extraReducers(builder) {
+    // Another folder: the open project is closed, so its focus, selection and frozen lines go
+    builder.addCase(folder.pathChanged, (state) => {
+      state.focusedLineIndex = initialState.focusedLineIndex;
+      state.focusedColumn = initialState.focusedColumn;
+      state.renderEpoch += 1;
+      state.textSelection = initialState.textSelection;
+      state.frozenLineNumbers = [];
+    });
   },
   selectors: {
     // Editor UI memory

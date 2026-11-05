@@ -1,4 +1,4 @@
-import type { TScanEntry, TScanResult } from './scanFolder';
+import type { TScanEntry, TScanResult } from '../../../bridge/definitions/scan';
 
 type TFileEntry = { readonly fileHash: string };
 

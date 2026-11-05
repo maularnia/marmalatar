@@ -4,6 +4,7 @@ import { TThemeSelection } from '@src/types';
 import type { PersistedAppSettings } from '@utils/appSettingsFile';
 import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
 import type { TUiLocale } from '@src/i18n/locales';
+import { folder } from '@src/services/folder';
 import {
   AI_INTEGRATION_ENABLED_DEFAULT,
   ASK_BEFORE_AI_TRANSLATE_DEFAULT,
@@ -126,6 +127,13 @@ const settingsSlice = createSlice({
     hydrateSettings(state, action: PayloadAction<PersistedAppSettings>) {
       Object.assign(state, action.payload);
     },
+  },
+  extraReducers(builder) {
+    // Another folder: every overlay closes
+    builder.addCase(folder.pathChanged, (state) => {
+      state.isSettingsOpen = false;
+      state.isExportOpen = false;
+    });
   },
   selectors: {
     selectResolvedThemeName: (state) => state.resolvedThemeName,

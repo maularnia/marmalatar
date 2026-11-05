@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { type AIGlossaryFileDataType, type TGlossaryEntry } from '@src/utils/data/schemas';
+import { folder } from '@src/services/folder';
 
 // Everything about glossaries in one place: the tracked folder's glossary files, the glossary open
 // in the editor overlay (its pairs, which pair input has focus), and the glossaries the translation
@@ -73,6 +74,14 @@ const glossarySlice = createSlice({
     setResolvedGlossaryEntries(state, action: PayloadAction<[string, string][]>) {
       state.resolvedGlossaryEntries = action.payload;
     },
+  },
+  extraReducers(builder) {
+    // Another folder: the open and the selected glossaries were the old folder's files
+    builder.addCase(folder.pathChanged, (state) => {
+      clearEditor(state);
+      state.selectedGlossaryFileNames = [];
+      state.resolvedGlossaryEntries = [];
+    });
   },
   selectors: {
     selectGlossaryItems: (state) => state.glossaryItems,

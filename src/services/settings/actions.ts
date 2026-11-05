@@ -4,8 +4,8 @@ import { Service } from '@src/services/Service';
 import { parseAppSettings } from '@utils/appSettingsFile';
 import { hydrateSettings } from './slice';
 
-// The settings service's operations. Saving is the persistProjectState middleware's job: it writes
-// the settings whenever they change.
+// The settings service's operations. Saving is the job of the middleware in persist.ts: it
+// writes the settings whenever they change.
 
 // Reads the persisted settings into the store. The UI language is switched here, before the first
 // render, so it doesn't flash the default; LocaleProvider keeps it in step afterwards. Settings

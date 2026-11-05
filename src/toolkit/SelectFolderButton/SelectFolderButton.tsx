@@ -1,5 +1,5 @@
 import { CSSVar } from '@src/theme/utils';
-import { app } from '@store/thunks';
+import { folder } from '@src/services/folder';
 import Button from '@ui-toolkit/Button/Button';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ export default function SelectFolderButton() {
   const navigate = useNavigate();
 
   const handleSelectFolder = async () => {
-    const didPickFolder = await app.pickFolder();
+    const didPickFolder = await folder.pick();
     if (didPickFolder) navigate('/');
   };
 

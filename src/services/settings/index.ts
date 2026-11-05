@@ -49,6 +49,7 @@ import {
 // the slice lives in slice.ts, the operations in actions.ts.
 
 export { default as settingsReducer } from './slice';
+export { settingsPersistMiddleware } from './persist';
 
 export const settings = new Service('settings', {
   actions: {

@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { folder } from '@src/services/folder';
 
 // The open project's video: which file, its duration, thumbnail and waveform, and the line playing
 // at the current position. The position itself isn't here: it changes many times a second during
 // playback, so it's a module variable in actions.ts, read on demand (media.getCurrentTimeMs()).
 type MediaState = {
-  // Persisted per project, with the other device preferences (see persistEditorState.ts)
+  // Persisted per project, with the other device preferences (see project/autosave.ts)
   videoFilePath: string | null;
   videoDurationMs: number | null;
   thumbnail: string | null;
@@ -51,6 +52,10 @@ const mediaSlice = createSlice({
     clearVideo(): MediaState {
       return initialState;
     },
+  },
+  extraReducers(builder) {
+    // Another folder: the open project, and so its video, is closed
+    builder.addCase(folder.pathChanged, (): MediaState => initialState);
   },
   selectors: {
     selectVideoFilePath: (state) => state.videoFilePath,

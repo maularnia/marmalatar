@@ -1,3 +1,4 @@
+import { folder } from '@src/services/folder';
 import { Service } from '@src/services/Service';
 import {
   createPromptTemplate,
@@ -56,3 +57,6 @@ export const promptTemplates = new Service('promptTemplate', {
     writePromptTemplateBody,
   },
 });
+
+// The folder can't import this service, so it hands every listing over through its scan event
+folder.onScanComplete(() => refreshPromptTemplates());

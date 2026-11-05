@@ -1,15 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { Service } from '@src/services/Service';
 import { rootReducer } from './root';
-import { persistProjectStateMiddleware } from './persistProjectState';
-import { persistEditorStateMiddleware } from './persistEditorState';
+import { projectAutosaveMiddleware } from '@src/services/project';
+import { settingsPersistMiddleware } from '@src/services/settings';
 
 export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(
-      persistProjectStateMiddleware.middleware,
-      persistEditorStateMiddleware.middleware
+      projectAutosaveMiddleware.middleware,
+      settingsPersistMiddleware.middleware
     ),
 });
 

@@ -4,7 +4,8 @@ import path from 'path';
 import { runWithFallback } from '../../utils/runWithFallback';
 import { Service } from '../service/Service';
 import type { TVersioning } from '../service/storeVersioning';
-import { EMPTY_SCAN, scanFolder, type TScanResult } from './scanFolder';
+import type { TScanResult } from '../../../bridge/definitions/scan';
+import { EMPTY_SCAN, scanFolder } from './scanFolder';
 
 type TScannerData = {
   trackedFolder: string;
@@ -51,8 +52,13 @@ export class ScannerService extends Service<TScannerData> {
       });
       return canceled ? null : filePaths[0];
     }),
-    // Rescan on request: picks up files changed outside the app
-    this.handle('drop-cache', () => this.dropCache()),
+    // The listing, cached or freshly scanned -- what the renderer loads at startup
+    this.handle('get-scan', () => this.scan()),
+    // Rescan on request: picks up files changed outside the app, and returns the new listing
+    this.handle('rescan', () => {
+      this.dropCache();
+      return this.scan();
+    }),
     // Video files live wherever the user picked them from, not inside the tracked folder -- this
     // handler is intentionally not resolved against the tracked folder, used only to check whether a
     // previously-saved video path is still on disk.
