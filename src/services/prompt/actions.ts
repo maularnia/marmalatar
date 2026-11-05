@@ -15,7 +15,9 @@ import {
   setCurrentPromptTemplate,
   setPromptTemplateData,
   setPromptTemplateItems,
+  selectPromptTemplateData,
   setSelectedPromptTemplateFileName,
+  templateSaved,
   type TPromptTemplateEntry,
 } from './slice';
 
@@ -171,6 +173,18 @@ export async function createPromptTemplate(title: string): Promise<void> {
   if (!fileName) throw new Error(t('promptTemplate.alreadyExists', { title: trimmed }));
   await refreshPromptTemplates();
   await openPromptTemplateEditor(fileName);
+}
+
+/** Writes the open template's body, refreshes the list, and announces it (`templateSaved`), so the
+ * ai service can take the new text if it's the template the translation uses. */
+export async function savePromptTemplate(): Promise<void> {
+  const fileName = Service.select(selectCurrentPromptTemplate);
+  const data = Service.select(selectPromptTemplateData);
+  if (!fileName || !data || !folder.get.path()) return;
+  await writePromptTemplateBody(fileName, data);
+  await refreshPromptTemplates();
+  const isSelected = Service.select(selectSelectedPromptTemplateFileName) === fileName;
+  Service.dispatch(templateSaved({ fileName, data, isSelected }));
 }
 
 export async function openPromptTemplateEditor(filename: string): Promise<void> {

@@ -45,6 +45,17 @@ const promptSlice = createSlice({
     setSelectedPromptTemplateFileName(state, action: PayloadAction<string | null>) {
       state.selectedPromptTemplateFileName = action.payload;
     },
+    // A template's body was written to its file. Changes nothing here: it's for services that keep
+    // a copy of a template to react to (the ai service, for the one the translation uses), since
+    // this service can't import them.
+    templateSaved(
+      _state,
+      _action: PayloadAction<{
+        fileName: string;
+        data: PromptTemplateFileDataType;
+        isSelected: boolean;
+      }>
+    ) {},
   },
   selectors: {
     selectPromptTemplateItems: (state) => state.promptTemplateItems,
@@ -61,6 +72,7 @@ export const {
   setPromptTemplateData,
   closePromptTemplateEditor,
   setSelectedPromptTemplateFileName,
+  templateSaved,
 } = promptSlice.actions;
 
 export const {

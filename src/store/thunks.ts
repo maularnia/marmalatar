@@ -8,24 +8,8 @@ import { editor } from '@src/services/project';
 import { projects } from '@src/services/project';
 import { settings } from '@src/services/settings';
 
-// Thunks that span slices which import each other, so they can't live in either slice file
+// Operations that span services which import each other, so they can't live in any one of them
 // without an import cycle.
-
-// ── AI Prompt Template ──────────────────────────────────────────────────────
-
-// Lives here because it refreshes the translation's selected template (the ai slice), and the
-// ai slice imports the prompt slice
-const savePromptTemplate = () => async (): Promise<void> => {
-  const currentPromptTemplate = promptTemplates.get.current();
-  const promptTemplateData = promptTemplates.get.data();
-  const folderPath = folder.get.path();
-  if (!currentPromptTemplate || !folderPath || !promptTemplateData) return;
-  await promptTemplates.writeBody(currentPromptTemplate, promptTemplateData);
-  await promptTemplates.refresh();
-  if (promptTemplates.get.selectedFileName() === currentPromptTemplate) {
-    void ai.refreshSelectedPromptTemplateData();
-  }
-};
 
 // ── Folder ──────────────────────────────────────────────────────────────────
 
@@ -74,7 +58,7 @@ const pickFolder =
       }
 
       // Whichever editors are open are saved; all overlays close below
-      if (promptTemplates.get.current()) await dispatch(savePromptTemplate());
+      if (promptTemplates.get.current()) await promptTemplates.save();
       if (glossaries.get.current()) await glossaries.save();
 
       await folder.setTracked(selected);
@@ -117,7 +101,6 @@ const hydrateApp =
 export const app = new Service('app', {
   thunks: {
     hydrateApp,
-    savePromptTemplate,
     pickFolder,
     scanFolder,
   },

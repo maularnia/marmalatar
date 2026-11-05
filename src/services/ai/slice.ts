@@ -66,6 +66,14 @@ const aiSlice = createSlice({
     },
   },
   extraReducers(builder) {
+    // The template the translation uses was edited and saved: take the saved text, which is what
+    // the file now holds, so there's nothing to read back
+    builder.addCase(promptTemplates.templateSaved, (state, action) => {
+      if (!action.payload.isSelected) return;
+      state.selectedPromptTemplateData = action.payload.data;
+      state.contextWindowEstimateStatus = 'idle';
+      state.contextWindowEstimate = null;
+    });
     builder.addMatcher(
       isAnyOf(folder.pathChanged, promptTemplates.setSelectedFileName),
       (state) => {

@@ -135,11 +135,10 @@ export async function initializeAiIntegration(integrationId?: string): Promise<v
 
 // ── Prompt template ──────────────────────────────────────────────────────────
 
-// Reloads the actively-selected prompt template's cached content from disk -- used both when the
-// selection itself changes (below) and when the active template is edited and saved elsewhere
-// (see thunks.ts's savePromptTemplate), so it deliberately owns no isBusy side effects of its own;
-// callers that need a loading indicator (like applySelectedPromptTemplateFileName) wrap it.
-export async function refreshSelectedPromptTemplateData(): Promise<void> {
+// Reloads the selected prompt template's content from disk when the selection changes. A saved
+// edit of the selected template comes in through the prompt service's templateSaved event instead
+// (see slice.ts). Owns no isBusy side effects: applySelectedPromptTemplateFileName wraps it.
+async function fetchSelectedPromptTemplateData(): Promise<void> {
   const folderPath = folder.get.path();
   const fileName = promptTemplates.get.selectedFileName();
   if (!folderPath || !fileName) {
@@ -156,7 +155,7 @@ export async function refreshSelectedPromptTemplateData(): Promise<void> {
 export async function applySelectedPromptTemplateFileName(fileName: string | null): Promise<void> {
   Service.dispatch(setTranslationIsBusy(true));
   promptTemplates.setSelectedFileName(fileName);
-  await refreshSelectedPromptTemplateData();
+  await fetchSelectedPromptTemplateData();
   Service.dispatch(setTranslationIsBusy(false));
 }
 

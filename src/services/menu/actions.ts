@@ -9,7 +9,6 @@ import { Service } from '@src/services/Service';
 import { glossaries } from '@src/services/glossary';
 import { settings } from '@src/services/settings';
 import { folder } from '@src/services/folder';
-import { app } from '@store/thunks';
 import {
   menuRenamingStopped,
   selectIsCreatingGlossary,
@@ -207,11 +206,9 @@ async function saveOpenEditors(): Promise<void> {
   if (currentPromptTemplate) {
     const title =
       promptTemplates.get.items().find((c) => c.fileName === currentPromptTemplate)?.title ?? '...';
-    await load(
-      { messages: [t('promptTemplate.savingLabel', { title })] },
-      app.savePromptTemplate() as Promise<unknown>,
-      { minLifeTime: 0 }
-    );
+    await load({ messages: [t('promptTemplate.savingLabel', { title })] }, promptTemplates.save(), {
+      minLifeTime: 0,
+    });
   }
   if (currentGlossary) {
     const title =

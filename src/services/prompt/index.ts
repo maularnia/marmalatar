@@ -6,6 +6,7 @@ import {
   readPromptTemplateFile,
   refreshPromptTemplates,
   renamePromptTemplate,
+  savePromptTemplate,
   updatePromptTemplateEmoji,
   writePromptTemplateBody,
 } from './actions';
@@ -19,6 +20,7 @@ import {
   setPromptTemplateData,
   setPromptTemplateItems,
   setSelectedPromptTemplateFileName,
+  templateSaved,
 } from './slice';
 
 // The prompt service: the tracked folder's prompt template files, the template open in the editor
@@ -33,6 +35,7 @@ export const promptTemplates = new Service('promptTemplate', {
     setPromptTemplateData,
     setPromptTemplateItems,
     setSelectedPromptTemplateFileName,
+    templateSaved,
   },
   selectors: {
     selectCurrentPromptTemplate,
@@ -48,6 +51,7 @@ export const promptTemplates = new Service('promptTemplate', {
     readPromptTemplateFile,
     refreshPromptTemplates,
     renamePromptTemplate,
+    savePromptTemplate,
     updatePromptTemplateEmoji,
     writePromptTemplateBody,
   },
