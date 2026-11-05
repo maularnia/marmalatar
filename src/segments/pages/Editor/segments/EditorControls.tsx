@@ -4,7 +4,7 @@ import { editor } from '@src/services/project';
 import { glossaries } from '@store/slices/glossary';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { overlays } from '@store/slices/overlays';
 import { ai } from '@src/services/ai';
 import Button from '@ui-toolkit/Button/Button';
@@ -15,7 +15,6 @@ import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@u
 import { type CSSProperties, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
 import { useVideoFileSwap } from '../components/VideoPlayer/useVideoFileSwap';
 
@@ -74,27 +73,39 @@ const PanelButton: typeof Button = (props) => {
 
 export function EditorControls() {
   const { t } = useTranslation('tooltips');
-  const { integrationIsConfigured, focusedLineIndex, textSelection } = useAppSelector(
-    (state) => ({
-      integrationIsConfigured: settings.selectIntegrationIsConfigured(state),
-      focusedLineIndex: editor.selectFocusedLineIndex(state),
-      textSelection: editor.selectTextSelection(state),
-    }),
-    shallowEqual
+  const [integrationIsConfigured, focusedLineIndex, textSelection] = useAppSelectors(
+    settings.selectIntegrationIsConfigured,
+    editor.selectFocusedLineIndex,
+    editor.selectTextSelection
   );
-  const currentBulkJob = useAppSelector(ai.selectCurrentBulkJob);
-  const isBusy = useAppSelector(ai.selectIsBusy);
-  const allLines = useAppSelector(editor.selectLines);
-  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
-  const isEditMode = useAppSelector(editor.selectIsEditMode);
+  const [
+    currentBulkJob,
+    isBusy,
+    allLines,
+    isSmallScreen,
+    isEditMode,
+    timeAdjustmentStep,
+    canUndo,
+    canRedo,
+    videoDurationMs,
+    videoPath,
+    focusedColumn,
+  ] = useAppSelectors(
+    ai.selectCurrentBulkJob,
+    ai.selectIsBusy,
+    editor.selectLines,
+    settings.selectIsSmallScreen,
+    editor.selectIsEditMode,
+    settings.selectTimeAdjustmentStep,
+    editor.selectCanUndo,
+    editor.selectCanRedo,
+    media.selectVideoDurationMs,
+    media.selectVideoFilePath,
+    editor.selectFocusedColumn
+  );
   const isAiAvailable = integrationIsConfigured && !isBusy && !isEditMode;
   const isAutoMergeAvailable = !currentBulkJob && !isBusy;
   const isExportAvailable = !currentBulkJob && !isBusy;
-  const timeAdjustmentStep = useAppSelector(settings.selectTimeAdjustmentStep);
-  const canUndo = useAppSelector(editor.selectCanUndo);
-  const canRedo = useAppSelector(editor.selectCanRedo);
-  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
-  const videoPath = useAppSelector(media.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   const earliestStartTime = allLines.length
     ? Math.min(...allLines.map((line) => line.start_time))
@@ -103,7 +114,6 @@ export function EditorControls() {
   const canShiftEarlier = allLines.length > 0 && earliestStartTime > 0;
   const canShiftLater =
     allLines.length > 0 && (videoDurationMs == null || latestEndTime < videoDurationMs);
-  const focusedColumn = useAppSelector(editor.selectFocusedColumn);
 
   const aiSectionRef = useRef<HTMLDivElement>(null);
   const [showAiOptions, setShowAiOptions] = useState(false);

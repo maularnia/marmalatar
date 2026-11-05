@@ -1,4 +1,4 @@
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
 import { projects } from '@src/services/project';
 import i18n from '@src/i18n';
@@ -59,9 +59,11 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
     [tSettings]
   );
   const linesPerRequestOptions = useMemo(() => getLinesPerRequestOptions(tSettings), [tSettings]);
-  const connected = useAppSelector(ai.selectIntegrationConnected);
-  const pingError = useAppSelector(ai.selectIntegrationPingError);
-  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
+  const [connected, pingError, targetLanguage] = useAppSelectors(
+    ai.selectIntegrationConnected,
+    ai.selectIntegrationPingError,
+    projects.selectTargetLanguage
+  );
   const languageLabels = useLanguageLabels();
   // Both glossary and formality support are DeepL properties of the target language only (not
   // the source/target pair as a whole) -- only check targetLanguage.

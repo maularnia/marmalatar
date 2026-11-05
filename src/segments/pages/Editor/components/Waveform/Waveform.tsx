@@ -5,7 +5,7 @@ import { CSSVar } from '@src/theme/utils';
 import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { clamp } from '@src/utils/numbers';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { settings } from '@store/slices/settings';
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -114,8 +114,7 @@ export default function Waveform({
   onLineTimingChange,
 }: WaveformProps) {
   const { t } = useTranslation('tooltips');
-  const size = useAppSelector(settings.selectScreenSize);
-  const theme = useAppSelector(settings.selectCurrentThemeData);
+  const [size, theme] = useAppSelectors(settings.selectScreenSize, settings.selectCurrentThemeData);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const waveformViewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);

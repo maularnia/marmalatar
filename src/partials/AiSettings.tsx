@@ -5,7 +5,7 @@ import { settings } from '@src/store/slices/settings';
 import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import Toggle from '@src/toolkit/Toggle';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
 import {
   FormSectionEntry,
@@ -23,11 +23,12 @@ import AiUserInputSection from './PromptSetup';
 
 export default function AiSettings() {
   const { t } = useTranslation('settings');
-  const isBusy = useAppSelector(ai.selectIsBusy);
-
-  const selectedIntegrationId = useAppSelector(settings.selectSelectedIntegrationId);
-  const aiTranslationEnabled = useAppSelector(settings.selectAIintegrationEnabled);
-  const isProjectOpen = useAppSelector(projects.selectIsOpen);
+  const [isBusy, selectedIntegrationId, aiTranslationEnabled, isProjectOpen] = useAppSelectors(
+    ai.selectIsBusy,
+    settings.selectSelectedIntegrationId,
+    settings.selectAIintegrationEnabled,
+    projects.selectIsOpen
+  );
 
   const activeId = selectedIntegrationId ?? DEFAULT_AI_CLIENT_ID;
   const activeClient = (aiClients as Record<string, AiClient>)[activeId];

@@ -1,6 +1,6 @@
 import { editor } from '@src/services/project';
 import Select from '@ui-toolkit/Select/Select';
-import { useAppSelector } from '@src/store/hooks';
+import { useAppSelectors } from '@src/store/hooks';
 import { projects } from '@src/services/project';
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
@@ -42,9 +42,11 @@ const Cell = styled.div`
 export const EditorTableHeader = () => {
   const { t } = useTranslation('editor');
   const languageOptions = useLanguageOptions();
-  const sourceLanguage = useAppSelector(projects.selectSourceLanguage);
-  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
-  const isEditMode = useAppSelector(editor.selectIsEditMode);
+  const [sourceLanguage, targetLanguage, isEditMode] = useAppSelectors(
+    projects.selectSourceLanguage,
+    projects.selectTargetLanguage,
+    editor.selectIsEditMode
+  );
   return (
     <Row>
       <Cell>

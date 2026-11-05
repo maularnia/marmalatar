@@ -3,10 +3,9 @@ import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/project';
 import { TSubtitleLine } from '@src/types';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
 import { useMemo } from 'react';
-import { shallowEqual } from 'react-redux';
 
 type LineRenderKeyProps = {
   lineNo: number;
@@ -49,11 +48,9 @@ function buildCacheKey(props: LineRenderKeyProps): string {
 }
 
 export function useLineFingerprint() {
-  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
-
   const { isCtrlPressed, isAltPressed, isCtrlAltPressed, isAltShiftPressed } = useEditorKeystroke();
 
-  const {
+  const [
     translationLines,
     frozenLineNumbers,
     integrationIsConfigured,
@@ -62,18 +59,17 @@ export function useLineFingerprint() {
     focusedLineIndex,
     activeLineIndex,
     editorMode,
-  } = useAppSelector(
-    (state) => ({
-      translationLines: editor.selectLines(state),
-      frozenLineNumbers: editor.selectFrozenLineNumbers(state),
-      integrationIsConfigured: settings.selectIntegrationIsConfigured(state),
-      translationIsBusy: ai.selectIsBusy(state),
-      characterOptions: editor.selectCharacterPool(state),
-      focusedLineIndex: editor.selectFocusedLineIndex(state),
-      activeLineIndex: media.selectActiveLineIndex(state),
-      editorMode: editor.selectMode(state),
-    }),
-    shallowEqual
+    videoDurationMs,
+  ] = useAppSelectors(
+    editor.selectLines,
+    editor.selectFrozenLineNumbers,
+    settings.selectIntegrationIsConfigured,
+    ai.selectIsBusy,
+    editor.selectCharacterPool,
+    editor.selectFocusedLineIndex,
+    media.selectActiveLineIndex,
+    editor.selectMode,
+    media.selectVideoDurationMs
   );
 
   const characterOptionsHash = useMemo(

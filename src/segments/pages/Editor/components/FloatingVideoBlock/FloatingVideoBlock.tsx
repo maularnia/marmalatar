@@ -2,7 +2,7 @@ import { media } from '@src/services/media';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { RefObject, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
@@ -41,14 +41,25 @@ export default function FloatingVideoBlock({
   virtualizedListRef,
   focusedItemIndex,
 }: FloatingVideoBlockProps) {
-  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
-  const videoFilePath = useAppSelector(media.selectVideoFilePath);
-  const activeLineIndex = useAppSelector(media.selectActiveLineIndex);
-  const translationLines = useAppSelector(editor.selectLines);
-  const screenSize = useAppSelector(settings.selectScreenSize);
-  const isVideoCollapsed = useAppSelector(editor.selectIsVideoCollapsed);
-  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
-  const waveformPeaks = useAppSelector(media.selectWaveformPeaks);
+  const [
+    isSmallScreen,
+    videoFilePath,
+    activeLineIndex,
+    translationLines,
+    screenSize,
+    isVideoCollapsed,
+    videoDurationMs,
+    waveformPeaks,
+  ] = useAppSelectors(
+    settings.selectIsSmallScreen,
+    media.selectVideoFilePath,
+    media.selectActiveLineIndex,
+    editor.selectLines,
+    settings.selectScreenSize,
+    editor.selectIsVideoCollapsed,
+    media.selectVideoDurationMs,
+    media.selectWaveformPeaks
+  );
   const isLargeScreen = screenSize !== TScreenSize.SMALL;
 
   const videoContainerRef = useRef<HTMLDivElement | null>(null);

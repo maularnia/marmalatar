@@ -1,18 +1,14 @@
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/project';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { cloneElement, type ReactElement, type ReactNode, useEffect, useMemo, useRef } from 'react';
-import { shallowEqual } from 'react-redux';
 import { EditorTableLinePanel } from './WorkTableLine/EditorTableLinePanel';
 
 export function useLinePanel() {
-  const { translationLines, autoMarkLinesCompleted, focusedLineIndex } = useAppSelector(
-    (state) => ({
-      translationLines: editor.selectLines(state),
-      autoMarkLinesCompleted: settings.selectAutoMarkLinesCompleted(state),
-      focusedLineIndex: editor.selectFocusedLineIndex(state),
-    }),
-    shallowEqual
+  const [translationLines, autoMarkLinesCompleted, focusedLineIndex] = useAppSelectors(
+    editor.selectLines,
+    settings.selectAutoMarkLinesCompleted,
+    editor.selectFocusedLineIndex
   );
 
   const focusedClonedNodeRef = useRef<{

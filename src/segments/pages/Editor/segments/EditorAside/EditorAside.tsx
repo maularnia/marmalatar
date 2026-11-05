@@ -2,7 +2,7 @@ import { media } from '@src/services/media';
 import GeneralSettings from '@src/partials/Settings';
 import { editor } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import {
   FormRoot,
@@ -16,7 +16,6 @@ import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import P, { TPVariant } from '@ui-toolkit/P';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
 import { useVideoFileSwap } from '../../components/VideoPlayer/useVideoFileSwap';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
@@ -56,18 +55,23 @@ const AsideVideoWrapper = styled.div``;
 
 export default function EditorAside() {
   const { t } = useTranslation(['editorAside', 'app']);
-  const isEditMode = useAppSelector(editor.selectIsEditMode);
-  const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
-    (state) => ({
-      translationLines: editor.selectLines(state),
-      activeLineIndex: media.selectActiveLineIndex(state),
-      focusedLineIndex: editor.selectFocusedLineIndex(state),
-    }),
-    shallowEqual
+  const [
+    isEditMode,
+    videoDurationMs,
+    waveformPeaks,
+    videoFilePath,
+    translationLines,
+    activeLineIndex,
+    focusedLineIndex,
+  ] = useAppSelectors(
+    editor.selectIsEditMode,
+    media.selectVideoDurationMs,
+    media.selectWaveformPeaks,
+    media.selectVideoFilePath,
+    editor.selectLines,
+    media.selectActiveLineIndex,
+    editor.selectFocusedLineIndex
   );
-  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
-  const waveformPeaks = useAppSelector(media.selectWaveformPeaks);
-  const videoFilePath = useAppSelector(media.selectVideoFilePath);
   const { swapVideo } = useVideoFileSwap();
   return (
     <Aside tabIndex={1}>

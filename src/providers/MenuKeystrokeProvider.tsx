@@ -7,7 +7,7 @@ import {
 } from 'react-keyhub';
 import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { menu } from '@src/services/menu';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { useMenuState } from '@providers/MenuStateProvider';
 import { PropsWithChildren, useEffect, useState } from 'react';
 
@@ -101,9 +101,11 @@ export function MenuKeystrokeProvider({ children }: PropsWithChildren) {
 // mouseleave. Lives here (outside KeystrokeZone's own KeyHubProvider subtree) since it doesn't
 // need shortcut context, unlike <MenuShortcuts/> below.
 function MenuKeystrokeBody({ children }: PropsWithChildren) {
-  const renamingKey = useAppSelector(menu.selectRenamingKey);
-  const isCreatingPromptTemplate = useAppSelector(menu.selectIsCreatingPromptTemplate);
-  const isCreatingGlossary = useAppSelector(menu.selectIsCreatingGlossary);
+  const [renamingKey, isCreatingPromptTemplate, isCreatingGlossary] = useAppSelectors(
+    menu.selectRenamingKey,
+    menu.selectIsCreatingPromptTemplate,
+    menu.selectIsCreatingGlossary
+  );
   const { setStaleOpen } = useMenuState();
 
   const [isFocusWithin, setIsFocusWithin] = useState(false);

@@ -1,6 +1,6 @@
 import '@src/assets/fonts.css';
 import { PropsWithChildren, useEffect, useRef } from 'react';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { LARGE_SCREEN_THRESHOLD, MEDUIM_SCREEN_THRESHOLD } from '@src/consts';
 import { TThemeSelection } from '@src/types';
 import { settings } from '@store/slices/settings';
@@ -18,8 +18,10 @@ const getCurrentMatcher = (): [MediaQueryList, TScreenSize] => {
 };
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const selection = useAppSelector(settings.selectThemeSelection);
-  const resolvedThemeName = useAppSelector(settings.selectResolvedThemeName);
+  const [selection, resolvedThemeName] = useAppSelectors(
+    settings.selectThemeSelection,
+    settings.selectResolvedThemeName
+  );
   const matcher = useRef<MediaQueryList>(null);
   useEffect(() => {
     const onMatchChage = () => {

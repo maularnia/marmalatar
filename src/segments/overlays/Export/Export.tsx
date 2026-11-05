@@ -6,7 +6,7 @@ import { overlays } from '@src/store/slices/overlays';
 import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import { LANGUAGE_LABELS, TCharacter } from '@src/types';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import Toggle from '@ui-toolkit/Toggle';
 import {
   FormRoot,
@@ -36,10 +36,12 @@ interface CharacterOption extends TOptionSelect {
 
 export default function Export() {
   const { t } = useTranslation('export');
-  const translationLines = useAppSelector(editor.selectLines);
-  const characterPool = useAppSelector(editor.selectCharacterPool);
-  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
-  const isEditMode = useAppSelector(editor.selectIsEditMode);
+  const [translationLines, characterPool, targetLanguage, isEditMode] = useAppSelectors(
+    editor.selectLines,
+    editor.selectCharacterPool,
+    projects.selectTargetLanguage,
+    editor.selectIsEditMode
+  );
 
   const formatOptions = Object.values(ExportFormats).map((format) => ({
     value: format,

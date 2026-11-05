@@ -9,11 +9,10 @@ import { TTagSize } from '@src/toolkit/Tag';
 import { TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import classNames from 'classnames';
 import { CSSProperties, type ReactElement, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
 import FloatingVideoBlock from './components/FloatingVideoBlock/FloatingVideoBlock';
 import VirtualizedList, {
@@ -87,24 +86,29 @@ const overscrollAmount = 300;
 const estimatedRowHeight = 100;
 export default function Editor() {
   const { t } = useTranslation('tooltips');
-  const activeLineIndex = useAppSelector(media.selectActiveLineIndex);
-  const focusedLineIndex = useAppSelector(editor.selectFocusedLineIndex);
-  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
+  const [
+    activeLineIndex,
+    focusedLineIndex,
+    isSmallScreen,
+    isEditMode,
+    renderEpoch,
+    translationLines,
+    frozenLineNumbers,
+    characterOptions,
+  ] = useAppSelectors(
+    media.selectActiveLineIndex,
+    editor.selectFocusedLineIndex,
+    settings.selectIsSmallScreen,
+    editor.selectIsEditMode,
+    editor.selectRenderEpoch,
+    editor.selectLines,
+    editor.selectFrozenLineNumbers,
+    editor.selectCharacterPool
+  );
   const focusedItemIndex = focusedLineIndex ?? -1;
   const { isAltShiftPressed } = useEditorKeystroke();
-  const isEditMode = useAppSelector(editor.selectIsEditMode);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const { translationLines, frozenLineNumbers, characterOptions } = useAppSelector(
-    (state) => ({
-      translationLines: editor.selectLines(state),
-      frozenLineNumbers: editor.selectFrozenLineNumbers(state),
-      characterOptions: editor.selectCharacterPool(state),
-    }),
-    shallowEqual
-  );
-  const renderEpoch = useAppSelector(editor.selectRenderEpoch);
 
   // This route element remounts fresh every time a project is opened (navigating away from
   // /workspace unmounts it) -- so a mount-only focus here means the editor always grabs focus as

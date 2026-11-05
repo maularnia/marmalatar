@@ -7,7 +7,7 @@ import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { TCharacter } from '@src/types';
 import { msToHunanTime } from '@src/utils/time';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -142,14 +142,17 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     projects.close();
     navigate('/');
   }, [navigate]);
-  const lines = useAppSelector(editor.selectLines);
-  const activeLineIndex = useAppSelector(media.selectActiveLineIndex);
-  const videoFilePath = useAppSelector(media.selectVideoFilePath);
+  const [lines, activeLineIndex, videoFilePath, characterPool, isSmallScreen, isVideoCollapsed] =
+    useAppSelectors(
+      editor.selectLines,
+      media.selectActiveLineIndex,
+      media.selectVideoFilePath,
+      editor.selectCharacterPool,
+      settings.selectIsSmallScreen,
+      editor.selectIsVideoCollapsed
+    );
   const { swapVideo } = useVideoFileSwap();
   const { selectAudioTrack } = useSelectAudioTrackDialog();
-  const characterPool = useAppSelector(editor.selectCharacterPool);
-  const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
-  const isVideoCollapsed = useAppSelector(editor.selectIsVideoCollapsed);
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;

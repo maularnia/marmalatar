@@ -1,5 +1,5 @@
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { promptTemplates } from '@src/services/prompt';
 import { overlays } from '@store/slices/overlays';
 import { app } from '@store/thunks';
@@ -26,8 +26,10 @@ const emptyFormData: PromptTemplateFileDataType = {
 
 export default function PromptOverlay() {
   const { t } = useTranslation(['prompt', 'messages']);
-  const currentPromptTemplate = useAppSelector(promptTemplates.selectCurrent);
-  const promptTemplateData = useAppSelector(promptTemplates.selectData);
+  const [currentPromptTemplate, promptTemplateData] = useAppSelectors(
+    promptTemplates.selectCurrent,
+    promptTemplates.selectData
+  );
   const { load } = useLoader();
 
   const formData = promptTemplateData ?? emptyFormData;

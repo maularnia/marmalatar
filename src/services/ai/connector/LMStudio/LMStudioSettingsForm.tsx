@@ -1,4 +1,4 @@
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
@@ -57,8 +57,10 @@ const RECONNECT_DEBOUNCE_MS = 500;
 export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClientSettingsFormProps) {
   const { t: tSettings } = useTranslation('settings');
   const linesPerRequestOptions = useMemo(() => getLinesPerRequestOptions(tSettings), [tSettings]);
-  const connected = useAppSelector(ai.selectIntegrationConnected);
-  const pingError = useAppSelector(ai.selectIntegrationPingError);
+  const [connected, pingError] = useAppSelectors(
+    ai.selectIntegrationConnected,
+    ai.selectIntegrationPingError
+  );
   const {
     register,
     control,

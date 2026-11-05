@@ -4,7 +4,7 @@ import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { glossaries } from '@store/slices/glossary';
 import { overlays } from '@store/slices/overlays';
 import Button from '@ui-toolkit/Button/Button';
@@ -39,8 +39,10 @@ const emptyFormData: AIGlossaryFileDataType = {
 export default function GlossaryOverlay() {
   const { t } = useTranslation(['glossary', 'tooltips', 'messages']);
   const languageOptions = useLanguageOptions();
-  const currentGlossary = useAppSelector(glossaries.selectCurrent);
-  const glossaryData = useAppSelector(glossaries.selectData);
+  const [currentGlossary, glossaryData] = useAppSelectors(
+    glossaries.selectCurrent,
+    glossaries.selectData
+  );
   const { load } = useLoader();
   const { confirmAndDeletePair } = useDeleteGlossaryEntryConfirmation();
 

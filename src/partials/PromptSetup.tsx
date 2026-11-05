@@ -5,7 +5,7 @@ import { projects } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { glossaries } from '@store/slices/glossary';
 import { ai } from '@src/services/ai';
 import {
@@ -21,29 +21,42 @@ import Select from '@ui-toolkit/Select/Select';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 
 const ESTIMATE_DEBOUNCE_MS = 500;
 
 export default function PromptSetupRow() {
   const { t } = useTranslation('settings');
-  const promptTemplateItems = useAppSelector(promptTemplates.selectItems);
-  const glossaryItems = useAppSelector(glossaries.selectItems);
-  const isBusy = useAppSelector(ai.selectIsBusy);
-  const sourceLanguage = useAppSelector(projects.selectSourceLanguage);
-  const targetLanguage = useAppSelector(projects.selectTargetLanguage);
-  const selectedPromptTemplateFileName = useAppSelector(promptTemplates.selectSelectedFileName);
-  const selectedGlossaryFileNames = useAppSelector(
-    glossaries.selectSelectedFileNames,
-    shallowEqual
+  const [
+    promptTemplateItems,
+    glossaryItems,
+    isBusy,
+    sourceLanguage,
+    targetLanguage,
+    selectedPromptTemplateFileName,
+    resolvedGlossaryEntries,
+    selectedIntegrationId,
+    aiTranslationEnabled,
+    connected,
+    pingError,
+    estimation,
+    estimationStatus,
+    selectedGlossaryFileNames,
+  ] = useAppSelectors(
+    promptTemplates.selectItems,
+    glossaries.selectItems,
+    ai.selectIsBusy,
+    projects.selectSourceLanguage,
+    projects.selectTargetLanguage,
+    promptTemplates.selectSelectedFileName,
+    glossaries.selectResolvedEntries,
+    settings.selectSelectedIntegrationId,
+    settings.selectAIintegrationEnabled,
+    ai.selectIntegrationConnected,
+    ai.selectIntegrationPingError,
+    ai.selectContextWindowEstimate,
+    ai.selectContextWindowEstimateStatus,
+    glossaries.selectSelectedFileNames
   );
-  const resolvedGlossaryEntries = useAppSelector(glossaries.selectResolvedEntries);
-  const selectedIntegrationId = useAppSelector(settings.selectSelectedIntegrationId);
-  const aiTranslationEnabled = useAppSelector(settings.selectAIintegrationEnabled);
-  const connected = useAppSelector(ai.selectIntegrationConnected);
-  const pingError = useAppSelector(ai.selectIntegrationPingError);
-  const estimation = useAppSelector(ai.selectContextWindowEstimate);
-  const estimationStatus = useAppSelector(ai.selectContextWindowEstimateStatus);
 
   const activeClient = selectedIntegrationId
     ? (aiClients as Record<string, AiClient>)[selectedIntegrationId]

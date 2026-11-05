@@ -9,7 +9,7 @@ import i18n from '@src/i18n';
 import { settings } from '@src/store/slices/settings';
 import { projects } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from '@store/slices/glossary';
 import { ai } from '@src/services/ai';
@@ -55,21 +55,35 @@ const t = i18n.getFixedT(null, 'errors');
 
 export default function FileList() {
   const { t: tMenu } = useTranslation('menu');
-  const folder = useAppSelector(workingFolder.selectFolder);
-  const projectList = useAppSelector(projects.selectList);
-  const promptTemplateItems = useAppSelector(promptTemplates.selectItems);
-  const glossaryItems = useAppSelector(glossaries.selectItems);
-  const workingFolderIsBusy = useAppSelector(workingFolder.selectIsBusy);
-  const translationIsBusy = useAppSelector(ai.selectIsBusy);
+  const [
+    folder,
+    projectList,
+    currentProjectId,
+    promptTemplateItems,
+    currentPromptTemplate,
+    glossaryItems,
+    currentGlossary,
+    workingFolderIsBusy,
+    translationIsBusy,
+    integrationIsConfigured,
+    isCreatingPromptTemplate,
+    isCreatingGlossary,
+  ] = useAppSelectors(
+    workingFolder.selectFolder,
+    projects.selectList,
+    projects.selectId,
+    promptTemplates.selectItems,
+    promptTemplates.selectCurrent,
+    glossaries.selectItems,
+    glossaries.selectCurrent,
+    workingFolder.selectIsBusy,
+    ai.selectIsBusy,
+    settings.selectIntegrationIsConfigured,
+    menu.selectIsCreatingPromptTemplate,
+    menu.selectIsCreatingGlossary
+  );
   const listIsDisabled = workingFolderIsBusy || translationIsBusy;
-  const currentPromptTemplate = useAppSelector(promptTemplates.selectCurrent);
-  const currentGlossary = useAppSelector(glossaries.selectCurrent);
   const { compact, dynamic } = useMenuState();
-  const currentProjectId = useAppSelector(projects.selectId);
-  const integrationIsConfigured = useAppSelector(settings.selectIntegrationIsConfigured);
-
-  const isCreatingPromptTemplate = useAppSelector(menu.selectIsCreatingPromptTemplate);
-  const isCreatingGlossary = useAppSelector(menu.selectIsCreatingGlossary);
 
   const setCreateProjectRef = useCallback(
     (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROJECT_KEY, el),

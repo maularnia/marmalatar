@@ -1,4 +1,4 @@
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { media } from '@src/services/media';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/project';
@@ -20,7 +20,6 @@ import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import classNames from 'classnames';
 import { type ClipboardEvent, type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { CharacterSelector, CharacterSelectorHandle } from './CharacterSelector/CharacterSelector';
 
@@ -375,12 +374,21 @@ export default function EditorTableLine({
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
   const { zoneRef } = useKeystrokeZone();
-  const videoDurationMs = useAppSelector(media.selectVideoDurationMs);
-  const sourceLanguage = useSelector(projects.selectSourceLanguage);
-  const targetLanguage = useSelector(projects.selectTargetLanguage);
-  const isTranslationBusy = useSelector(ai.selectIsBusy);
-  const isEditMode = useSelector(editor.selectIsEditMode);
-  const checkGrammar = useSelector(settings.selectCheckGrammar);
+  const [
+    videoDurationMs,
+    sourceLanguage,
+    targetLanguage,
+    isTranslationBusy,
+    isEditMode,
+    checkGrammar,
+  ] = useAppSelectors(
+    media.selectVideoDurationMs,
+    projects.selectSourceLanguage,
+    projects.selectTargetLanguage,
+    ai.selectIsBusy,
+    editor.selectIsEditMode,
+    settings.selectCheckGrammar
+  );
 
   const isNegativeStart = startTime < 0;
   const isBeyondVideo =

@@ -1,6 +1,6 @@
 import { settings } from '@src/store/slices/settings';
 import { ThemeColors } from '@src/theme/utils';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
@@ -11,15 +11,27 @@ import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
   const { t } = useTranslation(['settings', 'errors']);
-  const askBeforeMerge = useAppSelector(settings.selectAskBeforeMerge);
-  const askBeforeDelete = useAppSelector(settings.selectAskBeforeDelete);
-  const askBeforeAITranslate = useAppSelector(settings.selectAskBeforeAITranslate);
-  const askBeforeSplit = useAppSelector(settings.selectAskBeforeSplit);
-  const autoMergeThreshold = useAppSelector(settings.selectAutoMergeThreshold);
-  const timeAdjustmentStep = useAppSelector(settings.selectTimeAdjustmentStep);
-  const scrollVideoIntoViewOnPlay = useAppSelector(settings.selectScrollVideoIntoViewOnPlay);
-  const autoMarkLinesCompleted = useAppSelector(settings.selectAutoMarkLinesCompleted);
-  const checkGrammar = useAppSelector(settings.selectCheckGrammar);
+  const [
+    askBeforeMerge,
+    askBeforeDelete,
+    askBeforeAITranslate,
+    askBeforeSplit,
+    autoMergeThreshold,
+    timeAdjustmentStep,
+    scrollVideoIntoViewOnPlay,
+    autoMarkLinesCompleted,
+    checkGrammar,
+  ] = useAppSelectors(
+    settings.selectAskBeforeMerge,
+    settings.selectAskBeforeDelete,
+    settings.selectAskBeforeAITranslate,
+    settings.selectAskBeforeSplit,
+    settings.selectAutoMergeThreshold,
+    settings.selectTimeAdjustmentStep,
+    settings.selectScrollVideoIntoViewOnPlay,
+    settings.selectAutoMarkLinesCompleted,
+    settings.selectCheckGrammar
+  );
 
   const {
     register,

@@ -1,6 +1,6 @@
 import EditorLayout from '@src/layout/EditorLayout';
 import GeneralLayout from '@src/layout/GeneralLayout';
-import { useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { workingFolder } from '@store/slices/workingFolder';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import GlobalBackground from './layout/components/GlobalBackground';
@@ -11,8 +11,10 @@ import Home from './segments/pages/Home';
 import Import from './segments/pages/Import';
 
 function HomeGuard() {
-  const folder = useAppSelector(workingFolder.selectFolder);
-  const initialized = useAppSelector(workingFolder.selectInitialized);
+  const [folder, initialized] = useAppSelectors(
+    workingFolder.selectFolder,
+    workingFolder.selectInitialized
+  );
   if (!initialized) return null;
   if (!folder) return <Navigate to="/folder-setup" replace />;
   return <Home />;
