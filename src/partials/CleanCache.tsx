@@ -1,7 +1,7 @@
 import { useMessageHelmet } from '@providers/MessageHelmetProvider';
 import { emitCacheCleanupFailedMessage, emitCacheCleanupSuccessMessage } from '@src/messages';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
-import { workingFolder } from '@store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
@@ -15,7 +15,7 @@ export default function CleanCache() {
 
   const handleClean = async () => {
     try {
-      await load({ messages: [] }, workingFolder.cleanupMediaCache());
+      await load({ messages: [] }, folder.cleanupMediaCache());
       emitCacheCleanupSuccessMessage(pushMessage);
     } catch {
       emitCacheCleanupFailedMessage(pushMessage);

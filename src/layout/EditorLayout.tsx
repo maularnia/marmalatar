@@ -1,7 +1,7 @@
 import { EditorKeystrokeProvider } from '@providers/EditorKeystrokeProvider';
 import { EditorControls } from '@src/segments/pages/Editor/segments/EditorControls';
 import EditorAside from '@src/segments/pages/Editor/segments/EditorAside/EditorAside';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';

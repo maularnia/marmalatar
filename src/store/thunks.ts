@@ -3,12 +3,12 @@ import type { AppDispatch } from './root';
 import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from '@src/services/glossary';
 import { ai } from '@src/services/ai';
-import { workingFolder } from './slices/workingFolder';
+import { folder } from '@src/services/folder';
 import { editor } from '@src/services/project';
 import { TOverlay } from './slices/overlays';
 import { overlays } from './slices/overlays';
 import { projects } from '@src/services/project';
-import { settings } from './slices/settings';
+import { settings } from '@src/services/settings';
 
 // Thunks that span slices which import each other, so they can't live in either slice file
 // without an import cycle.
@@ -20,8 +20,8 @@ import { settings } from './slices/settings';
 const savePromptTemplate = () => async (): Promise<void> => {
   const currentPromptTemplate = promptTemplates.get.current();
   const promptTemplateData = promptTemplates.get.data();
-  const folder = workingFolder.get.folder();
-  if (!currentPromptTemplate || !folder || !promptTemplateData) return;
+  const folderPath = folder.get.path();
+  if (!currentPromptTemplate || !folderPath || !promptTemplateData) return;
   await promptTemplates.writeBody(currentPromptTemplate, promptTemplateData);
   await promptTemplates.refresh();
   if (promptTemplates.get.selectedFileName() === currentPromptTemplate) {
@@ -32,9 +32,9 @@ const savePromptTemplate = () => async (): Promise<void> => {
 // ── Folder ──────────────────────────────────────────────────────────────────
 
 // The folder's lists live in the slices that own the files (project, prompt, glossary), and those
-// import the workingFolder slice, so refreshing them all together has to happen here
+// import the folder service, so refreshing them all together has to happen here
 const refreshAll = () => async (): Promise<void> => {
-  if (!workingFolder.get.folder()) {
+  if (!folder.get.path()) {
     projects.setList([]);
     promptTemplates.setItems([]);
     glossaries.setItems([]);
@@ -46,29 +46,29 @@ const refreshAll = () => async (): Promise<void> => {
 // The only thunk that makes the main process scan the folder again -- restricted to the two
 // explicit user actions (folder select, manual rescan) per design. Anything else reads the cached
 // listing, so files changed outside the app show up only after one of these.
-const workingFolderScan =
+const scanFolder =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
-    workingFolder.setIsBusy(true);
+    folder.setIsBusy(true);
     try {
-      await workingFolder.rescanFolder();
+      await folder.rescan();
       await dispatch(refreshAll());
       // Best-effort housekeeping side effect of scanning -- not awaited (so it can't slow down the
       // scan) and not surfaced as a toast (it isn't a user-initiated action).
-      void workingFolder.cleanupMediaCache().catch(() => {});
+      void folder.cleanupMediaCache().catch(() => {});
     } finally {
-      workingFolder.setIsBusy(false);
+      folder.setIsBusy(false);
     }
   };
 
 // Saves whatever is open in every slice before switching folders
 
-const workingFolderPick =
+const pickFolder =
   () =>
   async (dispatch: AppDispatch): Promise<boolean> => {
-    workingFolder.setIsBusy(true);
+    folder.setIsBusy(true);
     try {
-      const selected = await workingFolder.selectFolderDialog();
+      const selected = await folder.pick();
       if (!selected) return false;
 
       if (projects.get.isOpen()) {
@@ -82,7 +82,7 @@ const workingFolderPick =
         await glossaries.save();
       }
 
-      await workingFolder.setTrackedFolder(selected);
+      await folder.setTracked(selected);
 
       editor.resetMemoryState();
       overlays.closeAll();
@@ -91,10 +91,10 @@ const workingFolderPick =
       promptTemplates.setSelectedFileName(null);
       glossaries.setSelectedFileNames([]);
 
-      await dispatch(workingFolderScan());
+      await dispatch(scanFolder());
       return true;
     } finally {
-      workingFolder.setIsBusy(false);
+      folder.setIsBusy(false);
     }
   };
 
@@ -107,10 +107,10 @@ const hydrateApp =
   async (dispatch: AppDispatch): Promise<void> => {
     await settings.load();
     // The main process keeps the last listing, so no live scan is needed at startup
-    void workingFolder
-      .loadTrackedFolder()
+    void folder
+      .loadTracked()
       .then((savedFolder) => (savedFolder ? dispatch(refreshAll()) : undefined))
-      .finally(() => workingFolder.setInitialized(true));
+      .finally(() => folder.setInitialized(true));
     void ai.initializeAiIntegration().catch(() => {});
   };
 
@@ -120,7 +120,7 @@ export const app = api('app', {
   thunks: {
     hydrateApp,
     savePromptTemplate,
-    workingFolderPick,
-    workingFolderScan,
+    pickFolder,
+    scanFolder,
   },
 });

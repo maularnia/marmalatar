@@ -6,14 +6,14 @@ import {
 } from '@src/services/menu';
 import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
 import i18n from '@src/i18n';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { projects } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
 import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from '@src/services/glossary';
 import { ai } from '@src/services/ai';
-import { workingFolder } from '@store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import H from '@ui-toolkit/H';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -55,7 +55,7 @@ const t = i18n.getFixedT(null, 'errors');
 export default function FileList() {
   const { t: tMenu } = useTranslation('menu');
   const [
-    folder,
+    folderPath,
     projectList,
     currentProjectId,
     promptTemplateItems,
@@ -70,14 +70,14 @@ export default function FileList() {
     compact,
     dynamic,
   ] = useAppSelectors(
-    workingFolder.selectFolder,
+    folder.selectPath,
     projects.selectList,
     projects.selectId,
     promptTemplates.selectItems,
     promptTemplates.selectCurrent,
     glossaries.selectItems,
     glossaries.selectCurrent,
-    workingFolder.selectIsBusy,
+    folder.selectIsBusy,
     ai.selectIsBusy,
     settings.selectIntegrationIsConfigured,
     menu.selectIsCreatingPromptTemplate,
@@ -132,7 +132,7 @@ export default function FileList() {
   };
 
   if (
-    !folder ||
+    !folderPath ||
     (projectList.length === 0 && promptTemplateItems.length === 0 && glossaryItems.length === 0)
   )
     return null;

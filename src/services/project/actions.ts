@@ -33,7 +33,7 @@ import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { dispatch, select } from '@store/createApi';
 import { glossaries } from '@src/services/glossary';
-import { workingFolder } from '@store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import { clearSplitCursor } from './editor/actions';
 import {
   clearFileData,
@@ -183,7 +183,7 @@ export async function saveProjectVideoPath(
   if (!videoPath) return;
   try {
     await writeProjectEditorState(projectId, { videoPath });
-    void workingFolder.cleanupMediaCache().catch(() => {});
+    void folder.cleanupMediaCache().catch(() => {});
   } catch (err) {
     emitVideoPathSaveFailedMessage(pushMessage, toErrorMessage(err));
   }
@@ -192,7 +192,7 @@ export async function saveProjectVideoPath(
 export async function removeProjectVideoPath(projectId: string): Promise<void> {
   try {
     await writeProjectEditorState(projectId, { videoPath: null });
-    void workingFolder.cleanupMediaCache().catch(() => {});
+    void folder.cleanupMediaCache().catch(() => {});
   } catch (err) {
     emitVideoPathRemovalFailedMessage(pushMessage, toErrorMessage(err));
   }
@@ -227,8 +227,8 @@ export async function saveProjectLanguages(): Promise<void> {
 }
 
 export async function renameProject(projectId: string, newName: string): Promise<void> {
-  const folder = workingFolder.get.folder();
-  if (!folder) throw new Error(t('project.folderNotTracked'));
+  const folderPath = folder.get.path();
+  if (!folderPath) throw new Error(t('project.folderNotTracked'));
   const trimmed = newName.trim();
   if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
@@ -410,7 +410,7 @@ export async function openProject(project: TProjectEntry): Promise<void> {
   // Saved path: verify it exists, then process it in the main process
   let fileExists: boolean;
   try {
-    fileExists = await workingFolder.checkForeignFileExists(savedPath);
+    fileExists = await folder.checkForeignFileExists(savedPath);
   } catch (error) {
     emitVideoFileCheckFailedMessage(pushMessage, toErrorMessage(error));
     fileExists = false;
@@ -510,7 +510,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
 /** Creates a project from imported lines (the video was already attached by the import page),
  * then shows the editor. Failures are reported, not thrown. */
 export async function createProject(params: TCreateProjectParams): Promise<void> {
-  if (!workingFolder.get.folder()) return;
+  if (!folder.get.path()) return;
   try {
     await load(
       {
@@ -556,13 +556,13 @@ export async function startNewProject(): Promise<void> {
 export async function deleteProject(projectId: string, projectName: string): Promise<boolean> {
   if (!(await confirmDeleteProject(projectName))) return false;
   const wasOpen = projectId === select(selectProjectId);
-  workingFolder.setIsBusy(true);
+  folder.setIsBusy(true);
   try {
     await deleteProjectOnDisk(projectId);
     await refreshProjects();
-    void workingFolder.cleanupMediaCache().catch(() => {});
+    void folder.cleanupMediaCache().catch(() => {});
   } finally {
-    workingFolder.setIsBusy(false);
+    folder.setIsBusy(false);
   }
   if (wasOpen) {
     closeProject();

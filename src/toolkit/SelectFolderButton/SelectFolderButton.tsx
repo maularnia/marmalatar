@@ -17,7 +17,7 @@ export default function SelectFolderButton() {
   const navigate = useNavigate();
 
   const handleSelectFolder = async () => {
-    const didPickFolder = await app.workingFolderPick();
+    const didPickFolder = await app.pickFolder();
     if (didPickFolder) navigate('/');
   };
 

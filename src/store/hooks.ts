@@ -9,8 +9,8 @@ type TAppSelector = (state: RootState) => unknown;
 /**
  * Several selectors in one subscription, returning their results as a typed tuple:
  *
- *   const [folder, projectList, isBusy] = useAppSelectors(
- *     workingFolder.selectFolder,
+ *   const [folderPath, projectList, isBusy] = useAppSelectors(
+ *     folder.selectPath,
  *     projects.selectList,
  *     ai.selectIsBusy
  *   );

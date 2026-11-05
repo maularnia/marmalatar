@@ -1,7 +1,7 @@
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import {
   TButtonProps,
   TButtonSize,

@@ -1,5 +1,5 @@
 import PromptSetupRow from '@src/partials/PromptSetup';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
 import { FormRoot, FormsContent } from '@ui-toolkit/forms';

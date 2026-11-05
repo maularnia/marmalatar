@@ -1,5 +1,5 @@
 import { useAppSelector } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import { TColor } from '@src/theme/definitions';
 import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import { TTheme } from '@src/theme/types';

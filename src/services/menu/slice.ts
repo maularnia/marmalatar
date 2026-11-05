@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TScreenSize } from '@src/theme/types';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 
 // The sidebar menu's state: which item is being renamed, whether a new prompt template or glossary
 // is being named, and what decides whether the sidebar is collapsed. Which item has focus isn't

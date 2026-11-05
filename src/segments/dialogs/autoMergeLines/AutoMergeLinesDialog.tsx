@@ -1,6 +1,6 @@
 import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
 import { useAppSelector } from '@src/store/hooks';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { ThemeColors } from '@src/theme/utils';
 import P from '@ui-toolkit/P';
 import Span from '@ui-toolkit/Span';

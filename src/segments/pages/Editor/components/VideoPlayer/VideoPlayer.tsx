@@ -1,6 +1,6 @@
 import { media } from '@src/services/media';
 import { useSelectAudioTrackDialog } from '@src/segments/dialogs/selectAudioTrack/useSelectAudioTrackDialog';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';

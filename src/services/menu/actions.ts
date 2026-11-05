@@ -8,8 +8,8 @@ import { promptTemplates } from '@src/services/prompt';
 import { dispatch, select } from '@store/createApi';
 import { glossaries } from '@src/services/glossary';
 import { overlays } from '@store/slices/overlays';
-import { settings } from '@store/slices/settings';
-import { workingFolder } from '@store/slices/workingFolder';
+import { settings } from '@src/services/settings';
+import { folder } from '@src/services/folder';
 import { app } from '@store/thunks';
 import {
   menuRenamingStopped,
@@ -49,7 +49,7 @@ type TMenuItemKind =
 
 type TMenuItemRef = { key: string; kind: TMenuItemKind };
 
-const isBusy = (): boolean => workingFolder.get.isBusy() || ai.get.isBusy();
+const isBusy = (): boolean => folder.get.isBusy() || ai.get.isBusy();
 
 // ── Items and focus ──────────────────────────────────────────────────────────
 

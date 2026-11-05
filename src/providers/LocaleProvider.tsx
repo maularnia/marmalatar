@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect } from 'react';
 import { useAppSelector } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import i18n from '@src/i18n';
 
 export function LocaleProvider({ children }: PropsWithChildren) {

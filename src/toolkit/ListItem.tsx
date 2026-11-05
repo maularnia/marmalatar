@@ -3,7 +3,7 @@ import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import { TTheme } from '@src/theme/types';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Span from '@ui-toolkit/Span';

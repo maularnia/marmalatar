@@ -16,8 +16,8 @@ import { getErrorMessage } from '@src/utils/errors';
 import { dispatch, select } from '@store/createApi';
 import { glossaries } from '@src/services/glossary';
 import { projects } from '@src/services/project';
-import { settings } from '@store/slices/settings';
-import { workingFolder } from '@store/slices/workingFolder';
+import { settings } from '@src/services/settings';
+import { folder } from '@src/services/folder';
 import { cancelActiveBulkJob, setActiveBulkJobController } from './bulkJob';
 import { aiClients } from './connector/clients';
 import { DEFAULT_AI_CLIENT_ID } from './connector/config';
@@ -138,9 +138,9 @@ export async function initializeAiIntegration(integrationId?: string): Promise<v
 // (see thunks.ts's savePromptTemplate), so it deliberately owns no isBusy side effects of its own;
 // callers that need a loading indicator (like applySelectedPromptTemplateFileName) wrap it.
 export async function refreshSelectedPromptTemplateData(): Promise<void> {
-  const folder = workingFolder.get.folder();
+  const folderPath = folder.get.path();
   const fileName = promptTemplates.get.selectedFileName();
-  if (!folder || !fileName) {
+  if (!folderPath || !fileName) {
     dispatch(setSelectedPromptTemplateData(null));
     return;
   }

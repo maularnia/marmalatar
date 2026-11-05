@@ -1,5 +1,5 @@
 import { useAppSelectors } from '@store/hooks';
-import { workingFolder } from '@store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import { app } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -8,7 +8,7 @@ import { TButtonVariant } from '../Button/types';
 
 export default function RescanButton() {
   const { t } = useTranslation('settings');
-  const [folder, isBusy] = useAppSelectors(workingFolder.selectFolder, workingFolder.selectIsBusy);
+  const [folderPath, isBusy] = useAppSelectors(folder.selectPath, folder.selectIsBusy);
 
   return (
     <Button
@@ -16,8 +16,8 @@ export default function RescanButton() {
       type="button"
       variant={TButtonVariant.SECONDARY}
       icon={TIcon.REFRESH}
-      disabled={!folder || isBusy}
-      onClick={() => void app.workingFolderScan()}
+      disabled={!folderPath || isBusy}
+      onClick={() => void app.scanFolder()}
     >
       {t('workingFolder.rescanButton')}
     </Button>

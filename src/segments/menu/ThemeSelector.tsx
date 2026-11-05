@@ -2,7 +2,7 @@ import { TColor } from '@src/theme/definitions';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { TThemeSelection } from '@src/types';
 import { useAppSelectors } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';

@@ -8,7 +8,7 @@ import {
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import { dispatch, select } from '@store/createApi';
 import { overlays, TOverlay } from '@store/slices/overlays';
-import { workingFolder } from '@store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import {
   closePromptTemplateEditor,
   selectCurrentPromptTemplate,
@@ -98,15 +98,15 @@ export async function refreshPromptTemplates(): Promise<void> {
 async function initializePromptTemplateEditor(fileName: string): Promise<void> {
   dispatch(setCurrentPromptTemplate(fileName));
   dispatch(setPromptTemplateData(null));
-  const folder = workingFolder.get.folder();
-  if (!folder) return;
+  const folderPath = folder.get.path();
+  if (!folderPath) return;
   const data = await readPromptTemplateFile(fileName);
   dispatch(setPromptTemplateData(data));
 }
 
 export async function deletePromptTemplate(fileName: string): Promise<void> {
-  const folder = workingFolder.get.folder();
-  if (!folder) return;
+  const folderPath = folder.get.path();
+  if (!folderPath) return;
   await deletePromptTemplateOnDisk(fileName);
   await refreshPromptTemplates();
   if (select(selectCurrentPromptTemplate) === fileName) {
@@ -115,8 +115,8 @@ export async function deletePromptTemplate(fileName: string): Promise<void> {
 }
 
 export async function renamePromptTemplate(fileName: string, newTitle: string): Promise<void> {
-  const folder = workingFolder.get.folder();
-  if (!folder) throw new Error(t('shared.folderNotSelected'));
+  const folderPath = folder.get.path();
+  if (!folderPath) throw new Error(t('shared.folderNotSelected'));
   const trimmed = newTitle.trim();
   if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
@@ -141,8 +141,8 @@ export async function renamePromptTemplate(fileName: string, newTitle: string): 
 }
 
 export async function updatePromptTemplateEmoji(fileName: string, emoji: string): Promise<void> {
-  const folder = workingFolder.get.folder();
-  if (!folder) throw new Error(t('shared.folderNotSelected'));
+  const folderPath = folder.get.path();
+  if (!folderPath) throw new Error(t('shared.folderNotSelected'));
 
   await updatePromptTemplateEmojiOnDisk(fileName, emoji);
   const updated = await readPromptTemplateFile(fileName);
@@ -156,8 +156,8 @@ export async function updatePromptTemplateEmoji(fileName: string, emoji: string)
 }
 
 export async function createPromptTemplate(title: string): Promise<void> {
-  const folder = workingFolder.get.folder();
-  if (!folder) throw new Error(t('shared.folderNotSelected'));
+  const folderPath = folder.get.path();
+  if (!folderPath) throw new Error(t('shared.folderNotSelected'));
   const trimmed = title.trim();
   if (!trimmed) throw new Error(t('shared.nameEmpty'));
 

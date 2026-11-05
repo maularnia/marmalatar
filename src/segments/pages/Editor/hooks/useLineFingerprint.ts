@@ -1,6 +1,6 @@
 import { media } from '@src/services/media';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { TSubtitleLine } from '@src/types';
 import { useAppSelectors } from '@store/hooks';

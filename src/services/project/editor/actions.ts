@@ -31,7 +31,7 @@ import type { TInputColumn, TSubtitleLine } from '@src/types';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { media } from '@src/services/media';
 import { dispatch, select } from '@store/createApi';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import {
   allSourceCopiedToOutput,
   allTranslatedLinesCompleted,

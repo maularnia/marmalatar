@@ -1,0 +1,88 @@
+import { api } from '@store/createApi';
+import { loadSettings } from './actions';
+import {
+  selectAIintegrationEnabled,
+  selectAskBeforeAITranslate,
+  selectAskBeforeDelete,
+  selectAskBeforeMerge,
+  selectAskBeforeSplit,
+  selectAutoMarkLinesCompleted,
+  selectAutoMergeThreshold,
+  selectCheckGrammar,
+  selectCurrentThemeData,
+  selectIntegrationIsConfigured,
+  selectIsLargeScreen,
+  selectIsSmallScreen,
+  selectResolvedThemeName,
+  selectScreenSize,
+  selectScrollVideoIntoViewOnPlay,
+  selectSelectedIntegrationId,
+  selectThemeSelection,
+  selectTimeAdjustmentStep,
+  selectUiLocale,
+  setAIintegrationEnabled,
+  setAskBeforeAITranslate,
+  setAskBeforeDelete,
+  setAskBeforeMerge,
+  setAskBeforeSplit,
+  setAutoMarkLinesCompleted,
+  setAutoMergeThreshold,
+  setCheckGrammar,
+  setResolvedThemeName,
+  setScreenSize,
+  setScrollVideoIntoViewOnPlay,
+  setSelectedIntegration,
+  setThemeSelection,
+  setTimeAdjustmentStep,
+  setUiLocale,
+} from './slice';
+
+// The settings service: the app-wide preferences (persisted by the main process) and the UI state
+// derived from the environment (resolved theme, screen size). This file is its only entry point:
+// the slice lives in slice.ts, the operations in actions.ts.
+
+export { default as settingsReducer } from './slice';
+
+export const settings = api('settings', {
+  actions: {
+    setAIintegrationEnabled,
+    setAskBeforeAITranslate,
+    setAskBeforeDelete,
+    setAskBeforeMerge,
+    setAskBeforeSplit,
+    setAutoMarkLinesCompleted,
+    setAutoMergeThreshold,
+    setCheckGrammar,
+    setResolvedThemeName,
+    setScreenSize,
+    setScrollVideoIntoViewOnPlay,
+    setSelectedIntegration,
+    setThemeSelection,
+    setTimeAdjustmentStep,
+    setUiLocale,
+  },
+  selectors: {
+    selectAIintegrationEnabled,
+    selectAskBeforeAITranslate,
+    selectAskBeforeDelete,
+    selectAskBeforeMerge,
+    selectAskBeforeSplit,
+    selectAutoMarkLinesCompleted,
+    selectAutoMergeThreshold,
+    selectCheckGrammar,
+    selectCurrentThemeData,
+    selectIntegrationIsConfigured,
+    selectIsLargeScreen,
+    selectIsSmallScreen,
+    selectResolvedThemeName,
+    selectScreenSize,
+    selectScrollVideoIntoViewOnPlay,
+    selectSelectedIntegrationId,
+    selectThemeSelection,
+    selectTimeAdjustmentStep,
+    selectUiLocale,
+  },
+  functions: {
+    loadSettings,
+  },
+});

@@ -4,7 +4,7 @@ import {
   UI_LOCALE_LABELS,
   type TUiLocale,
 } from '@src/i18n/locales';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { TIcon } from '@src/toolkit/Icon/icons';
 import { useAppSelector } from '@store/hooks';
 import {

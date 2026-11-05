@@ -1,10 +1,10 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import type { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit';
-import settingsReducer from './slices/settings';
+import { settingsReducer } from '@src/services/settings';
 import { projectReducer } from '@src/services/project';
 import { editorReducer } from '@src/services/project';
 import { promptReducer } from '@src/services/prompt';
-import workingFolderReducer from './slices/workingFolder';
+import { folderReducer } from '@src/services/folder';
 import { glossaryReducer } from '@src/services/glossary';
 import overlaysReducer from './slices/overlays';
 import { aiReducer } from '@src/services/ai';
@@ -16,7 +16,7 @@ export const rootReducer = combineReducers({
   project: projectReducer,
   editor: editorReducer,
   prompt: promptReducer,
-  workingFolder: workingFolderReducer,
+  folder: folderReducer,
   glossary: glossaryReducer,
   overlays: overlaysReducer,
   ai: aiReducer,

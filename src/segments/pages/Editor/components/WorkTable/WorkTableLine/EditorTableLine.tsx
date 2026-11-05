@@ -9,7 +9,7 @@ import { LogoLoader } from '@src/toolkit/LogoLoader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
 import { ai } from '@src/services/ai';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';

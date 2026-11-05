@@ -1,7 +1,7 @@
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppSelector } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import { overlays } from '@store/slices/overlays';
 import { TThemeSelection } from '@src/types';
 import {

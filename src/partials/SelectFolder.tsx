@@ -1,5 +1,5 @@
 import { useAppSelector } from '@src/store/hooks';
-import { workingFolder } from '@src/store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import { ThemeColors } from '@src/theme/utils';
 import Message, { TMessageSize, TMessageVariant } from '@src/toolkit/Message';
 import { FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function SelectFolder() {
   const { t } = useTranslation('settings');
-  const folder = useAppSelector(workingFolder.selectFolder);
+  const folderPath = useAppSelector(folder.selectPath);
   return (
     <FormsSection>
       <FormsSectionTitle icon={TIcon.FOLDER_FAVORITE} subtext={<>{t('workingFolder.subtext')}</>}>
@@ -19,9 +19,9 @@ export default function SelectFolder() {
         <SelectFolderButton />
       </FormsSectionContent>
       <FormsSectionContent>
-        {folder && (
+        {folderPath && (
           <Message size={TMessageSize.XS} color={ThemeColors.TEXT} type={TMessageVariant.SECONDARY}>
-            {t('workingFolder.currentFolder', { folder })}
+            {t('workingFolder.currentFolder', { folder: folderPath })}
           </Message>
         )}
       </FormsSectionContent>

@@ -1,6 +1,6 @@
 import { createConfirm } from '@providers/bridges/confirmation';
 import i18n from '@src/i18n';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { AutoMergeLinesDialog } from './AutoMergeLinesDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');

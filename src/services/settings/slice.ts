@@ -1,11 +1,7 @@
-import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { themes } from '@src/theme/themes';
 import { TThemeSelection } from '@src/types';
-import i18n from '@src/i18n';
-import { IPC } from '@src/services/ipc/IPC';
-import type { AppDispatch } from '@store/root';
-import { parseAppSettings, type PersistedAppSettings } from '@utils/appSettingsFile';
+import type { PersistedAppSettings } from '@utils/appSettingsFile';
 import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
 import type { TUiLocale } from '@src/i18n/locales';
 import {
@@ -137,7 +133,7 @@ const settingsSlice = createSlice({
   },
 });
 
-const {
+export const {
   setResolvedThemeName,
   setScreenSize,
   setSelectedIntegration,
@@ -158,7 +154,7 @@ const {
 
 export default settingsSlice.reducer;
 
-const {
+export const {
   selectResolvedThemeName,
   selectScreenSize,
   selectIsLargeScreen,
@@ -179,66 +175,3 @@ const {
   selectCheckGrammar,
   selectUiLocale,
 } = settingsSlice.selectors;
-
-// ── Thunks ───────────────────────────────────────────────────────────────────
-
-// Reads the persisted settings into the store. The UI language is switched here, before the first
-// render, so it doesn't flash the default; LocaleProvider keeps it in step afterwards. Settings
-// written by an older build are saved back normalized.
-const loadSettings =
-  () =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    const raw = await IPC.settings.getAppSettings();
-    const persisted = parseAppSettings(raw);
-    dispatch(hydrateSettings(persisted));
-    void i18n.changeLanguage(persisted.uiLocale);
-    if (JSON.stringify(raw) !== JSON.stringify(persisted)) {
-      void IPC.settings.setAppSettings(persisted);
-    }
-  };
-
-// ── API ──────────────────────────────────────────────────────────────────────
-
-export const settings = api('settings', {
-  actions: {
-    setAIintegrationEnabled,
-    setAskBeforeAITranslate,
-    setAskBeforeDelete,
-    setAskBeforeMerge,
-    setAskBeforeSplit,
-    setAutoMarkLinesCompleted,
-    setAutoMergeThreshold,
-    setCheckGrammar,
-    setResolvedThemeName,
-    setScreenSize,
-    setScrollVideoIntoViewOnPlay,
-    setSelectedIntegration,
-    setThemeSelection,
-    setTimeAdjustmentStep,
-    setUiLocale,
-  },
-  thunks: {
-    loadSettings,
-  },
-  selectors: {
-    selectAIintegrationEnabled,
-    selectAskBeforeAITranslate,
-    selectAskBeforeDelete,
-    selectAskBeforeMerge,
-    selectAskBeforeSplit,
-    selectAutoMarkLinesCompleted,
-    selectAutoMergeThreshold,
-    selectCheckGrammar,
-    selectCurrentThemeData,
-    selectIntegrationIsConfigured,
-    selectIsLargeScreen,
-    selectIsSmallScreen,
-    selectResolvedThemeName,
-    selectScreenSize,
-    selectScrollVideoIntoViewOnPlay,
-    selectSelectedIntegrationId,
-    selectThemeSelection,
-    selectTimeAdjustmentStep,
-    selectUiLocale,
-  },
-});

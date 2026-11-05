@@ -3,7 +3,7 @@ import { promptTemplates } from '@src/services/prompt';
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
 import { glossaries } from '@src/services/glossary';
 import { projects } from '@src/services/project';
-import { workingFolder } from '@store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import { cancelActiveBulkJob } from './bulkJob';
 import type { TranslationBulkJobState } from './connector/types';
 
@@ -67,7 +67,7 @@ const aiSlice = createSlice({
   },
   extraReducers(builder) {
     builder.addMatcher(
-      isAnyOf(workingFolder.folderChanged, promptTemplates.setSelectedFileName),
+      isAnyOf(folder.pathChanged, promptTemplates.setSelectedFileName),
       (state) => {
         cancelActiveBulkJob();
         state.currentBulkJob = null;

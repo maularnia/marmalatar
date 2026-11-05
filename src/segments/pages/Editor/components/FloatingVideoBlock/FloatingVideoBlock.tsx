@@ -1,5 +1,5 @@
 import { media } from '@src/services/media';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
 import { useAppSelectors } from '@store/hooks';

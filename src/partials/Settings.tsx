@@ -1,4 +1,4 @@
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
 import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';

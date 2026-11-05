@@ -1,4 +1,4 @@
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';

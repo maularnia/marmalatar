@@ -1,7 +1,7 @@
 import { aiClients } from '@src/services/ai/connector/clients';
 import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
 import type { AiClient } from '@src/services/ai/connector/types';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import Toggle from '@src/toolkit/Toggle';

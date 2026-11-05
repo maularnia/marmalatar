@@ -1,4 +1,4 @@
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { useAppSelectors } from '@store/hooks';
 import { cloneElement, type ReactElement, type ReactNode, useEffect, useMemo, useRef } from 'react';

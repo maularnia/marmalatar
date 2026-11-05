@@ -6,7 +6,7 @@ import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelectors } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';

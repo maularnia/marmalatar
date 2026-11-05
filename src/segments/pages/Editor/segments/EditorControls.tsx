@@ -1,5 +1,5 @@
 import { media } from '@src/services/media';
-import { settings } from '@src/store/slices/settings';
+import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { glossaries } from '@src/services/glossary';
 import { TShade } from '@src/theme/definitions';

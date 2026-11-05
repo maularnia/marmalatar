@@ -20,7 +20,7 @@ import {
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import { dispatch, select } from '@store/createApi';
 import { overlays, TOverlay } from '@store/slices/overlays';
-import { workingFolder } from '@store/slices/workingFolder';
+import { folder } from '@src/services/folder';
 import {
   closeGlossaryEditor,
   selectCurrentGlossary,
@@ -174,7 +174,7 @@ async function initializeGlossaryEditor(fileName: string): Promise<void> {
   clearPairInputs();
   dispatch(setCurrentGlossary(fileName));
   dispatch(setGlossaryData(null));
-  if (!workingFolder.get.folder()) return;
+  if (!folder.get.path()) return;
   dispatch(setGlossaryData(await readGlossaryFile(fileName)));
 }
 
@@ -187,7 +187,7 @@ export async function openGlossaryEditor(fileName: string): Promise<void> {
 export async function saveGlossary(): Promise<void> {
   const currentGlossary = current();
   const glossaryData = data();
-  if (!currentGlossary || !workingFolder.get.folder() || !glossaryData) return;
+  if (!currentGlossary || !folder.get.path() || !glossaryData) return;
   const dataToSave: AIGlossaryFileDataType = {
     ...glossaryData,
     list: glossaryData.list.filter((e) => e.original.trim() || e.translation.trim()),
@@ -219,7 +219,7 @@ export async function updateGlossaryLanguages(
 }
 
 export async function deleteGlossary(fileName: string): Promise<void> {
-  if (!workingFolder.get.folder()) return;
+  if (!folder.get.path()) return;
   await deleteGlossaryOnDisk(fileName);
   await refreshGlossaries();
   if (current() === fileName) {
@@ -228,7 +228,7 @@ export async function deleteGlossary(fileName: string): Promise<void> {
 }
 
 export async function renameGlossary(fileName: string, newTitle: string): Promise<void> {
-  if (!workingFolder.get.folder()) throw new Error(t('shared.folderNotSelected'));
+  if (!folder.get.path()) throw new Error(t('shared.folderNotSelected'));
   const trimmed = newTitle.trim();
   if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
@@ -258,7 +258,7 @@ export async function renameGlossary(fileName: string, newTitle: string): Promis
 }
 
 export async function updateGlossaryEmoji(fileName: string, emoji: string): Promise<void> {
-  if (!workingFolder.get.folder()) throw new Error(t('shared.folderNotSelected'));
+  if (!folder.get.path()) throw new Error(t('shared.folderNotSelected'));
 
   await updateGlossaryEmojiOnDisk(fileName, emoji);
   const updated = await readGlossaryFile(fileName);
@@ -272,7 +272,7 @@ export async function updateGlossaryEmoji(fileName: string, emoji: string): Prom
 }
 
 export async function createGlossary(title: string): Promise<void> {
-  if (!workingFolder.get.folder()) throw new Error(t('shared.folderNotSelected'));
+  if (!folder.get.path()) throw new Error(t('shared.folderNotSelected'));
   const trimmed = title.trim();
   if (!trimmed) throw new Error(t('shared.nameEmpty'));
 
@@ -298,7 +298,7 @@ export async function addGlossaryEntry(
 ): Promise<boolean> {
   const currentGlossary = current();
   const glossaryData = data();
-  if (!workingFolder.get.folder()) return false;
+  if (!folder.get.path()) return false;
 
   const target = targetFileName ?? currentGlossary;
   if (!target) return false;
@@ -341,7 +341,7 @@ function directionMatchedGlossaryFileNames(): string[] {
 
 export async function refreshResolvedGlossaryEntries(): Promise<void> {
   const matchedFileNames = directionMatchedGlossaryFileNames();
-  if (!workingFolder.get.folder() || !matchedFileNames.length) {
+  if (!folder.get.path() || !matchedFileNames.length) {
     dispatch(setResolvedGlossaryEntries([]));
     return;
   }

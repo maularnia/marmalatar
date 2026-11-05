@@ -2,7 +2,7 @@ import { TColor, TShade } from '@src/theme/definitions';
 import { TTheme } from '@src/theme/types';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import { CSSProperties, HTMLProps, MouseEvent, Ref } from 'react';
 import styled from 'styled-components';
 import Icon from './Icon/Icon';

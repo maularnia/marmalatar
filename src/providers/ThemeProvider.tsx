@@ -3,7 +3,7 @@ import { PropsWithChildren, useEffect, useRef } from 'react';
 import { useAppSelectors } from '@store/hooks';
 import { LARGE_SCREEN_THRESHOLD, MEDUIM_SCREEN_THRESHOLD } from '@src/consts';
 import { TThemeSelection } from '@src/types';
-import { settings } from '@store/slices/settings';
+import { settings } from '@src/services/settings';
 import { TScreenSize } from '@src/theme/types';
 
 const getCurrentMatcher = (): [MediaQueryList, TScreenSize] => {
