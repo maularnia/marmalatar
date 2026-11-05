@@ -33,7 +33,6 @@ import { useSplitConfirmation } from '@src/segments/dialogs/split/useSplitConfir
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
-import { prompt } from '@src/store/slices/prompt';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
@@ -241,7 +240,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
   const handleSplitLine = useCallback(
     async (lineIndex: number, cursorOffset: number | null) => {
       const translationLines = editor.get.lines();
-      const frozenLineNumbers = prompt.get.frozenLineNumbers();
+      const frozenLineNumbers = editor.get.frozenLineNumbers();
       if (frozenLineNumbers.includes(translationLines[lineIndex]?.line_no)) return;
       if (ai.get.currentBulkJob()?.running) return;
       const focusedColumn = editor.get.focusedColumn();
@@ -261,7 +260,7 @@ export function EditorActionsProvider({ children }: PropsWithChildren) {
       if (partnerIndex < 0 || partnerIndex >= translationLines.length) return;
       const line = translationLines[lineIndex];
       const partnerLine = translationLines[partnerIndex];
-      const frozenSet = new Set(prompt.get.frozenLineNumbers());
+      const frozenSet = new Set(editor.get.frozenLineNumbers());
       if (frozenSet.has(line.line_no) || frozenSet.has(partnerLine.line_no)) return;
       if (ai.get.currentBulkJob()?.running) return;
       if (settings.get.askBeforeMerge()) {

@@ -2,7 +2,7 @@ import { useConfirm } from '@providers/ConfirmationProvider/ConfirmationProvider
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { overlays } from '@store/slices/overlays';
-import { glossaries } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/glossary';
 import { DeleteGlossaryDialog } from './DeleteGlossaryDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');

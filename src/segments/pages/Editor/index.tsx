@@ -4,7 +4,6 @@ import { useVideo } from '@providers/VideoProvider';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
-import { prompt } from '@src/store/slices/prompt';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
@@ -104,7 +103,7 @@ export default function Editor() {
   const { translationLines, frozenLineNumbers, characterOptions } = useAppSelector(
     (state) => ({
       translationLines: editor.selectLines(state),
-      frozenLineNumbers: prompt.selectFrozenLineNumbers(state),
+      frozenLineNumbers: editor.selectFrozenLineNumbers(state),
       characterOptions: editor.selectCharacterPool(state),
     }),
     shallowEqual

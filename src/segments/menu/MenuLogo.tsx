@@ -5,7 +5,6 @@ import { overlays } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
-import { app } from '@store/thunks';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
@@ -85,7 +84,7 @@ export default function MenuLogo() {
             compact={dynamic ? compact : true}
             icon={TIcon.SETTINGS}
             isActive={overlay === 'settings'}
-            onClick={() => app.openSettingsOverlay()}
+            onClick={() => overlays.openSettings()}
           >
             {t('buttons.settings')}
           </ListItem>

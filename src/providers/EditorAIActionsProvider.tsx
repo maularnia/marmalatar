@@ -18,12 +18,12 @@ import { aiClients } from '@src/services/ai/clients';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
-import { prompt } from '@src/store/slices/prompt';
+import { promptTemplates } from '@src/services/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { ai } from '@store/slices/ai';
-import { glossaries } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/glossary';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize } from '@ui-toolkit/Tag';
@@ -62,7 +62,7 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
     const client = selectedIntegrationId
       ? aiClients[selectedIntegrationId as keyof typeof aiClients]
       : undefined;
-    const selectedPromptTemplateFileName = prompt.get.selectedPromptTemplateFileName();
+    const selectedPromptTemplateFileName = promptTemplates.get.selectedFileName();
     if (client?.supportsContext && !selectedPromptTemplateFileName) {
       emitNoPromptTemplateMessage(pushMessage);
       return false;

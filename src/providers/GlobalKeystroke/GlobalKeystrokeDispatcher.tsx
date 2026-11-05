@@ -3,7 +3,6 @@ import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useAppSelector } from '@store/hooks';
 import { settings } from '@store/slices/settings';
 import { overlays } from '@store/slices/overlays';
-import { app } from '@store/thunks';
 import { TThemeSelection } from '@src/types';
 import {
   KeyHubProvider,
@@ -255,10 +254,10 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
     if (currentOverlay !== null) overlays.closeAll();
   });
   useAppGlobalKeystroke('openSettings', () => {
-    app.openSettingsOverlay();
+    overlays.openSettings();
   });
   useAppGlobalKeystroke('openExport', () => {
-    app.openExportOverlay();
+    overlays.openExport();
   });
   useAppGlobalKeystroke('switchToDarkTheme', () => {
     settings.setThemeSelection(TThemeSelection.DARK);

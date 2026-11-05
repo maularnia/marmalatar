@@ -1,4 +1,4 @@
-import { TGlossaryPairColumn, useGlossaryRefs } from '@providers/GlossaryRefsProvider';
+import { glossaries, type TGlossaryPairColumn } from '@store/slices/glossary';
 import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import Button from '@ui-toolkit/Button/Button';
@@ -47,7 +47,6 @@ export default function GlossaryTableLine({
   onInsertAfter,
 }: GlossaryTableLineProps) {
   const { t } = useTranslation('tooltips');
-  const { registerGlossaryPairInputRef } = useGlossaryRefs();
   const originalInputRef = useRef<HTMLDivElement>(null);
   const translationInputRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState<boolean>();
@@ -61,13 +60,13 @@ export default function GlossaryTableLine({
   );
 
   useEffect(() => {
-    registerGlossaryPairInputRef(pairIndex, 'original', originalInputRef.current);
-    registerGlossaryPairInputRef(pairIndex, 'translation', translationInputRef.current);
+    glossaries.registerPairInput(pairIndex, 'original', originalInputRef.current);
+    glossaries.registerPairInput(pairIndex, 'translation', translationInputRef.current);
     return () => {
-      registerGlossaryPairInputRef(pairIndex, 'original', null);
-      registerGlossaryPairInputRef(pairIndex, 'translation', null);
+      glossaries.registerPairInput(pairIndex, 'original', null);
+      glossaries.registerPairInput(pairIndex, 'translation', null);
     };
-  }, [pairIndex, registerGlossaryPairInputRef]);
+  }, [pairIndex]);
 
   return (
     <EGlossaryTableLine>

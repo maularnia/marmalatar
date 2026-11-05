@@ -1,4 +1,3 @@
-import { GlossaryStateProvider } from '@providers/GlossaryStateProvider';
 import { useAppSelector } from '@store/hooks';
 import { overlays } from '@store/slices/overlays';
 import { AnimatePresence } from 'motion/react';
@@ -12,11 +11,7 @@ export default function Overlays() {
   return (
     <AnimatePresence mode="wait">
       {currentOverlay === 'promptTemplate' && <PromptOverlay />}
-      {currentOverlay === 'glossary' && (
-        <GlossaryStateProvider>
-          <GlossaryOverlay />
-        </GlossaryStateProvider>
-      )}
+      {currentOverlay === 'glossary' && <GlossaryOverlay />}
       {currentOverlay === 'settings' && <SettingsOverlay />}
       {currentOverlay === 'export' && <ExportOverlay />}
     </AnimatePresence>

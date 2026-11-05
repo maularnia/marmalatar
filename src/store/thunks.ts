@@ -1,13 +1,13 @@
 import { api } from './createApi';
 import type { AppDispatch } from './root';
-import { aiPromptEditor, glossaries, promptTemplates } from './slices/aiPromptEditor';
+import { promptTemplates } from '@src/services/prompt';
+import { glossaries } from './slices/glossary';
 import { ai } from './slices/ai';
 import { workingFolder } from './slices/workingFolder';
 import { editor } from './slices/editor';
 import { TOverlay } from './slices/overlays';
 import { overlays } from './slices/overlays';
 import { projects } from './slices/project';
-import { prompt } from './slices/prompt';
 import { settings } from './slices/settings';
 
 // Thunks that span slices which import each other, so they can't live in either slice file
@@ -16,7 +16,7 @@ import { settings } from './slices/settings';
 // ── AI Prompt Template ──────────────────────────────────────────────────────
 
 // Lives here because it refreshes the translation's selected template (the ai slice), and the
-// ai slice imports aiPromptEditor
+// ai slice imports the prompt slice
 const savePromptTemplate = () => async (): Promise<void> => {
   const currentPromptTemplate = promptTemplates.get.current();
   const promptTemplateData = promptTemplates.get.data();
@@ -24,28 +24,14 @@ const savePromptTemplate = () => async (): Promise<void> => {
   if (!currentPromptTemplate || !folder || !promptTemplateData) return;
   await promptTemplates.writeBody(currentPromptTemplate, promptTemplateData);
   await promptTemplates.refresh();
-  if (prompt.get.selectedPromptTemplateFileName() === currentPromptTemplate) {
+  if (promptTemplates.get.selectedFileName() === currentPromptTemplate) {
     void ai.refreshSelectedPromptTemplateData();
   }
 };
 
-// ── Overlays ────────────────────────────────────────────────────────────────
-
-// Here rather than in the overlays slice: they reset aiPromptEditor, which imports overlays
-
-const openSettingsOverlay = () => (): void => {
-  aiPromptEditor.reset();
-  overlays.setCurrent(TOverlay.SETTINGS);
-};
-
-const openExportOverlay = () => (): void => {
-  aiPromptEditor.reset();
-  overlays.setCurrent(TOverlay.EXPORT);
-};
-
 // ── Folder ──────────────────────────────────────────────────────────────────
 
-// The folder's lists live in the slices that own the files (project, aiPromptEditor), and those
+// The folder's lists live in the slices that own the files (project, prompt, glossary), and those
 // import the workingFolder slice, so refreshing them all together has to happen here
 const refreshAll = () => async (): Promise<void> => {
   if (!workingFolder.get.folder()) {
@@ -101,8 +87,9 @@ const workingFolderPick =
       editor.resetMemoryState();
       overlays.closeAll();
       projects.reset();
-      prompt.reset();
-      aiPromptEditor.reset();
+      editor.setFrozenLineNumbers([]);
+      promptTemplates.setSelectedFileName(null);
+      glossaries.setSelectedFileNames([]);
 
       await dispatch(workingFolderScan());
       return true;
@@ -132,8 +119,6 @@ const hydrateApp =
 export const app = api('app', {
   thunks: {
     hydrateApp,
-    openExportOverlay,
-    openSettingsOverlay,
     savePromptTemplate,
     workingFolderPick,
     workingFolderScan,

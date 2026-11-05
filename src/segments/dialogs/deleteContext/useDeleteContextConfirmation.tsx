@@ -2,7 +2,7 @@ import { useConfirm } from '@providers/ConfirmationProvider/ConfirmationProvider
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { overlays } from '@store/slices/overlays';
-import { promptTemplates } from '@store/slices/aiPromptEditor';
+import { promptTemplates } from '@src/services/prompt';
 import { DeleteContextDialog } from './DeleteContextDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');

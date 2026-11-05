@@ -7,7 +7,8 @@ import { settings } from '@src/store/slices/settings';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useProjectLoader } from '@src/utils/useProjectLoader';
-import { aiPromptEditor, glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
+import { promptTemplates } from '@src/services/prompt';
+import { glossaries } from '@store/slices/glossary';
 import { ai } from '@store/slices/ai';
 import { workingFolder } from '@store/slices/workingFolder';
 import { overlays } from '@store/slices/overlays';
@@ -267,7 +268,6 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
       if (isActive || isBusy) return;
       await saveCurrentIfNeeded();
       overlays.closeAll();
-      aiPromptEditor.reset();
       void loadProject(project);
     },
     [saveCurrentIfNeeded, loadProject]
@@ -326,7 +326,7 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
     const { key, kind } = focusedItem;
     switch (kind) {
       case 'settings':
-        app.openSettingsOverlay();
+        overlays.openSettings();
         break;
       case 'createProject':
         handleStartNewProject();

@@ -62,7 +62,8 @@ root folder `src`.
 - src/providers - business logic core of the application.
 - src/segments - logical chunks/groups of components grouped by functional similarity (dialogs, menu, overlays, pages/views)
 - src/services - pure services providing utility functions for providers to perform specific set of tasks (spellchecking/ai-translations) `spellcheck` runs dictionary parsing and text checks in one Web Worker shared by every editor, because that work is too slow for the UI thread. Suggestions take seconds per word, so they're only requested for the word the caret is on. `ipc` is the renderer's only way to reach the main process: consumers use the `IPC` singleton (`IPC.projects.get(...)`), whose properties are `IPCSegment` subclasses from `ipc/segments`, one per theme. ESLint forbids `window.electronAPI` and direct segment imports anywhere else.
-- src/store - application store and store-slices. Each slice exposes its selectors, actions and thunks only through domain facades built at the bottom of the slice file with `api(keyword, { actions, thunks, selectors, helpers })` (`src/store/createApi.ts`): `glossaries`, `promptTemplates`, `aiPromptEditor` (aiPromptEditor.ts), `projects`, `workingFolder`, `prompt`, `overlays`, `ai`, `settings`, `editor`. A member's key is its name with the keyword taken out (`selectGlossaryItems` → `glossaries.selectItems`, `refreshPromptTemplates` → `promptTemplates.refresh`), so name declarations to read well once it's gone (`createGlossary`, not `createGlossaryFile`). `api()` throws on load if two members land on the same key. Actions and thunks dispatch themselves on the app store (`editor.mergeLines(...)`, never `dispatch(editor.mergeLines(...))`, which would dispatch twice); each selector also gets a reader of the current state under `get` (`glossaries.get.items()`, the `select` prefix dropped). `store.ts` hands the store to `connectApi`. `thunks.ts` exposes its thunks as the `app` facade (`app.hydrate()`, `app.workingFolderPick()`). Inside a slice file code uses local names for its actions and selectors; everywhere else, other slices included, uses the facade. Store code reads the current state through `get` too, the slice's own facade included (`promptTemplates.get.current()`), instead of `const state = getState()` snapshots; `getState()` stays only where a snapshot is the point (before/after comparisons in middleware) or a facade can't be imported without a cycle. Thunks that would make slices import each other stay plain exports of `thunks.ts`
+- src/services/<domain> - domain services, one folder each, replacing a slice file in `src/store/slices` (prompt is the first; the other slices haven't moved yet). `slice.ts` defines the slice (state, reducers, extraReducers, selectors); `actions.ts` holds the operations as plain (async) functions, not thunks, plus IPC wrappers; they go into the facade's `functions` group; `index.ts` builds the facade with `api()` and is the only entry point from outside (`import { promptTemplates, promptReducer } from '@src/services/prompt'`). Imports run index → actions → slice: actions use `dispatch` and `select(localSelector)` exported from `createApi.ts` with their own slice's actions and selectors, never their own facade, which would be a cycle; other domains are reached through their facades
+- src/store - application store and store-slices. Each slice exposes its selectors, actions and thunks only through domain facades built at the bottom of the slice file with `api(keyword, { actions, thunks, selectors, functions })` (`src/store/createApi.ts`): `glossaries` (glossary.ts), `promptTemplates` (`src/services/prompt`), `projects`, `workingFolder`, `overlays`, `ai`, `settings`, `editor`. A member's key is its name with the keyword taken out (`selectGlossaryItems` → `glossaries.selectItems`, `refreshPromptTemplates` → `promptTemplates.refresh`), so name declarations to read well once it's gone (`createGlossary`, not `createGlossaryFile`). `api()` throws on load if two members land on the same key. Actions and thunks dispatch themselves on the app store (`editor.mergeLines(...)`, never `dispatch(editor.mergeLines(...))`, which would dispatch twice); each selector also gets a reader of the current state under `get` (`glossaries.get.items()`, the `select` prefix dropped). `store.ts` hands the store to `connectApi`. `thunks.ts` exposes its thunks as the `app` facade (`app.hydrate()`, `app.workingFolderPick()`). Inside a slice file code uses local names for its actions and selectors; everywhere else, other slices included, uses the facade. Store code reads the current state through `get` too, the slice's own facade included (`promptTemplates.get.current()`), instead of `const state = getState()` snapshots; `getState()` stays only where a snapshot is the point (before/after comparisons in middleware) or a facade can't be imported without a cycle. Thunks that would make slices import each other stay plain exports of `thunks.ts`
 - src/theme - theme service. Extracted to a separate folder due to scale and complexity
 - src/toolkit - UI atomic compoenet library of genreal purpose. Inputs, Icons, Selects, Tags...
 - src/utils - commonly used general-perpose utility functions or set of functions split into files by theme.
@@ -76,20 +77,20 @@ They sit in the middle between store/services and pure UI view components or pro
 
 Flat files in `src/providers`, with a subfolder only when a provider needs companion files (`ConfirmationProvider/`, `GlobalKeystroke/`, each with its own `types.ts`).
 
-Feature domains (Editor, Glossary, Menu) are split into layers. Each layer consumes the one before it through its hook:
+Feature domains (Editor, Menu) are split into layers. Each layer consumes the one before it through its hook:
 
 1. `*RefsProvider` - DOM element registries (no React state, no re-renders)
 2. `*ActionsProvider` - `handle*` business logic: reads refs and the store, dispatches, opens dialogs, emits messages
 3. `*KeystrokeProvider` - maps keys to actions and holds no business logic
 
-`EditorStateProvider` and `GlossaryStateProvider` only compose the Refs and Actions layers. The Keystroke layer is mounted separately, deeper in the tree.
+`EditorStateProvider` only composes the Refs and Actions layers. The Keystroke layer is mounted separately, deeper in the tree.
 
 Mount points:
 
 - App-wide, in this order (`src/main.tsx`): `MessageHelmetProvider` > `LocaleProvider` > `ThemeProvider` > `MenuStateProvider` > `PopperPortalProvider` > `GlobalKeystrokeDispatcher` > `ConfirmationProvider` > `VideoProvider`. The order matters: each one may use the ones above it.
 - Editor: `EditorStateProvider` in `src/layout/GeneralLayout.tsx`, `EditorKeystrokeProvider` in `src/layout/EditorLayout.tsx`
 - Menu: `MenuRefsProvider` > `MenuActionsProvider` > `MenuKeystrokeProvider` in `src/segments/menu/index.tsx`
-- Glossary: `GlossaryStateProvider` in `src/segments/overlays/Overlays.tsx`, `GlossaryKeystrokeProvider` in `src/segments/overlays/Glossary/Glossary.tsx`
+- Glossary: `GlossaryKeystrokeProvider` in `src/segments/overlays/Glossary/Glossary.tsx`
 
 ### Files
 
@@ -101,10 +102,8 @@ Editor:
 - `EditorKeystrokeProvider` - editor shortcuts, plus `useEditorKeystroke` exposing which modifier keys are held. Shortcuts are skipped while an AI translation is running
 
 Glossary:
-- `GlossaryStateProvider` - composes `GlossaryRefsProvider`, `GlossaryActionsProvider`
-- `GlossaryRefsProvider` - input elements per pair and column (`original`/`translation`), cleared when the glossary changes
-- `GlossaryActionsProvider` - pair focus, insert and delete. Focus lives in local state here, not in the store as in the editor
-- `GlossaryKeystrokeProvider` - glossary shortcuts
+- No Refs/Actions providers: everything glossary is the `glossaries` service in `src/store/slices/glossary.ts` -- the folder's glossary files, the open glossary's pairs, the translation's selection and resolved entries, and the editor's pair focus (`glossaries.focusPairInput`, `movePairFocus`, `insertPair`, `deletePair`). Focus lives in the store, as in the editor; the pair input elements live in a module-level registry next to it (`glossaries.registerPairInput`), since DOM elements aren't state. Deleting a pair asks first through `useDeleteGlossaryEntryConfirmation().confirmAndDeletePair`, because dialogs come from hooks
+- `GlossaryKeystrokeProvider` - glossary shortcuts, calling `glossaries.*`
 
 Menu:
 - `MenuStateProvider` - sidebar compact/expanded state

@@ -4,7 +4,7 @@ import { projects } from '@src/store/slices/project';
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { glossaries } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/glossary';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 

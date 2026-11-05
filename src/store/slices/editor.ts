@@ -20,6 +20,8 @@ type EditorSliceState = {
   future: TSubtitleLine[][];
   totalLinesToTranslate: number;
   characterPool: TCharacter[];
+  // Lines AI translation skips, by line number
+  frozenLineNumbers: number[];
   // Video UI (persisted)
   isVideoCollapsed: boolean;
 };
@@ -142,6 +144,7 @@ const initialState: EditorSliceState = {
   future: [],
   totalLinesToTranslate: 0,
   characterPool: [],
+  frozenLineNumbers: [],
   isVideoCollapsed: false,
 };
 
@@ -579,6 +582,18 @@ const editorSlice = createSlice({
     setVideoCollapsed(state, action: PayloadAction<boolean>) {
       state.isVideoCollapsed = action.payload;
     },
+    // Frozen lines
+    setFrozenLineNumbers(state, action: PayloadAction<number[]>) {
+      state.frozenLineNumbers = action.payload;
+    },
+    addFrozenLine(state, action: PayloadAction<number>) {
+      if (!state.frozenLineNumbers.includes(action.payload)) {
+        state.frozenLineNumbers.push(action.payload);
+      }
+    },
+    removeFrozenLine(state, action: PayloadAction<number>) {
+      state.frozenLineNumbers = state.frozenLineNumbers.filter((no) => no !== action.payload);
+    },
   },
   selectors: {
     // Editor UI memory
@@ -595,6 +610,7 @@ const editorSlice = createSlice({
     selectCharacterPool: (state) => state.characterPool,
     // Video UI
     selectIsVideoCollapsed: (state) => state.isVideoCollapsed,
+    selectFrozenLineNumbers: (state) => state.frozenLineNumbers,
   },
 });
 
@@ -631,6 +647,10 @@ const {
   setCharacterPool,
   // Video UI
   setVideoCollapsed,
+  // Frozen lines
+  setFrozenLineNumbers,
+  addFrozenLine,
+  removeFrozenLine,
 } = editorSlice.actions;
 
 const {
@@ -644,6 +664,7 @@ const {
   selectCanRedo,
   selectCharacterPool,
   selectIsVideoCollapsed,
+  selectFrozenLineNumbers,
 } = editorSlice.selectors;
 
 export default editorSlice.reducer;
@@ -652,6 +673,9 @@ export default editorSlice.reducer;
 
 export const editor = api('editor', {
   actions: {
+    addFrozenLine,
+    removeFrozenLine,
+    setFrozenLineNumbers,
     addTranslatedLine,
     autoMergeAdjacentLines,
     cleanupLines,
@@ -682,6 +706,7 @@ export const editor = api('editor', {
     updateTranslationCharacter,
   },
   selectors: {
+    selectFrozenLineNumbers,
     selectActiveLineIndex,
     selectCanRedo,
     selectCanUndo,

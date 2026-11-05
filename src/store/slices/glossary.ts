@@ -1,43 +1,35 @@
 import { api } from '@store/createApi';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { TPromptTemplateListEntry } from '@bridge/definitions/promptTemplateEntry';
 import i18n from '@src/i18n';
-import { DEFAULT_PROMPT_TEMPLATE } from '@src/services/ai/config';
 import { IPC } from '@src/services/ipc/IPC';
 import { TLanguage } from '@src/types';
+import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import {
   GlossaryListEntrySchema,
   readGlossaryFileContract,
-  readPromptTemplateFileContract,
   type AIGlossaryFileDataType,
-  type PromptTemplateFileDataType,
   type TGlossaryEntry,
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import type { AppDispatch, RootState } from '@store/root';
+import { overlays, TOverlay } from '@store/slices/overlays';
 import { workingFolder } from '@store/slices/workingFolder';
-import { TOverlay } from '@store/slices/overlays';
-import { overlays } from '@store/slices/overlays';
-import { prompt } from '@store/slices/prompt';
+
+// Everything about glossaries in one place: the tracked folder's glossary files, the glossary open
+// in the editor overlay (its pairs, which pair input has focus), and the glossaries the translation
+// uses (the selection, and the entries resolved from it for the AI request).
 
 export type { TGlossaryEntry };
-type TPromptTemplateEntry = TPromptTemplateListEntry;
+export type TGlossaryPairColumn = 'original' | 'translation';
 
 const t = i18n.getFixedT(null, 'errors');
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
 
-// Files in the tracked folder are reached only through the main process's project, prompt template
-// and glossary services, keyed by projectId or file name. The renderer reads whole files but
-// writes only their bodies: headers (names, titles, emoji, languages) change through dedicated
-// calls, and the services compute what derives from the file, such as translation progress.
-// create and rename resolve to null when the file name the title maps to is taken.
-
-// Prompt templates
-
-async function listPromptTemplates(): Promise<TPromptTemplateEntry[]> {
-  return IPC.promptTemplates.list();
-}
+// Glossary files are reached only through the main process's glossary service, keyed by file name.
+// The renderer reads whole files but writes only their pair list: the header (title, emoji,
+// languages) changes through dedicated calls. create and rename resolve to null when the file name
+// the title maps to is taken.
 
 // A glossary whose languages this build doesn't know is left out
 async function listGlossaries(): Promise<TGlossaryEntry[]> {
@@ -47,51 +39,6 @@ async function listGlossaries(): Promise<TGlossaryEntry[]> {
     return parsed.success ? [parsed.data] : [];
   });
 }
-
-async function readPromptTemplateFile(
-  fileName: string
-): Promise<PromptTemplateFileDataType | null> {
-  const raw = await IPC.promptTemplates.get(fileName);
-  if (!raw) return null;
-  try {
-    return readPromptTemplateFileContract(raw);
-  } catch {
-    return null;
-  }
-}
-
-async function writePromptTemplateBody(
-  fileName: string,
-  { promptTemplate }: PromptTemplateFileDataType
-): Promise<void> {
-  await IPC.promptTemplates.set(fileName, { promptTemplate });
-}
-
-// The new file name, or null when it's taken
-async function createPromptTemplateOnDisk({
-  title,
-  emoji,
-  promptTemplate,
-}: PromptTemplateFileDataType): Promise<string | null> {
-  const entry = await IPC.promptTemplates.create({ title, emoji }, { promptTemplate });
-  return entry?.fileName ?? null;
-}
-
-// The new file name, or null when it's taken
-async function renamePromptTemplateOnDisk(fileName: string, title: string): Promise<string | null> {
-  const entry = await IPC.promptTemplates.rename(fileName, title);
-  return entry?.fileName ?? null;
-}
-
-async function updatePromptTemplateEmojiOnDisk(fileName: string, emoji: string): Promise<void> {
-  await IPC.promptTemplates.setEmoji(fileName, emoji);
-}
-
-async function deletePromptTemplateOnDisk(fileName: string): Promise<void> {
-  await IPC.promptTemplates.delete(fileName);
-}
-
-// Glossaries
 
 async function readGlossaryFile(fileName: string): Promise<AIGlossaryFileDataType | null> {
   const raw = await IPC.glossaries.get(fileName);
@@ -147,254 +94,168 @@ async function deleteGlossaryOnDisk(fileName: string): Promise<void> {
   await IPC.glossaries.delete(fileName);
 }
 
-type AiPromptEditorState = {
-  // The tracked folder's prompt templates and glossaries, as the main process lists them
-  promptTemplateItems: TPromptTemplateEntry[];
+// ── Pair inputs ──────────────────────────────────────────────────────────────
+
+// The open glossary's pair input elements, by pair index and column, for moving focus. Kept out
+// of the store: DOM elements aren't state. Inputs register themselves as they mount, and null
+// removes one; a row goes once both its columns are empty, so the map cleans itself on unmount.
+type TPairInputs = Record<TGlossaryPairColumn, HTMLElement | null>;
+const pairInputs = new Map<number, TPairInputs>();
+
+function registerGlossaryPairInput(
+  pairIndex: number,
+  column: TGlossaryPairColumn,
+  el: HTMLElement | null
+): void {
+  if (el === null) {
+    const row = pairInputs.get(pairIndex);
+    if (!row) return;
+    row[column] = null;
+    if (!row.original && !row.translation) pairInputs.delete(pairIndex);
+    return;
+  }
+  const row = pairInputs.get(pairIndex) ?? { original: null, translation: null };
+  row[column] = el;
+  pairInputs.set(pairIndex, row);
+}
+
+// Called whenever a different glossary is opened: the table may stay mounted across the switch,
+// so its old inputs would otherwise still be found under the same indexes
+function clearPairInputs(): void {
+  pairInputs.clear();
+}
+
+type GlossaryState = {
+  // The tracked folder's glossaries, as the main process lists them
   glossaryItems: TGlossaryEntry[];
-  currentPromptTemplate: string | null;
-  promptTemplateData: PromptTemplateFileDataType | null;
+  // The glossary open in the editor overlay
   currentGlossary: string | null;
   glossaryData: AIGlossaryFileDataType | null;
+  focusedPairIndex: number | null;
+  focusedColumn: TGlossaryPairColumn | null;
+  // The glossaries the translation uses, and the entries resolved from them for the AI request
+  selectedGlossaryFileNames: string[];
   resolvedGlossaryEntries: [string, string][];
 };
 
-const initialState: AiPromptEditorState = {
-  promptTemplateItems: [],
+const initialState: GlossaryState = {
   glossaryItems: [],
-  currentPromptTemplate: null,
-  promptTemplateData: null,
   currentGlossary: null,
   glossaryData: null,
+  focusedPairIndex: null,
+  focusedColumn: null,
+  selectedGlossaryFileNames: [],
   resolvedGlossaryEntries: [],
 };
 
-const aiPromptEditorSlice = createSlice({
-  name: 'aiPromptEditor',
+function clearEditor(state: GlossaryState): void {
+  state.currentGlossary = null;
+  state.glossaryData = null;
+  state.focusedPairIndex = null;
+  state.focusedColumn = null;
+}
+
+const glossarySlice = createSlice({
+  name: 'glossary',
   initialState,
   reducers: {
-    setPromptTemplateItems(state, action: PayloadAction<TPromptTemplateEntry[]>) {
-      state.promptTemplateItems = action.payload;
-    },
     setGlossaryItems(state, action: PayloadAction<TGlossaryEntry[]>) {
       state.glossaryItems = action.payload;
     },
-    setCurrentPromptTemplate(state, action: PayloadAction<string | null>) {
-      state.currentPromptTemplate = action.payload;
-    },
-    setPromptTemplateData(state, action: PayloadAction<PromptTemplateFileDataType | null>) {
-      state.promptTemplateData = action.payload;
-    },
+    // A different glossary has no focused pair yet
     setCurrentGlossary(state, action: PayloadAction<string | null>) {
+      if (state.currentGlossary !== action.payload) {
+        state.focusedPairIndex = null;
+        state.focusedColumn = null;
+      }
       state.currentGlossary = action.payload;
     },
     setGlossaryData(state, action: PayloadAction<AIGlossaryFileDataType | null>) {
       state.glossaryData = action.payload;
     },
+    closeGlossaryEditor(state) {
+      clearEditor(state);
+    },
+    setFocusedGlossaryPair(
+      state,
+      action: PayloadAction<{ pairIndex: number | null; column?: TGlossaryPairColumn | null }>
+    ) {
+      state.focusedPairIndex = action.payload.pairIndex;
+      if (action.payload.column !== undefined) state.focusedColumn = action.payload.column;
+    },
+    // The resolved entries belong to the previous selection, so they're dropped until resolved again
+    setSelectedGlossaryFileNames(state, action: PayloadAction<string[]>) {
+      state.selectedGlossaryFileNames = action.payload;
+      state.resolvedGlossaryEntries = [];
+    },
     setResolvedGlossaryEntries(state, action: PayloadAction<[string, string][]>) {
       state.resolvedGlossaryEntries = action.payload;
     },
-    // Resets the editor's own scratch state only -- resolvedGlossaryEntries is the active
-    // translation-time glossary cache, not scratch editor state, and is deliberately preserved
-    // here (dispatched from opening Settings/Export and switching/deleting projects, none of
-    // which should invalidate a glossary resolution that's still valid). The lists are the tracked
-    // folder's, not the editor's, and are kept too.
-    resetAiPromptEditor(state): AiPromptEditorState {
-      return {
-        ...initialState,
-        promptTemplateItems: state.promptTemplateItems,
-        glossaryItems: state.glossaryItems,
-        resolvedGlossaryEntries: state.resolvedGlossaryEntries,
-      };
-    },
   },
   extraReducers(builder) {
-    builder.addCase(overlays.closeAll, (state) => {
-      state.promptTemplateData = null;
-      state.glossaryData = null;
-      state.currentPromptTemplate = null;
-      state.currentGlossary = null;
-    });
-    builder.addCase(prompt.setSelectedGlossaryFileNames, (state) => {
-      state.resolvedGlossaryEntries = [];
+    // Opening another overlay, or closing them all, closes the glossary editor. The prompt
+    // template editor does the same on its side, so neither slice has to reach into the other.
+    builder.addCase(overlays.closeAll, clearEditor);
+    builder.addCase(overlays.setCurrent, (state, action) => {
+      if (action.payload !== TOverlay.GLOSSARY) clearEditor(state);
     });
   },
   selectors: {
-    selectPromptTemplateItems: (state) => state.promptTemplateItems,
     selectGlossaryItems: (state) => state.glossaryItems,
-    selectCurrentPromptTemplate: (state) => state.currentPromptTemplate,
-    selectPromptTemplateData: (state) => state.promptTemplateData,
     selectCurrentGlossary: (state) => state.currentGlossary,
     selectGlossaryData: (state) => state.glossaryData,
+    selectFocusedGlossaryPairIndex: (state) => state.focusedPairIndex,
+    selectFocusedGlossaryColumn: (state) => state.focusedColumn,
+    selectSelectedGlossaryFileNames: (state) => state.selectedGlossaryFileNames,
     selectResolvedGlossaryEntries: (state) => state.resolvedGlossaryEntries,
   },
 });
 
-const { setCurrentPromptTemplate, setCurrentGlossary } = aiPromptEditorSlice.actions;
-
 const {
-  setPromptTemplateItems,
   setGlossaryItems,
-  setPromptTemplateData,
+  setCurrentGlossary,
   setGlossaryData,
+  closeGlossaryEditor,
+  setFocusedGlossaryPair,
+  setSelectedGlossaryFileNames,
   setResolvedGlossaryEntries,
-  resetAiPromptEditor,
-} = aiPromptEditorSlice.actions;
+} = glossarySlice.actions;
 
 const {
-  selectPromptTemplateItems,
   selectGlossaryItems,
-  selectCurrentPromptTemplate,
-  selectPromptTemplateData,
   selectCurrentGlossary,
   selectGlossaryData,
+  selectFocusedGlossaryPairIndex,
+  selectFocusedGlossaryColumn,
+  selectSelectedGlossaryFileNames,
   selectResolvedGlossaryEntries,
-} = aiPromptEditorSlice.selectors;
+} = glossarySlice.selectors;
 
-export default aiPromptEditorSlice.reducer;
+export default glossarySlice.reducer;
 
-// ── List thunks ──────────────────────────────────────────────────────────────
+// ── File thunks ──────────────────────────────────────────────────────────────
 
-// The lists come from the main process, which renormalizes them against the tracked folder on
-// every read, so after any write the renderer just reads them again. A selection whose file is gone
-// is dropped.
-const refreshPromptTemplates =
-  () =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    const promptTemplateItems = await listPromptTemplates();
-    dispatch(setPromptTemplateItems(promptTemplateItems));
-    const selectedTemplate = prompt.get.selectedPromptTemplateFileName();
-    if (selectedTemplate && !promptTemplateItems.some((i) => i.fileName === selectedTemplate)) {
-      prompt.setSelectedPromptTemplateFileName(null);
-    }
-  };
-
+// The list comes from the main process, which renormalizes it against the tracked folder on every
+// read, so after any write the renderer just reads it again. A selection whose file is gone is
+// dropped.
 const refreshGlossaries =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
     const glossaryItems = await listGlossaries();
     dispatch(setGlossaryItems(glossaryItems));
-    const selectedGlossaries = prompt.get.selectedGlossaryFileNames();
+    const selectedGlossaries = glossaries.get.selectedFileNames();
     const stillValidGlossaries = selectedGlossaries.filter((fn) =>
       glossaryItems.some((i) => i.fileName === fn)
     );
     if (stillValidGlossaries.length !== selectedGlossaries.length) {
-      prompt.setSelectedGlossaryFileNames(stillValidGlossaries);
+      glossaries.setSelectedFileNames(stillValidGlossaries);
     }
   };
-
-// ── Prompt template thunks ───────────────────────────────────────────────────
-
-const initializePromptTemplateEditor =
-  (fileName: string) =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    dispatch(setCurrentGlossary(null));
-    dispatch(setGlossaryData(null));
-    dispatch(setCurrentPromptTemplate(fileName));
-    dispatch(setPromptTemplateData(null));
-    const folder = workingFolder.get.folder();
-    if (!folder) return;
-    const data = await readPromptTemplateFile(fileName);
-    dispatch(setPromptTemplateData(data));
-  };
-
-const deletePromptTemplate =
-  (fileName: string) =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    const folder = workingFolder.get.folder();
-    if (!folder) return;
-    await deletePromptTemplateOnDisk(fileName);
-    await dispatch(refreshPromptTemplates());
-    if (promptTemplates.get.current() === fileName) {
-      dispatch(resetAiPromptEditor());
-    }
-  };
-
-const renamePromptTemplate =
-  (fileName: string, newTitle: string) =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    const folder = workingFolder.get.folder();
-    if (!folder) throw new Error(t('shared.folderNotSelected'));
-    const trimmed = newTitle.trim();
-    if (!trimmed) throw new Error(t('shared.nameEmpty'));
-
-    const newFileName = await renamePromptTemplateOnDisk(fileName, trimmed);
-    if (!newFileName) throw new Error(t('promptTemplate.alreadyExists', { title: trimmed }));
-    // Re-read: the main process wrote the header
-    const updated = await readPromptTemplateFile(newFileName);
-    if (!updated) throw new Error(t('promptTemplate.readFailed'));
-
-    if (newFileName !== fileName) {
-      const selectedPt = prompt.get.selectedPromptTemplateFileName();
-      if (selectedPt === fileName) prompt.setSelectedPromptTemplateFileName(newFileName);
-      if (promptTemplates.get.current() === fileName) {
-        dispatch(setCurrentPromptTemplate(newFileName));
-        dispatch(setPromptTemplateData(updated));
-      }
-    } else if (promptTemplates.get.current() === fileName) {
-      dispatch(setPromptTemplateData(updated));
-    }
-
-    await dispatch(refreshPromptTemplates());
-  };
-
-const updatePromptTemplateEmoji =
-  (fileName: string, emoji: string) =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    const folder = workingFolder.get.folder();
-    if (!folder) throw new Error(t('shared.folderNotSelected'));
-
-    await updatePromptTemplateEmojiOnDisk(fileName, emoji);
-    const updated = await readPromptTemplateFile(fileName);
-    if (!updated) throw new Error(t('promptTemplate.readFailed'));
-
-    if (promptTemplates.get.current() === fileName) {
-      dispatch(setPromptTemplateData(updated));
-    }
-
-    await dispatch(refreshPromptTemplates());
-  };
-
-const createPromptTemplate =
-  (title: string) =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    const folder = workingFolder.get.folder();
-    if (!folder) throw new Error(t('shared.folderNotSelected'));
-    const trimmed = title.trim();
-    if (!trimmed) throw new Error(t('shared.nameEmpty'));
-
-    const emoji = await pickRandomCreationEmoji();
-    const data: PromptTemplateFileDataType = {
-      version: 1,
-      title: trimmed,
-      emoji,
-      promptTemplate: DEFAULT_PROMPT_TEMPLATE,
-    };
-    const fileName = await createPromptTemplateOnDisk(data);
-    if (!fileName) throw new Error(t('promptTemplate.alreadyExists', { title: trimmed }));
-    await dispatch(refreshPromptTemplates());
-    await dispatch(openPromptTemplateEditor(fileName));
-  };
-
-const openPromptTemplateEditor =
-  (filename: string) =>
-  async (dispatch: AppDispatch): Promise<void> => {
-    if (
-      overlays.get.current() === TOverlay.PROMPT_TEMPLATE &&
-      promptTemplates.get.current() === filename
-    ) {
-      return;
-    }
-    overlays.setCurrent(TOverlay.PROMPT_TEMPLATE);
-    await dispatch(initializePromptTemplateEditor(filename));
-  };
-
-// ── Glossary thunks ──────────────────────────────────────────────────────────
 
 const initializeGlossaryEditor =
   (fileName: string) =>
   async (dispatch: AppDispatch): Promise<void> => {
-    dispatch(setCurrentPromptTemplate(null));
-    dispatch(setPromptTemplateData(null));
+    clearPairInputs();
     dispatch(setCurrentGlossary(fileName));
     dispatch(setGlossaryData(null));
     const folder = workingFolder.get.folder();
@@ -416,7 +277,7 @@ const saveGlossary =
     };
     await writeGlossaryBody(currentGlossary, dataToSave);
     await dispatch(refreshGlossaries());
-    if (prompt.get.selectedGlossaryFileNames().includes(currentGlossary)) {
+    if (glossaries.get.selectedFileNames().includes(currentGlossary)) {
       dispatch(reconcileGlossarySelectionWithDirection());
     }
   };
@@ -434,7 +295,7 @@ const updateGlossaryLanguages =
     }
     await dispatch(refreshGlossaries());
     // A selected glossary may no longer match the project's direction
-    if (prompt.get.selectedGlossaryFileNames().includes(fileName)) {
+    if (glossaries.get.selectedFileNames().includes(fileName)) {
       dispatch(reconcileGlossarySelectionWithDirection());
     }
   };
@@ -447,7 +308,7 @@ const deleteGlossary =
     await deleteGlossaryOnDisk(fileName);
     await dispatch(refreshGlossaries());
     if (glossaries.get.current() === fileName) {
-      dispatch(resetAiPromptEditor());
+      dispatch(closeGlossaryEditor());
     }
   };
 
@@ -466,13 +327,14 @@ const renameGlossary =
     if (!updated) throw new Error(t('glossaryFile.readFailed'));
 
     if (newFileName !== fileName) {
-      const selectedGlossaries = prompt.get.selectedGlossaryFileNames();
+      const selectedGlossaries = glossaries.get.selectedFileNames();
       if (selectedGlossaries.includes(fileName)) {
-        prompt.setSelectedGlossaryFileNames(
+        glossaries.setSelectedFileNames(
           selectedGlossaries.map((fn) => (fn === fileName ? newFileName : fn))
         );
       }
       if (glossaries.get.current() === fileName) {
+        clearPairInputs();
         dispatch(setCurrentGlossary(newFileName));
         dispatch(setGlossaryData(updated));
       }
@@ -549,14 +411,14 @@ const addGlossaryEntry =
   };
 
 // Filters selected glossary file names down to those whose own source/target language actually
-// matches the project's current translation direction -- the selection in prompt slice state can
+// matches the project's current translation direction -- the selection can
 // go stale relative to the direction (e.g. right after the user flips source/target), and nothing
 // upstream is guaranteed to have pruned it yet. Keeping this check here, at the one place entries
 // actually get resolved for sending, means a mismatched glossary can never leak into a prompt
 // regardless of what the UI selection currently looks like. The AI clients themselves stay
 // language-agnostic -- they only ever see the already-filtered `glossaryEntries` pairs.
 function selectDirectionMatchedGlossaryFileNames(state: RootState): string[] {
-  const selectedFileNames = prompt.get.selectedGlossaryFileNames();
+  const selectedFileNames = glossaries.get.selectedFileNames();
   // Read straight from the state rather than through the project slice's selectors: the project
   // slice imports this one (to reconcile on load), so importing it back would be a cycle
   const { sourceLanguage, targetLanguage } = state.project;
@@ -600,10 +462,10 @@ const refreshResolvedGlossaryEntries =
 const reconcileGlossarySelectionWithDirection =
   () =>
   (dispatch: AppDispatch, getState: () => RootState): void => {
-    const currentFileNames = prompt.get.selectedGlossaryFileNames();
+    const currentFileNames = glossaries.get.selectedFileNames();
     const matchedFileNames = selectDirectionMatchedGlossaryFileNames(getState());
     if (matchedFileNames.length !== currentFileNames.length) {
-      prompt.setSelectedGlossaryFileNames(matchedFileNames);
+      glossaries.setSelectedFileNames(matchedFileNames);
     }
     void dispatch(refreshResolvedGlossaryEntries());
   };
@@ -618,18 +480,98 @@ const openGlossaryEditor =
     await dispatch(initializeGlossaryEditor(filename));
   };
 
+// ── Pair thunks ──────────────────────────────────────────────────────────────
+
+// Focuses one pair input of the open glossary and scrolls it into view. false when that input
+// isn't mounted.
+const focusGlossaryPairInput =
+  (pairIndex: number, column: TGlossaryPairColumn, selectAll = false) =>
+  (dispatch: AppDispatch): boolean => {
+    const el = pairInputs.get(pairIndex)?.[column];
+    if (!el) return false;
+    if (selectAll) selectAllContentEditable(el);
+    else focusContentEditableToEnd(el);
+    el.scrollIntoView({ block: 'nearest' });
+    dispatch(setFocusedGlossaryPair({ pairIndex, column }));
+    return true;
+  };
+
+const moveGlossaryPairFocus =
+  (direction: 'up' | 'down') =>
+  (dispatch: AppDispatch): void => {
+    const pairCount = glossaries.get.data()?.list.length ?? 0;
+    const focusedPairIndex = glossaries.get.focusedPairIndex();
+    const column = glossaries.get.focusedColumn() ?? 'original';
+    if (focusedPairIndex == null) {
+      if (pairCount === 0) return;
+      dispatch(focusGlossaryPairInput(0, column));
+      return;
+    }
+    const targetIndex = direction === 'up' ? focusedPairIndex - 1 : focusedPairIndex + 1;
+    if (targetIndex < 0 || targetIndex >= pairCount) return;
+    dispatch(focusGlossaryPairInput(targetIndex, column));
+  };
+
+// Adds an empty pair next to pairIndex and focuses it once it has rendered
+const insertGlossaryPair =
+  (pairIndex: number, position: 'before' | 'after') =>
+  (dispatch: AppDispatch): void => {
+    const glossaryData = glossaries.get.data();
+    if (!glossaryData) return;
+    const targetIndex = position === 'before' ? pairIndex : pairIndex + 1;
+    const list = [
+      ...glossaryData.list.slice(0, targetIndex),
+      { original: '', translation: '' },
+      ...glossaryData.list.slice(targetIndex),
+    ];
+    dispatch(setGlossaryData({ ...glossaryData, list }));
+    const column = glossaries.get.focusedColumn() ?? 'original';
+    requestAnimationFrame(() => {
+      dispatch(focusGlossaryPairInput(targetIndex, column, false));
+    });
+  };
+
+// Removes a pair and moves focus to its neighbour, once rendered. No confirmation here: callers go
+// through useDeleteGlossaryEntryConfirmation, since dialogs come from hooks.
+const deleteGlossaryPair =
+  (pairIndex: number) =>
+  (dispatch: AppDispatch): void => {
+    const glossaryData = glossaries.get.data();
+    if (!glossaryData?.list[pairIndex]) return;
+    const hasNext = pairIndex + 1 < glossaryData.list.length;
+    const hasPrev = pairIndex > 0;
+    const list = glossaryData.list.filter((_, i) => i !== pairIndex);
+    dispatch(setGlossaryData({ ...glossaryData, list }));
+    const targetIndex = hasNext ? pairIndex : hasPrev ? pairIndex - 1 : null;
+    const column = glossaries.get.focusedColumn() ?? 'original';
+    if (targetIndex == null) {
+      dispatch(setFocusedGlossaryPair({ pairIndex: null, column: null }));
+      return;
+    }
+    requestAnimationFrame(() => {
+      dispatch(focusGlossaryPairInput(targetIndex, column, false));
+    });
+  };
+
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const glossaries = api('glossary', {
   actions: {
+    closeGlossaryEditor,
+    setFocusedGlossaryPair,
     setGlossaryData,
     setGlossaryItems,
     setResolvedGlossaryEntries,
+    setSelectedGlossaryFileNames,
   },
   thunks: {
     addGlossaryEntry,
     createGlossary,
     deleteGlossary,
+    deleteGlossaryPair,
+    focusGlossaryPairInput,
+    insertGlossaryPair,
+    moveGlossaryPairFocus,
     openGlossaryEditor,
     reconcileGlossarySelectionWithDirection,
     refreshGlossaries,
@@ -641,38 +583,14 @@ export const glossaries = api('glossary', {
   },
   selectors: {
     selectCurrentGlossary,
+    selectFocusedGlossaryColumn,
+    selectFocusedGlossaryPairIndex,
     selectGlossaryData,
     selectGlossaryItems,
     selectResolvedGlossaryEntries,
+    selectSelectedGlossaryFileNames,
   },
-});
-
-export const promptTemplates = api('promptTemplate', {
-  actions: {
-    setPromptTemplateData,
-    setPromptTemplateItems,
-  },
-  thunks: {
-    createPromptTemplate,
-    deletePromptTemplate,
-    openPromptTemplateEditor,
-    refreshPromptTemplates,
-    renamePromptTemplate,
-    updatePromptTemplateEmoji,
-  },
-  selectors: {
-    selectCurrentPromptTemplate,
-    selectPromptTemplateData,
-    selectPromptTemplateItems,
-  },
-  helpers: {
-    readPromptTemplateFile,
-    writePromptTemplateBody,
-  },
-});
-
-export const aiPromptEditor = api('aiPromptEditor', {
-  actions: {
-    resetAiPromptEditor,
+  functions: {
+    registerGlossaryPairInput,
   },
 });

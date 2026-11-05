@@ -2,11 +2,11 @@ import { aiClients } from '@src/services/ai/clients';
 import type { AiClient } from '@src/services/ai/types';
 import { settings } from '@src/store/slices/settings';
 import { projects } from '@src/store/slices/project';
-import { prompt } from '@src/store/slices/prompt';
+import { promptTemplates } from '@src/services/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
 import { useAppSelector } from '@store/hooks';
-import { glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/glossary';
 import { ai } from '@store/slices/ai';
 import {
   FormSectionEntry,
@@ -32,11 +32,9 @@ export default function PromptSetupRow() {
   const isBusy = useAppSelector(ai.selectIsBusy);
   const sourceLanguage = useAppSelector(projects.selectSourceLanguage);
   const targetLanguage = useAppSelector(projects.selectTargetLanguage);
-  const selectedPromptTemplateFileName = useAppSelector(
-    prompt.selectSelectedPromptTemplateFileName
-  );
+  const selectedPromptTemplateFileName = useAppSelector(promptTemplates.selectSelectedFileName);
   const selectedGlossaryFileNames = useAppSelector(
-    prompt.selectSelectedGlossaryFileNames,
+    glossaries.selectSelectedFileNames,
     shallowEqual
   );
   const resolvedGlossaryEntries = useAppSelector(glossaries.selectResolvedEntries);
@@ -71,7 +69,7 @@ export default function PromptSetupRow() {
   );
 
   // Re-resolve glossary entries whenever the selection changes and nothing's cached yet --
-  // prompt.setSelectedGlossaryFileNames clears the cache, this repopulates it from disc.
+  // glossaries.setSelectedFileNames clears the cache, this repopulates it from disc.
   useEffect(() => {
     if (selectedGlossaryFileNames.length > 0 && resolvedGlossaryEntries.length === 0) {
       void glossaries.refreshResolvedEntries();
@@ -157,7 +155,7 @@ export default function PromptSetupRow() {
                     multiple
                     options={filteredGlossaryOptions}
                     value={selectedGlossaryFileNames}
-                    onChange={(values) => prompt.setSelectedGlossaryFileNames(values)}
+                    onChange={(values) => glossaries.setSelectedFileNames(values)}
                     placeholder={t('aiSettings.prompt.glossariesPlaceholder')}
                     disabled={isBusy}
                   />

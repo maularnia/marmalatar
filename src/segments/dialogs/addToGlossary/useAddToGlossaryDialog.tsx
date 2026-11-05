@@ -5,7 +5,7 @@ import i18n from '@src/i18n';
 import { emitGlossaryPairAddedMessage, emitGlossaryPairDiscardedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { ThemeColors } from '@src/theme/utils';
-import { TGlossaryEntry } from '@store/slices/aiPromptEditor';
+import { TGlossaryEntry } from '@store/slices/glossary';
 
 const t = i18n.getFixedT(null, 'dialogs');
 

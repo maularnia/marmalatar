@@ -4,7 +4,7 @@ import { IPC } from '@src/services/ipc/IPC';
 import type { AppDispatch } from '@store/root';
 
 // The tracked folder only. The project, prompt template and glossary lists live in the slices that
-// own those files (project, aiPromptEditor); refreshing all of them at once is in thunks.ts, since
+// own those files (project, prompt, glossary); refreshing all of them at once is in thunks.ts, since
 // those slices import this one.
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ export const workingFolder = api('workingFolder', {
     selectInitialized,
     selectWorkingFolderIsBusy,
   },
-  helpers: {
+  functions: {
     checkForeignFileExists,
     cleanupMediaCache,
     rescanFolder,

@@ -1,11 +1,11 @@
 import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
-import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
+import { useDeleteGlossaryEntryConfirmation } from '@src/segments/dialogs/deleteGlossaryEntry/useDeleteGlossaryEntryConfirmation';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
 import { useAppSelector } from '@store/hooks';
-import { glossaries } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/glossary';
 import { overlays } from '@store/slices/overlays';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
@@ -42,7 +42,7 @@ export default function GlossaryOverlay() {
   const currentGlossary = useAppSelector(glossaries.selectCurrent);
   const glossaryData = useAppSelector(glossaries.selectData);
   const { load } = useLoader();
-  const { handleSetFocusedPair, handleInsertPair, handleDeletePair } = useGlossaryActions();
+  const { confirmAndDeletePair } = useDeleteGlossaryEntryConfirmation();
 
   const formData = glossaryData ?? emptyFormData;
 
@@ -66,8 +66,8 @@ export default function GlossaryOverlay() {
   );
 
   const handleAddRow = useCallback(() => {
-    handleInsertPair(formData.list.length - 1, 'after');
-  }, [handleInsertPair, formData.list.length]);
+    glossaries.insertPair(formData.list.length - 1, 'after');
+  }, [formData.list.length]);
 
   const handleClose = async () => {
     await load(
@@ -127,12 +127,12 @@ export default function GlossaryOverlay() {
                       translation={entry.translation}
                       sourceLanguage={formData.sourceLanguage}
                       targetLanguage={formData.targetLanguage}
-                      onFocus={(column) => handleSetFocusedPair(index, column)}
+                      onFocus={(column) => glossaries.setFocusedPair({ pairIndex: index, column })}
                       onOriginalChange={(v) => handleRowChange(index, 'original', v)}
                       onTranslationChange={(v) => handleRowChange(index, 'translation', v)}
-                      onDelete={() => handleDeletePair(index)}
-                      onInsertBefore={() => handleInsertPair(index, 'before')}
-                      onInsertAfter={() => handleInsertPair(index, 'after')}
+                      onDelete={() => void confirmAndDeletePair(index)}
+                      onInsertBefore={() => glossaries.insertPair(index, 'before')}
+                      onInsertAfter={() => glossaries.insertPair(index, 'after')}
                     />
                   ))}
                 </EGlossaryTable>

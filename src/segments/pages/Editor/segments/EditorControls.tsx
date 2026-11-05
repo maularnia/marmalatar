@@ -8,8 +8,8 @@ import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
+import { overlays } from '@store/slices/overlays';
 import { ai } from '@store/slices/ai';
-import { app } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
@@ -418,7 +418,7 @@ export function EditorControls() {
           <PanelButton
             color={ThemeColors.ACCENT1}
             disabled={!isExportAvailable}
-            onClick={() => app.openExportOverlay()}
+            onClick={() => overlays.openExport()}
             icon={TIcon.EXPORT}
           />
         </Tooltip>

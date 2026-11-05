@@ -1,3 +1,5 @@
+import type { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit';
+
 // Builds a slice's domain facade: one frozen object holding the selectors, actions and thunks of a
 // domain, so typing the domain's name lists everything about it. Actions and thunks dispatch
 // themselves on the app store (glossaries.rename(fileName, title), no dispatch(...)), and every
@@ -57,8 +59,9 @@ type TGroups = {
   thunks?: Record<string, TThunkCreator>;
   // Selectors, as they are, for useAppSelector; each also gets a reader under `get`
   selectors?: Record<string, TSelector>;
-  // Plain functions, as they are (IPC wrappers)
-  helpers?: Record<string, unknown>;
+  // Plain functions, as they are: a service's operations (which dispatch and select through this
+  // module themselves) and IPC wrappers
+  functions?: Record<string, unknown>;
 };
 
 type TRekeyed<W extends string, T, TMap extends 'action' | 'thunk' | 'as-is'> = {
@@ -72,7 +75,7 @@ type TRekeyed<W extends string, T, TMap extends 'action' | 'thunk' | 'as-is'> = 
 type TApi<W extends string, G extends TGroups> = TRekeyed<W, G['actions'], 'action'> &
   TRekeyed<W, G['thunks'], 'thunk'> &
   TRekeyed<W, G['selectors'], 'as-is'> &
-  TRekeyed<W, G['helpers'], 'as-is'> & {
+  TRekeyed<W, G['functions'], 'as-is'> & {
     readonly get: {
       readonly [K in keyof G['selectors'] as TGetKey<K & string, W>]: TReader<G['selectors'][K]>;
     };
@@ -96,6 +99,25 @@ function requireStore(): TConnectedStore {
   return connectedStore;
 }
 
+// The app store's dispatch and current-state reads, for a service's operations: they can't go
+// through their own facade, which their index.ts builds from them. select(selector) is what a
+// facade's `get` does.
+// Typed without the app's AppDispatch, which would make this module import root.ts and so every
+// slice -- the state type isn't needed to dispatch
+type TDispatch = ThunkDispatch<unknown, undefined, UnknownAction>;
+export const dispatch: TDispatch = ((action: unknown) =>
+  requireStore().dispatch(action as never)) as TDispatch;
+
+export function select<TArgs extends unknown[], TResult>(
+  selector: (state: never, ...args: TArgs) => TResult,
+  ...args: TArgs
+): TResult {
+  return (selector as (state: unknown, ...rest: TArgs) => TResult)(
+    requireStore().getState(),
+    ...args
+  );
+}
+
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
@@ -117,7 +139,7 @@ function toKey(name: string, keyword: string): string {
 // Throws on load if two members end up under the same key, so a clash can't silently hide one
 export function api<const W extends string, const G extends TGroups>(
   keyword: W,
-  { actions = {}, thunks = {}, selectors = {}, helpers = {} }: G
+  { actions = {}, thunks = {}, selectors = {}, functions = {} }: G
 ): TApi<W, G> {
   const facade: Record<string, unknown> = {};
   const get: Record<string, unknown> = {};
@@ -142,8 +164,8 @@ export function api<const W extends string, const G extends TGroups>(
       selector(requireStore().getState(), ...args)
     );
   }
-  for (const [name, helper] of Object.entries(helpers)) {
-    add(facade, toKey(name, keyword), name, helper);
+  for (const [name, fn] of Object.entries(functions)) {
+    add(facade, toKey(name, keyword), name, fn);
   }
   add(facade, 'get', 'get', Object.freeze(get));
   return Object.freeze(facade) as TApi<W, G>;

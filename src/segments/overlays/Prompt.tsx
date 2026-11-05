@@ -1,6 +1,6 @@
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
 import { useAppSelector } from '@store/hooks';
-import { promptTemplates } from '@store/slices/aiPromptEditor';
+import { promptTemplates } from '@src/services/prompt';
 import { overlays } from '@store/slices/overlays';
 import { app } from '@store/thunks';
 import {

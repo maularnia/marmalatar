@@ -3,7 +3,6 @@ import { useVideo } from '@providers/VideoProvider';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
-import { prompt } from '@src/store/slices/prompt';
 import { TSubtitleLine } from '@src/types';
 import { useAppSelector } from '@store/hooks';
 import { ai } from '@store/slices/ai';
@@ -67,7 +66,7 @@ export function useLineFingerprint() {
   } = useAppSelector(
     (state) => ({
       translationLines: editor.selectLines(state),
-      frozenLineNumbers: prompt.selectFrozenLineNumbers(state),
+      frozenLineNumbers: editor.selectFrozenLineNumbers(state),
       integrationIsConfigured: settings.selectIntegrationIsConfigured(state),
       translationIsBusy: ai.selectIsBusy(state),
       characterOptions: editor.selectCharacterPool(state),

@@ -15,10 +15,9 @@ import {
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import type { AppDispatch } from '@store/root';
-import { glossaries } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/glossary';
 import { workingFolder } from '@store/slices/workingFolder';
 import { editor } from '@store/slices/editor';
-import { prompt } from '@store/slices/prompt';
 
 export type TProjectEntry = TProjectListEntry;
 
@@ -388,7 +387,7 @@ function applyProjectData(
   dispatch(setProjectSourceLanguage(data.project.sourceLanguage));
   dispatch(setProjectTargetLanguage(data.project.targetLanguage));
   glossaries.reconcileSelectionWithDirection();
-  prompt.setFrozenLineNumbers([]);
+  editor.setFrozenLineNumbers([]);
 
   editor.setCharacterPool(data.editor.characterPool);
 
@@ -474,7 +473,7 @@ export const projects = api('project', {
     selectProjectTargetLanguage,
     selectVideoFilePath,
   },
-  helpers: {
+  functions: {
     buildProjectEditorStateSaveData,
     getProjectEditorState,
     writeProjectEditorState,

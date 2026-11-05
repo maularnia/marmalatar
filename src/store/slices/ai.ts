@@ -20,11 +20,11 @@ import { TSubtitleLine } from '@src/types';
 import { LANGUAGE_LABELS } from '@src/types';
 import { getErrorMessage } from '@src/utils/errors';
 import i18n from '@src/i18n';
-import { prompt } from '@store/slices/prompt';
+import { promptTemplates } from '@src/services/prompt';
 import { workingFolder } from '@store/slices/workingFolder';
 import { settings } from '@store/slices/settings';
 import { editor } from '@store/slices/editor';
-import { glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
+import { glossaries } from '@store/slices/glossary';
 import { projects } from '@store/slices/project';
 
 // Only used within this slice (bulk-translate cancellation), so it lives here rather than in
@@ -109,7 +109,7 @@ const aiSlice = createSlice({
   },
   extraReducers(builder) {
     builder.addMatcher(
-      isAnyOf(workingFolder.folderChanged, prompt.setSelectedPromptTemplateFileName),
+      isAnyOf(workingFolder.folderChanged, promptTemplates.setSelectedFileName),
       (state) => {
         activeController?.cancel();
         activeController = null;
@@ -124,8 +124,8 @@ const aiSlice = createSlice({
     // `integrationConnected: false` first, which the read side already treats as "not ready".
     builder.addMatcher(
       isAnyOf(
-        prompt.setSelectedPromptTemplateFileName,
-        prompt.setSelectedGlossaryFileNames,
+        promptTemplates.setSelectedFileName,
+        glossaries.setSelectedFileNames,
         glossaries.setResolvedEntries,
         projects.setSourceLanguage,
         projects.setTargetLanguage
@@ -182,7 +182,7 @@ function requireAiClient() {
 function requirePromptTemplateSelected(): void {
   const client = getWiredAiClient();
   if (!client?.supportsContext) return;
-  if (!prompt.get.selectedPromptTemplateFileName()) {
+  if (!promptTemplates.get.selectedFileName()) {
     throw new Error(t('aiTranslation.noPromptTemplateSelected'));
   }
 }
@@ -210,7 +210,7 @@ const refreshSelectedPromptTemplateData =
   () =>
   async (dispatch: AppDispatch): Promise<void> => {
     const folder = workingFolder.get.folder();
-    const fileName = prompt.get.selectedPromptTemplateFileName();
+    const fileName = promptTemplates.get.selectedFileName();
     if (!folder || !fileName) {
       dispatch(setSelectedPromptTemplateData(null));
       return;
@@ -227,7 +227,7 @@ const applySelectedPromptTemplateFileName =
   (fileName: string | null) =>
   async (dispatch: AppDispatch): Promise<void> => {
     dispatch(setTranslationIsBusy(true));
-    prompt.setSelectedPromptTemplateFileName(fileName);
+    promptTemplates.setSelectedFileName(fileName);
     await dispatch(refreshSelectedPromptTemplateData());
     dispatch(setTranslationIsBusy(false));
   };
@@ -242,13 +242,13 @@ const startAutomatedTranslation =
     const lines = editor.get.lines();
     const line = lines[lineIndex];
     if (!line) return;
-    if (prompt.get.frozenLineNumbers().includes(line.line_no)) return;
+    if (editor.get.frozenLineNumbers().includes(line.line_no)) return;
 
     const client = requireAiClient();
     const context = buildContext();
 
     dispatch(setTranslationIsBusy(true));
-    prompt.addFrozenLine(line.line_no);
+    editor.addFrozenLine(line.line_no);
     try {
       const translatedText = await client.translate({
         text: line.input,
@@ -259,7 +259,7 @@ const startAutomatedTranslation =
       dispatch(setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(err) }));
       throw err;
     } finally {
-      prompt.removeFrozenLine(line.line_no);
+      editor.removeFrozenLine(line.line_no);
       dispatch(setTranslationIsBusy(false));
     }
   };
@@ -302,7 +302,7 @@ const startAutomatedBulkTranslation =
             })
           );
         }
-        prompt.setFrozenLineNumbers(payload.lines.map((line) => line.line_no));
+        editor.setFrozenLineNumbers(payload.lines.map((line) => line.line_no));
         params.onChunkStart?.(payload);
       },
       onProgress: (progress) => {
@@ -326,7 +326,7 @@ const startAutomatedBulkTranslation =
       onDone: (result) => {
         dispatch(setCurrentBulkJob(null));
         dispatch(setTranslationIsBusy(false));
-        prompt.setFrozenLineNumbers([]);
+        editor.setFrozenLineNumbers([]);
         activeController = null;
         params.onDone?.(result);
       },
@@ -359,7 +359,7 @@ const startAutomatedBulkTranslation =
     void controller.waitUntilFinished().catch(() => {
       dispatch(setCurrentBulkJob(null));
       dispatch(setTranslationIsBusy(false));
-      prompt.setFrozenLineNumbers([]);
+      editor.setFrozenLineNumbers([]);
       activeController = null;
     });
   };
@@ -371,7 +371,7 @@ const cancelAutomatedBulkTranslation =
     activeController = null;
     dispatch(setCurrentBulkJob(null));
     dispatch(setTranslationIsBusy(false));
-    prompt.setFrozenLineNumbers([]);
+    editor.setFrozenLineNumbers([]);
   };
 
 // Fire-and-forget: writes its result into Redux (contextWindowEstimate/contextWindowEstimateStatus)
@@ -384,7 +384,7 @@ const estimateContextWindowUsage =
     const requestId = ++estimateRequestId;
     const client = getWiredAiClient();
 
-    if (!client?.evaluateContext || !prompt.get.selectedPromptTemplateFileName()) {
+    if (!client?.evaluateContext || !promptTemplates.get.selectedFileName()) {
       dispatch(setContextWindowEstimate(null));
       dispatch(setContextWindowEstimateStatus('idle'));
       return;
