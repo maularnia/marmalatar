@@ -7,7 +7,6 @@ import KeystrokeZone, {
 import { editor } from '@src/store/slices/editor';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
 import { ai } from '@store/slices/ai';
-import { fromCurrentStore } from '@store/store';
 import { createContext, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
 import {
   ShortcutScope,
@@ -461,7 +460,7 @@ function EditorShortcuts() {
     action: (event: KeyboardEvent) => void
   ) => {
     useAppKeystroke(keystroke, (event) => {
-      if (fromCurrentStore(ai.selectIsBusy)) return;
+      if (ai.get.isBusy()) return;
       action(event);
     });
   };
@@ -499,8 +498,8 @@ function EditorShortcuts() {
   // runs, so it doesn't need to be re-registered every time focus changes.
   useEffect(() => {
     const focusOverride = () => {
-      const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
-      const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
+      const focusedLineIndex = editor.get.focusedLineIndex();
+      const focusedColumn = editor.get.focusedColumn();
       if (
         focusedLineIndex !== null &&
         handleChangeFocusedColumn(focusedLineIndex, focusedColumn ?? 'output')
@@ -517,8 +516,8 @@ function EditorShortcuts() {
   }, [handleChangeFocusedColumn, handleSetFocusedLineAndColumn, zoneRef, setFocusOverride]);
 
   const getKeystrokeLineIndex = () => {
-    const focusedLineIndex = fromCurrentStore(editor.selectFocusedLineIndex);
-    const translationLines = fromCurrentStore(editor.selectLines);
+    const focusedLineIndex = editor.get.focusedLineIndex();
+    const translationLines = editor.get.lines();
     return focusedLineIndex ?? (translationLines.length > 0 ? 0 : null);
   };
 
@@ -617,7 +616,7 @@ function EditorShortcuts() {
 
   useGuardedKeystroke('focusCharacterSelector', () => {
     const lineIndex = getKeystrokeLineIndex();
-    const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
+    const focusedColumn = editor.get.focusedColumn();
     if (focusedColumn === 'source') return;
     const target = focusedColumn === 'character' ? 'source' : 'character';
     handleSwitchColumn(target, lineIndex);
@@ -625,7 +624,7 @@ function EditorShortcuts() {
 
   useGuardedKeystroke('focusTranslationInput', () => {
     const lineIndex = getKeystrokeLineIndex();
-    const focusedColumn = fromCurrentStore(editor.selectFocusedColumn);
+    const focusedColumn = editor.get.focusedColumn();
     const target = focusedColumn === 'source' ? 'character' : 'output';
     handleSwitchColumn(target, lineIndex);
   });

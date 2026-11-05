@@ -5,7 +5,7 @@ import { VideoProvider } from '@providers/VideoProvider';
 import AppErrorBoundary from '@src/layout/components/AppErrorBoundary';
 import { LocaleProvider } from '@src/providers/LocaleProvider';
 import { ThemeProvider } from '@src/providers/ThemeProvider';
-import { hydrateApp } from '@store/thunks';
+import { app } from '@store/thunks';
 import { store } from '@store/store';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -18,7 +18,7 @@ import { MenuStateProvider } from './providers/MenuStateProvider';
 import { MessageHelmetProvider } from './providers/MessageHelmetProvider';
 
 // Resolve persisted settings before mounting
-void store.dispatch(hydrateApp()).then(() => {
+void app.hydrate().then(() => {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <AppErrorBoundary>

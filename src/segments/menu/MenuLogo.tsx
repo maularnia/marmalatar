@@ -4,8 +4,8 @@ import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/Keystroke
 import { overlays } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { openSettingsOverlay } from '@store/thunks';
+import { useAppSelector } from '@store/hooks';
+import { app } from '@store/thunks';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
@@ -47,7 +47,6 @@ const Root = styled.div`
 `;
 export default function MenuLogo() {
   const { t } = useTranslation('menu');
-  const dispatch = useAppDispatch();
   const { dynamic, compact } = useMenuState();
   const overlay = useAppSelector(overlays.selectCurrent);
   const { registerMenuItemRef } = useMenuRefs();
@@ -86,7 +85,7 @@ export default function MenuLogo() {
             compact={dynamic ? compact : true}
             icon={TIcon.SETTINGS}
             isActive={overlay === 'settings'}
-            onClick={() => dispatch(openSettingsOverlay())}
+            onClick={() => app.openSettingsOverlay()}
           >
             {t('buttons.settings')}
           </ListItem>

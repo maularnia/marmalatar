@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { connectApi } from './createApi';
 import { rootReducer } from './root';
-import type { RootState } from './root';
 import { persistProjectStateMiddleware } from './persistProjectState';
 import { persistEditorStateMiddleware } from './persistEditorState';
 
@@ -13,8 +13,5 @@ export const store = configureStore({
     ),
 });
 
-/** Reads a selector's result from the current Redux state without subscribing to it -- for event
- * handlers, callbacks, and other imperative code that only needs a value at the moment it runs,
- * not on every change. */
-export const fromCurrentStore = <T>(selector: (state: RootState) => T): T =>
-  selector(store.getState());
+// Facade actions and thunks dispatch on this store, and their `get` readers read it
+connectApi(store);

@@ -67,13 +67,17 @@ const {
 // Keyed on "promptState" rather than "prompt", which would also cut "Prompt" out of
 // selectSelectedPromptTemplateFileName and friends
 export const prompt = api('promptState', {
-  addFrozenLine,
-  removeFrozenLine,
-  resetPromptState,
-  selectFrozenLineNumbers,
-  selectSelectedGlossaryFileNames,
-  selectSelectedPromptTemplateFileName,
-  setFrozenLineNumbers,
-  setSelectedGlossaryFileNames,
-  setSelectedPromptTemplateFileName,
+  actions: {
+    addFrozenLine,
+    removeFrozenLine,
+    resetPromptState,
+    setFrozenLineNumbers,
+    setSelectedGlossaryFileNames,
+    setSelectedPromptTemplateFileName,
+  },
+  selectors: {
+    selectFrozenLineNumbers,
+    selectSelectedGlossaryFileNames,
+    selectSelectedPromptTemplateFileName,
+  },
 });

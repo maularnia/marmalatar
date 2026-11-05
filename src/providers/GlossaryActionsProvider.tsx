@@ -3,8 +3,7 @@ import { useDeleteGlossaryEntryConfirmation } from '@src/segments/dialogs/delete
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
+import { useAppSelector } from '@store/hooks';
 import { glossaries } from '@store/slices/aiPromptEditor';
 import {
   createContext,
@@ -46,7 +45,6 @@ export function useGlossaryActions(): TGlossaryActionsContext {
 }
 
 export function GlossaryActionsProvider({ children }: PropsWithChildren) {
-  const dispatch = useAppDispatch();
   const { pairInputRefs } = useGlossaryRefs();
   const { confirmDeleteGlossaryEntry } = useDeleteGlossaryEntryConfirmation();
 
@@ -82,7 +80,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
 
   const handleMovePairFocus = useCallback(
     (direction: 'up' | 'down') => {
-      const pairCount = fromCurrentStore(glossaries.selectData)?.list.length ?? 0;
+      const pairCount = glossaries.get.data()?.list.length ?? 0;
       const column = focusedColumn ?? 'original';
       if (focusedPairIndex == null) {
         if (pairCount === 0) return;
@@ -98,7 +96,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
 
   const handleInsertPair = useCallback(
     (pairIndex: number, position: 'before' | 'after') => {
-      const glossaryData = fromCurrentStore(glossaries.selectData);
+      const glossaryData = glossaries.get.data();
       if (!glossaryData) return;
       const targetIndex = position === 'before' ? pairIndex : pairIndex + 1;
       const list = [
@@ -106,18 +104,18 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
         { original: '', translation: '' },
         ...glossaryData.list.slice(targetIndex),
       ];
-      dispatch(glossaries.setData({ ...glossaryData, list }));
+      glossaries.setData({ ...glossaryData, list });
       const column = focusedColumn ?? 'original';
       requestAnimationFrame(() => {
         handleFocusPairInput(targetIndex, column, false);
       });
     },
-    [dispatch, focusedColumn, handleFocusPairInput]
+    [focusedColumn, handleFocusPairInput]
   );
 
   const handleDeletePair = useCallback(
     async (pairIndex: number) => {
-      const glossaryData = fromCurrentStore(glossaries.selectData);
+      const glossaryData = glossaries.get.data();
       if (!glossaryData) return;
       const pair = glossaryData.list[pairIndex];
       if (!pair) return;
@@ -129,7 +127,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
       const hasNext = pairIndex + 1 < glossaryData.list.length;
       const hasPrev = pairIndex > 0;
       const list = glossaryData.list.filter((_, i) => i !== pairIndex);
-      dispatch(glossaries.setData({ ...glossaryData, list }));
+      glossaries.setData({ ...glossaryData, list });
       const targetIndex = hasNext ? pairIndex : hasPrev ? pairIndex - 1 : null;
       const column = focusedColumn ?? 'original';
       if (targetIndex != null) {
@@ -141,7 +139,7 @@ export function GlossaryActionsProvider({ children }: PropsWithChildren) {
         setFocusedColumn(null);
       }
     },
-    [confirmDeleteGlossaryEntry, dispatch, focusedColumn, handleFocusPairInput]
+    [confirmDeleteGlossaryEntry, focusedColumn, handleFocusPairInput]
   );
 
   const value = useMemoizedObject<TGlossaryActionsContext>({

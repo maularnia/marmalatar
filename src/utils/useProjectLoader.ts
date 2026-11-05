@@ -17,7 +17,6 @@ import { TProjectEntry } from '@store/slices/project';
 import { projects } from '@store/slices/project';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
-import { useAppDispatch } from '@store/hooks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +24,6 @@ import { IPC } from '@src/services/ipc/IPC';
 
 export function useProjectLoader() {
   const { t } = useTranslation(['dialogs', 'messages']);
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { setVideoData, setVideoFilePath, resetCurrentTime } = useVideo();
   const { pushMessage } = useMessageHelmet();
@@ -43,7 +41,7 @@ export function useProjectLoader() {
         preview: string | null
       ) {
         try {
-          await dispatch(projects.loadFromDisk(proj));
+          await projects.loadFromDisk(proj);
         } catch (error) {
           emitProjectLoadFailedMessage(pushMessage, toErrorMessage(error));
           return;
@@ -163,7 +161,6 @@ export function useProjectLoader() {
       );
     },
     [
-      dispatch,
       navigate,
       setVideoFilePath,
       setVideoData,

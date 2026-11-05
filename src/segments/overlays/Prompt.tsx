@@ -1,8 +1,8 @@
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { promptTemplates } from '@store/slices/aiPromptEditor';
 import { overlays } from '@store/slices/overlays';
-import { savePromptTemplate } from '@store/thunks';
+import { app } from '@store/thunks';
 import {
   FormsContent,
   FormsRow,
@@ -26,7 +26,6 @@ const emptyFormData: PromptTemplateFileDataType = {
 
 export default function PromptOverlay() {
   const { t } = useTranslation(['prompt', 'messages']);
-  const dispatch = useAppDispatch();
   const currentPromptTemplate = useAppSelector(promptTemplates.selectCurrent);
   const promptTemplateData = useAppSelector(promptTemplates.selectData);
   const { load } = useLoader();
@@ -34,15 +33,15 @@ export default function PromptOverlay() {
   const formData = promptTemplateData ?? emptyFormData;
 
   const handleChange = (field: keyof PromptTemplateFileDataType, value: string) => {
-    dispatch(promptTemplates.setData({ ...formData, [field]: value }));
+    promptTemplates.setData({ ...formData, [field]: value });
   };
 
   const handleClose = async () => {
     await load(
       { messages: [t('messages:promptTemplate.savingLabel', { title: formData.title || '...' })] },
-      dispatch(savePromptTemplate()) as Promise<unknown>
+      app.savePromptTemplate() as Promise<unknown>
     );
-    dispatch(overlays.closeAll());
+    overlays.closeAll();
   };
 
   if (!currentPromptTemplate) return null;

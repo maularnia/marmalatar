@@ -226,7 +226,7 @@ const applySelectedPromptTemplateFileName =
   (fileName: string | null) =>
   async (dispatch: AppDispatch): Promise<void> => {
     dispatch(setTranslationIsBusy(true));
-    dispatch(prompt.setSelectedPromptTemplateFileName(fileName));
+    prompt.setSelectedPromptTemplateFileName(fileName);
     await dispatch(refreshSelectedPromptTemplateData());
     dispatch(setTranslationIsBusy(false));
   };
@@ -249,18 +249,18 @@ const startAutomatedTranslation =
     const context = buildContext(state);
 
     dispatch(setTranslationIsBusy(true));
-    dispatch(prompt.addFrozenLine(line.line_no));
+    prompt.addFrozenLine(line.line_no);
     try {
       const translatedText = await client.translate({
         text: line.input,
         context: { ...context, lineNo: line.line_no },
       });
-      dispatch(editor.addTranslatedLine({ ...line, output: translatedText }));
+      editor.addTranslatedLine({ ...line, output: translatedText });
     } catch (err) {
       dispatch(setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(err) }));
       throw err;
     } finally {
-      dispatch(prompt.removeFrozenLine(line.line_no));
+      prompt.removeFrozenLine(line.line_no);
       dispatch(setTranslationIsBusy(false));
     }
   };
@@ -305,7 +305,7 @@ const startAutomatedBulkTranslation =
             })
           );
         }
-        dispatch(prompt.setFrozenLineNumbers(payload.lines.map((line) => line.line_no)));
+        prompt.setFrozenLineNumbers(payload.lines.map((line) => line.line_no));
         params.onChunkStart?.(payload);
       },
       onProgress: (progress) => {
@@ -329,7 +329,7 @@ const startAutomatedBulkTranslation =
       onDone: (result) => {
         dispatch(setCurrentBulkJob(null));
         dispatch(setTranslationIsBusy(false));
-        dispatch(prompt.setFrozenLineNumbers([]));
+        prompt.setFrozenLineNumbers([]);
         activeController = null;
         params.onDone?.(result);
       },
@@ -362,7 +362,7 @@ const startAutomatedBulkTranslation =
     void controller.waitUntilFinished().catch(() => {
       dispatch(setCurrentBulkJob(null));
       dispatch(setTranslationIsBusy(false));
-      dispatch(prompt.setFrozenLineNumbers([]));
+      prompt.setFrozenLineNumbers([]);
       activeController = null;
     });
   };
@@ -374,7 +374,7 @@ const cancelAutomatedBulkTranslation =
     activeController = null;
     dispatch(setCurrentBulkJob(null));
     dispatch(setTranslationIsBusy(false));
-    dispatch(prompt.setFrozenLineNumbers([]));
+    prompt.setFrozenLineNumbers([]);
   };
 
 // Fire-and-forget: writes its result into Redux (contextWindowEstimate/contextWindowEstimateStatus)
@@ -432,10 +432,9 @@ const estimateContextWindowUsage =
 // since the client's own SettingsForm drives it once the user has entered valid settings.
 const initializeAiIntegration =
   (integrationId?: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const id =
-      integrationId ?? settings.selectSelectedIntegrationId(getState()) ?? DEFAULT_AI_CLIENT_ID;
-    dispatch(settings.setSelectedIntegration(id));
+  async (dispatch: AppDispatch): Promise<void> => {
+    const id = integrationId ?? settings.get.selectedIntegrationId() ?? DEFAULT_AI_CLIENT_ID;
+    settings.setSelectedIntegration(id);
     dispatch(setIntegrationConnectionStatus({ connected: false, error: undefined }));
 
     const client = aiClients[id as keyof typeof aiClients] ?? null;
@@ -469,20 +468,26 @@ const initializeAiIntegration =
 
 // Keyed on "translation", so the facade reads ai.startAutomated, ai.selectIsBusy
 export const ai = api('translation', {
-  applySelectedPromptTemplateFileName,
-  cancelAutomatedBulkTranslation,
-  estimateContextWindowUsage,
-  initializeAiIntegration,
-  refreshSelectedPromptTemplateData,
-  selectContextWindowEstimate,
-  selectContextWindowEstimateStatus,
-  selectCurrentBulkJob,
-  selectIntegrationConnected,
-  selectIntegrationPingError,
-  selectTranslationIsBusy,
-  setContextWindowEstimate,
-  setContextWindowEstimateStatus,
-  setIntegrationConnectionStatus,
-  startAutomatedBulkTranslation,
-  startAutomatedTranslation,
+  actions: {
+    setContextWindowEstimate,
+    setContextWindowEstimateStatus,
+    setIntegrationConnectionStatus,
+  },
+  thunks: {
+    applySelectedPromptTemplateFileName,
+    cancelAutomatedBulkTranslation,
+    estimateContextWindowUsage,
+    initializeAiIntegration,
+    refreshSelectedPromptTemplateData,
+    startAutomatedBulkTranslation,
+    startAutomatedTranslation,
+  },
+  selectors: {
+    selectContextWindowEstimate,
+    selectContextWindowEstimateStatus,
+    selectCurrentBulkJob,
+    selectIntegrationConnected,
+    selectIntegrationPingError,
+    selectTranslationIsBusy,
+  },
 });

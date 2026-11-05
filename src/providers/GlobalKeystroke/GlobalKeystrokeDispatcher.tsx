@@ -1,9 +1,9 @@
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { settings } from '@store/slices/settings';
 import { overlays } from '@store/slices/overlays';
-import { openExportOverlay, openSettingsOverlay } from '@store/thunks';
+import { app } from '@store/thunks';
 import { TThemeSelection } from '@src/types';
 import {
   KeyHubProvider,
@@ -213,7 +213,6 @@ const useAppGlobalKeystroke = (
 // itself wrap ConfirmationProvider, so Confirmation can reach `useGlobalKeystrokePause` via React
 // context regardless of where its dialogs are portaled.
 function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
-  const dispatch = useAppDispatch();
   const currentOverlay = useAppSelector(overlays.selectCurrent);
   const slotsRef = useRef(new Map<TKeystrokeSlot, () => void>());
   const pauseSourcesRef = useRef(new Set<string>());
@@ -253,22 +252,22 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
   useAppGlobalKeystroke('focusSlot9', () => focusSlot(9));
   useAppGlobalKeystroke('focusSlot0', () => focusSlot(0));
   useAppGlobalKeystroke('closeOverlay', () => {
-    if (currentOverlay !== null) dispatch(overlays.closeAll());
+    if (currentOverlay !== null) overlays.closeAll();
   });
   useAppGlobalKeystroke('openSettings', () => {
-    dispatch(openSettingsOverlay());
+    app.openSettingsOverlay();
   });
   useAppGlobalKeystroke('openExport', () => {
-    dispatch(openExportOverlay());
+    app.openExportOverlay();
   });
   useAppGlobalKeystroke('switchToDarkTheme', () => {
-    dispatch(settings.setThemeSelection(TThemeSelection.DARK));
+    settings.setThemeSelection(TThemeSelection.DARK);
   });
   useAppGlobalKeystroke('switchToLightTheme', () => {
-    dispatch(settings.setThemeSelection(TThemeSelection.LIGHT));
+    settings.setThemeSelection(TThemeSelection.LIGHT);
   });
   useAppGlobalKeystroke('switchToSystemTheme', () => {
-    dispatch(settings.setThemeSelection(TThemeSelection.SYSTEM));
+    settings.setThemeSelection(TThemeSelection.SYSTEM);
   });
 
   const value = useMemoizedObject<TGlobalKeystrokeContext>({

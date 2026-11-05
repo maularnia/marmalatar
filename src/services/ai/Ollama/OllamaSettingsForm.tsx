@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { ai } from '@store/slices/ai';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
@@ -54,7 +54,6 @@ const RECONNECT_DEBOUNCE_MS = 500;
 export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSettingsFormProps) {
   const { t: tSettings } = useTranslation('settings');
   const linesPerRequestOptions = useMemo(() => getLinesPerRequestOptions(tSettings), [tSettings]);
-  const dispatch = useAppDispatch();
   const connected = useAppSelector(ai.selectIntegrationConnected);
   const pingError = useAppSelector(ai.selectIntegrationPingError);
   const {
@@ -110,16 +109,14 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
         setValue(modelSettingKey, options[0]?.value ?? '', { shouldValidate: true });
       }
       setConnectionStatus('connected');
-      dispatch(ai.setIntegrationConnectionStatus({ connected: true }));
+      ai.setIntegrationConnectionStatus({ connected: true });
     } catch (err) {
       setConnectionStatus('error');
       setConnectionError(getErrorMessage(err));
-      dispatch(
-        ai.setIntegrationConnectionStatus({
-          connected: false,
-          error: getErrorMessage(err),
-        })
-      );
+      ai.setIntegrationConnectionStatus({
+        connected: false,
+        error: getErrorMessage(err),
+      });
     }
   };
 
@@ -164,7 +161,7 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
     if (!isValid) return;
     if (commitDebounceRef.current) clearTimeout(commitDebounceRef.current);
     commitDebounceRef.current = setTimeout(() => {
-      void dispatch(ai.estimateContextWindowUsage());
+      void ai.estimateContextWindowUsage();
     }, SETTINGS_COMMIT_DEBOUNCE_MS);
   }, [isValid, values.endpoint, values.model, values.context_length, values.lines_per_request]);
 

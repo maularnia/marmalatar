@@ -5,7 +5,7 @@ import { settings } from '@src/store/slices/settings';
 import { projects } from '@src/store/slices/project';
 import { ThemeColors } from '@src/theme/utils';
 import Toggle from '@src/toolkit/Toggle';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { ai } from '@store/slices/ai';
 import {
   FormSectionEntry,
@@ -23,7 +23,6 @@ import AiUserInputSection from './PromptSetup';
 
 export default function AiSettings() {
   const { t } = useTranslation('settings');
-  const dispatch = useAppDispatch();
   const isBusy = useAppSelector(ai.selectIsBusy);
 
   const selectedIntegrationId = useAppSelector(settings.selectSelectedIntegrationId);
@@ -49,7 +48,7 @@ export default function AiSettings() {
 
   const handleSwitchIntegration = (newId: string) => {
     setSettingsValid(false);
-    void dispatch(ai.initializeAiIntegration(newId));
+    void ai.initializeAiIntegration(newId);
   };
 
   return (
@@ -72,9 +71,7 @@ export default function AiSettings() {
             after={
               <Toggle
                 checked={aiTranslationEnabled}
-                onChange={(e) =>
-                  dispatch(settings.setAIintegrationEnabled(e.currentTarget.checked))
-                }
+                onChange={(e) => settings.setAIintegrationEnabled(e.currentTarget.checked)}
               />
             }
           >

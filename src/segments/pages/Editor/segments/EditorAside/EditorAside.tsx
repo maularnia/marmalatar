@@ -3,7 +3,7 @@ import GeneralSettings from '@src/partials/Settings';
 import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import {
   FormRoot,
@@ -57,7 +57,6 @@ const AsideVideoWrapper = styled.div``;
 
 export default function EditorAside() {
   const { t } = useTranslation(['editorAside', 'app']);
-  const dispatch = useAppDispatch();
   const isEditMode = useAppSelector(projects.selectIsEditMode);
   const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
     (state) => ({
@@ -84,7 +83,7 @@ export default function EditorAside() {
             focusedLineIndex={focusedLineIndex}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(editor.updateLineTiming({ lineIndex, startTime, endTime }));
+              editor.updateLineTiming({ lineIndex, startTime, endTime });
             }}
           />
         </AsideVideoContainer>

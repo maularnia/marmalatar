@@ -22,8 +22,6 @@ import { prompt } from '@src/store/slices/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
-import { useAppDispatch } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
 import { ai } from '@store/slices/ai';
 import { glossaries } from '@store/slices/aiPromptEditor';
 import Icon from '@ui-toolkit/Icon/Icon';
@@ -54,20 +52,17 @@ export function useEditorAIActions(): TEditorAIActionsContext {
 
 export function EditorAIActionsProvider({ children }: PropsWithChildren) {
   const { t } = useTranslation(['messages', 'dialogs']);
-  const dispatch = useAppDispatch();
   const { lineInputRefs } = useEditorRefs();
   const { pushMessage } = useMessageHelmet();
   const { addToGlossary } = useAddToGlossaryDialog();
   const { confirmTranslationOverride } = useTranslationOverrideConfirmation();
 
   const isPromptTemplateSelected = useCallback((): boolean => {
-    const selectedIntegrationId = fromCurrentStore(settings.selectSelectedIntegrationId);
+    const selectedIntegrationId = settings.get.selectedIntegrationId();
     const client = selectedIntegrationId
       ? aiClients[selectedIntegrationId as keyof typeof aiClients]
       : undefined;
-    const selectedPromptTemplateFileName = fromCurrentStore(
-      prompt.selectSelectedPromptTemplateFileName
-    );
+    const selectedPromptTemplateFileName = prompt.get.selectedPromptTemplateFileName();
     if (client?.supportsContext && !selectedPromptTemplateFileName) {
       emitNoPromptTemplateMessage(pushMessage);
       return false;
@@ -79,9 +74,9 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
     async (lineIndex: number) => {
       if (!isPromptTemplateSelected()) return;
 
-      const line = fromCurrentStore(editor.selectLines)[lineIndex];
+      const line = editor.get.lines()[lineIndex];
       const outputNotEmpty = Boolean(line?.output?.trim());
-      if (outputNotEmpty || fromCurrentStore(settings.selectAskBeforeAITranslate)) {
+      if (outputNotEmpty || settings.get.askBeforeAITranslate()) {
         let confirmed: boolean;
         try {
           confirmed = await confirmTranslationOverride({
@@ -100,7 +95,7 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
       }
 
       try {
-        await dispatch(ai.startAutomated(lineIndex));
+        await ai.startAutomated(lineIndex);
         emitAiTranslationJobDoneMessage(pushMessage);
       } catch (err) {
         emitAiTranslationJobFailedMessage(
@@ -111,60 +106,56 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
         );
       }
     },
-    [confirmTranslationOverride, dispatch, pushMessage, isPromptTemplateSelected]
+    [confirmTranslationOverride, pushMessage, isPromptTemplateSelected]
   );
 
   const handleAiTranslateBulk = useCallback(() => {
-    const selectedIntegrationId = fromCurrentStore(settings.selectSelectedIntegrationId);
+    const selectedIntegrationId = settings.get.selectedIntegrationId();
     if (!selectedIntegrationId) return;
     if (!isPromptTemplateSelected()) return;
-    const translationLines = fromCurrentStore(editor.selectLines);
-    const autoMarkLinesCompleted = fromCurrentStore(settings.selectAutoMarkLinesCompleted);
+    const translationLines = editor.get.lines();
+    const autoMarkLinesCompleted = settings.get.autoMarkLinesCompleted();
     const lines = translationLines.filter((line) => !line.output);
     if (!lines.length) return;
     try {
-      dispatch(
-        ai.startAutomatedBulk({
-          lines,
-          onChunkTranslated: ({ results }) => {
-            results.forEach(({ line, translatedText }) => {
-              const lineIndex = translationLines.indexOf(line);
-              if (lineIndex >= 0) {
-                dispatch(editor.updateTranslatedText({ lineIndex, text: translatedText }));
-                if (autoMarkLinesCompleted)
-                  dispatch(
-                    editor.setLineCompleted({
-                      lineIndex,
-                      completed: Boolean(translatedText),
-                      skipHistory: true,
-                    })
-                  );
-              }
-            });
-          },
-          onChunkError: ({ error }) => {
-            emitBulkTranslationFailedMessage(pushMessage, error.message);
-          },
-        })
-      );
+      ai.startAutomatedBulk({
+        lines,
+        onChunkTranslated: ({ results }) => {
+          results.forEach(({ line, translatedText }) => {
+            const lineIndex = translationLines.indexOf(line);
+            if (lineIndex >= 0) {
+              editor.updateTranslatedText({ lineIndex, text: translatedText });
+              if (autoMarkLinesCompleted)
+                editor.setLineCompleted({
+                  lineIndex,
+                  completed: Boolean(translatedText),
+                  skipHistory: true,
+                });
+            }
+          });
+        },
+        onChunkError: ({ error }) => {
+          emitBulkTranslationFailedMessage(pushMessage, error.message);
+        },
+      });
     } catch (err) {
       emitBulkTranslationFailedMessage(
         pushMessage,
         err instanceof Error ? err.message : 'How did you get here? [UNREACHABLE 02]'
       );
     }
-  }, [isPromptTemplateSelected, dispatch, pushMessage]);
+  }, [isPromptTemplateSelected, pushMessage]);
 
   const handleAddToGlossary = useCallback(
     async (selectedText: string) => {
       const text = selectedText.trim();
       if (!text) return;
 
-      const sourceLanguage = fromCurrentStore(projects.selectSourceLanguage);
-      const targetLanguage = fromCurrentStore(projects.selectTargetLanguage);
-      const filteredGlossaries = fromCurrentStore(glossaries.selectItems).filter(
-        (g) => g.sourceLanguage === sourceLanguage && g.targetLanguage === targetLanguage
-      );
+      const sourceLanguage = projects.get.sourceLanguage();
+      const targetLanguage = projects.get.targetLanguage();
+      const filteredGlossaries = glossaries.get
+        .items()
+        .filter((g) => g.sourceLanguage === sourceLanguage && g.targetLanguage === targetLanguage);
       if (!filteredGlossaries.length) {
         emitNoMatchingGlossariesMessage(pushMessage);
         return;
@@ -176,11 +167,9 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
           glossaryOptions: filteredGlossaries,
         });
         if (result) {
-          const added = await (dispatch(
-            glossaries.addEntry(
-              { original: result.pair[0], translation: result.pair[1] },
-              result.glossaryFileName
-            )
+          const added = await (glossaries.addEntry(
+            { original: result.pair[0], translation: result.pair[1] },
+            result.glossaryFileName
           ) as Promise<boolean>);
           if (added) {
             emitGlossaryEntryAddedMessage(
@@ -209,7 +198,7 @@ export function EditorAIActionsProvider({ children }: PropsWithChildren) {
         );
       }
     },
-    [addToGlossary, dispatch, pushMessage]
+    [addToGlossary, pushMessage]
   );
 
   const handleAddSelectionToGlossary = useCallback(

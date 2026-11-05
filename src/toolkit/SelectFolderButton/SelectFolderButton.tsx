@@ -1,6 +1,5 @@
 import { CSSVar } from '@src/theme/utils';
-import { useAppDispatch } from '@store/hooks';
-import { workingFolderPick } from '@store/thunks';
+import { app } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { useTranslation } from 'react-i18next';
@@ -16,10 +15,9 @@ const Root = styled.div`
 export default function SelectFolderButton() {
   const { t } = useTranslation('settings');
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
 
   const handleSelectFolder = async () => {
-    const didPickFolder = await dispatch(workingFolderPick());
+    const didPickFolder = await app.workingFolderPick();
     if (didPickFolder) navigate('/');
   };
 

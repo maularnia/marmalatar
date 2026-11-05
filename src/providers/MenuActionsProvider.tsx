@@ -7,14 +7,12 @@ import { settings } from '@src/store/slices/settings';
 import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { useProjectLoader } from '@src/utils/useProjectLoader';
-import { useAppDispatch } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
 import { aiPromptEditor, glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
 import { ai } from '@store/slices/ai';
 import { workingFolder } from '@store/slices/workingFolder';
 import { overlays } from '@store/slices/overlays';
 import { projects } from '@store/slices/project';
-import { openSettingsOverlay, savePromptTemplate } from '@store/thunks';
+import { app } from '@store/thunks';
 import { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -97,7 +95,6 @@ export function useMenuActions(): TMenuActionsContext {
 }
 
 export function MenuActionsProvider({ children }: PropsWithChildren) {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { itemRefs } = useMenuRefs();
 
@@ -115,12 +112,12 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   // Not exposed via context -- only feeds keyboard-navigation bookkeeping below, so it's cheap to
   // recompute fresh from the store on every call rather than keep it reactive. Only the two local
   // "creating" flags actually need to be closure deps -- they change which literal entries get
-  // added, everything else is read fresh via fromCurrentStore() each time this runs.
+  // added, everything else is read fresh through the facades' get each time this runs.
   const getCombinedItems = useCallback((): TMenuItemRef[] => {
-    const projectList = fromCurrentStore(projects.selectList);
-    const promptTemplateItems = fromCurrentStore(promptTemplates.selectItems);
-    const glossaryItems = fromCurrentStore(glossaries.selectItems);
-    const integrationIsConfigured = fromCurrentStore(settings.selectIntegrationIsConfigured);
+    const projectList = projects.get.list();
+    const promptTemplateItems = promptTemplates.get.items();
+    const glossaryItems = glossaries.get.items();
+    const integrationIsConfigured = settings.get.integrationIsConfigured();
     const items: TMenuItemRef[] = [
       { key: SETTINGS_KEY, kind: 'settings' },
       ...projectList.map((p) => ({ key: p.filePath, kind: 'project' as const })),
@@ -241,108 +238,95 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   // Runs right before opening something, so no minimum lifetime here: it would be added on top of
   // the opening loader's own one.
   const saveCurrentIfNeeded = useCallback(async () => {
-    const currentOverlay = fromCurrentStore(overlays.selectCurrent);
-    const currentPromptTemplate = fromCurrentStore(promptTemplates.selectCurrent);
-    const currentGlossary = fromCurrentStore(glossaries.selectCurrent);
+    const currentOverlay = overlays.get.current();
+    const currentPromptTemplate = promptTemplates.get.current();
+    const currentGlossary = glossaries.get.current();
     if (currentOverlay === 'promptTemplate' && currentPromptTemplate) {
       const title =
-        fromCurrentStore(promptTemplates.selectItems).find(
-          (c) => c.fileName === currentPromptTemplate
-        )?.title ?? '...';
+        promptTemplates.get.items().find((c) => c.fileName === currentPromptTemplate)?.title ??
+        '...';
       await load(
         { messages: [t('promptTemplate.savingLabel', { title })] },
-        dispatch(savePromptTemplate()) as Promise<unknown>,
+        app.savePromptTemplate() as Promise<unknown>,
         { minLifeTime: 0 }
       );
     } else if (currentOverlay === 'glossary' && currentGlossary) {
       const title =
-        fromCurrentStore(glossaries.selectItems).find((g) => g.fileName === currentGlossary)
-          ?.title ?? '...';
+        glossaries.get.items().find((g) => g.fileName === currentGlossary)?.title ?? '...';
       await load(
         { messages: [t('glossary.savingLabel', { title })] },
-        dispatch(glossaries.save()) as Promise<unknown>,
+        glossaries.save() as Promise<unknown>,
         { minLifeTime: 0 }
       );
     }
-  }, [load, dispatch, t]);
+  }, [load, t]);
 
   const handleOpenProject = useCallback(
     async (project: TProjectEntry, isActive: boolean) => {
-      const isBusy =
-        fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
+      const isBusy = workingFolder.get.isBusy() || ai.get.isBusy();
       if (isActive || isBusy) return;
       await saveCurrentIfNeeded();
-      dispatch(overlays.closeAll());
-      dispatch(aiPromptEditor.reset());
+      overlays.closeAll();
+      aiPromptEditor.reset();
       void loadProject(project);
     },
-    [saveCurrentIfNeeded, dispatch, loadProject]
+    [saveCurrentIfNeeded, loadProject]
   );
 
   const handleOpenPromptTemplate = useCallback(
     async (fileName: string, title: string) => {
-      const isBusy =
-        fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
+      const isBusy = workingFolder.get.isBusy() || ai.get.isBusy();
       if (isBusy) return;
-      if (
-        fromCurrentStore(overlays.selectCurrent) === 'promptTemplate' &&
-        fromCurrentStore(promptTemplates.selectCurrent) === fileName
-      )
+      if (overlays.get.current() === 'promptTemplate' && promptTemplates.get.current() === fileName)
         return;
       await saveCurrentIfNeeded();
       await load(
         { messages: [t('promptTemplate.loadingLabel', { title })] },
-        dispatch(promptTemplates.openEditor(fileName)) as Promise<unknown>
+        promptTemplates.openEditor(fileName) as Promise<unknown>
       );
     },
-    [saveCurrentIfNeeded, load, dispatch, t]
+    [saveCurrentIfNeeded, load, t]
   );
 
   const handleOpenGlossary = useCallback(
     async (fileName: string, title: string) => {
-      const isBusy =
-        fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
+      const isBusy = workingFolder.get.isBusy() || ai.get.isBusy();
       if (isBusy) return;
-      if (
-        fromCurrentStore(overlays.selectCurrent) === 'glossary' &&
-        fromCurrentStore(glossaries.selectCurrent) === fileName
-      )
-        return;
+      if (overlays.get.current() === 'glossary' && glossaries.get.current() === fileName) return;
       await saveCurrentIfNeeded();
       await load(
         { messages: [t('glossary.loadingLabel', { title })] },
-        dispatch(glossaries.openEditor(fileName)) as Promise<unknown>
+        glossaries.openEditor(fileName) as Promise<unknown>
       );
     },
-    [saveCurrentIfNeeded, load, dispatch, t]
+    [saveCurrentIfNeeded, load, t]
   );
 
   const handleStartNewProject = useCallback(() => {
-    if (fromCurrentStore(projects.selectId)) {
+    if (projects.get.id()) {
       // No confirmation -- the current project is saved to disk first, so this is non-destructive.
       // Editor refs (line-index-keyed input map, split cursor) are reset by EditorRefsProvider
       // itself, reacting to the projectId change this dispatch causes.
       void (async () => {
-        await dispatch(projects.startNew());
+        await projects.startNew();
         navigate('/intro/import');
       })();
     } else {
       navigate('/intro/import');
     }
-  }, [dispatch, navigate]);
+  }, [navigate]);
 
   const handleOpenFocusedItem = useCallback(() => {
     // Enter/Space while a row's rename input has focus must only commit the rename (via
     // ListItem's own onKeyDown), not also open the item.
     if (renamingKey != null) return;
     const focusedItem = getFocusedItem();
-    const isBusy =
-      fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
+    const isBusy = workingFolder.get.isBusy() || ai.get.isBusy();
     if (isBusy || !focusedItem) return;
     const { key, kind } = focusedItem;
     switch (kind) {
       case 'settings':
-        dispatch(openSettingsOverlay());
+        app.openSettingsOverlay();
         break;
       case 'createProject':
         handleStartNewProject();
@@ -354,19 +338,19 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
         handleSetIsCreatingGlossary(true);
         break;
       case 'project': {
-        const project = fromCurrentStore(projects.selectList).find((p) => p.filePath === key);
+        const project = projects.get.list().find((p) => p.filePath === key);
         if (!project) return;
-        void handleOpenProject(project, project.projectId === fromCurrentStore(projects.selectId));
+        void handleOpenProject(project, project.projectId === projects.get.id());
         break;
       }
       case 'promptTemplate': {
-        const item = fromCurrentStore(promptTemplates.selectItems).find((c) => c.fileName === key);
+        const item = promptTemplates.get.items().find((c) => c.fileName === key);
         if (!item) return;
         void handleOpenPromptTemplate(item.fileName, item.title);
         break;
       }
       case 'glossary': {
-        const item = fromCurrentStore(glossaries.selectItems).find((g) => g.fileName === key);
+        const item = glossaries.get.items().find((g) => g.fileName === key);
         if (!item) return;
         void handleOpenGlossary(item.fileName, item.title);
         break;
@@ -375,7 +359,6 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
   }, [
     renamingKey,
     getFocusedItem,
-    dispatch,
     handleStartNewProject,
     handleOpenProject,
     handleOpenPromptTemplate,
@@ -427,20 +410,19 @@ export function MenuActionsProvider({ children }: PropsWithChildren) {
 
   const handleDeleteFocusedItem = useCallback(() => {
     const focusedItem = getFocusedItem();
-    const isBusy =
-      fromCurrentStore(workingFolder.selectIsBusy) || fromCurrentStore(ai.selectIsBusy);
+    const isBusy = workingFolder.get.isBusy() || ai.get.isBusy();
     if (isBusy || !focusedItem) return;
     const { key, kind } = focusedItem;
     if (kind === 'project') {
-      const project = fromCurrentStore(projects.selectList).find((p) => p.filePath === key);
+      const project = projects.get.list().find((p) => p.filePath === key);
       if (!project) return;
       void handleDeleteProject(project.filePath, project.projectName, project.projectId);
     } else if (kind === 'promptTemplate') {
-      const item = fromCurrentStore(promptTemplates.selectItems).find((c) => c.fileName === key);
+      const item = promptTemplates.get.items().find((c) => c.fileName === key);
       if (!item) return;
       void handleDeletePromptTemplate(item.fileName, item.title);
     } else if (kind === 'glossary') {
-      const item = fromCurrentStore(glossaries.selectItems).find((g) => g.fileName === key);
+      const item = glossaries.get.items().find((g) => g.fileName === key);
       if (!item) return;
       void handleDeleteGlossary(item.fileName, item.title);
     }

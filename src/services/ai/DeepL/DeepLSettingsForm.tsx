@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { ai } from '@store/slices/ai';
 import { projects } from '@src/store/slices/project';
 import i18n from '@src/i18n';
@@ -59,7 +59,6 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
     [tSettings]
   );
   const linesPerRequestOptions = useMemo(() => getLinesPerRequestOptions(tSettings), [tSettings]);
-  const dispatch = useAppDispatch();
   const connected = useAppSelector(ai.selectIntegrationConnected);
   const pingError = useAppSelector(ai.selectIntegrationPingError);
   const targetLanguage = useAppSelector(projects.selectTargetLanguage);
@@ -119,16 +118,14 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
       deeplClient.setCachedOptions(options);
       lastVerifiedApiKeyRef.current = apiKey;
       setConnectionStatus('connected');
-      dispatch(ai.setIntegrationConnectionStatus({ connected: true }));
+      ai.setIntegrationConnectionStatus({ connected: true });
     } catch (err) {
       setConnectionStatus('error');
       setConnectionError(getErrorMessage(err));
-      dispatch(
-        ai.setIntegrationConnectionStatus({
-          connected: false,
-          error: getErrorMessage(err),
-        })
-      );
+      ai.setIntegrationConnectionStatus({
+        connected: false,
+        error: getErrorMessage(err),
+      });
     }
   };
 
@@ -168,13 +165,13 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
 
   // Commit valid settings to the client (cache + direct electron-bridge persistence), and
   // debounce a context-window re-estimate -- the app never sees these values, only that a
-  // commit happened (via the client's own dispatch below).
+  // commit happened (via the re-estimate below).
   useEffect(() => {
     if (!isValid) return;
     deeplClient.setCurrentSettings(getValues());
     if (commitDebounceRef.current) clearTimeout(commitDebounceRef.current);
     commitDebounceRef.current = setTimeout(() => {
-      void dispatch(ai.estimateContextWindowUsage());
+      void ai.estimateContextWindowUsage();
     }, SETTINGS_COMMIT_DEBOUNCE_MS);
   }, [
     isValid,

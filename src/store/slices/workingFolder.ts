@@ -98,16 +98,24 @@ const loadTrackedFolder =
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const workingFolder = api('workingFolder', {
-  checkForeignFileExists,
-  cleanupMediaCache,
-  folderChanged,
-  loadTrackedFolder,
-  rescanFolder,
-  selectFolder,
-  selectFolderDialog,
-  selectInitialized,
-  selectWorkingFolderIsBusy,
-  setInitialized,
-  setIsBusy,
-  setTrackedFolder,
+  actions: {
+    folderChanged,
+    setInitialized,
+    setIsBusy,
+  },
+  thunks: {
+    loadTrackedFolder,
+    setTrackedFolder,
+  },
+  selectors: {
+    selectFolder,
+    selectInitialized,
+    selectWorkingFolderIsBusy,
+  },
+  helpers: {
+    checkForeignFileExists,
+    cleanupMediaCache,
+    rescanFolder,
+    selectFolderDialog,
+  },
 });

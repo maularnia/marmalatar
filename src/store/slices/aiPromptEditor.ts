@@ -259,26 +259,26 @@ export default aiPromptEditorSlice.reducer;
 // is dropped.
 const refreshPromptTemplates =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     const promptTemplateItems = await listPromptTemplates();
     dispatch(setPromptTemplateItems(promptTemplateItems));
-    const selectedTemplate = prompt.selectSelectedPromptTemplateFileName(getState());
+    const selectedTemplate = prompt.get.selectedPromptTemplateFileName();
     if (selectedTemplate && !promptTemplateItems.some((i) => i.fileName === selectedTemplate)) {
-      dispatch(prompt.setSelectedPromptTemplateFileName(null));
+      prompt.setSelectedPromptTemplateFileName(null);
     }
   };
 
 const refreshGlossaries =
   () =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     const glossaryItems = await listGlossaries();
     dispatch(setGlossaryItems(glossaryItems));
-    const selectedGlossaries = prompt.selectSelectedGlossaryFileNames(getState());
+    const selectedGlossaries = prompt.get.selectedGlossaryFileNames();
     const stillValidGlossaries = selectedGlossaries.filter((fn) =>
       glossaryItems.some((i) => i.fileName === fn)
     );
     if (stillValidGlossaries.length !== selectedGlossaries.length) {
-      dispatch(prompt.setSelectedGlossaryFileNames(stillValidGlossaries));
+      prompt.setSelectedGlossaryFileNames(stillValidGlossaries);
     }
   };
 
@@ -286,12 +286,12 @@ const refreshGlossaries =
 
 const initializePromptTemplateEditor =
   (fileName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     dispatch(setCurrentGlossary(null));
     dispatch(setGlossaryData(null));
     dispatch(setCurrentPromptTemplate(fileName));
     dispatch(setPromptTemplateData(null));
-    const folder = workingFolder.selectFolder(getState());
+    const folder = workingFolder.get.folder();
     if (!folder) return;
     const data = await readPromptTemplateFile(fileName);
     dispatch(setPromptTemplateData(data));
@@ -327,7 +327,7 @@ const renamePromptTemplate =
 
     if (newFileName !== fileName) {
       const selectedPt = prompt.selectSelectedPromptTemplateFileName(state);
-      if (selectedPt === fileName) dispatch(prompt.setSelectedPromptTemplateFileName(newFileName));
+      if (selectedPt === fileName) prompt.setSelectedPromptTemplateFileName(newFileName);
       if (state.aiPromptEditor.currentPromptTemplate === fileName) {
         dispatch(setCurrentPromptTemplate(newFileName));
         dispatch(setPromptTemplateData(updated));
@@ -389,7 +389,7 @@ const openPromptTemplateEditor =
     ) {
       return;
     }
-    dispatch(overlays.setCurrent(TOverlay.PROMPT_TEMPLATE));
+    overlays.setCurrent(TOverlay.PROMPT_TEMPLATE);
     await dispatch(initializePromptTemplateEditor(filename));
   };
 
@@ -397,12 +397,12 @@ const openPromptTemplateEditor =
 
 const initializeGlossaryEditor =
   (fileName: string) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
+  async (dispatch: AppDispatch): Promise<void> => {
     dispatch(setCurrentPromptTemplate(null));
     dispatch(setPromptTemplateData(null));
     dispatch(setCurrentGlossary(fileName));
     dispatch(setGlossaryData(null));
-    const folder = workingFolder.selectFolder(getState());
+    const folder = workingFolder.get.folder();
     if (!folder) return;
     const data = await readGlossaryFile(fileName);
     dispatch(setGlossaryData(data));
@@ -438,7 +438,7 @@ const updateGlossaryLanguages =
     }
     await dispatch(refreshGlossaries());
     // A selected glossary may no longer match the project's direction
-    if (prompt.selectSelectedGlossaryFileNames(getState()).includes(fileName)) {
+    if (prompt.get.selectedGlossaryFileNames().includes(fileName)) {
       dispatch(reconcileGlossarySelectionWithDirection());
     }
   };
@@ -474,10 +474,8 @@ const renameGlossary =
     if (newFileName !== fileName) {
       const selectedGlossaries = prompt.selectSelectedGlossaryFileNames(state);
       if (selectedGlossaries.includes(fileName)) {
-        dispatch(
-          prompt.setSelectedGlossaryFileNames(
-            selectedGlossaries.map((fn) => (fn === fileName ? newFileName : fn))
-          )
+        prompt.setSelectedGlossaryFileNames(
+          selectedGlossaries.map((fn) => (fn === fileName ? newFileName : fn))
         );
       }
       if (state.aiPromptEditor.currentGlossary === fileName) {
@@ -615,7 +613,7 @@ const reconcileGlossarySelectionWithDirection =
     const currentFileNames = prompt.selectSelectedGlossaryFileNames(state);
     const matchedFileNames = selectDirectionMatchedGlossaryFileNames(state);
     if (matchedFileNames.length !== currentFileNames.length) {
-      dispatch(prompt.setSelectedGlossaryFileNames(matchedFileNames));
+      prompt.setSelectedGlossaryFileNames(matchedFileNames);
     }
     void dispatch(refreshResolvedGlossaryEntries());
   };
@@ -630,49 +628,65 @@ const openGlossaryEditor =
     ) {
       return;
     }
-    dispatch(overlays.setCurrent(TOverlay.GLOSSARY));
+    overlays.setCurrent(TOverlay.GLOSSARY);
     await dispatch(initializeGlossaryEditor(filename));
   };
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const glossaries = api('glossary', {
-  addGlossaryEntry,
-  createGlossary,
-  deleteGlossary,
-  openGlossaryEditor,
-  reconcileGlossarySelectionWithDirection,
-  refreshGlossaries,
-  refreshResolvedGlossaryEntries,
-  renameGlossary,
-  saveGlossary,
-  selectCurrentGlossary,
-  selectGlossaryData,
-  selectGlossaryItems,
-  selectResolvedGlossaryEntries,
-  setGlossaryData,
-  setGlossaryItems,
-  setResolvedGlossaryEntries,
-  updateGlossaryEmoji,
-  updateGlossaryLanguages,
+  actions: {
+    setGlossaryData,
+    setGlossaryItems,
+    setResolvedGlossaryEntries,
+  },
+  thunks: {
+    addGlossaryEntry,
+    createGlossary,
+    deleteGlossary,
+    openGlossaryEditor,
+    reconcileGlossarySelectionWithDirection,
+    refreshGlossaries,
+    refreshResolvedGlossaryEntries,
+    renameGlossary,
+    saveGlossary,
+    updateGlossaryEmoji,
+    updateGlossaryLanguages,
+  },
+  selectors: {
+    selectCurrentGlossary,
+    selectGlossaryData,
+    selectGlossaryItems,
+    selectResolvedGlossaryEntries,
+  },
 });
 
 export const promptTemplates = api('promptTemplate', {
-  createPromptTemplate,
-  deletePromptTemplate,
-  openPromptTemplateEditor,
-  readPromptTemplateFile,
-  refreshPromptTemplates,
-  renamePromptTemplate,
-  selectCurrentPromptTemplate,
-  selectPromptTemplateData,
-  selectPromptTemplateItems,
-  setPromptTemplateData,
-  setPromptTemplateItems,
-  updatePromptTemplateEmoji,
-  writePromptTemplateBody,
+  actions: {
+    setPromptTemplateData,
+    setPromptTemplateItems,
+  },
+  thunks: {
+    createPromptTemplate,
+    deletePromptTemplate,
+    openPromptTemplateEditor,
+    refreshPromptTemplates,
+    renamePromptTemplate,
+    updatePromptTemplateEmoji,
+  },
+  selectors: {
+    selectCurrentPromptTemplate,
+    selectPromptTemplateData,
+    selectPromptTemplateItems,
+  },
+  helpers: {
+    readPromptTemplateFile,
+    writePromptTemplateBody,
+  },
 });
 
 export const aiPromptEditor = api('aiPromptEditor', {
-  resetAiPromptEditor,
+  actions: {
+    resetAiPromptEditor,
+  },
 });

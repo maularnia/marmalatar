@@ -7,7 +7,7 @@ import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { TCharacter } from '@src/types';
 import { msToHunanTime } from '@src/utils/time';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -134,7 +134,6 @@ type VideoPlayerProps = {
 
 export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: VideoPlayerProps) {
   const { t } = useTranslation('editor');
-  const dispatch = useAppDispatch();
   const {
     videoElementRef,
     registerVideoElementRef,
@@ -339,7 +338,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
                 variant={TButtonVariant.PRIMARY}
                 size={TButtonSize.SMALL}
                 icon={isVideoCollapsed ? TIcon.ARROW_TOGGLE_DOWN : TIcon.ARROW_TOGGLE_UP}
-                onClick={() => dispatch(editor.setVideoCollapsed(!isVideoCollapsed))}
+                onClick={() => editor.setVideoCollapsed(!isVideoCollapsed)}
               />
             </TopBarBlurWrapper>
           )}

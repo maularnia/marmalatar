@@ -1,8 +1,14 @@
 // Builds a slice's domain facade: one frozen object holding the selectors, actions and thunks of a
-// domain, so typing the domain's name lists everything about it.
+// domain, so typing the domain's name lists everything about it. Actions and thunks dispatch
+// themselves on the app store (glossaries.rename(fileName, title), no dispatch(...)), and every
+// selector also gets a reader of the current state under `get` (glossaries.get.items()).
 //
-//   export const glossaries = api('glossary', { selectGlossaryItems, renameGlossary, refreshGlossaries });
-//   glossaries.selectItems, glossaries.rename, glossaries.refresh
+//   export const glossaries = api('glossary', {
+//     actions: { setGlossaryData },
+//     thunks: { renameGlossary, refreshGlossaries },
+//     selectors: { selectGlossaryItems },
+//   });
+//   glossaries.setData(data), glossaries.rename(...), glossaries.selectItems, glossaries.get.items()
 //
 // Each member's key is its name with the keyword taken out: the first occurrence of the capitalized
 // plural ("Glossaries"), then of the capitalized singular ("Glossary"), then the first letter
@@ -26,7 +32,69 @@ type TKey<K extends string, W extends string> = Uncapitalize<
   TStripOnce<TStripOnce<K, Capitalize<TPlural<W>>>, Capitalize<W>>
 >;
 
-type TApi<W extends string, T> = { readonly [K in keyof T as TKey<K & string, W>]: T[K] };
+// Key of a selector's reader under `get`: its facade key without the leading "select"
+type TGetKey<K extends string, W extends string> =
+  TKey<K, W> extends `select${infer R}` ? Uncapitalize<R> : never;
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- member shapes are matched structurally */
+type TActionCreator = ((...args: any[]) => unknown) & { type: string; match: unknown };
+type TThunkCreator = (...args: any[]) => (dispatch: any, getState: any) => unknown;
+type TSelector = (state: any, ...args: any[]) => unknown;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+type TBoundAction<A> = A extends (...args: infer P) => infer R
+  ? ((...args: P) => R) & Pick<A, 'type' & keyof A> & Pick<A, 'match' & keyof A>
+  : never;
+type TBoundThunk<T> = T extends (...args: infer P) => (...thunkArgs: never[]) => infer R
+  ? (...args: P) => R
+  : never;
+type TReader<S> = S extends (state: never, ...args: infer P) => infer R ? (...args: P) => R : never;
+
+type TGroups = {
+  // Slice action creators: dispatched when called, and still usable in addCase / isAnyOf
+  actions?: Record<string, TActionCreator>;
+  // Thunk creators: dispatched when called, returning what the thunk returns
+  thunks?: Record<string, TThunkCreator>;
+  // Selectors, as they are, for useAppSelector; each also gets a reader under `get`
+  selectors?: Record<string, TSelector>;
+  // Plain functions, as they are (IPC wrappers)
+  helpers?: Record<string, unknown>;
+};
+
+type TRekeyed<W extends string, T, TMap extends 'action' | 'thunk' | 'as-is'> = {
+  readonly [K in keyof T as TKey<K & string, W>]: TMap extends 'action'
+    ? TBoundAction<T[K]>
+    : TMap extends 'thunk'
+      ? TBoundThunk<T[K]>
+      : T[K];
+};
+
+type TApi<W extends string, G extends TGroups> = TRekeyed<W, G['actions'], 'action'> &
+  TRekeyed<W, G['thunks'], 'thunk'> &
+  TRekeyed<W, G['selectors'], 'as-is'> &
+  TRekeyed<W, G['helpers'], 'as-is'> & {
+    readonly get: {
+      readonly [K in keyof G['selectors'] as TGetKey<K & string, W>]: TReader<G['selectors'][K]>;
+    };
+  };
+
+type TConnectedStore = {
+  dispatch: (action: never) => unknown;
+  getState: () => unknown;
+};
+
+let connectedStore: TConnectedStore | null = null;
+
+// Called once by store.ts with the app store. Facades can't import it themselves: the store imports
+// the slices, which build their facades with this module.
+export function connectApi(store: TConnectedStore): void {
+  connectedStore = store;
+}
+
+function requireStore(): TConnectedStore {
+  if (!connectedStore) throw new Error('api: store not connected');
+  return connectedStore;
+}
 
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
@@ -47,17 +115,38 @@ function toKey(name: string, keyword: string): string {
 }
 
 // Throws on load if two members end up under the same key, so a clash can't silently hide one
-export function api<const W extends string, const T extends Record<string, unknown>>(
+export function api<const W extends string, const G extends TGroups>(
   keyword: W,
-  members: T
-): TApi<W, T> {
+  { actions = {}, thunks = {}, selectors = {}, helpers = {} }: G
+): TApi<W, G> {
   const facade: Record<string, unknown> = {};
-  for (const [name, member] of Object.entries(members)) {
-    const key = toKey(name, keyword);
-    if (key in facade) throw new Error(`api('${keyword}'): "${name}" clashes on key "${key}"`);
-    facade[key] = member;
+  const get: Record<string, unknown> = {};
+  const add = (target: Record<string, unknown>, key: string, name: string, member: unknown) => {
+    if (key in target) throw new Error(`api('${keyword}'): "${name}" clashes on key "${key}"`);
+    target[key] = member;
+  };
+
+  for (const [name, creator] of Object.entries(actions)) {
+    const bound = (...args: unknown[]) => requireStore().dispatch(creator(...args) as never);
+    add(facade, toKey(name, keyword), name, Object.assign(bound, creator));
   }
-  return Object.freeze(facade) as TApi<W, T>;
+  for (const [name, thunk] of Object.entries(thunks)) {
+    const bound = (...args: unknown[]) => requireStore().dispatch(thunk(...args) as never);
+    add(facade, toKey(name, keyword), name, bound);
+  }
+  for (const [name, selector] of Object.entries(selectors)) {
+    const key = toKey(name, keyword);
+    add(facade, key, name, selector);
+    const getKey = key.replace(/^select/, '');
+    add(get, getKey.charAt(0).toLowerCase() + getKey.slice(1), name, (...args: unknown[]) =>
+      selector(requireStore().getState(), ...args)
+    );
+  }
+  for (const [name, helper] of Object.entries(helpers)) {
+    add(facade, toKey(name, keyword), name, helper);
+  }
+  add(facade, 'get', 'get', Object.freeze(get));
+  return Object.freeze(facade) as TApi<W, G>;
 }
 
 // Compile-time checks that TKey follows the rule described above
@@ -66,4 +155,5 @@ const _singular: TKey<'selectCurrentGlossary', 'glossary'> = 'selectCurrent';
 const _leading: TKey<'selectGlossaryItems', 'glossary'> = 'selectItems';
 const _vowelY: TKey<'closeAllOverlays', 'overlay'> = 'closeAll';
 const _untouched: TKey<'selectFolder', 'workingFolder'> = 'selectFolder';
-void [_plural, _singular, _leading, _vowelY, _untouched];
+const _getKey: TGetKey<'selectGlossaryItems', 'glossary'> = 'items';
+void [_plural, _singular, _leading, _vowelY, _untouched, _getKey];

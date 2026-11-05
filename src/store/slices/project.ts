@@ -260,8 +260,8 @@ const createProject =
     const { sourceLanguage, targetLanguage } = params;
 
     dispatch(setCurrentProjectFilePath(null));
-    dispatch(editor.resetMemoryState());
-    dispatch(editor.setVideoCollapsed(false));
+    editor.resetMemoryState();
+    editor.setVideoCollapsed(false);
 
     let emoji: string;
     try {
@@ -343,9 +343,9 @@ const startNewProject =
     if (selectIsProjectOpen(getState())) {
       await dispatch(saveProjectToDisk());
     }
-    dispatch(editor.resetMemoryState());
+    editor.resetMemoryState();
     dispatch(resetProject());
-    dispatch(editor.clearFileData());
+    editor.clearFileData();
   };
 
 const loadProjectFromDisk =
@@ -359,7 +359,7 @@ const loadProjectFromDisk =
     }
 
     dispatch(setCurrentProjectFilePath(null));
-    dispatch(editor.resetMemoryState());
+    editor.resetMemoryState();
 
     applyProjectData(dispatch, data);
 
@@ -370,7 +370,7 @@ const loadProjectFromDisk =
       throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
     }
     dispatch(setEditorMode(editorState.editorMode));
-    dispatch(editor.setVideoCollapsed(editorState.isVideoCollapsed));
+    editor.setVideoCollapsed(editorState.isVideoCollapsed);
     // Restore the video that was attached when the project was last saved/closed.
     dispatch(setVideoFilePath(editorState.videoPath));
 
@@ -387,19 +387,19 @@ function applyProjectData(
 
   dispatch(setProjectSourceLanguage(data.project.sourceLanguage));
   dispatch(setProjectTargetLanguage(data.project.targetLanguage));
-  dispatch(glossaries.reconcileSelectionWithDirection());
-  dispatch(prompt.setFrozenLineNumbers([]));
+  glossaries.reconcileSelectionWithDirection();
+  prompt.setFrozenLineNumbers([]);
 
-  dispatch(editor.setCharacterPool(data.editor.characterPool));
+  editor.setCharacterPool(data.editor.characterPool);
 
-  dispatch(editor.setLines(data.editor.lines));
-  dispatch(editor.setTotalLinesToTranslate(data.editor.lines.length));
+  editor.setLines(data.editor.lines);
+  editor.setTotalLinesToTranslate(data.editor.lines.length);
 }
 
 const renameProject =
   (projectId: string, newName: string) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
-    const folder = workingFolder.selectFolder(getState());
+    const folder = workingFolder.get.folder();
     if (!folder) throw new Error(t('project.folderNotTracked'));
     const trimmed = newName.trim();
     if (!trimmed) throw new Error(t('shared.nameEmpty'));
@@ -430,44 +430,52 @@ const updateProjectEmoji =
 const deleteProject =
   (projectId: string) =>
   async (dispatch: AppDispatch): Promise<void> => {
-    dispatch(workingFolder.setIsBusy(true));
+    workingFolder.setIsBusy(true);
     try {
       await deleteProjectOnDisk(projectId);
       await dispatch(refreshProjects());
       void workingFolder.cleanupMediaCache().catch(() => {});
     } finally {
-      dispatch(workingFolder.setIsBusy(false));
+      workingFolder.setIsBusy(false);
     }
   };
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const projects = api('project', {
-  buildProjectEditorStateSaveData,
-  createProject,
-  deleteProject,
-  getProjectEditorState,
-  loadProjectFromDisk,
-  refreshProjects,
-  renameProject,
-  resetProject,
-  saveProjectLanguages,
-  saveProjectToDisk,
-  selectEditorMode,
-  selectIsEditMode,
-  selectIsProjectOpen,
-  selectProjectId,
-  selectProjectList,
-  selectProjectName,
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-  selectVideoFilePath,
-  setEditorMode,
-  setProjectList,
-  setProjectSourceLanguage,
-  setProjectTargetLanguage,
-  setVideoFilePath,
-  startNewProject,
-  updateProjectEmoji,
-  writeProjectEditorState,
+  actions: {
+    resetProject,
+    setEditorMode,
+    setProjectList,
+    setProjectSourceLanguage,
+    setProjectTargetLanguage,
+    setVideoFilePath,
+  },
+  thunks: {
+    createProject,
+    deleteProject,
+    loadProjectFromDisk,
+    refreshProjects,
+    renameProject,
+    saveProjectLanguages,
+    saveProjectToDisk,
+    startNewProject,
+    updateProjectEmoji,
+  },
+  selectors: {
+    selectEditorMode,
+    selectIsEditMode,
+    selectIsProjectOpen,
+    selectProjectId,
+    selectProjectList,
+    selectProjectName,
+    selectProjectSourceLanguage,
+    selectProjectTargetLanguage,
+    selectVideoFilePath,
+  },
+  helpers: {
+    buildProjectEditorStateSaveData,
+    getProjectEditorState,
+    writeProjectEditorState,
+  },
 });

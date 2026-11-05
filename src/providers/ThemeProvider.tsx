@@ -1,6 +1,6 @@
 import '@src/assets/fonts.css';
 import { PropsWithChildren, useEffect, useRef } from 'react';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { LARGE_SCREEN_THRESHOLD, MEDUIM_SCREEN_THRESHOLD } from '@src/consts';
 import { TThemeSelection } from '@src/types';
 import { settings } from '@store/slices/settings';
@@ -18,7 +18,6 @@ const getCurrentMatcher = (): [MediaQueryList, TScreenSize] => {
 };
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const dispatch = useAppDispatch();
   const selection = useAppSelector(settings.selectThemeSelection);
   const resolvedThemeName = useAppSelector(settings.selectResolvedThemeName);
   const matcher = useRef<MediaQueryList>(null);
@@ -28,28 +27,26 @@ export function ThemeProvider({ children }: PropsWithChildren) {
       const [mc, size] = getCurrentMatcher();
       matcher.current = mc;
       matcher.current.addEventListener('change', onMatchChage);
-      dispatch(settings.setScreenSize(size));
+      settings.setScreenSize(size);
     };
     onMatchChage();
     return () => {
       if (matcher.current) matcher.current.removeEventListener('change', onMatchChage);
     };
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     if (selection !== TThemeSelection.SYSTEM) {
-      dispatch(
-        settings.setResolvedThemeName(selection === TThemeSelection.DARK ? 'dark' : 'light')
-      );
+      settings.setResolvedThemeName(selection === TThemeSelection.DARK ? 'dark' : 'light');
       return;
     }
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    dispatch(settings.setResolvedThemeName(mq.matches ? 'dark' : 'light'));
+    settings.setResolvedThemeName(mq.matches ? 'dark' : 'light');
     const handler = (e: MediaQueryListEvent) =>
-      dispatch(settings.setResolvedThemeName(e.matches ? 'dark' : 'light'));
+      settings.setResolvedThemeName(e.matches ? 'dark' : 'light');
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [selection, dispatch]);
+  }, [selection]);
 
   useEffect(() => {
     document.body.classList.remove('theme-dark', 'theme-light');

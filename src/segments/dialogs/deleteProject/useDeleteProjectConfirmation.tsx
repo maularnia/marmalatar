@@ -1,7 +1,7 @@
 import { useConfirm } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { projects } from '@store/slices/project';
 import { useNavigate } from 'react-router-dom';
 import { DeleteProjectDialog } from './DeleteProjectDialog';
@@ -9,7 +9,6 @@ import { DeleteProjectDialog } from './DeleteProjectDialog';
 const t = i18n.getFixedT(null, 'dialogs');
 
 export const useDeleteProjectConfirmation = () => {
-  const dispatch = useAppDispatch();
   const currentProjectId = useAppSelector(projects.selectId);
   const navigate = useNavigate();
   const { confirm } = useConfirm(DeleteProjectDialog, {
@@ -19,9 +18,9 @@ export const useDeleteProjectConfirmation = () => {
   return {
     confirmDeleteProject: async (projectName: string, projectId: string): Promise<boolean> => {
       if (!(await confirm({ projectName }))) return false;
-      await dispatch(projects.delete(projectId));
+      await projects.delete(projectId);
       if (projectId === currentProjectId) {
-        dispatch(projects.reset());
+        projects.reset();
         navigate('/');
       }
       return true;

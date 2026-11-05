@@ -12,8 +12,7 @@ import { TTagSize } from '@src/toolkit/Tag';
 import { TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
+import { useAppSelector } from '@store/hooks';
 import classNames from 'classnames';
 import { CSSProperties, type ReactElement, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -91,7 +90,6 @@ const overscrollAmount = 300;
 const estimatedRowHeight = 100;
 export default function Editor() {
   const { t } = useTranslation('tooltips');
-  const dispatch = useAppDispatch();
   const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
   const focusedLineIndex = useAppSelector(editor.selectFocusedLineIndex);
   const { handleChangeFocusedLine, handleFocusEditor, handleMergeLines } = useEditorActions();
@@ -178,16 +176,14 @@ export default function Editor() {
           handlePause();
         }}
         onCharacterChange={(character) =>
-          dispatch(editor.updateTranslationCharacter({ lineIndex, character }))
+          editor.updateTranslationCharacter({ lineIndex, character })
         }
         onOutputTextChange={(text) => {
-          dispatch(editor.updateTranslatedText({ lineIndex, text }));
-          if (fromCurrentStore(settings.selectAutoMarkLinesCompleted))
-            dispatch(
-              editor.setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true })
-            );
+          editor.updateTranslatedText({ lineIndex, text });
+          if (settings.get.autoMarkLinesCompleted())
+            editor.setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true });
         }}
-        onSourceTextChange={(text) => dispatch(editor.updateSourceText({ lineIndex, text }))}
+        onSourceTextChange={(text) => editor.updateSourceText({ lineIndex, text })}
         onMergeUpClick={() => handleMergeLines(lineIndex, 'up')}
         onMergeDownClick={() => handleMergeLines(lineIndex, 'down')}
       />
@@ -220,7 +216,7 @@ export default function Editor() {
             overscanPx={overscrollAmount}
             estimatedRowHeight={estimatedRowHeight}
             renderEpoch={renderEpoch}
-            onRenderEpochEnded={() => dispatch(editor.incrementRenderEpoch())}
+            onRenderEpochEnded={() => editor.incrementRenderEpoch()}
             renderItem={({ item, onMeasure }) => renderVirtualizedLine(item, onMeasure)}
           />
         </Root>

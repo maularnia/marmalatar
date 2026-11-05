@@ -1,5 +1,5 @@
 import Select from '@ui-toolkit/Select/Select';
-import { useAppDispatch, useAppSelector } from '@src/store/hooks';
+import { useAppSelector } from '@src/store/hooks';
 import { projects } from '@src/store/slices/project';
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
@@ -40,7 +40,6 @@ const Cell = styled.div`
 
 export const EditorTableHeader = () => {
   const { t } = useTranslation('editor');
-  const dispatch = useAppDispatch();
   const languageOptions = useLanguageOptions();
   const sourceLanguage = useAppSelector(projects.selectSourceLanguage);
   const targetLanguage = useAppSelector(projects.selectTargetLanguage);
@@ -51,8 +50,8 @@ export const EditorTableHeader = () => {
         <Select
           value={sourceLanguage ?? TLanguage.English}
           onChange={([value]) => {
-            dispatch(projects.setSourceLanguage(value as TLanguage));
-            dispatch(glossaries.reconcileSelectionWithDirection());
+            projects.setSourceLanguage(value as TLanguage);
+            glossaries.reconcileSelectionWithDirection();
           }}
           options={languageOptions}
         />
@@ -63,8 +62,8 @@ export const EditorTableHeader = () => {
           <Select
             value={targetLanguage ?? TLanguage.Belarusian}
             onChange={([value]) => {
-              dispatch(projects.setTargetLanguage(value as TLanguage));
-              dispatch(glossaries.reconcileSelectionWithDirection());
+              projects.setTargetLanguage(value as TLanguage);
+              glossaries.reconcileSelectionWithDirection();
             }}
             options={languageOptions}
           />

@@ -4,7 +4,7 @@ import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { glossaries } from '@store/slices/aiPromptEditor';
 import { overlays } from '@store/slices/overlays';
 import Button from '@ui-toolkit/Button/Button';
@@ -39,7 +39,6 @@ const emptyFormData: AIGlossaryFileDataType = {
 export default function GlossaryOverlay() {
   const { t } = useTranslation(['glossary', 'tooltips', 'messages']);
   const languageOptions = useLanguageOptions();
-  const dispatch = useAppDispatch();
   const currentGlossary = useAppSelector(glossaries.selectCurrent);
   const glossaryData = useAppSelector(glossaries.selectData);
   const { load } = useLoader();
@@ -52,18 +51,18 @@ export default function GlossaryOverlay() {
   const handleLanguagesChange = useCallback(
     (sourceLanguage: TLanguage, targetLanguage: TLanguage) => {
       if (!currentGlossary) return;
-      void dispatch(glossaries.updateLanguages(currentGlossary, sourceLanguage, targetLanguage));
+      void glossaries.updateLanguages(currentGlossary, sourceLanguage, targetLanguage);
     },
-    [dispatch, currentGlossary]
+    [currentGlossary]
   );
   const handleRowChange = useCallback(
     (index: number, field: 'original' | 'translation', value: string) => {
       const list = formData.list.map((entry, i) =>
         i === index ? { ...entry, [field]: value } : entry
       );
-      dispatch(glossaries.setData({ ...formData, list }));
+      glossaries.setData({ ...formData, list });
     },
-    [dispatch, formData]
+    [formData]
   );
 
   const handleAddRow = useCallback(() => {
@@ -73,9 +72,9 @@ export default function GlossaryOverlay() {
   const handleClose = async () => {
     await load(
       { messages: [t('messages:glossary.savingLabel', { title: formData.title || '...' })] },
-      dispatch(glossaries.save()) as Promise<unknown>
+      glossaries.save() as Promise<unknown>
     );
-    dispatch(overlays.closeAll());
+    overlays.closeAll();
   };
   if (!currentGlossary) return null;
 

@@ -5,7 +5,7 @@ import { projects } from '@src/store/slices/project';
 import { prompt } from '@src/store/slices/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
 import { ai } from '@store/slices/ai';
 import {
@@ -27,7 +27,6 @@ const ESTIMATE_DEBOUNCE_MS = 500;
 
 export default function PromptSetupRow() {
   const { t } = useTranslation('settings');
-  const dispatch = useAppDispatch();
   const promptTemplateItems = useAppSelector(promptTemplates.selectItems);
   const glossaryItems = useAppSelector(glossaries.selectItems);
   const isBusy = useAppSelector(ai.selectIsBusy);
@@ -75,9 +74,9 @@ export default function PromptSetupRow() {
   // prompt.setSelectedGlossaryFileNames clears the cache, this repopulates it from disc.
   useEffect(() => {
     if (selectedGlossaryFileNames.length > 0 && resolvedGlossaryEntries.length === 0) {
-      void dispatch(glossaries.refreshResolvedEntries());
+      void glossaries.refreshResolvedEntries();
     }
-  }, [selectedGlossaryFileNames, resolvedGlossaryEntries.length, dispatch]);
+  }, [selectedGlossaryFileNames, resolvedGlossaryEntries.length]);
 
   // Never re-runs while a valid estimate is already showing ('success') -- whatever it actually
   // depends on (prompt template, glossary selection, direction) is instead degraded back to
@@ -87,20 +86,20 @@ export default function PromptSetupRow() {
   // (disabled, misconfigured, or no template selected) the estimate is dropped and unavailable.
   useEffect(() => {
     if (!metricsSupported || !configured || !selectedPromptTemplateFileName) {
-      dispatch(ai.setContextWindowEstimateStatus('idle'));
-      dispatch(ai.setContextWindowEstimate(null));
+      ai.setContextWindowEstimateStatus('idle');
+      ai.setContextWindowEstimate(null);
       return;
     }
 
     if (estimationStatus === 'success') return;
 
-    dispatch(ai.setContextWindowEstimateStatus('estimating'));
+    ai.setContextWindowEstimateStatus('estimating');
     const timer = setTimeout(() => {
-      void dispatch(ai.estimateContextWindowUsage());
+      void ai.estimateContextWindowUsage();
     }, ESTIMATE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [metricsSupported, configured, selectedPromptTemplateFileName, estimationStatus, dispatch]);
+  }, [metricsSupported, configured, selectedPromptTemplateFileName, estimationStatus]);
 
   const utilizationPercent =
     estimationStatus === 'success' && estimation && estimation.contextWindow > 0
@@ -145,7 +144,7 @@ export default function PromptSetupRow() {
                     options={promptTemplateOptions}
                     value={selectedPromptTemplateFileName ?? ''}
                     onChange={([v]) =>
-                      void dispatch(ai.applySelectedPromptTemplateFileName((v as string) || null))
+                      void ai.applySelectedPromptTemplateFileName((v as string) || null)
                     }
                     placeholder={t('aiSettings.prompt.promptTemplatePlaceholder')}
                     disabled={isBusy}
@@ -158,7 +157,7 @@ export default function PromptSetupRow() {
                     multiple
                     options={filteredGlossaryOptions}
                     value={selectedGlossaryFileNames}
-                    onChange={(values) => dispatch(prompt.setSelectedGlossaryFileNames(values))}
+                    onChange={(values) => prompt.setSelectedGlossaryFileNames(values)}
                     placeholder={t('aiSettings.prompt.glossariesPlaceholder')}
                     disabled={isBusy}
                   />

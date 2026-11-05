@@ -1,7 +1,7 @@
 import { emitProjectCreationAbortedMessage } from '@src/messages';
 import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
-import { useAppDispatch, useAppSelector } from '@src/store/hooks';
+import { useAppSelector } from '@src/store/hooks';
 import { workingFolder } from '@src/store/slices/workingFolder';
 import { projects } from '@store/slices/project';
 import { TLanguage, TSubtitleLine } from '@src/types';
@@ -18,7 +18,6 @@ type SubmitNewProjectParams = {
 
 export function useSubmitNewProject() {
   const { t } = useTranslation('messages');
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const folder = useAppSelector(workingFolder.selectFolder);
   const { load } = useLoader();
@@ -41,7 +40,7 @@ export function useSubmitNewProject() {
               'Demanding more RAM',
             ],
           },
-          dispatch(projects.create(params))
+          projects.create(params)
         );
         navigate('/workspace');
       } catch (error) {
@@ -51,7 +50,7 @@ export function useSubmitNewProject() {
         );
       }
     },
-    [folder, dispatch, navigate, load, t, pushMessage]
+    [folder, navigate, load, t, pushMessage]
   );
 
   return { submitNewProject };

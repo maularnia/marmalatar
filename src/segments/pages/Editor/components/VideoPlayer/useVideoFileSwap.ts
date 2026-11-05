@@ -5,7 +5,6 @@ import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { usePersistVideoPath } from '@src/utils/usePersistVideoPath';
 import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
-import { fromCurrentStore } from '@store/store';
 import { useCallback, useRef } from 'react';
 
 export function useVideoFileSwap() {
@@ -22,13 +21,13 @@ export function useVideoFileSwap() {
       const result = await selectVideo();
       if (!result) return;
 
-      const projectId = fromCurrentStore(projects.selectId);
+      const projectId = projects.get.id();
       if (projectId) await persistVideoPath(projectId, result.videoPath);
 
       const video = videoElementRef.current;
       const onLoadedMetadata = () => {
         video?.removeEventListener('loadedmetadata', onLoadedMetadata);
-        const activeLineIndex = fromCurrentStore(editor.selectActiveLineIndex);
+        const activeLineIndex = editor.get.activeLineIndex();
         if (activeLineIndex != null) seekToLine(activeLineIndex);
       };
       video?.addEventListener('loadedmetadata', onLoadedMetadata);

@@ -10,7 +10,7 @@ import i18n from '@src/i18n';
 import { settings } from '@src/store/slices/settings';
 import { projects } from '@src/store/slices/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { glossaries, promptTemplates } from '@store/slices/aiPromptEditor';
 import { ai } from '@store/slices/ai';
 import { workingFolder } from '@store/slices/workingFolder';
@@ -55,7 +55,6 @@ const t = i18n.getFixedT(null, 'errors');
 
 export default function FileList() {
   const { t: tMenu } = useTranslation('menu');
-  const dispatch = useAppDispatch();
   const folder = useAppSelector(workingFolder.selectFolder);
   const projectList = useAppSelector(projects.selectList);
   const promptTemplateItems = useAppSelector(promptTemplates.selectItems);
@@ -109,23 +108,23 @@ export default function FileList() {
   const handleCommitProject = async (fileName: string | null, newTitle: string) => {
     const project = projectList.find((p) => p.fileName === fileName);
     if (!project) throw new Error(t('fileList.projectNotFound'));
-    await dispatch(projects.rename(project.projectId, newTitle));
+    await projects.rename(project.projectId, newTitle);
   };
 
   const handleCommitPromptTemplate = async (fileName: string | null, newTitle: string) => {
     if (fileName) {
-      await dispatch(promptTemplates.rename(fileName, newTitle));
+      await promptTemplates.rename(fileName, newTitle);
     } else {
-      await dispatch(promptTemplates.create(newTitle));
+      await promptTemplates.create(newTitle);
       handleSetIsCreatingPromptTemplate(false);
     }
   };
 
   const handleCommitGlossary = async (fileName: string | null, newTitle: string) => {
     if (fileName) {
-      await dispatch(glossaries.rename(fileName, newTitle));
+      await glossaries.rename(fileName, newTitle);
     } else {
-      await dispatch(glossaries.create(newTitle));
+      await glossaries.create(newTitle);
       handleSetIsCreatingGlossary(false);
     }
   };
@@ -164,7 +163,7 @@ export default function FileList() {
                         existingFileNames={projectFileNames}
                         emoji={project.emoji}
                         onEmojiSelect={(emoji) =>
-                          void dispatch(projects.updateEmoji(project.projectId, emoji))
+                          void projects.updateEmoji(project.projectId, emoji)
                         }
                         onClick={() => void handleOpenProject(project, isActive)}
                         onCommit={handleCommitProject}
@@ -220,7 +219,7 @@ export default function FileList() {
                         existingFileNames={promptTemplateFileNames}
                         emoji={emoji}
                         onEmojiSelect={(newEmoji) =>
-                          void dispatch(promptTemplates.updateEmoji(fileName, newEmoji))
+                          void promptTemplates.updateEmoji(fileName, newEmoji)
                         }
                         onClick={() => void handleOpenPromptTemplate(fileName, title)}
                         onCommit={handleCommitPromptTemplate}
@@ -282,7 +281,7 @@ export default function FileList() {
                           existingFileNames={glossaryFileNames}
                           emoji={emoji}
                           onEmojiSelect={(newEmoji) =>
-                            void dispatch(glossaries.updateEmoji(fileName, newEmoji))
+                            void glossaries.updateEmoji(fileName, newEmoji)
                           }
                           onClick={() => void handleOpenGlossary(fileName, title)}
                           onCommit={handleCommitGlossary}

@@ -1,7 +1,6 @@
 import { useConfirm } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
-import { useAppDispatch } from '@store/hooks';
 import { overlays } from '@store/slices/overlays';
 import { glossaries } from '@store/slices/aiPromptEditor';
 import { DeleteGlossaryDialog } from './DeleteGlossaryDialog';
@@ -9,7 +8,6 @@ import { DeleteGlossaryDialog } from './DeleteGlossaryDialog';
 const t = i18n.getFixedT(null, 'dialogs');
 
 export const useDeleteGlossaryConfirmation = () => {
-  const dispatch = useAppDispatch();
   const { confirm } = useConfirm(DeleteGlossaryDialog, {
     confirmButton: { children: t('shared.yes'), color: ThemeColors.RED },
     dismissButton: { children: t('shared.no') },
@@ -17,8 +15,8 @@ export const useDeleteGlossaryConfirmation = () => {
   return {
     confirmDeleteGlossary: async (fileName: string, title: string): Promise<boolean> => {
       if (!(await confirm({ title }))) return false;
-      dispatch(overlays.closeAll());
-      await dispatch(glossaries.delete(fileName));
+      overlays.closeAll();
+      await glossaries.delete(fileName);
       return true;
     },
   };

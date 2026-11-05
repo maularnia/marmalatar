@@ -6,8 +6,6 @@ import { providerNoop } from '@src/utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { pathToFileUrl } from '@utils/checkVideoPlayability';
-import { useAppDispatch } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
 import {
   createContext,
   PropsWithChildren,
@@ -82,7 +80,6 @@ function loadVideoDuration(url: string): Promise<number> {
 }
 
 export function VideoProvider({ children }: PropsWithChildren) {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { pushMessage } = useMessageHelmet();
 
@@ -96,7 +93,7 @@ export function VideoProvider({ children }: PropsWithChildren) {
 
   const setVideoFilePath = useCallback(
     (path: string | null, audioPath?: string) => {
-      dispatch(projects.setVideoFilePath(path));
+      projects.setVideoFilePath(path);
       setVideoDurationMs(null);
       setThumbnail(null);
       setWaveformPeaks([]);
@@ -130,12 +127,12 @@ export function VideoProvider({ children }: PropsWithChildren) {
           });
       }
     },
-    [dispatch, pushMessage]
+    [pushMessage]
   );
 
   const registerVideoElementRef = useCallback((e: HTMLVideoElement | null) => {
     videoElementRef.current = e;
-    const videoFilePath = fromCurrentStore(projects.selectVideoFilePath);
+    const videoFilePath = projects.get.videoFilePath();
     if (e && videoFilePath) {
       e.src = pathToFileUrl(videoFilePath);
       e.muted = true;
@@ -145,7 +142,7 @@ export function VideoProvider({ children }: PropsWithChildren) {
   const registerAudioElementRef = useCallback(
     (e: HTMLAudioElement | null) => {
       audioElementRef.current = e;
-      const videoFilePath = fromCurrentStore(projects.selectVideoFilePath);
+      const videoFilePath = projects.get.videoFilePath();
       if (e && videoFilePath) {
         IPC.media
           .extractAudio(videoFilePath)
@@ -167,20 +164,17 @@ export function VideoProvider({ children }: PropsWithChildren) {
     setWaveformPeaks(nextPeaks);
   }, []);
 
-  const setCurrentTimeMs = useCallback(
-    (ms: number) => {
-      const currentTime = ms < 0 ? 0 : ms;
-      const activeIndex = fromCurrentStore(editor.selectLines).findIndex(
-        (l) => l.start_time <= currentTime && l.end_time >= currentTime
-      );
-      const next = activeIndex >= 0 ? activeIndex : null;
-      if (next !== fromCurrentStore(editor.selectActiveLineIndex)) {
-        dispatch(editor.setActiveLineIndex(next));
-      }
-      currentTimeRef.current = ms;
-    },
-    [dispatch]
-  );
+  const setCurrentTimeMs = useCallback((ms: number) => {
+    const currentTime = ms < 0 ? 0 : ms;
+    const activeIndex = editor.get
+      .lines()
+      .findIndex((l) => l.start_time <= currentTime && l.end_time >= currentTime);
+    const next = activeIndex >= 0 ? activeIndex : null;
+    if (next !== editor.get.activeLineIndex()) {
+      editor.setActiveLineIndex(next);
+    }
+    currentTimeRef.current = ms;
+  }, []);
 
   const seekVideoToMs = useCallback(
     (ms: number) => {
@@ -223,7 +217,7 @@ export function VideoProvider({ children }: PropsWithChildren) {
   const seekToLine = useCallback(
     (lineIndex: number | null) => {
       if (lineIndex == null) return;
-      const line = fromCurrentStore(editor.selectLines)[lineIndex];
+      const line = editor.get.lines()[lineIndex];
       if (!line) return;
       seekVideoToMs(line.start_time);
     },
@@ -232,9 +226,9 @@ export function VideoProvider({ children }: PropsWithChildren) {
 
   const reportVideoUnplayable = useCallback(() => {
     emitVideoPlaybackErrorMessage(pushMessage);
-    dispatch(projects.reset());
+    projects.reset();
     navigate('/');
-  }, [dispatch, navigate, pushMessage]);
+  }, [navigate, pushMessage]);
 
   const value = useMemoizedObject<TVideoContext>({
     videoDurationMs,

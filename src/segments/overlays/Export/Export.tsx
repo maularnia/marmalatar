@@ -6,7 +6,7 @@ import { overlays } from '@src/store/slices/overlays';
 import { projects } from '@src/store/slices/project';
 import { ThemeColors } from '@src/theme/utils';
 import { LANGUAGE_LABELS, TCharacter } from '@src/types';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import Toggle from '@ui-toolkit/Toggle';
 import {
   FormRoot,
@@ -36,7 +36,6 @@ interface CharacterOption extends TOptionSelect {
 
 export default function Export() {
   const { t } = useTranslation('export');
-  const dispatch = useAppDispatch();
   const translationLines = useAppSelector(editor.selectLines);
   const characterPool = useAppSelector(editor.selectCharacterPool);
   const targetLanguage = useAppSelector(projects.selectTargetLanguage);
@@ -94,7 +93,7 @@ export default function Export() {
   const effectiveSourceFps = applyTimeCorrection ? sourceFps : FrameRate.FPS23P976;
   const effectiveResultFps = applyTimeCorrection ? resultFps : FrameRate.FPS23P976;
   return (
-    <Overlay onClose={() => dispatch(overlays.closeAll())}>
+    <Overlay onClose={() => overlays.closeAll()}>
       <FormRoot>
         <FormsContent>
           <FormsRow>

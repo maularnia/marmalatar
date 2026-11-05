@@ -39,7 +39,11 @@ export default overlaysSlice.reducer;
 // ── API ──────────────────────────────────────────────────────────────────────
 
 export const overlays = api('overlay', {
-  closeAllOverlays,
-  selectCurrentOverlay,
-  setCurrentOverlay,
+  actions: {
+    closeAllOverlays,
+    setCurrentOverlay,
+  },
+  selectors: {
+    selectCurrentOverlay,
+  },
 });

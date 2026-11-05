@@ -7,9 +7,9 @@ import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelector } from '@store/hooks';
 import { ai } from '@store/slices/ai';
-import { openExportOverlay } from '@store/thunks';
+import { app } from '@store/thunks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
@@ -77,7 +77,6 @@ const PanelButton: typeof Button = (props) => {
 
 export function EditorControls() {
   const { t } = useTranslation('tooltips');
-  const dispatch = useAppDispatch();
   const { integrationIsConfigured, focusedLineIndex, textSelection } = useAppSelector(
     (state) => ({
       integrationIsConfigured: settings.selectIntegrationIsConfigured(state),
@@ -181,7 +180,7 @@ export function EditorControls() {
                 <PanelButton
                   icon={TIcon.STOP}
                   color={ThemeColors.RED}
-                  onClick={() => dispatch(ai.cancelAutomatedBulk())}
+                  onClick={() => ai.cancelAutomatedBulk()}
                 />
               </AiTranslationProgressBar>
             ) : (
@@ -221,7 +220,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canShiftEarlier || isBusy}
             icon={TIcon.BACKWARD}
-            onClick={() => dispatch(editor.shiftAllLinesEarlier(timeAdjustmentStep))}
+            onClick={() => editor.shiftAllLinesEarlier(timeAdjustmentStep)}
           />
         </Tooltip>
         <Tooltip
@@ -237,7 +236,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canShiftLater || isBusy}
             icon={TIcon.FORWARD}
-            onClick={() => dispatch(editor.shiftAllLinesLater(timeAdjustmentStep))}
+            onClick={() => editor.shiftAllLinesLater(timeAdjustmentStep)}
           />
         </Tooltip>
         <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
@@ -419,7 +418,7 @@ export function EditorControls() {
           <PanelButton
             color={ThemeColors.ACCENT1}
             disabled={!isExportAvailable}
-            onClick={() => dispatch(openExportOverlay())}
+            onClick={() => app.openExportOverlay()}
             icon={TIcon.EXPORT}
           />
         </Tooltip>

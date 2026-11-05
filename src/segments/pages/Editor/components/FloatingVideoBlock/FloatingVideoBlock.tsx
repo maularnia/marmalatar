@@ -3,8 +3,7 @@ import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/store/slices/editor';
 import { projects } from '@src/store/slices/project';
 import { TScreenSize } from '@src/theme/types';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
+import { useAppSelector } from '@store/hooks';
 import { RefObject, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
@@ -43,7 +42,6 @@ export default function FloatingVideoBlock({
   virtualizedListRef,
   focusedItemIndex,
 }: FloatingVideoBlockProps) {
-  const dispatch = useAppDispatch();
   const isSmallScreen = useAppSelector(settings.selectIsSmallScreen);
   const videoFilePath = useAppSelector(projects.selectVideoFilePath);
   const activeLineIndex = useAppSelector(editor.selectActiveLineIndex);
@@ -64,7 +62,7 @@ export default function FloatingVideoBlock({
   const handlePlaybackResume = () => {
     if (!scrollContainerRef.current) return;
     scrollBeforePlayRef.current = scrollContainerRef.current.scrollTop;
-    if (fromCurrentStore(settings.selectScrollVideoIntoViewOnPlay))
+    if (settings.get.scrollVideoIntoViewOnPlay())
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollTop - videoContainerShiftRef.current,
         behavior: 'smooth',
@@ -198,7 +196,7 @@ export default function FloatingVideoBlock({
             focusedLineIndex={focusedItemIndex >= 0 ? focusedItemIndex : null}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(editor.updateLineTiming({ lineIndex, startTime, endTime }));
+              editor.updateLineTiming({ lineIndex, startTime, endTime });
             }}
           />
         </>
