@@ -1,7 +1,7 @@
 import { shallowEqual, useSelector } from 'react-redux';
 import type { RootState } from './root';
 
-// No dispatch hook: facade actions and thunks dispatch themselves (see createApi.ts)
+// No dispatch hook: facade actions and thunks dispatch themselves (see src/services/Service.ts)
 export const useAppSelector = useSelector.withTypes<RootState>();
 
 type TAppSelector = (state: RootState) => unknown;

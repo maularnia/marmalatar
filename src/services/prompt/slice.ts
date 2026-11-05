@@ -1,14 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { TPromptTemplateListEntry } from '@bridge/definitions/promptTemplateEntry';
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
-import { overlays, TOverlay } from '@store/slices/overlays';
 
 export type TPromptTemplateEntry = TPromptTemplateListEntry;
 
 type PromptState = {
   // The tracked folder's prompt templates, as the main process lists them
   promptTemplateItems: TPromptTemplateEntry[];
-  // The prompt template open in the editor overlay
+  // The prompt template open in the editor overlay; the overlay is open while it's set
   currentPromptTemplate: string | null;
   promptTemplateData: PromptTemplateFileDataType | null;
   // The prompt template the translation uses
@@ -47,17 +46,10 @@ const promptSlice = createSlice({
       state.selectedPromptTemplateFileName = action.payload;
     },
   },
-  extraReducers(builder) {
-    // Opening another overlay, or closing them all, closes the prompt template editor. The glossary
-    // editor does the same on its side, so neither slice has to reach into the other.
-    builder.addCase(overlays.closeAll, clearEditor);
-    builder.addCase(overlays.setCurrent, (state, action) => {
-      if (action.payload !== TOverlay.PROMPT_TEMPLATE) clearEditor(state);
-    });
-  },
   selectors: {
     selectPromptTemplateItems: (state) => state.promptTemplateItems,
     selectCurrentPromptTemplate: (state) => state.currentPromptTemplate,
+    selectIsPromptTemplateEditorOpen: (state) => state.currentPromptTemplate !== null,
     selectPromptTemplateData: (state) => state.promptTemplateData,
     selectSelectedPromptTemplateFileName: (state) => state.selectedPromptTemplateFileName,
   },
@@ -74,6 +66,7 @@ export const {
 export const {
   selectPromptTemplateItems,
   selectCurrentPromptTemplate,
+  selectIsPromptTemplateEditorOpen,
   selectPromptTemplateData,
   selectSelectedPromptTemplateFileName,
 } = promptSlice.selectors;

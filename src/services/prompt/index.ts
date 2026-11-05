@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   createPromptTemplate,
   deletePromptTemplate,
@@ -12,6 +12,7 @@ import {
 import {
   closePromptTemplateEditor,
   selectCurrentPromptTemplate,
+  selectIsPromptTemplateEditorOpen,
   selectPromptTemplateData,
   selectPromptTemplateItems,
   selectSelectedPromptTemplateFileName,
@@ -26,7 +27,7 @@ import {
 
 export { default as promptReducer } from './slice';
 
-export const promptTemplates = api('promptTemplate', {
+export const promptTemplates = new Service('promptTemplate', {
   actions: {
     closePromptTemplateEditor,
     setPromptTemplateData,
@@ -35,6 +36,7 @@ export const promptTemplates = api('promptTemplate', {
   },
   selectors: {
     selectCurrentPromptTemplate,
+    selectIsPromptTemplateEditorOpen,
     selectPromptTemplateData,
     selectPromptTemplateItems,
     selectSelectedPromptTemplateFileName,

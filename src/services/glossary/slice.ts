@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { type AIGlossaryFileDataType, type TGlossaryEntry } from '@src/utils/data/schemas';
-import { overlays, TOverlay } from '@store/slices/overlays';
 
 // Everything about glossaries in one place: the tracked folder's glossary files, the glossary open
 // in the editor overlay (its pairs, which pair input has focus), and the glossaries the translation
@@ -11,7 +10,7 @@ export type TGlossaryPairColumn = 'original' | 'translation';
 type GlossaryState = {
   // The tracked folder's glossaries, as the main process lists them
   glossaryItems: TGlossaryEntry[];
-  // The glossary open in the editor overlay
+  // The glossary open in the editor overlay; the overlay is open while it's set
   currentGlossary: string | null;
   glossaryData: AIGlossaryFileDataType | null;
   focusedPairIndex: number | null;
@@ -75,17 +74,10 @@ const glossarySlice = createSlice({
       state.resolvedGlossaryEntries = action.payload;
     },
   },
-  extraReducers(builder) {
-    // Opening another overlay, or closing them all, closes the glossary editor. The prompt
-    // template editor does the same on its side, so neither slice has to reach into the other.
-    builder.addCase(overlays.closeAll, clearEditor);
-    builder.addCase(overlays.setCurrent, (state, action) => {
-      if (action.payload !== TOverlay.GLOSSARY) clearEditor(state);
-    });
-  },
   selectors: {
     selectGlossaryItems: (state) => state.glossaryItems,
     selectCurrentGlossary: (state) => state.currentGlossary,
+    selectIsGlossaryEditorOpen: (state) => state.currentGlossary !== null,
     selectGlossaryData: (state) => state.glossaryData,
     selectFocusedGlossaryPairIndex: (state) => state.focusedPairIndex,
     selectFocusedGlossaryColumn: (state) => state.focusedColumn,
@@ -107,6 +99,7 @@ export const {
 export const {
   selectGlossaryItems,
   selectCurrentGlossary,
+  selectIsGlossaryEditorOpen,
   selectGlossaryData,
   selectFocusedGlossaryPairIndex,
   selectFocusedGlossaryColumn,

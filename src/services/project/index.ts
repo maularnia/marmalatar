@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   buildProjectEditorStateSaveData,
   closeProject,
@@ -104,7 +104,7 @@ import {
 export { default as projectReducer } from './slice';
 export type { TProjectEntry } from './slice';
 
-export const projects = api('project', {
+export const projects = new Service('project', {
   actions: {
     setProjectList,
     setProjectSourceLanguage,
@@ -147,7 +147,7 @@ export const projects = api('project', {
 
 export { default as editorReducer } from './editor/slice';
 
-export const editor = api('editor', {
+export const editor = new Service('editor', {
   actions: {
     addFrozenLine,
     addTranslatedLine,

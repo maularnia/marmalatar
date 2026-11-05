@@ -1,16 +1,16 @@
+import { settings } from '@src/services/settings';
 import AiSettings from '@src/partials/AiSettings';
 import CleanCache from '@src/partials/CleanCache';
 import SelectFolder from '@src/partials/SelectFolder';
 import SelectLanguage from '@src/partials/SelectLanguage';
 import Settings from '@src/partials/Settings';
-import { overlays } from '@store/slices/overlays';
 import { FormRoot, FormsContent, FormsRow } from '@ui-toolkit/forms';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
 import Overlay from './Overlay';
 
 export default function SettingsOverlay() {
   return (
-    <Overlay onClose={() => overlays.closeAll()}>
+    <Overlay onClose={() => settings.close()}>
       <FormRoot>
         <FormsContent>
           <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />

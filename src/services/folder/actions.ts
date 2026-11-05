@@ -1,5 +1,5 @@
 import { IPC } from '@src/services/ipc/IPC';
-import { dispatch } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import { pathChanged } from './slice';
 
 // The folder service's operations.
@@ -38,12 +38,12 @@ export async function rescanFolder(): Promise<void> {
 // Persists the folder in the main process, then puts it in the store
 export async function setTrackedFolder(folder: string): Promise<void> {
   await saveTrackedFolder(folder);
-  dispatch(pathChanged(folder));
+  Service.dispatch(pathChanged(folder));
 }
 
 // Puts the folder the main process remembers in the store, and returns it. null when none is set.
 export async function loadTrackedFolder(): Promise<string | null> {
   const folder = await readTrackedFolder();
-  if (folder) dispatch(pathChanged(folder));
+  if (folder) Service.dispatch(pathChanged(folder));
   return folder;
 }

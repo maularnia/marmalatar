@@ -31,7 +31,7 @@ import {
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
-import { dispatch, select } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import { glossaries } from '@src/services/glossary';
 import { folder } from '@src/services/folder';
 import { clearSplitCursor } from './editor/actions';
@@ -98,8 +98,8 @@ async function readProjectFile(projectId: string): Promise<TProjectFileData> {
 function buildProjectBody(): TProjectFileBody {
   return {
     editor: ProjectSaveV1Schema.shape.editor.parse({
-      lines: select(selectLines),
-      characterPool: select(selectCharacterPool),
+      lines: Service.select(selectLines),
+      characterPool: Service.select(selectCharacterPool),
     }),
   };
 }
@@ -153,8 +153,8 @@ async function deleteProjectOnDisk(projectId: string): Promise<void> {
 // whatever isn't sent.
 export function buildProjectEditorStateSaveData(): Omit<TProjectStatePrefs, 'audioTrackId'> {
   return {
-    editorMode: select(selectEditorMode),
-    isVideoCollapsed: select(selectIsVideoCollapsed),
+    editorMode: Service.select(selectEditorMode),
+    isVideoCollapsed: Service.select(selectIsVideoCollapsed),
     videoPath: media.get.videoFilePath(),
   };
 }
@@ -203,25 +203,25 @@ export async function removeProjectVideoPath(projectId: string): Promise<void> {
 // The list comes from the main process, which renormalizes it against the tracked folder on every
 // read, so after any write the renderer just reads it again.
 export async function refreshProjects(): Promise<void> {
-  dispatch(setProjectList(await listProjects()));
+  Service.dispatch(setProjectList(await listProjects()));
 }
 
 // Writes the open project's lines and characters to its file. A project without a file yet is
 // skipped: createProject creates it. The returned entry carries the progress the main process
 // computed from the new lines.
 export async function saveProjectToDisk(): Promise<void> {
-  const projectId = select(selectProjectId);
-  if (!projectId || !select(selectCurrentProjectFilePath)) return;
-  dispatch(setProjectEntry(await writeProjectBody(projectId)));
+  const projectId = Service.select(selectProjectId);
+  if (!projectId || !Service.select(selectCurrentProjectFilePath)) return;
+  Service.dispatch(setProjectEntry(await writeProjectBody(projectId)));
 }
 
 export async function saveProjectLanguages(): Promise<void> {
-  const projectId = select(selectProjectId);
-  const sourceLanguage = select(selectProjectSourceLanguage);
-  const targetLanguage = select(selectProjectTargetLanguage);
+  const projectId = Service.select(selectProjectId);
+  const sourceLanguage = Service.select(selectProjectSourceLanguage);
+  const targetLanguage = Service.select(selectProjectTargetLanguage);
   if (!projectId || !sourceLanguage || !targetLanguage) return;
-  if (!select(selectCurrentProjectFilePath)) return;
-  dispatch(
+  if (!Service.select(selectCurrentProjectFilePath)) return;
+  Service.dispatch(
     setProjectEntry(await updateProjectLanguagesOnDisk(projectId, sourceLanguage, targetLanguage))
   );
 }
@@ -235,51 +235,51 @@ export async function renameProject(projectId: string, newName: string): Promise
   const entry = await renameProjectOnDisk(projectId, trimmed);
   if (!entry) throw new Error(t('project.alreadyExists'));
 
-  if (projectId === select(selectProjectId)) {
-    dispatch(setCurrentProjectFilePath(entry.filePath));
-    dispatch(setProjectName(entry.projectName));
+  if (projectId === Service.select(selectProjectId)) {
+    Service.dispatch(setCurrentProjectFilePath(entry.filePath));
+    Service.dispatch(setProjectName(entry.projectName));
   }
 
-  dispatch(setProjectEntry(entry));
+  Service.dispatch(setProjectEntry(entry));
 }
 
 export async function updateProjectEmoji(projectId: string, emoji: string): Promise<void> {
   const entry = await updateProjectEmojiOnDisk(projectId, emoji);
-  if (projectId === select(selectProjectId)) {
-    dispatch(setProjectEmoji(entry.emoji));
+  if (projectId === Service.select(selectProjectId)) {
+    Service.dispatch(setProjectEmoji(entry.emoji));
   }
-  dispatch(setProjectEntry(entry));
+  Service.dispatch(setProjectEntry(entry));
 }
 
 // ── Open project state ───────────────────────────────────────────────────────
 
 // Clears what belongs to the previously open project before another one is applied
 function resetOpenProjectMemory(): void {
-  dispatch(setCurrentProjectFilePath(null));
-  dispatch(resetEditorMemoryState());
+  Service.dispatch(setCurrentProjectFilePath(null));
+  Service.dispatch(resetEditorMemoryState());
   clearSplitCursor();
   media.resetPlayback();
 }
 
 function applyProjectData(data: Pick<TProjectFileData, 'project' | 'editor'>): void {
-  dispatch(setProjectId(data.project.projectId));
-  dispatch(setProjectName(data.project.projectName));
-  dispatch(setProjectEmoji(data.project.emoji));
+  Service.dispatch(setProjectId(data.project.projectId));
+  Service.dispatch(setProjectName(data.project.projectName));
+  Service.dispatch(setProjectEmoji(data.project.emoji));
 
-  dispatch(setProjectSourceLanguage(data.project.sourceLanguage));
-  dispatch(setProjectTargetLanguage(data.project.targetLanguage));
+  Service.dispatch(setProjectSourceLanguage(data.project.sourceLanguage));
+  Service.dispatch(setProjectTargetLanguage(data.project.targetLanguage));
   glossaries.reconcileSelectionWithDirection();
-  dispatch(setFrozenLineNumbers([]));
+  Service.dispatch(setFrozenLineNumbers([]));
 
-  dispatch(setCharacterPool(data.editor.characterPool));
+  Service.dispatch(setCharacterPool(data.editor.characterPool));
 
-  dispatch(setLines(data.editor.lines));
-  dispatch(setTotalLinesToTranslate(data.editor.lines.length));
+  Service.dispatch(setLines(data.editor.lines));
+  Service.dispatch(setTotalLinesToTranslate(data.editor.lines.length));
 }
 
 /** Closes the open project and its video. The project list is the tracked folder's and stays. */
 export function closeProject(): void {
-  dispatch(resetProject());
+  Service.dispatch(resetProject());
   media.clearVideo();
 }
 
@@ -300,12 +300,12 @@ async function loadProjectFromDisk(project: TProjectEntry): Promise<void> {
   } catch (err) {
     throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
   }
-  dispatch(setEditorMode(editorState.editorMode));
-  dispatch(setVideoCollapsed(editorState.isVideoCollapsed));
+  Service.dispatch(setEditorMode(editorState.editorMode));
+  Service.dispatch(setVideoCollapsed(editorState.isVideoCollapsed));
   // Restore the video that was attached when the project was last saved/closed.
   media.setVideoFilePath(editorState.videoPath);
 
-  dispatch(setCurrentProjectFilePath(project.filePath));
+  Service.dispatch(setCurrentProjectFilePath(project.filePath));
 }
 
 // ── Open ─────────────────────────────────────────────────────────────────────
@@ -457,7 +457,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
   const { sourceLanguage, targetLanguage } = params;
 
   resetOpenProjectMemory();
-  dispatch(setVideoCollapsed(false));
+  Service.dispatch(setVideoCollapsed(false));
 
   let emoji: string;
   try {
@@ -491,8 +491,8 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
     editor: editorData,
   });
 
-  dispatch(setEditorMode('translate'));
-  dispatch(setCurrentProjectFilePath(entry.filePath));
+  Service.dispatch(setEditorMode('translate'));
+  Service.dispatch(setCurrentProjectFilePath(entry.filePath));
 
   try {
     await writeProjectEditorState(entry.projectId, buildProjectEditorStateSaveData());
@@ -538,13 +538,13 @@ export async function createProject(params: TCreateProjectParams): Promise<void>
 /** Saves and closes the open project, if any, and goes to the import page. No confirmation: the
  * save makes it non-destructive. The editor's line inputs clean themselves as the rows unmount. */
 export async function startNewProject(): Promise<void> {
-  if (select(selectIsProjectOpen)) {
+  if (Service.select(selectIsProjectOpen)) {
     await saveProjectToDisk();
-    dispatch(resetEditorMemoryState());
+    Service.dispatch(resetEditorMemoryState());
     clearSplitCursor();
     media.resetPlayback();
     closeProject();
-    dispatch(clearFileData());
+    Service.dispatch(clearFileData());
   }
   navigate('/intro/import');
 }
@@ -555,7 +555,7 @@ export async function startNewProject(): Promise<void> {
  * editor. Resolves whether it was deleted. */
 export async function deleteProject(projectId: string, projectName: string): Promise<boolean> {
   if (!(await confirmDeleteProject(projectName))) return false;
-  const wasOpen = projectId === select(selectProjectId);
+  const wasOpen = projectId === Service.select(selectProjectId);
   folder.setIsBusy(true);
   try {
     await deleteProjectOnDisk(projectId);

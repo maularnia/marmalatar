@@ -1,8 +1,8 @@
+import { settings } from '@src/services/settings';
 import { exporterList } from './formats/list';
 import { ExportFormatlabels, ExportFormats, FrameRate } from './types';
 import Overlay from '@src/segments/overlays/Overlay';
 import { editor } from '@src/services/project';
-import { overlays } from '@src/store/slices/overlays';
 import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import { LANGUAGE_LABELS, TCharacter } from '@src/types';
@@ -95,7 +95,7 @@ export default function Export() {
   const effectiveSourceFps = applyTimeCorrection ? sourceFps : FrameRate.FPS23P976;
   const effectiveResultFps = applyTimeCorrection ? resultFps : FrameRate.FPS23P976;
   return (
-    <Overlay onClose={() => overlays.closeAll()}>
+    <Overlay onClose={() => settings.closeExport()}>
       <FormRoot>
         <FormsContent>
           <FormsRow>

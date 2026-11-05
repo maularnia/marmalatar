@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { connectApi } from './createApi';
+import { Service } from '@src/services/Service';
 import { rootReducer } from './root';
 import { persistProjectStateMiddleware } from './persistProjectState';
 import { persistEditorStateMiddleware } from './persistEditorState';
@@ -14,4 +14,4 @@ export const store = configureStore({
 });
 
 // Facade actions and thunks dispatch on this store, and their `get` readers read it
-connectApi(store);
+Service.connect(store);

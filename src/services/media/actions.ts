@@ -3,7 +3,7 @@ import { emitAudioExtractionFailedMessage, emitVideoPlaybackErrorMessage } from 
 import { IPC } from '@src/services/ipc/IPC';
 import { pathToFileUrl } from '@src/utils/checkVideoPlayability';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
-import { dispatch, select } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   selectActiveLineIndex,
   selectVideoFilePath,
@@ -14,13 +14,13 @@ import {
 
 // The media service's operations: the video and audio elements (a muted video plus a separate
 // audio element, always driven together), play/pause/seek, and loading a video. They read their
-// own state with select(localSelector), not the facade: index.ts builds the facade from this file,
+// own state with Service.select(localSelector), not the facade: index.ts builds the facade from this file,
 // so importing it here would be a cycle.
 
 // The editor imports this service (to seek and play), so its facade can't be imported here. The
 // lines' timings are read from the raw state instead.
 type TLineTimings = { editor: { lines: { start_time: number; end_time: number }[] } };
-const lineTimings = () => select((state: TLineTimings) => state.editor.lines);
+const lineTimings = () => Service.select((state: TLineTimings) => state.editor.lines);
 
 // ── Elements and position ────────────────────────────────────────────────────
 
@@ -50,7 +50,7 @@ function attachExtractedAudio(path: string, element: HTMLAudioElement): void {
 
 export function registerVideoElement(el: HTMLVideoElement | null): void {
   videoElement = el;
-  const path = select(selectVideoFilePath);
+  const path = Service.select(selectVideoFilePath);
   if (el && path) {
     el.src = pathToFileUrl(path);
     el.muted = true;
@@ -59,7 +59,7 @@ export function registerVideoElement(el: HTMLVideoElement | null): void {
 
 export function registerAudioElement(el: HTMLAudioElement | null): void {
   audioElement = el;
-  const path = select(selectVideoFilePath);
+  const path = Service.select(selectVideoFilePath);
   if (el && path) attachExtractedAudio(path, el);
 }
 
@@ -80,7 +80,7 @@ function loadVideoDuration(url: string): Promise<number> {
  * waveform are set separately (`media.setVideoData`), since callers get them from the import or
  * reselect flow. */
 export function loadVideo(path: string | null, audioPath?: string): void {
-  dispatch(videoChanged(path));
+  Service.dispatch(videoChanged(path));
   const url = path ? pathToFileUrl(path) : '';
   if (videoElement) {
     videoElement.src = url;
@@ -92,8 +92,8 @@ export function loadVideo(path: string | null, audioPath?: string): void {
   if (!path) return;
 
   loadVideoDuration(url)
-    .then((ms) => dispatch(setVideoDurationMs(ms)))
-    .catch(() => dispatch(setVideoDurationMs(null)));
+    .then((ms) => Service.dispatch(setVideoDurationMs(ms)))
+    .catch(() => Service.dispatch(setVideoDurationMs(null)));
 
   // Audio path wasn't already known (e.g. project reload, only videoPath is persisted) --
   // re-derive it via the same content-addressed cache the import flow already populated.
@@ -105,7 +105,7 @@ export function setCurrentTimeMs(ms: number): void {
   const time = ms < 0 ? 0 : ms;
   const index = lineTimings().findIndex((l) => l.start_time <= time && l.end_time >= time);
   const next = index >= 0 ? index : null;
-  if (next !== select(selectActiveLineIndex)) dispatch(setActiveLineIndex(next));
+  if (next !== Service.select(selectActiveLineIndex)) Service.dispatch(setActiveLineIndex(next));
   currentTimeMs = ms;
 }
 
@@ -128,7 +128,7 @@ export function resetPlayback(): void {
   currentTimeMs = 0;
   if (videoElement) videoElement.currentTime = 0;
   if (audioElement) audioElement.currentTime = 0;
-  dispatch(setActiveLineIndex(null));
+  Service.dispatch(setActiveLineIndex(null));
 }
 
 // ── Playback ─────────────────────────────────────────────────────────────────

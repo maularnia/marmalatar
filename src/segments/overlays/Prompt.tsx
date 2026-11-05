@@ -1,7 +1,6 @@
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
 import { useAppSelectors } from '@store/hooks';
 import { promptTemplates } from '@src/services/prompt';
-import { overlays } from '@store/slices/overlays';
 import { app } from '@store/thunks';
 import {
   FormsContent,
@@ -43,7 +42,7 @@ export default function PromptOverlay() {
       { messages: [t('messages:promptTemplate.savingLabel', { title: formData.title || '...' })] },
       app.savePromptTemplate() as Promise<unknown>
     );
-    overlays.closeAll();
+    promptTemplates.closeEditor();
   };
 
   if (!currentPromptTemplate) return null;

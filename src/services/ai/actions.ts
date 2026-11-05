@@ -13,7 +13,7 @@ import { editor } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
 import { LANGUAGE_LABELS, TSubtitleLine } from '@src/types';
 import { getErrorMessage } from '@src/utils/errors';
-import { dispatch, select } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import { glossaries } from '@src/services/glossary';
 import { projects } from '@src/services/project';
 import { settings } from '@src/services/settings';
@@ -44,7 +44,7 @@ import {
   setTranslationIsBusy,
 } from './slice';
 
-// The ai service's operations. They read their own state with select(localSelector), not the
+// The ai service's operations. They read their own state with Service.select(localSelector), not the
 // facade: index.ts builds the facade from this file, so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'errors');
@@ -88,7 +88,7 @@ function buildContext(): TranslationRequestContext {
     sourceLanguage: sourceLanguage ? LANGUAGE_LABELS[sourceLanguage] : undefined,
     targetLanguage: targetLanguage ? LANGUAGE_LABELS[targetLanguage] : undefined,
     glossaryEntries: glossaries.get.resolvedEntries(),
-    promptTemplate: select(selectSelectedPromptTemplateData)?.promptTemplate ?? undefined,
+    promptTemplate: Service.select(selectSelectedPromptTemplateData)?.promptTemplate ?? undefined,
   };
 }
 
@@ -102,12 +102,12 @@ function buildContext(): TranslationRequestContext {
 export async function initializeAiIntegration(integrationId?: string): Promise<void> {
   const id = integrationId ?? settings.get.selectedIntegrationId() ?? DEFAULT_AI_CLIENT_ID;
   settings.setSelectedIntegration(id);
-  dispatch(setIntegrationConnectionStatus({ connected: false, error: undefined }));
+  Service.dispatch(setIntegrationConnectionStatus({ connected: false, error: undefined }));
 
   const client = aiClients[id as keyof typeof aiClients] ?? null;
   wiredClient = client;
   if (!client) {
-    dispatch(
+    Service.dispatch(
       setIntegrationConnectionStatus({ connected: false, error: `Unknown AI client: ${id}` })
     );
     return;
@@ -120,14 +120,16 @@ export async function initializeAiIntegration(integrationId?: string): Promise<v
 
   try {
     const connected = await client.ping();
-    dispatch(
+    Service.dispatch(
       setIntegrationConnectionStatus({
         connected,
         error: connected ? undefined : `Could not connect to ${client.name}.`,
       })
     );
   } catch (error) {
-    dispatch(setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(error) }));
+    Service.dispatch(
+      setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(error) })
+    );
   }
 }
 
@@ -141,21 +143,21 @@ export async function refreshSelectedPromptTemplateData(): Promise<void> {
   const folderPath = folder.get.path();
   const fileName = promptTemplates.get.selectedFileName();
   if (!folderPath || !fileName) {
-    dispatch(setSelectedPromptTemplateData(null));
+    Service.dispatch(setSelectedPromptTemplateData(null));
     return;
   }
   try {
-    dispatch(setSelectedPromptTemplateData(await promptTemplates.readFile(fileName)));
+    Service.dispatch(setSelectedPromptTemplateData(await promptTemplates.readFile(fileName)));
   } catch {
-    dispatch(setSelectedPromptTemplateData(null));
+    Service.dispatch(setSelectedPromptTemplateData(null));
   }
 }
 
 export async function applySelectedPromptTemplateFileName(fileName: string | null): Promise<void> {
-  dispatch(setTranslationIsBusy(true));
+  Service.dispatch(setTranslationIsBusy(true));
   promptTemplates.setSelectedFileName(fileName);
   await refreshSelectedPromptTemplateData();
-  dispatch(setTranslationIsBusy(false));
+  Service.dispatch(setTranslationIsBusy(false));
 }
 
 // ── Context window ───────────────────────────────────────────────────────────
@@ -169,15 +171,15 @@ export async function estimateContextWindowUsage(): Promise<void> {
   const client = wiredClient;
 
   if (!client?.evaluateContext || !promptTemplates.get.selectedFileName()) {
-    dispatch(setContextWindowEstimate(null));
-    dispatch(setContextWindowEstimateStatus('idle'));
+    Service.dispatch(setContextWindowEstimate(null));
+    Service.dispatch(setContextWindowEstimateStatus('idle'));
     return;
   }
 
   const lines = editor.get.lines();
   if (!lines.length) {
-    dispatch(setContextWindowEstimate(null));
-    dispatch(setContextWindowEstimateStatus('idle'));
+    Service.dispatch(setContextWindowEstimate(null));
+    Service.dispatch(setContextWindowEstimateStatus('idle'));
     return;
   }
 
@@ -186,19 +188,21 @@ export async function estimateContextWindowUsage(): Promise<void> {
   // (PromptSetupRow's own effect, and each SettingsForm's commit effect, which also fires on
   // mount), so this guard has to live here to be authoritative regardless of which of them
   // triggered it.
-  if (select(selectContextWindowEstimateStatus) === 'success') return;
+  if (Service.select(selectContextWindowEstimateStatus) === 'success') return;
 
-  dispatch(setContextWindowEstimateStatus('estimating'));
+  Service.dispatch(setContextWindowEstimateStatus('estimating'));
   try {
     const result = await client.evaluateContext({ lines, context: buildContext() });
     if (requestId !== estimateRequestId) return;
-    dispatch(setContextWindowEstimate(result));
-    dispatch(setContextWindowEstimateStatus(result ? 'success' : 'idle'));
+    Service.dispatch(setContextWindowEstimate(result));
+    Service.dispatch(setContextWindowEstimateStatus(result ? 'success' : 'idle'));
   } catch (err) {
     if (requestId !== estimateRequestId) return;
-    dispatch(setContextWindowEstimate(null));
-    dispatch(setContextWindowEstimateStatus('error'));
-    dispatch(setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(err) }));
+    Service.dispatch(setContextWindowEstimate(null));
+    Service.dispatch(setContextWindowEstimateStatus('error'));
+    Service.dispatch(
+      setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(err) })
+    );
   }
 }
 
@@ -208,7 +212,7 @@ export async function estimateContextWindowUsage(): Promise<void> {
 // user-facing wrappers that report through toasts instead.
 
 export async function startAutomatedTranslation(lineIndex: number): Promise<void> {
-  if (select(selectTranslationIsBusy)) return;
+  if (Service.select(selectTranslationIsBusy)) return;
 
   requirePromptTemplateSelected();
 
@@ -219,7 +223,7 @@ export async function startAutomatedTranslation(lineIndex: number): Promise<void
   const client = requireAiClient();
   const context = buildContext();
 
-  dispatch(setTranslationIsBusy(true));
+  Service.dispatch(setTranslationIsBusy(true));
   editor.addFrozenLine(line.line_no);
   try {
     const translatedText = await client.translate({
@@ -228,11 +232,13 @@ export async function startAutomatedTranslation(lineIndex: number): Promise<void
     });
     editor.addTranslatedLine({ ...line, output: translatedText });
   } catch (err) {
-    dispatch(setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(err) }));
+    Service.dispatch(
+      setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(err) })
+    );
     throw err;
   } finally {
     editor.removeFrozenLine(line.line_no);
-    dispatch(setTranslationIsBusy(false));
+    Service.dispatch(setTranslationIsBusy(false));
   }
 }
 
@@ -246,8 +252,8 @@ type BulkCallbackParams = {
 };
 
 function endBulkJob(): void {
-  dispatch(setCurrentBulkJob(null));
-  dispatch(setTranslationIsBusy(false));
+  Service.dispatch(setCurrentBulkJob(null));
+  Service.dispatch(setTranslationIsBusy(false));
   editor.setFrozenLineNumbers([]);
   setActiveBulkJobController(null);
 }
@@ -256,8 +262,8 @@ export function startAutomatedBulkTranslation(params: BulkCallbackParams): void 
   requirePromptTemplateSelected();
 
   cancelActiveBulkJob();
-  dispatch(setCurrentBulkJob(null));
-  dispatch(setTranslationIsBusy(true));
+  Service.dispatch(setCurrentBulkJob(null));
+  Service.dispatch(setTranslationIsBusy(true));
 
   const client = requireAiClient();
   const context = buildContext();
@@ -267,9 +273,9 @@ export function startAutomatedBulkTranslation(params: BulkCallbackParams): void 
     lines: params.lines,
     context,
     onChunkStart: (payload) => {
-      const cur = select(selectCurrentBulkJob);
+      const cur = Service.select(selectCurrentBulkJob);
       if (cur?.id === jobId) {
-        dispatch(
+        Service.dispatch(
           setCurrentBulkJob({
             ...cur,
             running: true,
@@ -282,9 +288,9 @@ export function startAutomatedBulkTranslation(params: BulkCallbackParams): void 
       params.onChunkStart?.(payload);
     },
     onProgress: (progress) => {
-      const cur = select(selectCurrentBulkJob);
+      const cur = Service.select(selectCurrentBulkJob);
       if (cur?.id === jobId) {
-        dispatch(
+        Service.dispatch(
           setCurrentBulkJob({
             ...cur,
             running:
@@ -305,7 +311,7 @@ export function startAutomatedBulkTranslation(params: BulkCallbackParams): void 
     },
     onChunkTranslated: params.onChunkTranslated,
     onChunkError: (payload) => {
-      dispatch(
+      Service.dispatch(
         setIntegrationConnectionStatus({ connected: false, error: getErrorMessage(payload.error) })
       );
       params.onChunkError?.(payload);
@@ -313,7 +319,7 @@ export function startAutomatedBulkTranslation(params: BulkCallbackParams): void 
   });
 
   setActiveBulkJobController(controller);
-  dispatch(
+  Service.dispatch(
     setCurrentBulkJob({
       id: jobId,
       provider: client.id,
@@ -331,8 +337,8 @@ export function startAutomatedBulkTranslation(params: BulkCallbackParams): void 
 
 export function cancelAutomatedBulkTranslation(): void {
   cancelActiveBulkJob();
-  dispatch(setCurrentBulkJob(null));
-  dispatch(setTranslationIsBusy(false));
+  Service.dispatch(setCurrentBulkJob(null));
+  Service.dispatch(setTranslationIsBusy(false));
   editor.setFrozenLineNumbers([]);
 }
 

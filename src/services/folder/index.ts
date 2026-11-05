@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   checkForeignFileExists,
   cleanupMediaCache,
@@ -22,7 +22,7 @@ import {
 
 export { default as folderReducer } from './slice';
 
-export const folder = api('folder', {
+export const folder = new Service('folder', {
   actions: {
     pathChanged,
     setInitialized,

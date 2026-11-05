@@ -6,7 +6,6 @@ import { editorReducer } from '@src/services/project';
 import { promptReducer } from '@src/services/prompt';
 import { folderReducer } from '@src/services/folder';
 import { glossaryReducer } from '@src/services/glossary';
-import overlaysReducer from './slices/overlays';
 import { aiReducer } from '@src/services/ai';
 import { mediaReducer } from '@src/services/media';
 import { menuReducer } from '@src/services/menu';
@@ -18,7 +17,6 @@ export const rootReducer = combineReducers({
   prompt: promptReducer,
   folder: folderReducer,
   glossary: glossaryReducer,
-  overlays: overlaysReducer,
   ai: aiReducer,
   media: mediaReducer,
   menu: menuReducer,

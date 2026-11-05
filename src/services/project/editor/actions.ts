@@ -30,7 +30,7 @@ import { confirmSplit } from '@src/segments/dialogs/split/splitConfirmation';
 import type { TInputColumn, TSubtitleLine } from '@src/types';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { media } from '@src/services/media';
-import { dispatch, select } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import { settings } from '@src/services/settings';
 import {
   allSourceCopiedToOutput,
@@ -57,18 +57,18 @@ import {
   updateTranslatedText,
 } from './slice';
 
-// The editor service's operations. They read their own state with select(localSelector), not the
+// The editor service's operations. They read their own state with Service.select(localSelector), not the
 // facade: index.ts builds the facade from this file, so importing it here would be a cycle. Dialogs
 // and toasts are reached through the bridges in src/providers/bridges, playback through media.
 
-const lines = (): TSubtitleLine[] => select(selectLines);
+const lines = (): TSubtitleLine[] => Service.select(selectLines);
 
 // The ai slice imports the editor, so its facade can't be imported here. Edits that restructure
 // lines are blocked while a bulk AI translation runs, since its results are matched to lines by
 // index; the job's flag is read from the raw state instead.
 type TBulkJobState = { ai: { currentBulkJob: { running: boolean } | null } };
 const isBulkTranslationRunning = (): boolean =>
-  select((state: TBulkJobState) => Boolean(state.ai.currentBulkJob?.running));
+  Service.select((state: TBulkJobState) => Boolean(state.ai.currentBulkJob?.running));
 
 // ── Line inputs ──────────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ export function clearSplitCursor(): void {
 // ── Focus and navigation ─────────────────────────────────────────────────────
 
 function setFocusedLine(lineIndex: number | null): void {
-  dispatch(setFocusedLineIndex(lineIndex));
+  Service.dispatch(setFocusedLineIndex(lineIndex));
   splitCursor = null;
 }
 
@@ -149,7 +149,7 @@ export function focusInput(lineIndex: number, column: TInputColumn, selectAll = 
   }
   el.scrollIntoView({ block: 'nearest' });
   setFocusedLine(lineIndex);
-  dispatch(setFocusedColumn(column));
+  Service.dispatch(setFocusedColumn(column));
   return true;
 }
 
@@ -158,7 +158,7 @@ export function focusInput(lineIndex: number, column: TInputColumn, selectAll = 
  * caller, since only it knows which element that is. */
 export function setFocusedLineAndColumn(lineIndex: number, column: TInputColumn): void {
   setFocusedLine(lineIndex);
-  dispatch(setFocusedColumn(column));
+  Service.dispatch(setFocusedColumn(column));
 }
 
 /** Refocuses whatever was last focused, falling back to the first line's first available input
@@ -168,8 +168,8 @@ export function setFocusedLineAndColumn(lineIndex: number, column: TInputColumn)
 // was, and otherwise land on the first line's first available input -- output normally, source
 // when edit mode hides the output column.
 export function focusEditor(): boolean {
-  const focusedLineIndex = select(selectFocusedLineIndex);
-  const focusedColumn = select(selectFocusedColumn);
+  const focusedLineIndex = Service.select(selectFocusedLineIndex);
+  const focusedColumn = Service.select(selectFocusedColumn);
   if (focusedLineIndex !== null && focusInput(focusedLineIndex, focusedColumn ?? 'output')) {
     return true;
   }
@@ -199,7 +199,7 @@ export function switchColumn(targetColumn: TInputColumn, lineIndex: number | nul
     focusInput(0, targetColumn);
     return;
   }
-  if (!select(selectFocusedColumn)) return;
+  if (!Service.select(selectFocusedColumn)) return;
   focusInput(lineIndex, targetColumn);
 }
 
@@ -215,7 +215,7 @@ function hasSelectedTextInElement(element: HTMLElement): boolean {
 export function navigateLine(direction: 'up' | 'down', lineIndex: number | null): void {
   const activeElement = (document.activeElement as HTMLElement | null) ?? document.body;
   const lineCount = lines().length;
-  const focusedColumn = select(selectFocusedColumn);
+  const focusedColumn = Service.select(selectFocusedColumn);
   const column = focusedColumn ?? 'output';
   if (lineIndex == null) {
     if (lineCount === 0) return;
@@ -231,7 +231,7 @@ export function navigateLine(direction: 'up' | 'down', lineIndex: number | null)
 }
 
 export function playFocusedLine(): void {
-  const focusedLineIndex = select(selectFocusedLineIndex);
+  const focusedLineIndex = Service.select(selectFocusedLineIndex);
   if (focusedLineIndex === null || !lines()[focusedLineIndex]) return;
   media.seekToLine(focusedLineIndex);
   media.playPause();
@@ -240,7 +240,7 @@ export function playFocusedLine(): void {
 // ── Line edits ───────────────────────────────────────────────────────────────
 
 export async function copySourceToOutput(lineIndex: number): Promise<void> {
-  if (select(selectIsEditMode)) return;
+  if (Service.select(selectIsEditMode)) return;
   const line = lines()[lineIndex];
   if (!line) return;
   const autoMarkLinesCompleted = settings.get.autoMarkLinesCompleted();
@@ -262,9 +262,11 @@ export async function copySourceToOutput(lineIndex: number): Promise<void> {
       return;
     }
   }
-  dispatch(updateTranslatedText({ lineIndex, text: line.input ?? '' }));
+  Service.dispatch(updateTranslatedText({ lineIndex, text: line.input ?? '' }));
   if (autoMarkLinesCompleted)
-    dispatch(setLineCompleted({ lineIndex, completed: Boolean(line.input), skipHistory: true }));
+    Service.dispatch(
+      setLineCompleted({ lineIndex, completed: Boolean(line.input), skipHistory: true })
+    );
   focusInput(lineIndex, 'output', true);
   emitTextCopiedMessage(pushMessage);
 }
@@ -278,20 +280,20 @@ export function insertLine(lineIndex: number, position: 'before' | 'after'): voi
     emitLineTooShortToSplitMessage(pushMessage);
     return;
   }
-  const column = select(selectFocusedColumn) ?? 'output';
-  dispatch(lineInserted({ lineIndex, position }));
+  const column = Service.select(selectFocusedColumn) ?? 'output';
+  Service.dispatch(lineInserted({ lineIndex, position }));
   refocusLineAfterRender(position === 'before' ? lineIndex : lineIndex + 1, column);
 }
 
 /** Splits a line at the caret position the line last recorded (`setSplitCursor`). */
 export async function splitLine(lineIndex: number): Promise<void> {
   const cursorOffset = splitCursor;
-  if (select(selectFrozenLineNumbers).includes(lines()[lineIndex]?.line_no)) return;
+  if (Service.select(selectFrozenLineNumbers).includes(lines()[lineIndex]?.line_no)) return;
   if (isBulkTranslationRunning()) return;
-  const focusedColumn = select(selectFocusedColumn);
+  const focusedColumn = Service.select(selectFocusedColumn);
   if (focusedColumn !== 'source' && focusedColumn !== 'output') return;
   if (settings.get.askBeforeSplit() && !(await confirmSplit())) return;
-  dispatch(lineSplit({ lineIndex, cursorOffset, column: focusedColumn }));
+  Service.dispatch(lineSplit({ lineIndex, cursorOffset, column: focusedColumn }));
   refocusLineAfterRender(lineIndex, focusedColumn);
   emitLineSplitMessage(pushMessage);
 }
@@ -304,7 +306,7 @@ export async function mergeLines(lineIndex: number, direction: 'up' | 'down'): P
   if (partnerIndex < 0 || partnerIndex >= current.length) return;
   const line = current[lineIndex];
   const partnerLine = current[partnerIndex];
-  const frozen = new Set(select(selectFrozenLineNumbers));
+  const frozen = new Set(Service.select(selectFrozenLineNumbers));
   if (frozen.has(line.line_no) || frozen.has(partnerLine.line_no)) return;
   if (isBulkTranslationRunning()) return;
   if (settings.get.askBeforeMerge()) {
@@ -329,7 +331,7 @@ export async function mergeLines(lineIndex: number, direction: 'up' | 'down'): P
       return;
     }
   }
-  dispatch(linesMerged({ lineIndex, direction }));
+  Service.dispatch(linesMerged({ lineIndex, direction }));
   refocusLineAfterRender(direction === 'up' ? partnerIndex : lineIndex, 'output');
   emitLinesMergedMessage(pushMessage);
 }
@@ -359,7 +361,7 @@ export async function removeLine(lineIndex: number): Promise<void> {
   const lineCount = lines().length;
   const hasNext = lineIndex + 1 < lineCount;
   const hasPrev = lineIndex > 0;
-  dispatch(lineRemoved(lineIndex));
+  Service.dispatch(lineRemoved(lineIndex));
   const targetIndex = hasNext ? lineIndex : hasPrev ? lineIndex - 1 : null;
   if (targetIndex != null) refocusLineAfterRender(targetIndex, 'output');
   else setFocusedLine(null);
@@ -368,9 +370,9 @@ export async function removeLine(lineIndex: number): Promise<void> {
 
 export function toggleCompleted(lineIndex: number): void {
   const current = lines();
-  const focusedColumn = select(selectFocusedColumn);
+  const focusedColumn = Service.select(selectFocusedColumn);
   const completed = !current[lineIndex].completed;
-  dispatch(setLineCompleted({ lineIndex, completed }));
+  Service.dispatch(setLineCompleted({ lineIndex, completed }));
   if (completed) {
     // Marking complete advances to the next line.
     if (current[lineIndex + 1]) focusInput(lineIndex + 1, 'output', false);
@@ -402,7 +404,7 @@ export function adjustStartTime(lineIndex: number, direction: TTimeDirection): v
     emitEntryTimeShiftBlockedMessage(pushMessage);
     return;
   }
-  dispatch(updateLineTiming({ lineIndex, startTime: next, endTime: line.end_time }));
+  Service.dispatch(updateLineTiming({ lineIndex, startTime: next, endTime: line.end_time }));
 }
 
 export function adjustEndTime(lineIndex: number, direction: TTimeDirection): void {
@@ -421,7 +423,7 @@ export function adjustEndTime(lineIndex: number, direction: TTimeDirection): voi
     emitEntryTimeShiftBlockedMessage(pushMessage);
     return;
   }
-  dispatch(updateLineTiming({ lineIndex, startTime: line.start_time, endTime: next }));
+  Service.dispatch(updateLineTiming({ lineIndex, startTime: line.start_time, endTime: next }));
 }
 
 /** Moves a whole line (start and end) by one step, without overlapping its neighbours. */
@@ -441,21 +443,21 @@ export function adjustEntryTime(lineIndex: number, direction: TTimeDirection): v
     emitEntryTimeShiftBlockedMessage(pushMessage);
     return;
   }
-  dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
+  Service.dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
 }
 
 export function shiftAllLines(direction: TTimeDirection): void {
   const step = settings.get.timeAdjustmentStep();
-  dispatch(direction === 'earlier' ? shiftAllLinesEarlier(step) : shiftAllLinesLater(step));
+  Service.dispatch(direction === 'earlier' ? shiftAllLinesEarlier(step) : shiftAllLinesLater(step));
 }
 
 // ── History ──────────────────────────────────────────────────────────────────
 
 export function undoRedo(direction: 'backward' | 'forward'): void {
   if (isBulkTranslationRunning()) return;
-  const focusedLineIndex = select(selectFocusedLineIndex);
-  const focusedColumn = select(selectFocusedColumn);
-  dispatch(restoreHistory(direction));
+  const focusedLineIndex = Service.select(selectFocusedLineIndex);
+  const focusedColumn = Service.select(selectFocusedColumn);
+  Service.dispatch(restoreHistory(direction));
   if (focusedLineIndex !== null && focusedColumn) {
     refocusLineAfterRender(focusedLineIndex, focusedColumn);
   }
@@ -479,14 +481,14 @@ export async function autoMerge(): Promise<void> {
     emitAutoMergeCancelledMessage(pushMessage);
     return;
   }
-  dispatch(autoMergeAdjacentLines({ threshold }));
+  Service.dispatch(autoMergeAdjacentLines({ threshold }));
 }
 
 export async function cleanup(): Promise<void> {
   if (isBulkTranslationRunning()) return;
   let values: TCleanupFormValues | null;
   try {
-    values = await confirmCleanup(select(selectIsEditMode));
+    values = await confirmCleanup(Service.select(selectIsEditMode));
   } catch (e) {
     emitCleanupFailedMessage(
       pushMessage,
@@ -499,7 +501,7 @@ export async function cleanup(): Promise<void> {
     return;
   }
   const { targetColumn, ...options } = values;
-  dispatch(cleanupLines({ targetColumn, options }));
+  Service.dispatch(cleanupLines({ targetColumn, options }));
   // Cleanup can drop lines/renumber, which may bump renderEpoch and remount visible rows -- wait a
   // frame before refocusing, same as refocusLineAfterRender does for other structural changes.
   requestAnimationFrame(() => {
@@ -508,7 +510,7 @@ export async function cleanup(): Promise<void> {
 }
 
 export async function copyAllSourceToOutput(): Promise<void> {
-  if (isBulkTranslationRunning() || select(selectIsEditMode)) return;
+  if (isBulkTranslationRunning() || Service.select(selectIsEditMode)) return;
   const hasExistingOutput = lines().some((line) => line.output?.trim());
   let overrideExisting: boolean | null;
   try {
@@ -526,12 +528,12 @@ export async function copyAllSourceToOutput(): Promise<void> {
     emitCopyAllCancelledMessage(pushMessage);
     return;
   }
-  dispatch(allSourceCopiedToOutput({ overrideExisting }));
+  Service.dispatch(allSourceCopiedToOutput({ overrideExisting }));
 }
 
 export function completeAllTranslatedLines(): void {
   if (isBulkTranslationRunning()) return;
-  dispatch(allTranslatedLinesCompleted());
+  Service.dispatch(allTranslatedLinesCompleted());
 }
 
 // ── Mode ─────────────────────────────────────────────────────────────────────
@@ -539,9 +541,9 @@ export function completeAllTranslatedLines(): void {
 /** Switches between translating and editing, keeping focus on the focused line in the column the
  * new mode works in. */
 export function toggleEditMode(): void {
-  const nextMode = select(selectIsEditMode) ? 'translate' : 'edit';
-  const focusedLineIndex = select(selectFocusedLineIndex);
-  dispatch(setEditorMode(nextMode));
+  const nextMode = Service.select(selectIsEditMode) ? 'translate' : 'edit';
+  const focusedLineIndex = Service.select(selectFocusedLineIndex);
+  Service.dispatch(setEditorMode(nextMode));
   if (focusedLineIndex !== null) {
     refocusLineAfterRender(focusedLineIndex, nextMode === 'edit' ? 'source' : 'output');
   }

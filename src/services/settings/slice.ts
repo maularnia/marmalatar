@@ -36,6 +36,10 @@ type AppState = {
   themeSelection: TThemeSelection;
   checkGrammar: boolean;
   uiLocale: TUiLocale;
+  // The settings and export overlays. Not persisted, like the screen size and resolved theme:
+  // hydrateSettings only assigns persisted fields.
+  isSettingsOpen: boolean;
+  isExportOpen: boolean;
 };
 
 const initialState: AppState = {
@@ -54,6 +58,8 @@ const initialState: AppState = {
   themeSelection: THEME_SELECTION_DEFAULT,
   checkGrammar: CHECK_GRAMMAR_DEFAULT,
   uiLocale: UI_LOCALE_DEFAULT,
+  isSettingsOpen: false,
+  isExportOpen: false,
 };
 
 const settingsSlice = createSlice({
@@ -105,6 +111,18 @@ const settingsSlice = createSlice({
     setUiLocale(state, action: PayloadAction<TUiLocale>) {
       state.uiLocale = action.payload;
     },
+    openSettings(state) {
+      state.isSettingsOpen = true;
+    },
+    closeSettings(state) {
+      state.isSettingsOpen = false;
+    },
+    openExport(state) {
+      state.isExportOpen = true;
+    },
+    closeExport(state) {
+      state.isExportOpen = false;
+    },
     hydrateSettings(state, action: PayloadAction<PersistedAppSettings>) {
       Object.assign(state, action.payload);
     },
@@ -130,6 +148,8 @@ const settingsSlice = createSlice({
     selectThemeSelection: (state) => state.themeSelection,
     selectCheckGrammar: (state) => state.checkGrammar,
     selectUiLocale: (state) => state.uiLocale,
+    selectIsSettingsOpen: (state) => state.isSettingsOpen,
+    selectIsExportOpen: (state) => state.isExportOpen,
   },
 });
 
@@ -149,6 +169,10 @@ export const {
   setThemeSelection,
   setCheckGrammar,
   setUiLocale,
+  openSettings,
+  closeSettings,
+  openExport,
+  closeExport,
   hydrateSettings,
 } = settingsSlice.actions;
 
@@ -174,4 +198,6 @@ export const {
   selectThemeSelection,
   selectCheckGrammar,
   selectUiLocale,
+  selectIsSettingsOpen,
+  selectIsExportOpen,
 } = settingsSlice.selectors;

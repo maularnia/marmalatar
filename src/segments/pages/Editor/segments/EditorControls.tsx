@@ -2,10 +2,10 @@ import { media } from '@src/services/media';
 import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { glossaries } from '@src/services/glossary';
+import { promptTemplates } from '@src/services/prompt';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
-import { overlays } from '@store/slices/overlays';
 import { ai } from '@src/services/ai';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
@@ -70,6 +70,15 @@ const PanelButton: typeof Button = (props) => {
     />
   );
 };
+
+// Overlays are exclusive: each owner keeps its own open state, and the caller closes the others
+// before opening one.
+function openExport(): void {
+  promptTemplates.closeEditor();
+  glossaries.closeEditor();
+  settings.close();
+  settings.openExport();
+}
 
 export function EditorControls() {
   const { t } = useTranslation('tooltips');
@@ -412,7 +421,7 @@ export function EditorControls() {
           <PanelButton
             color={ThemeColors.ACCENT1}
             disabled={!isExportAvailable}
-            onClick={() => overlays.openExport()}
+            onClick={openExport}
             icon={TIcon.EXPORT}
           />
         </Tooltip>

@@ -1,8 +1,8 @@
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
-import { useAppSelector } from '@store/hooks';
 import { settings } from '@src/services/settings';
-import { overlays } from '@store/slices/overlays';
+import { glossaries } from '@src/services/glossary';
+import { promptTemplates } from '@src/services/prompt';
 import { TThemeSelection } from '@src/types';
 import {
   KeyHubProvider,
@@ -211,8 +211,14 @@ const useAppGlobalKeystroke = (
 // Must render inside KeyHubProvider (needs its context for useShortcut/useShortcutPause) and must
 // itself wrap ConfirmationProvider, so Confirmation can reach `useGlobalKeystrokePause` via React
 // context regardless of where its dialogs are portaled.
+function closeOverlays(): void {
+  promptTemplates.closeEditor();
+  glossaries.closeEditor();
+  settings.close();
+  settings.closeExport();
+}
+
 function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
-  const currentOverlay = useAppSelector(overlays.selectCurrent);
   const slotsRef = useRef(new Map<TKeystrokeSlot, () => void>());
   const pauseSourcesRef = useRef(new Set<string>());
   const [isPaused, setIsPaused] = useState(false);
@@ -250,14 +256,18 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
   useAppGlobalKeystroke('focusSlot8', () => focusSlot(8));
   useAppGlobalKeystroke('focusSlot9', () => focusSlot(9));
   useAppGlobalKeystroke('focusSlot0', () => focusSlot(0));
+  // Overlays are exclusive: each owner keeps its own open state, and this caller closes the others
+  // before opening one. Esc closes whichever is open, without saving the prompt or glossary editor.
   useAppGlobalKeystroke('closeOverlay', () => {
-    if (currentOverlay !== null) overlays.closeAll();
+    closeOverlays();
   });
   useAppGlobalKeystroke('openSettings', () => {
-    overlays.openSettings();
+    closeOverlays();
+    settings.open();
   });
   useAppGlobalKeystroke('openExport', () => {
-    overlays.openExport();
+    closeOverlays();
+    settings.openExport();
   });
   useAppGlobalKeystroke('switchToDarkTheme', () => {
     settings.setThemeSelection(TThemeSelection.DARK);

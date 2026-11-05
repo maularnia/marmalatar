@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   applySelectedPromptTemplateFileName,
   cancelAutomatedBulkTranslation,
@@ -31,7 +31,7 @@ import {
 export { default as aiReducer } from './slice';
 
 // Keyed on "translation", so the facade reads ai.startAutomated, ai.selectIsBusy
-export const ai = api('translation', {
+export const ai = new Service('translation', {
   actions: {
     setContextWindowEstimate,
     setContextWindowEstimateStatus,

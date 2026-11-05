@@ -1,6 +1,8 @@
 import { menu, SETTINGS_KEY } from '@src/services/menu';
+import { glossaries } from '@src/services/glossary';
+import { promptTemplates } from '@src/services/prompt';
+import { settings } from '@src/services/settings';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { overlays } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
@@ -42,10 +44,20 @@ const Root = styled.div`
     }
   }
 `;
+// Overlays are exclusive: each owner keeps its own open state, and the caller closes the others
+// before opening one. Opening settings drops the prompt or glossary editor without saving, as
+// before.
+function openSettings(): void {
+  promptTemplates.closeEditor();
+  glossaries.closeEditor();
+  settings.closeExport();
+  settings.open();
+}
+
 export default function MenuLogo() {
   const { t } = useTranslation('menu');
-  const [overlay, dynamic, compact] = useAppSelectors(
-    overlays.selectCurrent,
+  const [isSettingsOpen, dynamic, compact] = useAppSelectors(
+    settings.selectIsOpen,
     menu.selectIsDynamic,
     menu.selectIsCompact
   );
@@ -83,8 +95,8 @@ export default function MenuLogo() {
             ref={setSettingsRef}
             compact={dynamic ? compact : true}
             icon={TIcon.SETTINGS}
-            isActive={overlay === 'settings'}
-            onClick={() => overlays.openSettings()}
+            isActive={isSettingsOpen}
+            onClick={openSettings}
           >
             {t('buttons.settings')}
           </ListItem>

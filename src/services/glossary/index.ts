@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   addGlossaryEntry,
   addGlossaryEntryFromText,
@@ -21,6 +21,7 @@ import {
 import {
   closeGlossaryEditor,
   selectCurrentGlossary,
+  selectIsGlossaryEditorOpen,
   selectFocusedGlossaryColumn,
   selectFocusedGlossaryPairIndex,
   selectGlossaryData,
@@ -42,7 +43,7 @@ import {
 export { default as glossaryReducer } from './slice';
 export type { TGlossaryPairColumn } from './slice';
 
-export const glossaries = api('glossary', {
+export const glossaries = new Service('glossary', {
   actions: {
     closeGlossaryEditor,
     setFocusedGlossaryPair,
@@ -53,6 +54,7 @@ export const glossaries = api('glossary', {
   },
   selectors: {
     selectCurrentGlossary,
+    selectIsGlossaryEditorOpen,
     selectFocusedGlossaryColumn,
     selectFocusedGlossaryPairIndex,
     selectGlossaryData,

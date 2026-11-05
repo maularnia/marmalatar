@@ -5,9 +5,8 @@ import { load } from '@src/segments/dialogs/loader/loader';
 import { ai } from '@src/services/ai';
 import { projects, type TProjectEntry } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
-import { dispatch, select } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import { glossaries } from '@src/services/glossary';
-import { overlays } from '@store/slices/overlays';
 import { settings } from '@src/services/settings';
 import { folder } from '@src/services/folder';
 import { app } from '@store/thunks';
@@ -23,7 +22,7 @@ import {
 
 // The menu service's operations: keyboard navigation across all menu items, rename, and opening,
 // creating and deleting projects, prompt templates and glossaries from the menu. They read their
-// own state with select(localSelector), not the facade: index.ts builds the facade from this file,
+// own state with Service.select(localSelector), not the facade: index.ts builds the facade from this file,
 // so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'messages');
@@ -80,13 +79,13 @@ function getCombinedItems(): TMenuItemRef[] {
         kind: 'promptTemplate' as const,
       }))
     );
-    if (!select(selectIsCreatingPromptTemplate)) {
+    if (!Service.select(selectIsCreatingPromptTemplate)) {
       items.push({ key: CREATE_PROMPT_TEMPLATE_KEY, kind: 'createPromptTemplate' });
     }
     items.push(
       ...glossaries.get.items().map((g) => ({ key: g.fileName, kind: 'glossary' as const }))
     );
-    if (!select(selectIsCreatingGlossary)) {
+    if (!Service.select(selectIsCreatingGlossary)) {
       items.push({ key: CREATE_GLOSSARY_KEY, kind: 'createGlossary' });
     }
   }
@@ -154,16 +153,16 @@ async function deleteAndRefocus(key: string, remove: () => Promise<boolean>): Pr
 // ── Rename and create ────────────────────────────────────────────────────────
 
 export function startRenaming(key: string): void {
-  dispatch(setMenuRenamingKey(key));
+  Service.dispatch(setMenuRenamingKey(key));
 }
 
 export function stopRenaming(key: string): void {
-  dispatch(menuRenamingStopped(key));
+  Service.dispatch(menuRenamingStopped(key));
 }
 
 export function renameFocusedItem(): void {
   const focused = getFocusedItem();
-  if (focused == null || select(selectMenuRenamingKey) === focused.key) return;
+  if (focused == null || Service.select(selectMenuRenamingKey) === focused.key) return;
   // "Create" buttons and Settings have nothing to rename.
   if (
     focused.kind === 'createProject' ||
@@ -176,26 +175,36 @@ export function renameFocusedItem(): void {
 }
 
 export function cancelCreatingPromptTemplate(): void {
-  dispatch(setIsCreatingPromptTemplate(false));
+  Service.dispatch(setIsCreatingPromptTemplate(false));
   // The Create button remounts (it's conditionally rendered) once the flag flips false, so wait a
   // frame before it can actually receive focus.
   requestAnimationFrame(() => focusMenuItem(CREATE_PROMPT_TEMPLATE_KEY));
 }
 
 export function cancelCreatingGlossary(): void {
-  dispatch(setIsCreatingGlossary(false));
+  Service.dispatch(setIsCreatingGlossary(false));
   requestAnimationFrame(() => focusMenuItem(CREATE_GLOSSARY_KEY));
 }
 
 // ── Open ─────────────────────────────────────────────────────────────────────
 
-// Runs right before opening something, so no minimum lifetime here: it would be added on top of
-// the opening loader's own one.
-async function saveOpenOverlay(): Promise<void> {
-  const currentOverlay = overlays.get.current();
+type TOverlayKind = 'promptTemplate' | 'glossary' | 'settings' | 'export';
+
+// Overlays are exclusive: each owner keeps its own open state, and the menu, as the caller, closes
+// the others before opening one.
+function closeOverlays(except?: TOverlayKind): void {
+  if (except !== 'promptTemplate') promptTemplates.closeEditor();
+  if (except !== 'glossary') glossaries.closeEditor();
+  if (except !== 'settings') settings.close();
+  if (except !== 'export') settings.closeExport();
+}
+
+// Saves whichever editor is open. Runs right before opening something, so no minimum lifetime
+// here: it would be added on top of the opening loader's own one.
+async function saveOpenEditors(): Promise<void> {
   const currentPromptTemplate = promptTemplates.get.current();
   const currentGlossary = glossaries.get.current();
-  if (currentOverlay === 'promptTemplate' && currentPromptTemplate) {
+  if (currentPromptTemplate) {
     const title =
       promptTemplates.get.items().find((c) => c.fileName === currentPromptTemplate)?.title ?? '...';
     await load(
@@ -203,7 +212,8 @@ async function saveOpenOverlay(): Promise<void> {
       app.savePromptTemplate() as Promise<unknown>,
       { minLifeTime: 0 }
     );
-  } else if (currentOverlay === 'glossary' && currentGlossary) {
+  }
+  if (currentGlossary) {
     const title =
       glossaries.get.items().find((g) => g.fileName === currentGlossary)?.title ?? '...';
     await load(
@@ -216,16 +226,16 @@ async function saveOpenOverlay(): Promise<void> {
 
 export async function openProject(project: TProjectEntry): Promise<void> {
   if (project.projectId === projects.get.id() || isBusy()) return;
-  await saveOpenOverlay();
-  overlays.closeAll();
+  await saveOpenEditors();
+  closeOverlays();
   await projects.open(project);
 }
 
 export async function openPromptTemplate(fileName: string, title: string): Promise<void> {
   if (isBusy()) return;
-  if (overlays.get.current() === 'promptTemplate' && promptTemplates.get.current() === fileName)
-    return;
-  await saveOpenOverlay();
+  if (promptTemplates.get.current() === fileName) return;
+  await saveOpenEditors();
+  closeOverlays('promptTemplate');
   await load(
     { messages: [t('promptTemplate.loadingLabel', { title })] },
     promptTemplates.openEditor(fileName) as Promise<unknown>
@@ -234,8 +244,9 @@ export async function openPromptTemplate(fileName: string, title: string): Promi
 
 export async function openGlossary(fileName: string, title: string): Promise<void> {
   if (isBusy()) return;
-  if (overlays.get.current() === 'glossary' && glossaries.get.current() === fileName) return;
-  await saveOpenOverlay();
+  if (glossaries.get.current() === fileName) return;
+  await saveOpenEditors();
+  closeOverlays('glossary');
   await load(
     { messages: [t('glossary.loadingLabel', { title })] },
     glossaries.openEditor(fileName) as Promise<unknown>
@@ -249,22 +260,23 @@ export function startNewProject(): void {
 export function openFocusedItem(): void {
   // Enter/Space while a row's rename input has focus must only commit the rename (via ListItem's
   // own onKeyDown), not also open the item.
-  if (select(selectMenuRenamingKey) != null) return;
+  if (Service.select(selectMenuRenamingKey) != null) return;
   const focusedItem = getFocusedItem();
   if (isBusy() || !focusedItem) return;
   const { key, kind } = focusedItem;
   switch (kind) {
     case 'settings':
-      overlays.openSettings();
+      closeOverlays('settings');
+      settings.open();
       break;
     case 'createProject':
       startNewProject();
       break;
     case 'createPromptTemplate':
-      dispatch(setIsCreatingPromptTemplate(true));
+      Service.dispatch(setIsCreatingPromptTemplate(true));
       break;
     case 'createGlossary':
-      dispatch(setIsCreatingGlossary(true));
+      Service.dispatch(setIsCreatingGlossary(true));
       break;
     case 'project': {
       const project = projects.get.list().find((p) => p.filePath === key);
@@ -295,7 +307,7 @@ export function deleteProject(project: TProjectEntry): Promise<void> {
 export function deletePromptTemplate(fileName: string, title: string): Promise<void> {
   return deleteAndRefocus(fileName, async () => {
     if (!(await confirmDeletePromptTemplate(title))) return false;
-    overlays.closeAll();
+    closeOverlays();
     await promptTemplates.delete(fileName);
     return true;
   });
@@ -304,7 +316,7 @@ export function deletePromptTemplate(fileName: string, title: string): Promise<v
 export function deleteGlossary(fileName: string, title: string): Promise<void> {
   return deleteAndRefocus(fileName, async () => {
     if (!(await confirmDeleteGlossary(title))) return false;
-    overlays.closeAll();
+    closeOverlays();
     await glossaries.delete(fileName);
     return true;
   });

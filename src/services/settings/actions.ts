@@ -1,6 +1,6 @@
 import i18n from '@src/i18n';
 import { IPC } from '@src/services/ipc/IPC';
-import { dispatch } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import { parseAppSettings } from '@utils/appSettingsFile';
 import { hydrateSettings } from './slice';
 
@@ -13,7 +13,7 @@ import { hydrateSettings } from './slice';
 export async function loadSettings(): Promise<void> {
   const raw = await IPC.settings.getAppSettings();
   const persisted = parseAppSettings(raw);
-  dispatch(hydrateSettings(persisted));
+  Service.dispatch(hydrateSettings(persisted));
   void i18n.changeLanguage(persisted.uiLocale);
   if (JSON.stringify(raw) !== JSON.stringify(persisted)) {
     void IPC.settings.setAppSettings(persisted);

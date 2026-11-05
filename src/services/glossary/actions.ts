@@ -18,8 +18,7 @@ import {
   type TGlossaryEntry,
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
-import { dispatch, select } from '@store/createApi';
-import { overlays, TOverlay } from '@store/slices/overlays';
+import { Service } from '@src/services/Service';
 import { folder } from '@src/services/folder';
 import {
   closeGlossaryEditor,
@@ -38,7 +37,7 @@ import {
   type TGlossaryPairColumn,
 } from './slice';
 
-// The glossary service's operations. They read their own state with select(localSelector), not
+// The glossary service's operations. They read their own state with Service.select(localSelector), not
 // the facade: index.ts builds the facade from this file, so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'errors');
@@ -48,11 +47,11 @@ const t = i18n.getFixedT(null, 'errors');
 type TProjectLanguages = {
   project: { sourceLanguage: TLanguage | null; targetLanguage: TLanguage | null };
 };
-const projectLanguages = () => select((state: TProjectLanguages) => state.project);
+const projectLanguages = () => Service.select((state: TProjectLanguages) => state.project);
 
-const current = () => select(selectCurrentGlossary);
-const data = () => select(selectGlossaryData);
-const selectedFileNames = () => select(selectSelectedGlossaryFileNames);
+const current = () => Service.select(selectCurrentGlossary);
+const data = () => Service.select(selectGlossaryData);
+const selectedFileNames = () => Service.select(selectSelectedGlossaryFileNames);
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
 
@@ -162,25 +161,26 @@ function clearPairInputs(): void {
 // dropped.
 export async function refreshGlossaries(): Promise<void> {
   const glossaryItems = await listGlossaries();
-  dispatch(setGlossaryItems(glossaryItems));
+  Service.dispatch(setGlossaryItems(glossaryItems));
   const selected = selectedFileNames();
   const stillValid = selected.filter((fn) => glossaryItems.some((i) => i.fileName === fn));
   if (stillValid.length !== selected.length) {
-    dispatch(setSelectedGlossaryFileNames(stillValid));
+    Service.dispatch(setSelectedGlossaryFileNames(stillValid));
   }
 }
 
 async function initializeGlossaryEditor(fileName: string): Promise<void> {
   clearPairInputs();
-  dispatch(setCurrentGlossary(fileName));
-  dispatch(setGlossaryData(null));
+  Service.dispatch(setCurrentGlossary(fileName));
+  Service.dispatch(setGlossaryData(null));
   if (!folder.get.path()) return;
-  dispatch(setGlossaryData(await readGlossaryFile(fileName)));
+  Service.dispatch(setGlossaryData(await readGlossaryFile(fileName)));
 }
 
 export async function openGlossaryEditor(fileName: string): Promise<void> {
-  if (overlays.get.current() === TOverlay.GLOSSARY && current() === fileName) return;
-  overlays.setCurrent(TOverlay.GLOSSARY);
+  // Opening the editor is the glossary service's own business; closing other overlays first is up
+  // to the caller
+  if (current() === fileName) return;
   await initializeGlossaryEditor(fileName);
 }
 
@@ -209,7 +209,7 @@ export async function updateGlossaryLanguages(
   await updateGlossaryLanguagesOnDisk(fileName, sourceLanguage, targetLanguage);
   const glossaryData = data();
   if (current() === fileName && glossaryData) {
-    dispatch(setGlossaryData({ ...glossaryData, sourceLanguage, targetLanguage }));
+    Service.dispatch(setGlossaryData({ ...glossaryData, sourceLanguage, targetLanguage }));
   }
   await refreshGlossaries();
   // A selected glossary may no longer match the project's direction
@@ -223,7 +223,7 @@ export async function deleteGlossary(fileName: string): Promise<void> {
   await deleteGlossaryOnDisk(fileName);
   await refreshGlossaries();
   if (current() === fileName) {
-    dispatch(closeGlossaryEditor());
+    Service.dispatch(closeGlossaryEditor());
   }
 }
 
@@ -241,17 +241,17 @@ export async function renameGlossary(fileName: string, newTitle: string): Promis
   if (newFileName !== fileName) {
     const selected = selectedFileNames();
     if (selected.includes(fileName)) {
-      dispatch(
+      Service.dispatch(
         setSelectedGlossaryFileNames(selected.map((fn) => (fn === fileName ? newFileName : fn)))
       );
     }
     if (current() === fileName) {
       clearPairInputs();
-      dispatch(setCurrentGlossary(newFileName));
-      dispatch(setGlossaryData(updated));
+      Service.dispatch(setCurrentGlossary(newFileName));
+      Service.dispatch(setGlossaryData(updated));
     }
   } else if (current() === fileName) {
-    dispatch(setGlossaryData(updated));
+    Service.dispatch(setGlossaryData(updated));
   }
 
   await refreshGlossaries();
@@ -265,7 +265,7 @@ export async function updateGlossaryEmoji(fileName: string, emoji: string): Prom
   if (!updated) throw new Error(t('glossaryFile.readFailed'));
 
   if (current() === fileName) {
-    dispatch(setGlossaryData(updated));
+    Service.dispatch(setGlossaryData(updated));
   }
 
   await refreshGlossaries();
@@ -311,7 +311,7 @@ export async function addGlossaryEntry(
   await writeGlossaryBody(target, updated);
 
   if (target === currentGlossary) {
-    dispatch(setGlossaryData(updated));
+    Service.dispatch(setGlossaryData(updated));
   }
 
   return true;
@@ -328,7 +328,9 @@ export async function addGlossaryEntry(
 // they only ever see the already-filtered `glossaryEntries` pairs.
 function directionMatchedGlossaryFileNames(): string[] {
   const { sourceLanguage, targetLanguage } = projectLanguages();
-  const itemsByFileName = new Map(select(selectGlossaryItems).map((item) => [item.fileName, item]));
+  const itemsByFileName = new Map(
+    Service.select(selectGlossaryItems).map((item) => [item.fileName, item])
+  );
   return selectedFileNames().filter((fileName) => {
     const item = itemsByFileName.get(fileName);
     return (
@@ -342,7 +344,7 @@ function directionMatchedGlossaryFileNames(): string[] {
 export async function refreshResolvedGlossaryEntries(): Promise<void> {
   const matchedFileNames = directionMatchedGlossaryFileNames();
   if (!folder.get.path() || !matchedFileNames.length) {
-    dispatch(setResolvedGlossaryEntries([]));
+    Service.dispatch(setResolvedGlossaryEntries([]));
     return;
   }
   const seen = new Map<string, string>();
@@ -352,7 +354,7 @@ export async function refreshResolvedGlossaryEntries(): Promise<void> {
       for (const e of fileData.list) seen.set(e.original, e.translation);
     }
   }
-  dispatch(setResolvedGlossaryEntries(Array.from(seen.entries())));
+  Service.dispatch(setResolvedGlossaryEntries(Array.from(seen.entries())));
 }
 
 // Prunes the glossary selection down to whatever still matches the project's current direction,
@@ -364,7 +366,7 @@ export async function refreshResolvedGlossaryEntries(): Promise<void> {
 export function reconcileGlossarySelectionWithDirection(): void {
   const matchedFileNames = directionMatchedGlossaryFileNames();
   if (matchedFileNames.length !== selectedFileNames().length) {
-    dispatch(setSelectedGlossaryFileNames(matchedFileNames));
+    Service.dispatch(setSelectedGlossaryFileNames(matchedFileNames));
   }
   void refreshResolvedGlossaryEntries();
 }
@@ -383,14 +385,14 @@ export function focusGlossaryPairInput(
   if (selectAll) selectAllContentEditable(el);
   else focusContentEditableToEnd(el);
   el.scrollIntoView({ block: 'nearest' });
-  dispatch(setFocusedGlossaryPair({ pairIndex, column }));
+  Service.dispatch(setFocusedGlossaryPair({ pairIndex, column }));
   return true;
 }
 
 export function moveGlossaryPairFocus(direction: 'up' | 'down'): void {
   const pairCount = data()?.list.length ?? 0;
-  const focusedPairIndex = select(selectFocusedGlossaryPairIndex);
-  const column = select(selectFocusedGlossaryColumn) ?? 'original';
+  const focusedPairIndex = Service.select(selectFocusedGlossaryPairIndex);
+  const column = Service.select(selectFocusedGlossaryColumn) ?? 'original';
   if (focusedPairIndex == null) {
     if (pairCount === 0) return;
     focusGlossaryPairInput(0, column);
@@ -411,8 +413,8 @@ export function insertGlossaryPair(pairIndex: number, position: 'before' | 'afte
     { original: '', translation: '' },
     ...glossaryData.list.slice(targetIndex),
   ];
-  dispatch(setGlossaryData({ ...glossaryData, list }));
-  const column = select(selectFocusedGlossaryColumn) ?? 'original';
+  Service.dispatch(setGlossaryData({ ...glossaryData, list }));
+  const column = Service.select(selectFocusedGlossaryColumn) ?? 'original';
   requestAnimationFrame(() => {
     focusGlossaryPairInput(targetIndex, column, false);
   });
@@ -433,11 +435,11 @@ export async function deleteGlossaryPair(pairIndex: number): Promise<void> {
   const hasNext = pairIndex + 1 < glossaryData.list.length;
   const hasPrev = pairIndex > 0;
   const list = glossaryData.list.filter((_, i) => i !== pairIndex);
-  dispatch(setGlossaryData({ ...glossaryData, list }));
+  Service.dispatch(setGlossaryData({ ...glossaryData, list }));
   const targetIndex = hasNext ? pairIndex : hasPrev ? pairIndex - 1 : null;
-  const column = select(selectFocusedGlossaryColumn) ?? 'original';
+  const column = Service.select(selectFocusedGlossaryColumn) ?? 'original';
   if (targetIndex == null) {
-    dispatch(setFocusedGlossaryPair({ pairIndex: null, column: null }));
+    Service.dispatch(setFocusedGlossaryPair({ pairIndex: null, column: null }));
     return;
   }
   requestAnimationFrame(() => {
@@ -454,7 +456,7 @@ export async function addGlossaryEntryFromText(text: string): Promise<void> {
   if (!original) return;
 
   const { sourceLanguage, targetLanguage } = projectLanguages();
-  const matching = select(selectGlossaryItems).filter(
+  const matching = Service.select(selectGlossaryItems).filter(
     (g) => g.sourceLanguage === sourceLanguage && g.targetLanguage === targetLanguage
   );
   if (!matching.length) {

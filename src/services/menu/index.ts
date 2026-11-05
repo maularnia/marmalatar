@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   cancelCreatingGlossary,
   cancelCreatingPromptTemplate,
@@ -43,7 +43,7 @@ export {
   SETTINGS_KEY,
 } from './actions';
 
-export const menu = api('menu', {
+export const menu = new Service('menu', {
   actions: {
     setIsCreatingGlossary,
     setIsCreatingPromptTemplate,

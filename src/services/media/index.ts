@@ -1,4 +1,4 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import {
   getAudioElement,
   getCurrentTimeMs,
@@ -33,7 +33,7 @@ import {
 
 export { default as mediaReducer } from './slice';
 
-export const media = api('media', {
+export const media = new Service('media', {
   actions: {
     clearVideo,
     setActiveLineIndex,

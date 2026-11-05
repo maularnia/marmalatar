@@ -6,8 +6,7 @@ import {
   type PromptTemplateFileDataType,
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
-import { dispatch, select } from '@store/createApi';
-import { overlays, TOverlay } from '@store/slices/overlays';
+import { Service } from '@src/services/Service';
 import { folder } from '@src/services/folder';
 import {
   closePromptTemplateEditor,
@@ -20,7 +19,7 @@ import {
   type TPromptTemplateEntry,
 } from './slice';
 
-// The prompt service's operations. They read their own state with select(localSelector), not the
+// The prompt service's operations. They read their own state with Service.select(localSelector), not the
 // facade: index.ts builds the facade from this file, so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'errors');
@@ -86,22 +85,22 @@ async function deletePromptTemplateOnDisk(fileName: string): Promise<void> {
 // dropped.
 export async function refreshPromptTemplates(): Promise<void> {
   const promptTemplateItems = await listPromptTemplates();
-  dispatch(setPromptTemplateItems(promptTemplateItems));
-  const selectedTemplate = select(selectSelectedPromptTemplateFileName);
+  Service.dispatch(setPromptTemplateItems(promptTemplateItems));
+  const selectedTemplate = Service.select(selectSelectedPromptTemplateFileName);
   if (selectedTemplate && !promptTemplateItems.some((i) => i.fileName === selectedTemplate)) {
-    dispatch(setSelectedPromptTemplateFileName(null));
+    Service.dispatch(setSelectedPromptTemplateFileName(null));
   }
 }
 
 // ── Prompt templates ───────────────────────────────────────────────────
 
 async function initializePromptTemplateEditor(fileName: string): Promise<void> {
-  dispatch(setCurrentPromptTemplate(fileName));
-  dispatch(setPromptTemplateData(null));
+  Service.dispatch(setCurrentPromptTemplate(fileName));
+  Service.dispatch(setPromptTemplateData(null));
   const folderPath = folder.get.path();
   if (!folderPath) return;
   const data = await readPromptTemplateFile(fileName);
-  dispatch(setPromptTemplateData(data));
+  Service.dispatch(setPromptTemplateData(data));
 }
 
 export async function deletePromptTemplate(fileName: string): Promise<void> {
@@ -109,8 +108,8 @@ export async function deletePromptTemplate(fileName: string): Promise<void> {
   if (!folderPath) return;
   await deletePromptTemplateOnDisk(fileName);
   await refreshPromptTemplates();
-  if (select(selectCurrentPromptTemplate) === fileName) {
-    dispatch(closePromptTemplateEditor());
+  if (Service.select(selectCurrentPromptTemplate) === fileName) {
+    Service.dispatch(closePromptTemplateEditor());
   }
 }
 
@@ -127,14 +126,14 @@ export async function renamePromptTemplate(fileName: string, newTitle: string): 
   if (!updated) throw new Error(t('promptTemplate.readFailed'));
 
   if (newFileName !== fileName) {
-    const selectedPt = select(selectSelectedPromptTemplateFileName);
-    if (selectedPt === fileName) dispatch(setSelectedPromptTemplateFileName(newFileName));
-    if (select(selectCurrentPromptTemplate) === fileName) {
-      dispatch(setCurrentPromptTemplate(newFileName));
-      dispatch(setPromptTemplateData(updated));
+    const selectedPt = Service.select(selectSelectedPromptTemplateFileName);
+    if (selectedPt === fileName) Service.dispatch(setSelectedPromptTemplateFileName(newFileName));
+    if (Service.select(selectCurrentPromptTemplate) === fileName) {
+      Service.dispatch(setCurrentPromptTemplate(newFileName));
+      Service.dispatch(setPromptTemplateData(updated));
     }
-  } else if (select(selectCurrentPromptTemplate) === fileName) {
-    dispatch(setPromptTemplateData(updated));
+  } else if (Service.select(selectCurrentPromptTemplate) === fileName) {
+    Service.dispatch(setPromptTemplateData(updated));
   }
 
   await refreshPromptTemplates();
@@ -148,8 +147,8 @@ export async function updatePromptTemplateEmoji(fileName: string, emoji: string)
   const updated = await readPromptTemplateFile(fileName);
   if (!updated) throw new Error(t('promptTemplate.readFailed'));
 
-  if (select(selectCurrentPromptTemplate) === fileName) {
-    dispatch(setPromptTemplateData(updated));
+  if (Service.select(selectCurrentPromptTemplate) === fileName) {
+    Service.dispatch(setPromptTemplateData(updated));
   }
 
   await refreshPromptTemplates();
@@ -175,12 +174,8 @@ export async function createPromptTemplate(title: string): Promise<void> {
 }
 
 export async function openPromptTemplateEditor(filename: string): Promise<void> {
-  if (
-    overlays.get.current() === TOverlay.PROMPT_TEMPLATE &&
-    select(selectCurrentPromptTemplate) === filename
-  ) {
-    return;
-  }
-  overlays.setCurrent(TOverlay.PROMPT_TEMPLATE);
+  // Opening the editor is the prompt service's own business; closing other overlays first is up
+  // to the caller
+  if (Service.select(selectCurrentPromptTemplate) === filename) return;
   await initializePromptTemplateEditor(filename);
 }

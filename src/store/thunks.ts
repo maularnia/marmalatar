@@ -1,12 +1,10 @@
-import { api } from './createApi';
+import { Service } from '@src/services/Service';
 import type { AppDispatch } from './root';
 import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from '@src/services/glossary';
 import { ai } from '@src/services/ai';
 import { folder } from '@src/services/folder';
 import { editor } from '@src/services/project';
-import { TOverlay } from './slices/overlays';
-import { overlays } from './slices/overlays';
 import { projects } from '@src/services/project';
 import { settings } from '@src/services/settings';
 
@@ -75,17 +73,17 @@ const pickFolder =
         await projects.saveToDisk();
       }
 
-      const currentOverlay = overlays.get.current();
-      if (currentOverlay === TOverlay.PROMPT_TEMPLATE && promptTemplates.get.current()) {
-        await dispatch(savePromptTemplate());
-      } else if (currentOverlay === TOverlay.GLOSSARY && glossaries.get.current()) {
-        await glossaries.save();
-      }
+      // Whichever editors are open are saved; all overlays close below
+      if (promptTemplates.get.current()) await dispatch(savePromptTemplate());
+      if (glossaries.get.current()) await glossaries.save();
 
       await folder.setTracked(selected);
 
       editor.resetMemoryState();
-      overlays.closeAll();
+      promptTemplates.closeEditor();
+      glossaries.closeEditor();
+      settings.close();
+      settings.closeExport();
       projects.close();
       editor.setFrozenLineNumbers([]);
       promptTemplates.setSelectedFileName(null);
@@ -116,7 +114,7 @@ const hydrateApp =
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
-export const app = api('app', {
+export const app = new Service('app', {
   thunks: {
     hydrateApp,
     savePromptTemplate,

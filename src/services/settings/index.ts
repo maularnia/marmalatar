@@ -1,6 +1,12 @@
-import { api } from '@store/createApi';
+import { Service } from '@src/services/Service';
 import { loadSettings } from './actions';
 import {
+  closeExport,
+  closeSettings,
+  openExport,
+  openSettings,
+  selectIsExportOpen,
+  selectIsSettingsOpen,
   selectAIintegrationEnabled,
   selectAskBeforeAITranslate,
   selectAskBeforeDelete,
@@ -37,14 +43,19 @@ import {
   setUiLocale,
 } from './slice';
 
-// The settings service: the app-wide preferences (persisted by the main process) and the UI state
-// derived from the environment (resolved theme, screen size). This file is its only entry point:
+// The settings service: the app-wide preferences (persisted by the main process), the UI state
+// derived from the environment (resolved theme, screen size), and whether the settings and export
+// overlays are open. This file is its only entry point:
 // the slice lives in slice.ts, the operations in actions.ts.
 
 export { default as settingsReducer } from './slice';
 
-export const settings = api('settings', {
+export const settings = new Service('settings', {
   actions: {
+    closeExport,
+    closeSettings,
+    openExport,
+    openSettings,
     setAIintegrationEnabled,
     setAskBeforeAITranslate,
     setAskBeforeDelete,
@@ -62,6 +73,8 @@ export const settings = api('settings', {
     setUiLocale,
   },
   selectors: {
+    selectIsExportOpen,
+    selectIsSettingsOpen,
     selectAIintegrationEnabled,
     selectAskBeforeAITranslate,
     selectAskBeforeDelete,

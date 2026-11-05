@@ -5,7 +5,6 @@ import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
 import { useAppSelectors } from '@store/hooks';
 import { glossaries } from '@src/services/glossary';
-import { overlays } from '@store/slices/overlays';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import {
@@ -74,7 +73,7 @@ export default function GlossaryOverlay() {
       { messages: [t('messages:glossary.savingLabel', { title: formData.title || '...' })] },
       glossaries.save() as Promise<unknown>
     );
-    overlays.closeAll();
+    glossaries.closeEditor();
   };
   if (!currentGlossary) return null;
 
