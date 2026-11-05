@@ -1,7 +1,7 @@
 import { createSlice, isAnyOf, PayloadAction } from '@reduxjs/toolkit';
 import { promptTemplates } from '@src/services/prompt';
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { projects } from '@src/services/project';
 import { workingFolder } from '@store/slices/workingFolder';
 import { cancelActiveBulkJob } from './bulkJob';

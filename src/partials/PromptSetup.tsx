@@ -6,7 +6,7 @@ import { promptTemplates } from '@src/services/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
 import { useAppSelectors } from '@store/hooks';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { ai } from '@src/services/ai';
 import {
   FormSectionEntry,

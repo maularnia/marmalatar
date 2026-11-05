@@ -1,7 +1,7 @@
 import { api } from './createApi';
 import type { AppDispatch } from './root';
 import { promptTemplates } from '@src/services/prompt';
-import { glossaries } from './slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { ai } from '@src/services/ai';
 import { workingFolder } from './slices/workingFolder';
 import { editor } from '@src/services/project';

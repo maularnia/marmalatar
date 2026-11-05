@@ -1,7 +1,7 @@
 import { media } from '@src/services/media';
 import { settings } from '@src/store/slices/settings';
 import { editor } from '@src/services/project';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';

@@ -1,4 +1,4 @@
-import { glossaries, type TGlossaryPairColumn } from '@store/slices/glossary';
+import { glossaries, type TGlossaryPairColumn } from '@src/services/glossary';
 import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import Button from '@ui-toolkit/Button/Button';

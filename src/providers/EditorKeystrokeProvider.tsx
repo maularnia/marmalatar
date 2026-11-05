@@ -4,7 +4,7 @@ import KeystrokeZone, {
 import { editor } from '@src/services/project';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
 import { ai } from '@src/services/ai';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { createContext, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
 import {
   ShortcutScope,

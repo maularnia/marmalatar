@@ -5,7 +5,7 @@ import { projects } from '@src/services/project';
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 

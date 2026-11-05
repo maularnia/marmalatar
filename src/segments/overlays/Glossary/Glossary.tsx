@@ -1,11 +1,10 @@
 import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
-import { useDeleteGlossaryEntryConfirmation } from '@src/segments/dialogs/deleteGlossaryEntry/useDeleteGlossaryEntryConfirmation';
 import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
 import { useAppSelectors } from '@store/hooks';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { overlays } from '@store/slices/overlays';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
@@ -44,7 +43,6 @@ export default function GlossaryOverlay() {
     glossaries.selectData
   );
   const { load } = useLoader();
-  const { confirmAndDeletePair } = useDeleteGlossaryEntryConfirmation();
 
   const formData = glossaryData ?? emptyFormData;
 
@@ -132,7 +130,7 @@ export default function GlossaryOverlay() {
                       onFocus={(column) => glossaries.setFocusedPair({ pairIndex: index, column })}
                       onOriginalChange={(v) => handleRowChange(index, 'original', v)}
                       onTranslationChange={(v) => handleRowChange(index, 'translation', v)}
-                      onDelete={() => void confirmAndDeletePair(index)}
+                      onDelete={() => void glossaries.deletePair(index)}
                       onInsertBefore={() => glossaries.insertPair(index, 'before')}
                       onInsertAfter={() => glossaries.insertPair(index, 'after')}
                     />

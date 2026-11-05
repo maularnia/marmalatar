@@ -14,7 +14,7 @@ import { promptTemplates } from '@src/services/prompt';
 import { LANGUAGE_LABELS, TSubtitleLine } from '@src/types';
 import { getErrorMessage } from '@src/utils/errors';
 import { dispatch, select } from '@store/createApi';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { projects } from '@src/services/project';
 import { settings } from '@store/slices/settings';
 import { workingFolder } from '@store/slices/workingFolder';

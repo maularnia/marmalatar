@@ -6,7 +6,7 @@ import { ai } from '@src/services/ai';
 import { projects, type TProjectEntry } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
 import { dispatch, select } from '@store/createApi';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { overlays } from '@store/slices/overlays';
 import { settings } from '@store/slices/settings';
 import { workingFolder } from '@store/slices/workingFolder';

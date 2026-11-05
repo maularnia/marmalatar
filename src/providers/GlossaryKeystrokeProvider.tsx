@@ -6,8 +6,7 @@ import {
   useShortcut,
 } from 'react-keyhub';
 import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { useDeleteGlossaryEntryConfirmation } from '@src/segments/dialogs/deleteGlossaryEntry/useDeleteGlossaryEntryConfirmation';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { PropsWithChildren } from 'react';
 
 const myShortcuts = {
@@ -120,8 +119,6 @@ export function GlossaryKeystrokeProvider({ children }: PropsWithChildren) {
 // Registers useShortcut handlers -- must render as KeystrokeZone's child so these hooks run inside
 // the KeyHubProvider context KeystrokeZone creates for `shortcuts`.
 function GlossaryShortcuts() {
-  const { confirmAndDeletePair } = useDeleteGlossaryEntryConfirmation();
-
   useAppGlossaryKeystroke('previousPairInput', () => glossaries.movePairFocus('up'));
   useAppGlossaryKeystroke('nextPairInput', () => glossaries.movePairFocus('down'));
 
@@ -139,7 +136,7 @@ function GlossaryShortcuts() {
     const focusedPairIndex = glossaries.get.focusedPairIndex();
     if (focusedPairIndex == null) return;
     event.preventDefault();
-    void confirmAndDeletePair(focusedPairIndex);
+    void glossaries.deletePair(focusedPairIndex);
   };
 
   useAppGlossaryKeystroke('deletePair', handleDeletePairKeystroke);

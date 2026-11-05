@@ -5,7 +5,7 @@ import { projectReducer } from '@src/services/project';
 import { editorReducer } from '@src/services/project';
 import { promptReducer } from '@src/services/prompt';
 import workingFolderReducer from './slices/workingFolder';
-import glossaryReducer from './slices/glossary';
+import { glossaryReducer } from '@src/services/glossary';
 import overlaysReducer from './slices/overlays';
 import { aiReducer } from '@src/services/ai';
 import { mediaReducer } from '@src/services/media';

@@ -32,7 +32,7 @@ import {
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { dispatch, select } from '@store/createApi';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { workingFolder } from '@store/slices/workingFolder';
 import { clearSplitCursor } from './editor/actions';
 import {

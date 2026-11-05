@@ -11,7 +11,7 @@ import { projects } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
 import { promptTemplates } from '@src/services/prompt';
-import { glossaries } from '@store/slices/glossary';
+import { glossaries } from '@src/services/glossary';
 import { ai } from '@src/services/ai';
 import { workingFolder } from '@store/slices/workingFolder';
 import H from '@ui-toolkit/H';
