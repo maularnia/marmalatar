@@ -8,6 +8,7 @@ import { glossaryReducer } from '@src/services/glossary';
 import { aiReducer } from '@src/services/ai';
 import { mediaReducer } from '@src/services/media';
 import { menuReducer } from '@src/services/menu';
+import { modalReducer } from '@src/services/modal';
 
 export const rootReducer = combineReducers({
   settings: settingsReducer,
@@ -19,6 +20,7 @@ export const rootReducer = combineReducers({
   ai: aiReducer,
   media: mediaReducer,
   menu: menuReducer,
+  modal: modalReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

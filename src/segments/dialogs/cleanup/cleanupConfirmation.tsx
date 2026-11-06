@@ -1,18 +1,20 @@
-import { createConfirm } from '@providers/bridges/confirmation';
+import { modal } from '@src/services/modal';
 import i18n from '@src/i18n';
 import { CleanupDialog, TCleanupFormValues } from './CleanupDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');
 
-const cleanupWindow = createConfirm(CleanupDialog, {
-  confirmButton: { children: t('cleanup.confirmButton') },
-  dismissButton: { children: t('shared.cancel') },
-});
-
 /** Resolves the form values on confirm, `null` on dismiss. */
 export const confirmCleanup = (isEditMode: boolean): Promise<TCleanupFormValues | null> => {
   let values: TCleanupFormValues | null = null;
-  return cleanupWindow
-    .confirm({ isEditMode, onValuesChange: (next) => (values = next) })
+  return modal
+    .confirm(
+      CleanupDialog,
+      { isEditMode, onValuesChange: (next) => (values = next) },
+      {
+        confirmButton: { children: t('cleanup.confirmButton') },
+        dismissButton: { children: t('shared.cancel') },
+      }
+    )
     .then((confirmed) => (confirmed ? values : null));
 };

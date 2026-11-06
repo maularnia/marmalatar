@@ -1,4 +1,4 @@
-import { TConfirmationWindowProps } from '@src/providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
@@ -13,7 +13,7 @@ type TMergedLine = { lineNo: number; text: string };
 export type LineMergeDialogProps = {
   /** In display order (the earlier line first). */
   lines: [TMergedLine, TMergedLine];
-} & TConfirmationWindowProps;
+} & TModalContentProps;
 
 const LineNumberTag = styled(Tag)`
   vertical-align: middle;

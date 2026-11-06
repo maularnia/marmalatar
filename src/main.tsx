@@ -1,4 +1,3 @@
-import { ConfirmationProvider } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import { GlobalKeystrokeDispatcher } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { PopperPortalProvider } from '@providers/PopperPortalProvider';
 import { NavigationBridge } from '@providers/bridges/NavigationBridge';
@@ -7,6 +6,7 @@ import { LocaleProvider } from '@src/providers/LocaleProvider';
 import { ThemeProvider } from '@src/providers/ThemeProvider';
 import { ai } from '@src/services/ai';
 import { folder } from '@src/services/folder';
+import { Modals } from '@src/services/modal';
 import { settings } from '@src/services/settings';
 import { store } from '@store/store';
 import React from 'react';
@@ -39,9 +39,8 @@ void hydrate().then(() => {
                 <ThemeProvider>
                   <PopperPortalProvider>
                     <GlobalKeystrokeDispatcher>
-                      <ConfirmationProvider>
-                        <App />
-                      </ConfirmationProvider>
+                      <App />
+                      <Modals />
                     </GlobalKeystrokeDispatcher>
                   </PopperPortalProvider>
                 </ThemeProvider>

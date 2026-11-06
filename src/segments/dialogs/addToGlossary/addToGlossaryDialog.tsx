@@ -1,4 +1,4 @@
-import { createConfirm } from '@providers/bridges/confirmation';
+import { modal } from '@src/services/modal';
 import { pushMessage } from '@providers/bridges/messages';
 import i18n from '@src/i18n';
 import { emitGlossaryPairAddedMessage, emitGlossaryPairDiscardedMessage } from '@src/messages';
@@ -22,11 +22,6 @@ type TAddToGlossaryProps = {
   glossaryOptions?: { fileName: string; title: string }[];
 };
 
-const addToGlossaryWindow = createConfirm(GlossaryPairForm, {
-  confirmButton: { children: t('addToGlossary.confirmButton'), color: ThemeColors.GREEN },
-  dismissButton: { children: t('addToGlossary.dismissButton') },
-});
-
 /** Asks for a glossary pair and the glossary to add it to; resolves `null` when dismissed. */
 export async function askForGlossaryPair({
   defaultOriginal,
@@ -43,7 +38,8 @@ export async function askForGlossaryPair({
 
   let glossaryFileName = options[0]?.value ?? '';
 
-  const confirmed = await addToGlossaryWindow.confirm(
+  const confirmed = await modal.confirm(
+    GlossaryPairForm,
     {
       defaultOriginal,
       defaultTranslation,
@@ -53,7 +49,11 @@ export async function askForGlossaryPair({
       onFormReady: (next) => (getValues = next),
       onGlossaryChange: (fileName) => (glossaryFileName = fileName),
     },
-    () => isValid
+    {
+      confirmButton: { children: t('addToGlossary.confirmButton'), color: ThemeColors.GREEN },
+      dismissButton: { children: t('addToGlossary.dismissButton') },
+      validate: () => isValid,
+    }
   );
   if (!confirmed) {
     emitGlossaryPairDiscardedMessage(pushMessage);

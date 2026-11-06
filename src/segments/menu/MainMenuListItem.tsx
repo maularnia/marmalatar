@@ -12,7 +12,7 @@ import EmoPicker from '@ui-toolkit/EmoPicker';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLoader } from '../dialogs/loader/useLoader';
+import { load } from '../dialogs/loader/loader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 
 const MAX_NAME_LENGTH = 64;
@@ -82,7 +82,6 @@ export function MainMenuListItem({
   const wasEditingRef = useRef(isEditing);
 
   const { pushMessage } = useMessageHelmet();
-  const { load } = useLoader();
 
   const setItemRef = useCallback(
     (el: HTMLDivElement | null) => menu.registerItem(itemKey, el),

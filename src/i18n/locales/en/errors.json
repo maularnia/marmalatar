@@ -112,9 +112,6 @@
     "fieldNamesEmpty": "Field can not be empty",
     "duplicateFieldName": "Field [{{fieldName}}] already exists"
   },
-  "confirmationProvider": {
-    "confirmDestroyed": "The confirmation provider message has already been destroyed"
-  },
   "videoPlaybackError": {
     "title": "Can not play video",
     "message": "Video may have been corrapted or deleted"

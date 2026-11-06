@@ -1,11 +1,11 @@
-import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import Span from '@ui-toolkit/Span';
 import Toggle from '@ui-toolkit/Toggle';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialogBodySmall, DialogContent, DialogTitle, DialogTitleContent } from '../partials';
 
-type CopyAllSourceToOutputDialogProps = TConfirmationWindowProps & {
+type CopyAllSourceToOutputDialogProps = TModalContentProps & {
   showOverrideToggle: boolean;
   onOverrideChange?: (overrideExisting: boolean) => void;
 };

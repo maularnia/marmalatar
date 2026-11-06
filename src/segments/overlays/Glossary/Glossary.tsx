@@ -1,5 +1,5 @@
 import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
-import { useLoader } from '@src/segments/dialogs/loader/useLoader';
+import { load } from '@src/segments/dialogs/loader/loader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
@@ -41,7 +41,6 @@ export default function GlossaryOverlay() {
     glossaries.selectCurrent,
     glossaries.selectData
   );
-  const { load } = useLoader();
 
   const formData = glossaryData ?? emptyFormData;
 

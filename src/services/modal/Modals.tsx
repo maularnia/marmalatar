@@ -1,36 +1,19 @@
-import { useGlobalKeystrokePause } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { usePopperPortal } from '@providers/PopperPortalProvider';
-import { registerConfirmationBridge } from '@providers/bridges/confirmation';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { appearDownSpring, appearUpSpring } from '@src/toolkit/motion/transitions';
+import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import FocusTrap from '@ui-toolkit/FocusTrap';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import { providerNoop } from '@utils/noop';
-import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  ComponentType,
-  createContext,
-  PropsWithChildren,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
-import { ConfirmationKeyhubProvider } from './ConfirmationKeyhubProvider';
-import { createConfirmWindow, createInfoWindow } from './confirmWindow';
-import {
-  TConfirmationContext,
-  TInternalConfirmationWindowProps,
-  TUseConfirm,
-  TWindowID,
-} from './types';
+import { completeModalExits, setModalValidity } from './actions';
+import { ModalKeyhub } from './ModalKeyhub';
+import { modalEntries, type TModalEntry } from './registry';
+import { selectModalWindows } from './slice';
 
 const Backdrop = styled(motion.div)`
   position: fixed;
@@ -91,9 +74,14 @@ const DialogHotkeyTooltips = styled(motion.div).attrs<TAnimatedAttrs>(({ $animat
   justify-content: center;
 `;
 
-const noop = providerNoop('ConfirmationContext');
+type TModalWindowProps = TModalEntry & {
+  isValid: boolean;
+  animate: boolean;
+  onValidChange: (isValid: boolean) => void;
+};
 
-const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
+function ModalWindow({
+  render,
   onConfirm,
   onDismiss,
   onValidChange,
@@ -101,8 +89,7 @@ const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
   dismissButton,
   isValid,
   animate,
-  Content,
-}) => {
+}: TModalWindowProps) {
   const hasActions = onConfirm != null || onDismiss != null;
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -119,15 +106,13 @@ const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
         $animate={animate}
       >
         <FocusTrap active initialFocusRef={cancelRef}>
-          <ConfirmationKeyhubProvider
+          <ModalKeyhub
             dialogRef={dialogRef}
             onConfirm={onConfirm}
             onDismiss={onDismiss}
             isValid={isValid}
           >
-            <DialogMessage>
-              <Content onValidChange={onValidChange} />
-            </DialogMessage>
+            <DialogMessage>{render(onValidChange)}</DialogMessage>
             {hasActions && (
               <Actions $animate={animate} initial="hidden" animate="animate" exit="exit">
                 <DialogStyledButtonContainer
@@ -139,7 +124,7 @@ const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
                     ref={cancelRef}
                     onClick={onDismiss}
                     variant={TButtonVariant.TRANSPARENT}
-                    {...{ children: 'Cancel', ...dismissButton }}
+                    {...dismissButton}
                   />
                   <DialogHotkeyTooltips $animate={animate}>
                     <Tag
@@ -158,7 +143,7 @@ const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
                     onClick={onConfirm}
                     disabled={isValid === false}
                     variant={TButtonVariant.TRANSPARENT}
-                    {...{ children: 'Confirm', ...confirmButton }}
+                    {...confirmButton}
                   />
                   <DialogHotkeyTooltips $animate={animate}>
                     <Tag
@@ -172,105 +157,35 @@ const Confirmation: (props: TInternalConfirmationWindowProps) => ReactNode = ({
                 </DialogStyledButtonContainer>
               </Actions>
             )}
-          </ConfirmationKeyhubProvider>
+          </ModalKeyhub>
         </FocusTrap>
       </Dialog>
     </Backdrop>
   );
-};
+}
 
-const ConfirmationContext = createContext<TConfirmationContext>({
-  registerWindow: noop,
-  open: noop,
-  close: noop,
-  destroyWindow: noop,
-});
-
-export function ConfirmationProvider({ children }: PropsWithChildren) {
-  const windows = useRef(new Map<TWindowID, TInternalConfirmationWindowProps>());
-  const [openWindows, setOpenWindows] = useState<TWindowID[]>([]);
+// The host of every modal window: renders the windows the modal slice lists, portaled above the
+// app. Mounted once in main.tsx. Windows are opened only through the facade (modal.confirm,
+// modal.showInfo); their content and buttons come from the registry.
+export function Modals() {
+  const windows = useAppSelector(selectModalWindows);
   const overlays = usePopperPortal();
-  // The entire ctrl+1..0/esc isolation mechanism: while any confirmation is open, the global
-  // dispatcher is paused, so those shortcuts never fire and can't steal focus from the dialog.
-  useGlobalKeystrokePause(openWindows.length > 0);
-  // Callbacks to run once a given window has actually finished its exit animation (not merely
-  // been removed from `openWindows`) -- see `handleExitComplete` below.
-  const pendingExitCallbacksRef = useRef(new Map<TWindowID, () => void>());
-
-  const close = useCallback((id: TWindowID, onExitAnimationComplete?: () => void) => {
-    if (onExitAnimationComplete) {
-      pendingExitCallbacksRef.current.set(id, onExitAnimationComplete);
-    }
-    setOpenWindows((prev) => prev.filter((windowId) => windowId !== id));
-  }, []);
-
-  const handleExitComplete = useCallback(() => {
-    pendingExitCallbacksRef.current.forEach((callback) => callback());
-    pendingExitCallbacksRef.current.clear();
-  }, []);
-
-  const open = useCallback((id: TWindowID, props: TInternalConfirmationWindowProps) => {
-    windows.current.set(id, props);
-    setOpenWindows((prev) => (prev.includes(id) ? prev : [...prev, id]));
-  }, []);
-
-  const destroyWindow = useCallback((id: TWindowID) => {
-    windows.current.delete(id);
-    setOpenWindows((prev) => prev.filter((windowId) => windowId !== id));
-  }, []);
-
-  const registerWindow = useCallback(() => {
-    const id = crypto.randomUUID();
-    windows.current.set(id, { Content: () => null });
-    return id;
-  }, []);
-
-  const value = useMemoizedObject<TConfirmationContext>({
-    registerWindow,
-    destroyWindow,
-    open,
-    close,
-  });
-  useEffect(() => registerConfirmationBridge(value), [value]);
-
-  const rerenderWindows = () => setOpenWindows((prev) => [...prev]);
-  return (
-    <ConfirmationContext.Provider value={value}>
-      {overlays
-        ? createPortal(
-            <AnimatePresence mode="wait" onExitComplete={handleExitComplete}>
-              {openWindows.map((id) => {
-                const props = windows.current.get(id);
-                const onValidChnage = (isValid: boolean) => {
-                  if (!props) return;
-                  props.isValid = isValid;
-                  rerenderWindows();
-                };
-                return props ? (
-                  <Confirmation key={id} {...props} onValidChange={onValidChnage} />
-                ) : null;
-              })}
-            </AnimatePresence>,
-            overlays
-          )
-        : null}
-      {children}
-    </ConfirmationContext.Provider>
+  if (!overlays) return null;
+  return createPortal(
+    <AnimatePresence mode="wait" onExitComplete={completeModalExits}>
+      {windows.map(({ id, isValid, animate }) => {
+        const entry = modalEntries.get(id);
+        return entry ? (
+          <ModalWindow
+            key={id}
+            {...entry}
+            isValid={isValid}
+            animate={animate}
+            onValidChange={(valid) => setModalValidity(id, valid)}
+          />
+        ) : null;
+      })}
+    </AnimatePresence>,
+    overlays
   );
 }
-
-export function useInfoWindow<T extends Record<string, unknown>>(Content: ComponentType<T>) {
-  const confirmationContext = useContext(ConfirmationContext);
-  // Created once: the context value is stable, and the window registers itself on first use.
-  const [infoWindow] = useState(() => createInfoWindow(() => confirmationContext, Content));
-  return infoWindow;
-}
-
-export const useConfirm: TUseConfirm = (Content, confirmProps) => {
-  const confirmationContext = useContext(ConfirmationContext);
-  // Created once: the context value is stable, and the window registers itself on first use.
-  const [confirmWindow] = useState(() =>
-    createConfirmWindow(() => confirmationContext, Content, confirmProps)
-  );
-  return confirmWindow;
-};

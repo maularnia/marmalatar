@@ -1,6 +1,6 @@
 import { useMessageHelmet } from '@providers/MessageHelmetProvider';
 import { emitCacheCleanupFailedMessage, emitCacheCleanupSuccessMessage } from '@src/messages';
-import { useLoader } from '@src/segments/dialogs/loader/useLoader';
+import { load } from '@src/segments/dialogs/loader/loader';
 import { folder } from '@src/services/folder';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 export default function CleanCache() {
   const { t } = useTranslation('settings');
   const { pushMessage } = useMessageHelmet();
-  const { load } = useLoader();
 
   const handleClean = async () => {
     try {

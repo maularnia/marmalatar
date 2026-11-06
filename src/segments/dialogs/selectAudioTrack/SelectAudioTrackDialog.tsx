@@ -1,5 +1,5 @@
 import type { TAudioTrack } from '@bridge/definitions/audioTrack';
-import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import { IPC } from '@src/services/ipc/IPC';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@ui-toolkit/LogoLoader';
@@ -31,7 +31,7 @@ enum TListingStatus {
   FAILED = 'failed',
 }
 
-type TSelectAudioTrackDialogProps = TConfirmationWindowProps & {
+type TSelectAudioTrackDialogProps = TModalContentProps & {
   videoPath: string;
   onTrackChange: (trackId: number | null) => void;
 };

@@ -1,4 +1,4 @@
-import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import { useAppSelector } from '@src/store/hooks';
 import { settings } from '@src/services/settings';
 import { ThemeColors } from '@src/theme/utils';
@@ -8,7 +8,7 @@ import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { useTranslation } from 'react-i18next';
 import { DialogBodyStandard, DialogContent, DialogTitle, DialogTitleContent } from '../partials';
 
-type AutoMergeLinesDialogProps = TConfirmationWindowProps;
+type AutoMergeLinesDialogProps = TModalContentProps;
 
 export function AutoMergeLinesDialog(_props: AutoMergeLinesDialogProps) {
   const { t } = useTranslation('dialogs');

@@ -12,7 +12,7 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import TextArea from '@ui-toolkit/TextArea';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 import { useTranslation } from 'react-i18next';
-import { useLoader } from '../dialogs/loader/useLoader';
+import { load } from '../dialogs/loader/loader';
 import Overlay from './Overlay';
 
 const emptyFormData: PromptTemplateFileDataType = {
@@ -28,7 +28,6 @@ export default function PromptOverlay() {
     promptTemplates.selectCurrent,
     promptTemplates.selectData
   );
-  const { load } = useLoader();
 
   const formData = promptTemplateData ?? emptyFormData;
 

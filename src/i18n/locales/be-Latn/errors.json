@@ -112,9 +112,6 @@
     "fieldNamesEmpty": "Nielha pakinuć pustym",
     "duplicateFieldName": "Pole [{{fieldName}}] užo isnuje"
   },
-  "confirmationProvider": {
-    "confirmDestroyed": "Sproba zniščyć spasyłku na ŭžo zniščanaje paviedamlennie"
-  },
   "videoPlaybackError": {
     "title": "Niemahčyma prajhrać videa",
     "message": "Fajł paškodžany, abo kodek niesumiaščalny"

@@ -1,4 +1,4 @@
-import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
 import { Fragment } from 'react/jsx-runtime';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,7 @@ import {
   DialogWarningMessage,
 } from '../partials';
 
-export type DeleteGlossaryEntryProps = TConfirmationWindowProps & {
+export type DeleteGlossaryEntryProps = TModalContentProps & {
   original: string;
   translation: string;
 };

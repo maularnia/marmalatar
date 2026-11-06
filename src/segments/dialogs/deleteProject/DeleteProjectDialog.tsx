@@ -1,4 +1,4 @@
-import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import { ThemeColors } from '@src/theme/utils';
 import H from '@ui-toolkit/H';
 import { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
@@ -13,7 +13,7 @@ import {
   DialogWarningMessage,
 } from '../partials';
 
-type DeleteProjectProps = TConfirmationWindowProps & {
+type DeleteProjectProps = TModalContentProps & {
   projectName: string;
 };
 

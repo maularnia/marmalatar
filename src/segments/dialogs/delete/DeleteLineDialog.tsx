@@ -1,4 +1,4 @@
-import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
@@ -15,7 +15,7 @@ import {
 
 // The text is passed in rather than read from the editor store: the editor service opens this
 // dialog, so importing its facade here would be an import cycle.
-export type DeleteLineProps = TConfirmationWindowProps & {
+export type DeleteLineProps = TModalContentProps & {
   lineNo: number;
   text: string;
 };

@@ -1,4 +1,4 @@
-import { createConfirm } from '@providers/bridges/confirmation';
+import { modal } from '@src/services/modal';
 import i18n from '@src/i18n';
 import {
   TranslationOverrideDialog,
@@ -7,10 +7,8 @@ import {
 
 const t = i18n.getFixedT(null, 'dialogs');
 
-const translationOverrideWindow = createConfirm(TranslationOverrideDialog, {
-  confirmButton: { children: t('translationOverride.confirmButton') },
-  dismissButton: { children: t('shared.cancel') },
-});
-
 export const confirmTranslationOverride = (props: TranslationOverrideDialogProps) =>
-  translationOverrideWindow.confirm(props);
+  modal.confirm(TranslationOverrideDialog, props, {
+    confirmButton: { children: t('translationOverride.confirmButton') },
+    dismissButton: { children: t('shared.cancel') },
+  });

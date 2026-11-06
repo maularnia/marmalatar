@@ -1,5 +1,5 @@
 import { media } from '@src/services/media';
-import { useSelectAudioTrackDialog } from '@src/segments/dialogs/selectAudioTrack/useSelectAudioTrackDialog';
+import { selectAudioTrack } from '@src/segments/dialogs/selectAudioTrack/selectAudioTrack';
 import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { projects } from '@src/services/project';
@@ -152,7 +152,6 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       editor.selectIsVideoCollapsed
     );
   const { swapVideo } = useVideoFileSwap();
-  const { selectAudioTrack } = useSelectAudioTrackDialog();
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;

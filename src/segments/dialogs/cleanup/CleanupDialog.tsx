@@ -1,4 +1,4 @@
-import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
+import type { TModalContentProps } from '@src/services/modal';
 import { TEntryCleanupOptions } from '@src/utils/data/entryCleanup';
 import Select from '@ui-toolkit/Select/Select';
 import type { TOptionSelect } from '@ui-toolkit/Select/types';
@@ -14,7 +14,7 @@ export type TCleanupFormValues = {
   targetColumn: TCleanupTargetColumn;
 } & Required<TEntryCleanupOptions>;
 
-type CleanupDialogProps = TConfirmationWindowProps & {
+type CleanupDialogProps = TModalContentProps & {
   isEditMode: boolean;
   onValuesChange?: (values: TCleanupFormValues) => void;
 };

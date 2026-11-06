@@ -112,9 +112,6 @@
     "fieldNamesEmpty": "Нельга пакінуць пустым",
     "duplicateFieldName": "Поле [{{fieldName}}] ужо існуе"
   },
-  "confirmationProvider": {
-    "confirmDestroyed": "Спроба знішчыць спасылку на ўжо знішчанае паведамленне"
-  },
   "videoPlaybackError": {
     "title": "Немагчыма прайграць відэа",
     "message": "Файл пашкоджаны, або кодэк несумяшчальны"
