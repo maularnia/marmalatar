@@ -1,23 +1,21 @@
 import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
-import { pushMessage } from '@providers/bridges/messages';
+import { modal } from '@src/services/modal';
+import { toast } from '@src/services/toast';
 import { navigate } from '@providers/bridges/navigation';
 import i18n from '@src/i18n';
 import {
-  emitAudioExtractionFailedMessage,
-  emitProjectCreationAbortedMessage,
-  emitProjectLoadedMessage,
-  emitProjectLoadFailedMessage,
-  emitProjectStateReadFailedMessage,
-  emitThumbnailGenerationFailedMessage,
-  emitVideoFileCheckFailedMessage,
-  emitVideoFileMissingMessage,
-  emitVideoPathRemovalFailedMessage,
-  emitVideoPathSaveFailedMessage,
-  emitWaveformExtractionFailedMessage,
-} from '@src/messages';
-import { confirmDeleteProject } from '@src/segments/dialogs/deleteProject/deleteProjectConfirmation';
-import { load } from '@src/segments/dialogs/loader/loader';
-import { selectVideo } from '@src/segments/dialogs/videoSelect/videoSelection';
+  makeProjectCreationAbortedMessage,
+  makeProjectLoadFailedMessage,
+  makeProjectLoadedMessage,
+  makeProjectStateReadFailedMessage,
+  makeVideoFileCheckFailedMessage,
+  makeVideoFileMissingMessage,
+  makeVideoPathRemovalFailedMessage,
+  makeVideoPathSaveFailedMessage,
+  makeVideoUpdatedMessage,
+} from '@src/services/project/toasts';
+import { confirmDeleteProject } from './dialogs/deleteProject/deleteProjectConfirmation';
+import { selectVideo } from './dialogs/videoSelect/videoSelection';
 import { IPC } from '@src/services/ipc/IPC';
 import { media } from '@src/services/media';
 import { TLanguage, TSubtitleLine } from '@src/types';
@@ -185,7 +183,7 @@ export async function saveProjectVideoPath(
     await writeProjectEditorState(projectId, { videoPath });
     void folder.cleanupMediaCache().catch(() => {});
   } catch (err) {
-    emitVideoPathSaveFailedMessage(pushMessage, toErrorMessage(err));
+    toast.push(makeVideoPathSaveFailedMessage(toErrorMessage(err)));
   }
 }
 
@@ -194,7 +192,7 @@ export async function removeProjectVideoPath(projectId: string): Promise<void> {
     await writeProjectEditorState(projectId, { videoPath: null });
     void folder.cleanupMediaCache().catch(() => {});
   } catch (err) {
-    emitVideoPathRemovalFailedMessage(pushMessage, toErrorMessage(err));
+    toast.push(makeVideoPathRemovalFailedMessage(toErrorMessage(err)));
   }
 }
 
@@ -328,7 +326,7 @@ async function applyLoadedProject(project: TProjectEntry, video: TVideoMedia): P
   try {
     await loadProjectFromDisk(project);
   } catch (error) {
-    emitProjectLoadFailedMessage(pushMessage, toErrorMessage(error));
+    toast.push(makeProjectLoadFailedMessage(toErrorMessage(error)));
     return;
   }
 
@@ -336,7 +334,7 @@ async function applyLoadedProject(project: TProjectEntry, video: TVideoMedia): P
   media.setVideoData({ thumbnail: video.previewImage, waveformPeaks: video.waveformPeaks });
   media.resetPlayback();
 
-  emitProjectLoadedMessage(pushMessage);
+  toast.push(makeProjectLoadedMessage());
   navigate('/workspace');
 }
 
@@ -357,36 +355,38 @@ async function openWithReselectedVideo(project: TProjectEntry, bannerKey: string
   await applyLoadedProject(project, result);
 }
 
-// Extracts what the editor needs from the saved video: audio, waveform and thumbnail. null when a
-// step failed (already reported).
-async function extractVideoMedia(
-  videoPath: string
-): Promise<Omit<TVideoMedia, 'videoPath'> | null> {
-  let audioPath: string;
-  try {
-    audioPath = await IPC.media.extractAudio(videoPath);
-  } catch (error) {
-    emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
-    return null;
-  }
+// ── Video change ─────────────────────────────────────────────────────────────
 
-  let waveformPeaks: number[];
-  try {
-    waveformPeaks = await IPC.media.extractWaveformPeaks(videoPath);
-  } catch (error) {
-    emitWaveformExtractionFailedMessage(pushMessage, toErrorMessage(error));
-    return null;
-  }
+let isChangingVideo = false;
 
-  let previewImage: string | null;
+/** Asks for another video for the open project, saves its path, loads it in the player at the
+ * active line, and reports it. Does nothing when cancelled, or while a change is already running. */
+export async function changeProjectVideo(): Promise<void> {
+  if (isChangingVideo) return;
+  isChangingVideo = true;
   try {
-    previewImage = await IPC.media.generateThumbnail(videoPath);
-  } catch (error) {
-    emitThumbnailGenerationFailedMessage(pushMessage, toErrorMessage(error));
-    return null;
-  }
+    const result = await selectVideo();
+    if (!result) return;
 
-  return { audioPath, waveformPeaks, previewImage };
+    const projectId = Service.select(selectProjectId);
+    if (projectId) await saveProjectVideoPath(projectId, result.videoPath);
+
+    // Back to the line being worked on, once the new video knows its duration
+    const video = media.getVideoElement();
+    const onLoadedMetadata = () => {
+      video?.removeEventListener('loadedmetadata', onLoadedMetadata);
+      const activeLineIndex = media.get.activeLineIndex();
+      if (activeLineIndex != null) media.seekToLine(activeLineIndex);
+    };
+    video?.addEventListener('loadedmetadata', onLoadedMetadata);
+
+    media.loadVideo(result.videoPath, result.audioPath);
+    media.setVideoData({ thumbnail: result.previewImage, waveformPeaks: result.waveformPeaks });
+
+    toast.push(makeVideoUpdatedMessage());
+  } finally {
+    isChangingVideo = false;
+  }
 }
 
 /** Opens a project with its saved video (asking for another one when it's missing or can't be
@@ -396,7 +396,7 @@ export async function openProject(project: TProjectEntry): Promise<void> {
   try {
     editorState = await getProjectEditorState(project.projectId);
   } catch (error) {
-    emitProjectStateReadFailedMessage(pushMessage, toErrorMessage(error));
+    toast.push(makeProjectStateReadFailedMessage(toErrorMessage(error)));
     return;
   }
   const savedPath = editorState.videoPath;
@@ -412,16 +412,16 @@ export async function openProject(project: TProjectEntry): Promise<void> {
   try {
     fileExists = await folder.checkForeignFileExists(savedPath);
   } catch (error) {
-    emitVideoFileCheckFailedMessage(pushMessage, toErrorMessage(error));
+    toast.push(makeVideoFileCheckFailedMessage(toErrorMessage(error)));
     fileExists = false;
   }
   if (!fileExists) {
-    emitVideoFileMissingMessage(pushMessage);
+    toast.push(makeVideoFileMissingMessage());
     await openWithReselectedVideo(project, 'videoSelect.savedFileNotFoundBanner');
     return;
   }
 
-  const extracted = await load(
+  const extracted = await modal.load(
     {
       messages: [
         tMessages('projectLoader.loadingVideo'),
@@ -432,7 +432,7 @@ export async function openProject(project: TProjectEntry): Promise<void> {
         tMessages('projectLoader.demandingRam'),
       ],
     },
-    extractVideoMedia(savedPath)
+    media.processVideo(savedPath)
   );
   if (!extracted) {
     await openWithReselectedVideo(project, 'videoSelect.processingFailedBanner');
@@ -512,7 +512,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
 export async function createProject(params: TCreateProjectParams): Promise<void> {
   if (!folder.get.path()) return;
   try {
-    await load(
+    await modal.load(
       {
         messages: [
           tMessages('submitNewProject.creatingProject'),
@@ -528,9 +528,8 @@ export async function createProject(params: TCreateProjectParams): Promise<void>
     );
     navigate('/workspace');
   } catch (error) {
-    emitProjectCreationAbortedMessage(
-      pushMessage,
-      error instanceof Error ? error.message : undefined
+    toast.push(
+      makeProjectCreationAbortedMessage(error instanceof Error ? error.message : undefined)
     );
   }
 }

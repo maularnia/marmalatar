@@ -1,7 +1,20 @@
-import { pushMessage } from '@providers/bridges/messages';
-import { emitAudioExtractionFailedMessage, emitVideoPlaybackErrorMessage } from '@src/messages';
+import { toast } from '@src/services/toast';
+import { modal } from '@src/services/modal';
+import {
+  makeAudioExtractionFailedMessage,
+  makeCacheCleanupFailedMessage,
+  makeCacheCleanupSuccessMessage,
+  makeVideoPlaybackErrorMessage,
+  makeWaveformExtractionFailedMessage,
+} from '@src/services/media/toasts';
+import { selectAudioTrack } from './dialogs/selectAudioTrack/selectAudioTrack';
 import { IPC } from '@src/services/ipc/IPC';
-import { pathToFileUrl } from '@src/utils/checkVideoPlayability';
+import { TWaveformStatus } from '@src/types';
+import {
+  checkAudioPlayability,
+  checkVideoDecodable,
+  pathToFileUrl,
+} from '@src/utils/checkVideoPlayability';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { Service } from '@src/services/Service';
 import {
@@ -44,7 +57,7 @@ function attachExtractedAudio(path: string, element: HTMLAudioElement): void {
       if (audioElement === element) element.src = pathToFileUrl(resolvedAudioPath);
     })
     .catch((error) => {
-      emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
+      toast.push(makeAudioExtractionFailedMessage(toErrorMessage(error)));
     });
 }
 
@@ -152,5 +165,104 @@ export function playPause(): void {
 /** Reports a video the player can't play. Closing the project and leaving the editor is up to
  * the caller, which owns navigation. */
 export function reportVideoUnplayable(): void {
-  emitVideoPlaybackErrorMessage(pushMessage);
+  toast.push(makeVideoPlaybackErrorMessage());
+}
+
+// ── Video processing ─────────────────────────────────────────────────────────
+
+/** What the editor needs from a video, extracted by the main process. */
+export type TProcessedVideo = {
+  audioPath: string;
+  waveformPeaks: number[];
+  previewImage: string | null;
+};
+
+type TProcessVideoOptions = {
+  /** Each step as it starts, then how it ended: SUCCESS or the failed step's status */
+  onStatus?: (status: TWaveformStatus) => void;
+  /** Checked after every step: once true, the run stops quietly, reporting nothing */
+  isCancelled?: () => boolean;
+};
+
+/**
+ * The one pipeline that prepares a video: checks it can be decoded, takes a thumbnail (optional),
+ * extracts its audio to AAC, checks the converted audio plays, and extracts the waveform. Reports
+ * failures with a toast where there's something to tell; resolves null when a step failed or the
+ * run was cancelled.
+ */
+export async function processVideo(
+  videoPath: string,
+  { onStatus, isCancelled = () => false }: TProcessVideoOptions = {}
+): Promise<TProcessedVideo | null> {
+  const fail = (status: TWaveformStatus, report?: () => void): null => {
+    if (isCancelled()) return null;
+    onStatus?.(status);
+    report?.();
+    return null;
+  };
+
+  onStatus?.(TWaveformStatus.LOADING);
+  try {
+    await checkVideoDecodable(videoPath);
+  } catch {
+    return fail(TWaveformStatus.UNSUPPORTED_VIDEO);
+  }
+  if (isCancelled()) return null;
+
+  const previewImage = await IPC.media.generateThumbnail(videoPath).catch(() => null);
+  if (isCancelled()) return null;
+
+  // The original audio isn't pre-checked for native playability: codecs Chromium can't play (e.g.
+  // EAC-3) are exactly what this conversion fixes. The converted file is checked instead.
+  onStatus?.(TWaveformStatus.EXTRACTING_AUDIO);
+  let audioPath: string;
+  try {
+    audioPath = await IPC.media.extractAudio(videoPath);
+  } catch (error) {
+    return fail(TWaveformStatus.AUDIO_EXTRACTION_FAILED, () =>
+      toast.push(makeAudioExtractionFailedMessage(toErrorMessage(error)))
+    );
+  }
+  if (isCancelled()) return null;
+
+  try {
+    await checkAudioPlayability(audioPath);
+  } catch {
+    return fail(TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO);
+  }
+  if (isCancelled()) return null;
+
+  let waveformPeaks: number[];
+  try {
+    waveformPeaks = await IPC.media.extractWaveformPeaks(videoPath);
+  } catch (error) {
+    return fail(TWaveformStatus.ERROR, () =>
+      toast.push(makeWaveformExtractionFailedMessage(toErrorMessage(error)))
+    );
+  }
+  if (isCancelled()) return null;
+
+  onStatus?.(TWaveformStatus.SUCCESS);
+  return { audioPath, waveformPeaks, previewImage };
+}
+
+// ── User actions ─────────────────────────────────────────────────────────────
+
+/** Cleans the media cache on request (the Settings button), behind a loader, and reports the
+ * outcome with a toast. The silent housekeeping after a scan or a video change is
+ * folder.cleanupMediaCache. */
+export async function cleanMediaCache(): Promise<void> {
+  try {
+    await modal.load({ messages: [] }, IPC.media.cleanupCache());
+    toast.push(makeCacheCleanupSuccessMessage());
+  } catch {
+    toast.push(makeCacheCleanupFailedMessage());
+  }
+}
+
+/** Asks which of the open video's audio tracks to use; resolves its id, or null on Cancel or
+ * without a video. Applying the chosen track isn't wired yet. */
+export async function pickAudioTrack(): Promise<number | null> {
+  const path = Service.select(selectVideoFilePath);
+  return path ? selectAudioTrack(path) : null;
 }

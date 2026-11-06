@@ -1,8 +1,6 @@
 import { menu } from '@src/services/menu';
 import { useAppSelector } from '@store/hooks';
 import i18n from '@src/i18n';
-import { emitFileProcessingFailedMessage } from '@src/messages';
-import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { TColor } from '@src/theme/definitions';
 import { ThemeColors } from '@src/theme/utils';
 import Button from '@ui-toolkit/Button/Button';
@@ -12,12 +10,10 @@ import EmoPicker from '@ui-toolkit/EmoPicker';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { load } from '../dialogs/loader/loader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 
 const MAX_NAME_LENGTH = 64;
 const t = i18n.getFixedT(null, 'errors');
-const tMessages = i18n.getFixedT(null, 'messages');
 
 type MainMenuListItemProps = {
   itemKey: string;
@@ -81,8 +77,6 @@ export function MainMenuListItem({
   const committingRef = useRef(false);
   const wasEditingRef = useRef(isEditing);
 
-  const { pushMessage } = useMessageHelmet();
-
   const setItemRef = useCallback(
     (el: HTMLDivElement | null) => menu.registerItem(itemKey, el),
     [itemKey]
@@ -130,19 +124,13 @@ export function MainMenuListItem({
     }
 
     committingRef.current = true;
-    const label =
-      fileName === null
-        ? tMessages('mainMenuListItem.creatingNewFile')
-        : tMessages('mainMenuListItem.renamingFile');
-
     try {
-      await load({ messages: [label] }, onCommit(fileName, draftValue));
+      // The service shows the loader and reports a failure; the item only shows it inline
+      await onCommit(fileName, draftValue);
       setError(null);
       menu.stopRenaming(itemKey);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('mainMenuListItem.unreachableCommitError');
-      setError(msg);
-      emitFileProcessingFailedMessage(pushMessage, msg);
+      setError(e instanceof Error ? e.message : t('mainMenuListItem.unreachableCommitError'));
     } finally {
       committingRef.current = false;
     }

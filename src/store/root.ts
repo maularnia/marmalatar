@@ -9,6 +9,7 @@ import { aiReducer } from '@src/services/ai';
 import { mediaReducer } from '@src/services/media';
 import { menuReducer } from '@src/services/menu';
 import { modalReducer } from '@src/services/modal';
+import { toastReducer } from '@src/services/toast';
 
 export const rootReducer = combineReducers({
   settings: settingsReducer,
@@ -21,6 +22,7 @@ export const rootReducer = combineReducers({
   media: mediaReducer,
   menu: menuReducer,
   modal: modalReducer,
+  toast: toastReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

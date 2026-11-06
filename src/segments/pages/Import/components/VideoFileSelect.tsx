@@ -1,11 +1,8 @@
 import { media } from '@src/services/media';
 import { VideoFileProcessingStatusToMessage, VideoFilesProcessingStatusToColor } from '@src/consts';
-import { emitAudioExtractionFailedMessage } from '@src/messages';
-import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';
 import { TWaveformStatus } from '@src/types';
-import { toErrorMessage } from '@src/utils/toErrorMessage';
 import FileSelectButton from '@ui-toolkit/FileSelectButton/FileSelectButton';
 import {
   FormSectionEntry,
@@ -17,11 +14,18 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
 import P, { TPVariant } from '@ui-toolkit/P';
 import Toggle from '@ui-toolkit/Toggle';
-import { checkAudioPlayability, checkVideoDecodable } from '@utils/checkVideoPlayability';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { IPC } from '@src/services/ipc/IPC';
+
+// The inline error for each way processing can fail
+const FAILURE_MESSAGE_KEYS: Partial<Record<TWaveformStatus, string>> = {
+  [TWaveformStatus.UNSUPPORTED_VIDEO]: 'videoFileSelect.unsupportedVideoCodec',
+  [TWaveformStatus.AUDIO_EXTRACTION_FAILED]: 'videoFileSelect.audioExtractionFailed',
+  [TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO]: 'videoFileSelect.unplayableConvertedAudio',
+  [TWaveformStatus.ERROR]: 'videoFileSelect.processingFailed',
+};
 
 const FileFormSectionEntry = styled(FormSectionEntry)`
   flex-direction: row;
@@ -53,7 +57,6 @@ export default function VideoFileSelect({
 }: VideoFileSelectProps) {
   const { t } = useTranslation('errors');
   const { t: tImport } = useTranslation(['import', 'app']);
-  const { pushMessage } = useMessageHelmet();
   const [waveformStatus, setWaveformStatus] = useState<TWaveformStatus>(TWaveformStatus.IDLE);
   useEffect(() => {
     if (!enabled && value) {
@@ -85,72 +88,27 @@ export default function VideoFileSelect({
       return;
     }
 
-    setWaveformStatus(TWaveformStatus.LOADING);
     onError(t('videoFileSelect.stillProcessing'));
-
-    void (async () => {
-      // Step 1: video container/codec decodable
-      try {
-        await checkVideoDecodable(videoPath);
-      } catch {
+    let status = TWaveformStatus.LOADING;
+    void media
+      .processVideo(videoPath, {
+        onStatus: (next) => {
+          status = next;
+          setWaveformStatus(next);
+        },
+        isCancelled: () => isCancelled,
+      })
+      .then((result) => {
         if (isCancelled) return;
-        setWaveformStatus(TWaveformStatus.UNSUPPORTED_VIDEO);
-        media.loadVideo(null);
-        onError(t('videoFileSelect.unsupportedVideoCodec'));
-        return;
-      }
-      if (isCancelled) return;
-
-      // Step 2: thumbnail (best-effort, non-fatal on failure)
-      const previewImage = await IPC.media.generateThumbnail(videoPath).catch(() => null);
-      if (isCancelled) return;
-
-      // Step 3: extract/convert audio to AAC. The original file's audio is intentionally not
-      // pre-checked for native playability here -- codecs Chromium can't play (e.g. EAC-3) are
-      // exactly what this conversion step exists to fix, so a native-playability check here
-      // would hard-stop before conversion ever got a chance to run. Step 4 (below) verifies the
-      // *converted* file is actually playable, which is what's played back.
-      setWaveformStatus(TWaveformStatus.EXTRACTING_AUDIO);
-      let audioPath: string;
-      try {
-        audioPath = await IPC.media.extractAudio(videoPath);
-      } catch (error) {
-        if (isCancelled) return;
-        setWaveformStatus(TWaveformStatus.AUDIO_EXTRACTION_FAILED);
-        media.loadVideo(null);
-        onError(t('videoFileSelect.audioExtractionFailed'));
-        emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
-        return;
-      }
-      if (isCancelled) return;
-
-      // Step 4: converted audio playable
-      try {
-        await checkAudioPlayability(audioPath);
-      } catch {
-        if (isCancelled) return;
-        setWaveformStatus(TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO);
-        media.loadVideo(null);
-        onError(t('videoFileSelect.unplayableConvertedAudio'));
-        return;
-      }
-      if (isCancelled) return;
-
-      try {
-        const waveformPeaks = await IPC.media.extractWaveformPeaks(videoPath);
-        if (isCancelled) return;
-        media.loadVideo(videoPath, audioPath);
-        media.setVideoData({ thumbnail: previewImage ?? null, waveformPeaks: waveformPeaks });
-        setWaveformStatus(TWaveformStatus.SUCCESS);
+        if (!result) {
+          media.loadVideo(null);
+          onError(t(FAILURE_MESSAGE_KEYS[status] ?? 'videoFileSelect.processingFailed'));
+          return;
+        }
+        media.loadVideo(videoPath, result.audioPath);
+        media.setVideoData({ thumbnail: result.previewImage, waveformPeaks: result.waveformPeaks });
         onError(null);
-      } catch (error) {
-        if (isCancelled) return;
-        setWaveformStatus(TWaveformStatus.ERROR);
-        media.loadVideo(null);
-        onError(t('videoFileSelect.processingFailed'));
-        emitAudioExtractionFailedMessage(pushMessage, toErrorMessage(error));
-      }
-    })();
+      });
 
     return () => {
       isCancelled = true;

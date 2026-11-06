@@ -1,32 +1,32 @@
-import { pushMessage } from '@providers/bridges/messages';
+import { toast } from '@src/services/toast';
 import {
-  emitAutoMergeCancelledMessage,
-  emitAutoMergeFailedMessage,
-  emitCleanupCancelledMessage,
-  emitCleanupFailedMessage,
-  emitCopyAllCancelledMessage,
-  emitCopyAllFailedMessage,
-  emitCopyOperationCancelledMessage,
-  emitCopyOperationFailedMessage,
-  emitDeleteLineCancelledMessage,
-  emitDeleteLineFailedMessage,
-  emitEntryTimeShiftBlockedMessage,
-  emitLineDeletedMessage,
-  emitLinesMergedMessage,
-  emitLineSplitMessage,
-  emitLineTooShortToSplitMessage,
-  emitMergeLinesFailedMessage,
-  emitMergeOperationCancelledMessage,
-  emitTextCopiedMessage,
-} from '@src/messages';
-import { confirmAutoMerge } from '@src/segments/dialogs/autoMergeLines/autoMergeLinesConfirmation';
-import { TCleanupFormValues } from '@src/segments/dialogs/cleanup/CleanupDialog';
-import { confirmCleanup } from '@src/segments/dialogs/cleanup/cleanupConfirmation';
-import { confirmCopyAllSourceToOutput } from '@src/segments/dialogs/copyAllSourceToOutput/copyAllSourceToOutputConfirmation';
-import { confirmCopyOverride } from '@src/segments/dialogs/copyOverride/copyOverrideConfirmation';
-import { confirmDeleteLine } from '@src/segments/dialogs/delete/deleteLineConfirmation';
-import { confirmMerge } from '@src/segments/dialogs/lineMerge/mergeConfirmation';
-import { confirmSplit } from '@src/segments/dialogs/split/splitConfirmation';
+  makeAutoMergeCancelledMessage,
+  makeAutoMergeFailedMessage,
+  makeCleanupCancelledMessage,
+  makeCleanupFailedMessage,
+  makeCopyAllCancelledMessage,
+  makeCopyAllFailedMessage,
+  makeCopyOperationCancelledMessage,
+  makeCopyOperationFailedMessage,
+  makeDeleteLineCancelledMessage,
+  makeDeleteLineFailedMessage,
+  makeEntryTimeShiftBlockedMessage,
+  makeLineDeletedMessage,
+  makeLineSplitMessage,
+  makeLineTooShortToSplitMessage,
+  makeLinesMergedMessage,
+  makeMergeLinesFailedMessage,
+  makeMergeOperationCancelledMessage,
+  makeTextCopiedMessage,
+} from '@src/services/project/editor/toasts';
+import { confirmAutoMerge } from './dialogs/autoMergeLines/autoMergeLinesConfirmation';
+import { TCleanupFormValues } from './dialogs/cleanup/CleanupDialog';
+import { confirmCleanup } from './dialogs/cleanup/cleanupConfirmation';
+import { confirmCopyAllSourceToOutput } from './dialogs/copyAllSourceToOutput/copyAllSourceToOutputConfirmation';
+import { confirmCopyOverride } from './dialogs/copyOverride/copyOverrideConfirmation';
+import { confirmDeleteLine } from './dialogs/delete/deleteLineConfirmation';
+import { confirmMerge } from './dialogs/lineMerge/mergeConfirmation';
+import { confirmSplit } from './dialogs/split/splitConfirmation';
 import type { TInputColumn, TSubtitleLine } from '@src/types';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { media } from '@src/services/media';
@@ -249,16 +249,17 @@ export async function copySourceToOutput(lineIndex: number): Promise<void> {
     try {
       confirmed = await confirmCopyOverride();
     } catch (e) {
-      emitCopyOperationFailedMessage(
-        pushMessage,
-        e instanceof Error
-          ? e.message
-          : 'Critical unexpected error while copying source text to translation column'
+      toast.push(
+        makeCopyOperationFailedMessage(
+          e instanceof Error
+            ? e.message
+            : 'Critical unexpected error while copying source text to translation column'
+        )
       );
       return;
     }
     if (!confirmed) {
-      emitCopyOperationCancelledMessage(pushMessage);
+      toast.push(makeCopyOperationCancelledMessage());
       return;
     }
   }
@@ -268,7 +269,7 @@ export async function copySourceToOutput(lineIndex: number): Promise<void> {
       setLineCompleted({ lineIndex, completed: Boolean(line.input), skipHistory: true })
     );
   focusInput(lineIndex, 'output', true);
-  emitTextCopiedMessage(pushMessage);
+  toast.push(makeTextCopiedMessage());
 }
 
 export function insertLine(lineIndex: number, position: 'before' | 'after'): void {
@@ -277,7 +278,7 @@ export function insertLine(lineIndex: number, position: 'before' | 'after'): voi
   const duration = line.end_time - line.start_time;
   const mid = line.start_time + Math.floor(duration / 2);
   if (mid - 1 - line.start_time < 100 || line.end_time - (mid + 1) < 100) {
-    emitLineTooShortToSplitMessage(pushMessage);
+    toast.push(makeLineTooShortToSplitMessage());
     return;
   }
   const column = Service.select(selectFocusedColumn) ?? 'output';
@@ -295,7 +296,7 @@ export async function splitLine(lineIndex: number): Promise<void> {
   if (settings.get.askBeforeSplit() && !(await confirmSplit())) return;
   Service.dispatch(lineSplit({ lineIndex, cursorOffset, column: focusedColumn }));
   refocusLineAfterRender(lineIndex, focusedColumn);
-  emitLineSplitMessage(pushMessage);
+  toast.push(makeLineSplitMessage());
 }
 
 const lineText = (line: TSubtitleLine): string => line.output || line.input || '';
@@ -320,20 +321,21 @@ export async function mergeLines(lineIndex: number, direction: 'up' | 'down'): P
         ],
       });
     } catch (e) {
-      emitMergeLinesFailedMessage(
-        pushMessage,
-        e instanceof Error ? e.message : 'Unexpected critical error while merging lines'
+      toast.push(
+        makeMergeLinesFailedMessage(
+          e instanceof Error ? e.message : 'Unexpected critical error while merging lines'
+        )
       );
       return;
     }
     if (!confirmed) {
-      emitMergeOperationCancelledMessage(pushMessage);
+      toast.push(makeMergeOperationCancelledMessage());
       return;
     }
   }
   Service.dispatch(linesMerged({ lineIndex, direction }));
   refocusLineAfterRender(direction === 'up' ? partnerIndex : lineIndex, 'output');
-  emitLinesMergedMessage(pushMessage);
+  toast.push(makeLinesMergedMessage());
 }
 
 export async function removeLine(lineIndex: number): Promise<void> {
@@ -347,14 +349,15 @@ export async function removeLine(lineIndex: number): Promise<void> {
         text: line ? lineText(line) : '',
       });
     } catch (e) {
-      emitDeleteLineFailedMessage(
-        pushMessage,
-        e instanceof Error ? e.message : 'Critical unexpected failure while deleting a line'
+      toast.push(
+        makeDeleteLineFailedMessage(
+          e instanceof Error ? e.message : 'Critical unexpected failure while deleting a line'
+        )
       );
       return;
     }
     if (!confirmed) {
-      emitDeleteLineCancelledMessage(pushMessage);
+      toast.push(makeDeleteLineCancelledMessage());
       return;
     }
   }
@@ -365,7 +368,7 @@ export async function removeLine(lineIndex: number): Promise<void> {
   const targetIndex = hasNext ? lineIndex : hasPrev ? lineIndex - 1 : null;
   if (targetIndex != null) refocusLineAfterRender(targetIndex, 'output');
   else setFocusedLine(null);
-  emitLineDeletedMessage(pushMessage);
+  toast.push(makeLineDeletedMessage());
 }
 
 export function toggleCompleted(lineIndex: number): void {
@@ -401,7 +404,7 @@ export function adjustStartTime(lineIndex: number, direction: TTimeDirection): v
       : next >= line.end_time ||
         next > (current[lineIndex + 1]?.start_time ?? Number.POSITIVE_INFINITY);
   if (blocked) {
-    emitEntryTimeShiftBlockedMessage(pushMessage);
+    toast.push(makeEntryTimeShiftBlockedMessage());
     return;
   }
   Service.dispatch(updateLineTiming({ lineIndex, startTime: next, endTime: line.end_time }));
@@ -420,7 +423,7 @@ export function adjustEndTime(lineIndex: number, direction: TTimeDirection): voi
       : next <= line.start_time ||
         next > (current[lineIndex + 1]?.start_time ?? Number.POSITIVE_INFINITY);
   if (blocked) {
-    emitEntryTimeShiftBlockedMessage(pushMessage);
+    toast.push(makeEntryTimeShiftBlockedMessage());
     return;
   }
   Service.dispatch(updateLineTiming({ lineIndex, startTime: line.start_time, endTime: next }));
@@ -440,7 +443,7 @@ export function adjustEntryTime(lineIndex: number, direction: TTimeDirection): v
       ? startTime < (lineIndex > 0 ? current[lineIndex - 1].end_time : 0)
       : endTime > (current[lineIndex + 1]?.start_time ?? Number.POSITIVE_INFINITY);
   if (blocked) {
-    emitEntryTimeShiftBlockedMessage(pushMessage);
+    toast.push(makeEntryTimeShiftBlockedMessage());
     return;
   }
   Service.dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
@@ -471,14 +474,15 @@ export async function autoMerge(): Promise<void> {
   try {
     threshold = await confirmAutoMerge();
   } catch (e) {
-    emitAutoMergeFailedMessage(
-      pushMessage,
-      e instanceof Error ? e.message : 'How did you get there [UNREACHABLE 03]'
+    toast.push(
+      makeAutoMergeFailedMessage(
+        e instanceof Error ? e.message : 'How did you get there [UNREACHABLE 03]'
+      )
     );
     return;
   }
   if (threshold === null) {
-    emitAutoMergeCancelledMessage(pushMessage);
+    toast.push(makeAutoMergeCancelledMessage());
     return;
   }
   Service.dispatch(autoMergeAdjacentLines({ threshold }));
@@ -490,14 +494,15 @@ export async function cleanup(): Promise<void> {
   try {
     values = await confirmCleanup(Service.select(selectIsEditMode));
   } catch (e) {
-    emitCleanupFailedMessage(
-      pushMessage,
-      e instanceof Error ? e.message : 'Unexpected critical error while running cleanup'
+    toast.push(
+      makeCleanupFailedMessage(
+        e instanceof Error ? e.message : 'Unexpected critical error while running cleanup'
+      )
     );
     return;
   }
   if (!values) {
-    emitCleanupCancelledMessage(pushMessage);
+    toast.push(makeCleanupCancelledMessage());
     return;
   }
   const { targetColumn, ...options } = values;
@@ -516,16 +521,17 @@ export async function copyAllSourceToOutput(): Promise<void> {
   try {
     overrideExisting = await confirmCopyAllSourceToOutput(hasExistingOutput);
   } catch (e) {
-    emitCopyAllFailedMessage(
-      pushMessage,
-      e instanceof Error
-        ? e.message
-        : 'Unexpected critical error while copying all source to output'
+    toast.push(
+      makeCopyAllFailedMessage(
+        e instanceof Error
+          ? e.message
+          : 'Unexpected critical error while copying all source to output'
+      )
     );
     return;
   }
   if (overrideExisting === null) {
-    emitCopyAllCancelledMessage(pushMessage);
+    toast.push(makeCopyAllCancelledMessage());
     return;
   }
   Service.dispatch(allSourceCopiedToOutput({ overrideExisting }));

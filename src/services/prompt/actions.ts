@@ -1,4 +1,5 @@
 import i18n from '@src/i18n';
+import { modal } from '@src/services/modal';
 import { DEFAULT_PROMPT_TEMPLATE } from '@src/services/ai/connector/config';
 import { IPC } from '@src/services/ipc/IPC';
 import {
@@ -6,6 +7,7 @@ import {
   type PromptTemplateFileDataType,
 } from '@src/utils/data/schemas';
 import { pickRandomCreationEmoji } from '@src/utils/emoji';
+import type { TLoadOptions } from '@src/services/modal';
 import { Service } from '@src/services/Service';
 import { folder } from '@src/services/folder';
 import {
@@ -16,6 +18,7 @@ import {
   setPromptTemplateData,
   setPromptTemplateItems,
   selectPromptTemplateData,
+  selectPromptTemplateItems,
   setSelectedPromptTemplateFileName,
   templateSaved,
   type TPromptTemplateEntry,
@@ -25,6 +28,7 @@ import {
 // facade: index.ts builds the facade from this file, so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'errors');
+const tMessages = i18n.getFixedT(null, 'messages');
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
 
@@ -185,6 +189,23 @@ export async function savePromptTemplate(): Promise<void> {
   await refreshPromptTemplates();
   const isSelected = Service.select(selectSelectedPromptTemplateFileName) === fileName;
   Service.dispatch(templateSaved({ fileName, data, isSelected }));
+}
+
+/** Saves the open template behind the saving loader, then closes the editor. `loaderOptions` lets
+ * a caller that opens something else right after drop the loader's minimum lifetime. */
+export async function saveAndClosePromptTemplate(loaderOptions?: TLoadOptions): Promise<void> {
+  const fileName = Service.select(selectCurrentPromptTemplate);
+  if (!fileName) return;
+  const title =
+    Service.select(selectPromptTemplateData)?.title ||
+    Service.select(selectPromptTemplateItems).find((i) => i.fileName === fileName)?.title ||
+    '...';
+  await modal.load(
+    { messages: [tMessages('promptTemplate.savingLabel', { title })] },
+    savePromptTemplate(),
+    loaderOptions
+  );
+  Service.dispatch(closePromptTemplateEditor());
 }
 
 export async function openPromptTemplateEditor(filename: string): Promise<void> {

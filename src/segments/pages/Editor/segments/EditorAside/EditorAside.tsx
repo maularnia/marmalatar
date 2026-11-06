@@ -1,3 +1,4 @@
+import { projects } from '@src/services/project';
 import { media } from '@src/services/media';
 import GeneralSettings from '@src/partials/Settings';
 import { editor } from '@src/services/project';
@@ -17,7 +18,6 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import P, { TPVariant } from '@ui-toolkit/P';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useVideoFileSwap } from '../../components/VideoPlayer/useVideoFileSwap';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import Waveform from '../../components/Waveform/Waveform';
 import AiTranslationStatusPanel from './components/AiTranslationStatusPanel';
@@ -72,7 +72,6 @@ export default function EditorAside() {
     media.selectActiveLineIndex,
     editor.selectFocusedLineIndex
   );
-  const { swapVideo } = useVideoFileSwap();
   return (
     <Aside tabIndex={1}>
       {videoFilePath && (
@@ -101,7 +100,10 @@ export default function EditorAside() {
               </FormsSectionTitle>
               <FormsSectionContent>
                 <FormSectionEntry>
-                  <Button style={{ alignSelf: 'flex-start' }} onClick={swapVideo}>
+                  <Button
+                    style={{ alignSelf: 'flex-start' }}
+                    onClick={() => void projects.changeVideo()}
+                  >
                     {t('video.pickVideoButton')}
                   </Button>
                 </FormSectionEntry>

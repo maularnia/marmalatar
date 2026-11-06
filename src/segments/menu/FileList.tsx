@@ -5,7 +5,6 @@ import {
   menu,
 } from '@src/services/menu';
 import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
-import i18n from '@src/i18n';
 import { settings } from '@src/services/settings';
 import { projects } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
@@ -49,8 +48,6 @@ const ListHeaderText = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
 `;
-
-const t = i18n.getFixedT(null, 'errors');
 
 export default function FileList() {
   const { t: tMenu } = useTranslation('menu');
@@ -107,29 +104,12 @@ export default function FileList() {
   );
   const glossaryFileNames = useMemo(() => glossaryItems.map((g) => g.fileName), [glossaryItems]);
 
-  const handleCommitProject = async (fileName: string | null, newTitle: string) => {
-    const project = projectList.find((p) => p.fileName === fileName);
-    if (!project) throw new Error(t('fileList.projectNotFound'));
-    await projects.rename(project.projectId, newTitle);
-  };
-
-  const handleCommitPromptTemplate = async (fileName: string | null, newTitle: string) => {
-    if (fileName) {
-      await promptTemplates.rename(fileName, newTitle);
-    } else {
-      await promptTemplates.create(newTitle);
-      menu.setIsCreatingPromptTemplate(false);
-    }
-  };
-
-  const handleCommitGlossary = async (fileName: string | null, newTitle: string) => {
-    if (fileName) {
-      await glossaries.rename(fileName, newTitle);
-    } else {
-      await glossaries.create(newTitle);
-      menu.setIsCreatingGlossary(false);
-    }
-  };
+  const handleCommitProject = (fileName: string | null, title: string) =>
+    menu.commitItemTitle('project', fileName, title);
+  const handleCommitPromptTemplate = (fileName: string | null, title: string) =>
+    menu.commitItemTitle('promptTemplate', fileName, title);
+  const handleCommitGlossary = (fileName: string | null, title: string) =>
+    menu.commitItemTitle('glossary', fileName, title);
 
   if (
     !folderPath ||

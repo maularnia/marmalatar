@@ -2,6 +2,7 @@ import { folder } from '@src/services/folder';
 import { Service } from '@src/services/Service';
 import {
   buildProjectEditorStateSaveData,
+  changeProjectVideo,
   closeProject,
   createProject,
   deleteProject,
@@ -123,6 +124,7 @@ export const projects = new Service('project', {
   },
   functions: {
     buildProjectEditorStateSaveData,
+    changeProjectVideo,
     closeProject,
     createProject,
     deleteProject,

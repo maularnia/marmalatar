@@ -1,3 +1,4 @@
+import { projects } from '@src/services/project';
 import { media } from '@src/services/media';
 import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
@@ -16,7 +17,6 @@ import { type CSSProperties, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useVideoFileSwap } from '../components/VideoPlayer/useVideoFileSwap';
 
 const Container = styled.div`
   display: flex;
@@ -115,7 +115,6 @@ export function EditorControls() {
   const isAiAvailable = integrationIsConfigured && !isBusy && !isEditMode;
   const isAutoMergeAvailable = !currentBulkJob && !isBusy;
   const isExportAvailable = !currentBulkJob && !isBusy;
-  const { swapVideo } = useVideoFileSwap();
   const earliestStartTime = allLines.length
     ? Math.min(...allLines.map((line) => line.start_time))
     : 0;
@@ -405,7 +404,7 @@ export function EditorControls() {
               color={ThemeColors.ACCENT2}
               disabled={isBusy}
               icon={TIcon.VIDEO_ABSENT}
-              onClick={swapVideo}
+              onClick={() => void projects.changeVideo()}
             />
           </Tooltip>
         )}

@@ -1,5 +1,4 @@
 import { media } from '@src/services/media';
-import { selectAudioTrack } from '@src/segments/dialogs/selectAudioTrack/selectAudioTrack';
 import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { projects } from '@src/services/project';
@@ -17,7 +16,6 @@ import { Fragment, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useVideoFileSwap } from './useVideoFileSwap';
 import VideoProgressBar from './VideoProgressBar';
 
 const TopBar = styled.div`
@@ -151,7 +149,6 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       settings.selectIsSmallScreen,
       editor.selectIsVideoCollapsed
     );
-  const { swapVideo } = useVideoFileSwap();
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;
@@ -313,7 +310,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
                 size={TButtonSize.SMALL}
                 icon={TIcon.AUDIO_TRACK}
                 // Not wired yet: the chosen track isn't applied
-                onClick={() => void selectAudioTrack(videoFilePath)}
+                onClick={() => void media.pickAudioTrack()}
               />
             </TopBarBlurWrapper>
           )}
@@ -323,7 +320,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
               color={ThemeColors.TEXT}
               size={TButtonSize.SMALL}
               icon={TIcon.VIDEO}
-              onClick={swapVideo}
+              onClick={() => void projects.changeVideo()}
             />
           </TopBarBlurWrapper>
           {isSmallScreen && (

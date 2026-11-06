@@ -1,5 +1,6 @@
 import { Service } from '@src/services/Service';
 import { confirmModal, showInfoModal } from './actions';
+import { loadModal } from './loader/loader';
 import { selectIsModalOpen, selectModalWindows } from './slice';
 
 // The modal service: dialog windows. Services and dialog modules open them through the facade --
@@ -10,7 +11,9 @@ import { selectIsModalOpen, selectModalWindows } from './slice';
 
 export { default as modalReducer } from './slice';
 export { Modals } from './Modals';
-export type { TModalContentProps, TModalInfoOptions } from './types';
+export type { TModalContentProps } from './types';
+export type { TLoadOptions } from './loader/loader';
+export * from './partials';
 
 export const modal = new Service('modal', {
   selectors: {
@@ -19,6 +22,7 @@ export const modal = new Service('modal', {
   },
   functions: {
     confirmModal,
+    loadModal,
     showInfoModal,
   },
 });

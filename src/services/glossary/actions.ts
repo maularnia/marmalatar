@@ -1,14 +1,16 @@
-import { pushMessage } from '@providers/bridges/messages';
 import i18n from '@src/i18n';
+import { modal } from '@src/services/modal';
+import { toast } from '@src/services/toast';
 import {
-  emitAddGlossaryEntryErrorMessage,
-  emitGlossaryEntrySaveFailedMessage,
-  emitNoMatchingGlossariesMessage,
-} from '@src/messages';
-import { askForGlossaryPair } from '@src/segments/dialogs/addToGlossary/addToGlossaryDialog';
-import { emitGlossaryPairSavedMessage } from '@src/segments/dialogs/addToGlossary/glossaryEntryAddedMessage';
-import { confirmDeleteGlossaryEntry } from '@src/segments/dialogs/deleteGlossaryEntry/deleteGlossaryEntryConfirmation';
+  makeAddGlossaryEntryErrorMessage,
+  makeGlossaryEntrySaveFailedMessage,
+  makeNoMatchingGlossariesMessage,
+} from '@src/services/glossary/toasts';
+import { askForGlossaryPair } from './dialogs/addToGlossary/addToGlossaryDialog';
+import { makeGlossaryPairSavedMessage } from '@src/services/glossary/toasts';
+import { confirmDeleteGlossaryEntry } from './dialogs/deleteGlossaryEntry/deleteGlossaryEntryConfirmation';
 import { IPC } from '@src/services/ipc/IPC';
+import type { TLoadOptions } from '@src/services/modal';
 import { TLanguage } from '@src/types';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import {
@@ -41,6 +43,7 @@ import {
 // the facade: index.ts builds the facade from this file, so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'errors');
+const tMessages = i18n.getFixedT(null, 'messages');
 
 // The project service imports this one (to reconcile the selection when a project loads), so its
 // facade can't be imported here. The project's languages are read from the raw state instead.
@@ -182,6 +185,23 @@ export async function openGlossaryEditor(fileName: string): Promise<void> {
   // to the caller
   if (current() === fileName) return;
   await initializeGlossaryEditor(fileName);
+}
+
+/** Saves the open glossary behind the saving loader, then closes the editor. `loaderOptions` lets
+ * a caller that opens something else right after drop the loader's minimum lifetime. */
+export async function saveAndCloseGlossary(loaderOptions?: TLoadOptions): Promise<void> {
+  const fileName = current();
+  if (!fileName) return;
+  const title =
+    data()?.title ||
+    Service.select(selectGlossaryItems).find((g) => g.fileName === fileName)?.title ||
+    '...';
+  await modal.load(
+    { messages: [tMessages('glossary.savingLabel', { title })] },
+    saveGlossary(),
+    loaderOptions
+  );
+  Service.dispatch(closeGlossaryEditor());
 }
 
 export async function saveGlossary(): Promise<void> {
@@ -460,7 +480,7 @@ export async function addGlossaryEntryFromText(text: string): Promise<void> {
     (g) => g.sourceLanguage === sourceLanguage && g.targetLanguage === targetLanguage
   );
   if (!matching.length) {
-    emitNoMatchingGlossariesMessage(pushMessage);
+    toast.push(makeNoMatchingGlossariesMessage());
     return;
   }
 
@@ -475,12 +495,15 @@ export async function addGlossaryEntryFromText(text: string): Promise<void> {
       { original: pairOriginal, translation: pairTranslation },
       result.glossaryFileName
     );
-    if (added) emitGlossaryPairSavedMessage(pairOriginal, pairTranslation);
-    else emitGlossaryEntrySaveFailedMessage(pushMessage);
+    if (added) toast.push(makeGlossaryPairSavedMessage(pairOriginal, pairTranslation));
+    else toast.push(makeGlossaryEntrySaveFailedMessage());
   } catch (e) {
-    emitAddGlossaryEntryErrorMessage(
-      pushMessage,
-      e instanceof Error ? e.message : 'Critical unexpected error white adding entry to a glossary'
+    toast.push(
+      makeAddGlossaryEntryErrorMessage(
+        e instanceof Error
+          ? e.message
+          : 'Critical unexpected error white adding entry to a glossary'
+      )
     );
   }
 }

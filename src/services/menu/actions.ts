@@ -1,7 +1,9 @@
 import i18n from '@src/i18n';
-import { confirmDeletePromptTemplate } from '@src/segments/dialogs/deleteContext/deletePromptTemplateConfirmation';
-import { confirmDeleteGlossary } from '@src/segments/dialogs/deleteGlossary/deleteGlossaryConfirmation';
-import { load } from '@src/segments/dialogs/loader/loader';
+import { modal } from '@src/services/modal';
+import { toast } from '@src/services/toast';
+import { makeFileProcessingFailedMessage } from '@src/services/menu/toasts';
+import { confirmDeletePromptTemplate } from './dialogs/deleteContext/deletePromptTemplateConfirmation';
+import { confirmDeleteGlossary } from './dialogs/deleteGlossary/deleteGlossaryConfirmation';
 import { ai } from '@src/services/ai';
 import { projects, type TProjectEntry } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
@@ -25,6 +27,7 @@ import {
 // so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'messages');
+const tErrors = i18n.getFixedT(null, 'errors');
 
 // Stable keys for the "+"/Create buttons -- these participate in the same combined focus/
 // navigation tracking as real rows (see MainMenu keyboard navigation), so FileList.tsx registers
@@ -201,24 +204,8 @@ function closeOverlays(except?: TOverlayKind): void {
 // Saves whichever editor is open. Runs right before opening something, so no minimum lifetime
 // here: it would be added on top of the opening loader's own one.
 async function saveOpenEditors(): Promise<void> {
-  const currentPromptTemplate = promptTemplates.get.current();
-  const currentGlossary = glossaries.get.current();
-  if (currentPromptTemplate) {
-    const title =
-      promptTemplates.get.items().find((c) => c.fileName === currentPromptTemplate)?.title ?? '...';
-    await load({ messages: [t('promptTemplate.savingLabel', { title })] }, promptTemplates.save(), {
-      minLifeTime: 0,
-    });
-  }
-  if (currentGlossary) {
-    const title =
-      glossaries.get.items().find((g) => g.fileName === currentGlossary)?.title ?? '...';
-    await load(
-      { messages: [t('glossary.savingLabel', { title })] },
-      glossaries.save() as Promise<unknown>,
-      { minLifeTime: 0 }
-    );
-  }
+  await promptTemplates.saveAndClose({ minLifeTime: 0 });
+  await glossaries.saveAndClose({ minLifeTime: 0 });
 }
 
 export async function openProject(project: TProjectEntry): Promise<void> {
@@ -233,7 +220,7 @@ export async function openPromptTemplate(fileName: string, title: string): Promi
   if (promptTemplates.get.current() === fileName) return;
   await saveOpenEditors();
   closeOverlays('promptTemplate');
-  await load(
+  await modal.load(
     { messages: [t('promptTemplate.loadingLabel', { title })] },
     promptTemplates.openEditor(fileName) as Promise<unknown>
   );
@@ -244,10 +231,56 @@ export async function openGlossary(fileName: string, title: string): Promise<voi
   if (glossaries.get.current() === fileName) return;
   await saveOpenEditors();
   closeOverlays('glossary');
-  await load(
+  await modal.load(
     { messages: [t('glossary.loadingLabel', { title })] },
     glossaries.openEditor(fileName) as Promise<unknown>
   );
+}
+
+// ── Rename and create ────────────────────────────────────────────────────────
+
+type TMenuFileKind = 'project' | 'promptTemplate' | 'glossary';
+
+async function commitTitle(kind: TMenuFileKind, fileName: string | null, title: string) {
+  if (kind === 'project') {
+    const project = projects.get.list().find((p) => p.fileName === fileName);
+    if (!project) throw new Error(tErrors('fileList.projectNotFound'));
+    await projects.rename(project.projectId, title);
+  } else if (kind === 'promptTemplate') {
+    if (fileName) {
+      await promptTemplates.rename(fileName, title);
+    } else {
+      await promptTemplates.create(title);
+      Service.dispatch(setIsCreatingPromptTemplate(false));
+    }
+  } else if (fileName) {
+    await glossaries.rename(fileName, title);
+  } else {
+    await glossaries.create(title);
+    Service.dispatch(setIsCreatingGlossary(false));
+  }
+}
+
+/** Renames a menu item's file, or creates one when `fileName` is null (prompt templates and
+ * glossaries), behind a loader. A failure is reported with a toast and rethrown, so the item can
+ * show it inline. */
+export async function commitMenuItemTitle(
+  kind: TMenuFileKind,
+  fileName: string | null,
+  title: string
+): Promise<void> {
+  const label =
+    fileName === null ? t('mainMenuListItem.creatingNewFile') : t('mainMenuListItem.renamingFile');
+  try {
+    await modal.load({ messages: [label] }, commitTitle(kind, fileName, title));
+  } catch (e) {
+    toast.push(
+      makeFileProcessingFailedMessage(
+        e instanceof Error ? e.message : tErrors('mainMenuListItem.unreachableCommitError')
+      )
+    );
+    throw e;
+  }
 }
 
 export function startNewProject(): void {

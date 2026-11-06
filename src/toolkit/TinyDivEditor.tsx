@@ -1,9 +1,9 @@
 import { CSSVar, ThemeColors } from '@src/theme/utils';
+import { toast } from '@src/services/toast';
 import { TLanguage } from '@src/types';
 import { contentEditableHtmlToText, textToContentEditableHtml } from '@utils/string';
 import { getMarkCss, type SpellCheckMark } from '@ui-toolkit/Mark';
-import { emitSpellcheckUnavailableMessage } from '@src/messages';
-import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
+import { makeSpellcheckUnavailableMessage } from '@src/services/spellcheck/toasts';
 import { createSpellCheckClient, type SpellCheckClient } from '@src/services/spellcheck/typoClient';
 import {
   useCallback,
@@ -161,7 +161,6 @@ export default function TinyDivEditor({
   // dictionary is unreachable) -- reset on the next successful check so a later failure can still
   // be reported.
   const hasReportedSpellCheckErrorRef = useRef(false);
-  const { pushMessage } = useMessageHelmet();
   const effectiveLanguage = checkSpelling ? language : null;
 
   const editableRefCallback = useCallback(
@@ -187,63 +186,61 @@ export default function TinyDivEditor({
   // only means cancelled/superseded/stale (a newer call already owns propagating this text); a
   // failed dictionary lookup still resolves `true`, since the user's typed text is valid
   // regardless of whether spellcheck itself could run.
-  const runSpellCheck = useCallback(
-    (text: string): Promise<boolean> => {
-      // Rule 3: nothing to do if this exact text was already the last thing actually checked.
-      if (text === checkedTextRef.current) return Promise.resolve(true);
+  const runSpellCheck = useCallback((text: string): Promise<boolean> => {
+    // Rule 3: nothing to do if this exact text was already the last thing actually checked.
+    if (text === checkedTextRef.current) return Promise.resolve(true);
 
-      if (!text) {
-        setAppliedMarks((prev) => (prev.length === 0 ? prev : []));
-        checkedTextRef.current = text;
-        return Promise.resolve(true);
-      }
+    if (!text) {
+      setAppliedMarks((prev) => (prev.length === 0 ? prev : []));
+      checkedTextRef.current = text;
+      return Promise.resolve(true);
+    }
 
-      const client = spellCheckClientRef.current;
-      if (!client) {
-        // Spellcheck is off (or no language available) -- never touches the dictionary. Leaves
-        // `checkedTextRef` alone (reset to null by the effect below) so re-enabling later is never
-        // mistaken by the guard above for "unchanged, skip".
-        setAppliedMarks((prev) => (prev.length === 0 ? prev : []));
+    const client = spellCheckClientRef.current;
+    if (!client) {
+      // Spellcheck is off (or no language available) -- never touches the dictionary. Leaves
+      // `checkedTextRef` alone (reset to null by the effect below) so re-enabling later is never
+      // mistaken by the guard above for "unchanged, skip".
+      setAppliedMarks((prev) => (prev.length === 0 ? prev : []));
+      const el = editableRef.current;
+      if (el) stripMarks(el, text);
+      return Promise.resolve(true);
+    }
+
+    return client
+      .request(text)
+      .then((result) => {
+        if (result === null) return false;
         const el = editableRef.current;
-        if (el) stripMarks(el, text);
-        return Promise.resolve(true);
-      }
+        if (!el) return false;
+        if (contentEditableHtmlToText(el.innerHTML) !== text) return false;
 
-      return client
-        .request(text)
-        .then((result) => {
-          if (result === null) return false;
-          const el = editableRef.current;
-          if (!el) return false;
-          if (contentEditableHtmlToText(el.innerHTML) !== text) return false;
-
-          const nextHtml = textToContentEditableHtml(text, result);
-          if (el.innerHTML !== nextHtml) {
-            const isFocused = document.activeElement === el;
-            const caret = isFocused ? getCaretOffset(el) : null;
-            el.innerHTML = nextHtml;
-            if (caret !== null) setCaretOffset(el, caret);
-          }
-          setAppliedMarks(result);
-          checkedTextRef.current = text;
-          hasReportedSpellCheckErrorRef.current = false;
-          return true;
-        })
-        .catch((err) => {
-          if (!hasReportedSpellCheckErrorRef.current) {
-            hasReportedSpellCheckErrorRef.current = true;
-            emitSpellcheckUnavailableMessage(
-              pushMessage,
+        const nextHtml = textToContentEditableHtml(text, result);
+        if (el.innerHTML !== nextHtml) {
+          const isFocused = document.activeElement === el;
+          const caret = isFocused ? getCaretOffset(el) : null;
+          el.innerHTML = nextHtml;
+          if (caret !== null) setCaretOffset(el, caret);
+        }
+        setAppliedMarks(result);
+        checkedTextRef.current = text;
+        hasReportedSpellCheckErrorRef.current = false;
+        return true;
+      })
+      .catch((err) => {
+        if (!hasReportedSpellCheckErrorRef.current) {
+          hasReportedSpellCheckErrorRef.current = true;
+          toast.push(
+            makeSpellcheckUnavailableMessage(
               err instanceof Error ? err.message : 'Could not load the dictionary.'
-            );
-          }
-          // Unlike the cancelled/stale cases above, a failed check is not superseded by anything
-          // -- the text is real and must still reach `onInput`, just without marks applied.
-          return true;
-        });
-    },
-    [pushMessage]
-  );
+            )
+          );
+        }
+        // Unlike the cancelled/stale cases above, a failed check is not superseded by anything
+        // -- the text is real and must still reach `onInput`, just without marks applied.
+        return true;
+      });
+  }, []);
 
   // Each editor owns its own client (and cancellation token) -- recreated whenever `language` or
   // the "check grammar" toggle changes, cancelling whatever the previous client had in flight.

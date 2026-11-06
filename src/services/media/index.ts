@@ -1,5 +1,6 @@
 import { Service } from '@src/services/Service';
 import {
+  cleanMediaCache,
   getAudioElement,
   getCurrentTimeMs,
   getVideoElement,
@@ -7,6 +8,8 @@ import {
   pause,
   play,
   playPause,
+  pickAudioTrack,
+  processVideo,
   registerAudioElement,
   registerVideoElement,
   reportVideoUnplayable,
@@ -48,6 +51,7 @@ export const media = new Service('media', {
     selectWaveformPeaks,
   },
   functions: {
+    cleanMediaCache,
     getAudioElement,
     getCurrentTimeMs,
     getVideoElement,
@@ -55,6 +59,8 @@ export const media = new Service('media', {
     pause,
     play,
     playPause,
+    pickAudioTrack,
+    processVideo,
     registerAudioElement,
     registerVideoElement,
     reportVideoUnplayable,

@@ -7,6 +7,7 @@ import { ThemeProvider } from '@src/providers/ThemeProvider';
 import { ai } from '@src/services/ai';
 import { folder } from '@src/services/folder';
 import { Modals } from '@src/services/modal';
+import { Toasts } from '@src/services/toast';
 import { settings } from '@src/services/settings';
 import { store } from '@store/store';
 import React from 'react';
@@ -16,7 +17,6 @@ import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import './assets/index.css';
 import './assets/variables.css';
-import { MessageHelmetProvider } from './providers/MessageHelmetProvider';
 
 // Startup. Settings are awaited, so the first render already has the theme and language; the
 // folder's lists (from the main process's cached listing, no live scan) and the AI integration
@@ -34,18 +34,17 @@ void hydrate().then(() => {
         <MemoryRouter>
           <NavigationBridge />
           <Provider store={store}>
-            <MessageHelmetProvider>
-              <LocaleProvider>
-                <ThemeProvider>
-                  <PopperPortalProvider>
-                    <GlobalKeystrokeDispatcher>
-                      <App />
-                      <Modals />
-                    </GlobalKeystrokeDispatcher>
-                  </PopperPortalProvider>
-                </ThemeProvider>
-              </LocaleProvider>
-            </MessageHelmetProvider>
+            <LocaleProvider>
+              <ThemeProvider>
+                <PopperPortalProvider>
+                  <GlobalKeystrokeDispatcher>
+                    <App />
+                    <Modals />
+                    <Toasts />
+                  </GlobalKeystrokeDispatcher>
+                </PopperPortalProvider>
+              </ThemeProvider>
+            </LocaleProvider>
           </Provider>
         </MemoryRouter>
       </AppErrorBoundary>

@@ -1,5 +1,4 @@
 import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
-import { load } from '@src/segments/dialogs/loader/loader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
@@ -67,17 +66,10 @@ export default function GlossaryOverlay() {
     glossaries.insertPair(formData.list.length - 1, 'after');
   }, [formData.list.length]);
 
-  const handleClose = async () => {
-    await load(
-      { messages: [t('messages:glossary.savingLabel', { title: formData.title || '...' })] },
-      glossaries.save() as Promise<unknown>
-    );
-    glossaries.closeEditor();
-  };
   if (!currentGlossary) return null;
 
   return (
-    <Overlay onClose={() => void handleClose()}>
+    <Overlay onClose={() => void glossaries.saveAndClose()}>
       <GlossaryKeystrokeProvider>
         <FormsContent>
           <FormsRow>

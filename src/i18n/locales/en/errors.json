@@ -140,9 +140,6 @@
   "waveformExtractionFailed": {
     "title": "Unable to extract audio waveform"
   },
-  "thumbnailGenerationFailed": {
-    "title": "Unable to generate video thumbnail"
-  },
   "projectLoadFailed": {
     "title": "Project can not be loaded"
   },

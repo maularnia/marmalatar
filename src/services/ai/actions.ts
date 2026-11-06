@@ -1,14 +1,14 @@
-import { pushMessage } from '@providers/bridges/messages';
 import i18n from '@src/i18n';
+import { toast } from '@src/services/toast';
 import {
-  emitAiTranslationJobDoneMessage,
-  emitAiTranslationJobFailedMessage,
-  emitBulkTranslationFailedMessage,
-  emitNoPromptTemplateMessage,
-  emitTranslationCancelledMessage,
-  emitUnableToTranslateLineMessage,
-} from '@src/messages';
-import { confirmTranslationOverride } from '@src/segments/dialogs/translationOverrride/translationOverrideConfirmation';
+  makeAiTranslationJobDoneMessage,
+  makeAiTranslationJobFailedMessage,
+  makeBulkTranslationFailedMessage,
+  makeNoPromptTemplateMessage,
+  makeTranslationCancelledMessage,
+  makeUnableToTranslateLineMessage,
+} from '@src/services/ai/toasts';
+import { confirmTranslationOverride } from './dialogs/translationOverrride/translationOverrideConfirmation';
 import { editor } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
 import { LANGUAGE_LABELS, TSubtitleLine } from '@src/types';
@@ -351,7 +351,7 @@ function isPromptTemplateSelected(): boolean {
     ? aiClients[selectedIntegrationId as keyof typeof aiClients]
     : undefined;
   if (client?.supportsContext && !promptTemplates.get.selectedFileName()) {
-    emitNoPromptTemplateMessage(pushMessage);
+    toast.push(makeNoPromptTemplateMessage());
     return false;
   }
   return true;
@@ -373,24 +373,25 @@ export async function translateLine(lineIndex: number): Promise<void> {
           : tDialogs('translationOverride.bodyWillTranslate'),
       });
     } catch {
-      emitUnableToTranslateLineMessage(pushMessage);
+      toast.push(makeUnableToTranslateLineMessage());
       return;
     }
     if (!confirmed) {
-      emitTranslationCancelledMessage(pushMessage);
+      toast.push(makeTranslationCancelledMessage());
       return;
     }
   }
 
   try {
     await startAutomatedTranslation(lineIndex);
-    emitAiTranslationJobDoneMessage(pushMessage);
+    toast.push(makeAiTranslationJobDoneMessage());
   } catch (err) {
-    emitAiTranslationJobFailedMessage(
-      pushMessage,
-      err instanceof Error
-        ? err.message
-        : 'Unexpected critical error while performing AI translation'
+    toast.push(
+      makeAiTranslationJobFailedMessage(
+        err instanceof Error
+          ? err.message
+          : 'Unexpected critical error while performing AI translation'
+      )
     );
   }
 }
@@ -421,13 +422,14 @@ export function translateUntranslatedLines(): void {
         });
       },
       onChunkError: ({ error }) => {
-        emitBulkTranslationFailedMessage(pushMessage, error.message);
+        toast.push(makeBulkTranslationFailedMessage(error.message));
       },
     });
   } catch (err) {
-    emitBulkTranslationFailedMessage(
-      pushMessage,
-      err instanceof Error ? err.message : 'How did you get here? [UNREACHABLE 02]'
+    toast.push(
+      makeBulkTranslationFailedMessage(
+        err instanceof Error ? err.message : 'How did you get here? [UNREACHABLE 02]'
+      )
     );
   }
 }

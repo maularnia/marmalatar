@@ -1,6 +1,7 @@
 import { Service } from '@src/services/Service';
 import {
   cancelCreatingGlossary,
+  commitMenuItemTitle,
   cancelCreatingPromptTemplate,
   deleteFocusedItem,
   deleteGlossary,
@@ -59,6 +60,7 @@ export const menu = new Service('menu', {
   },
   functions: {
     cancelCreatingGlossary,
+    commitMenuItemTitle,
     cancelCreatingPromptTemplate,
     deleteFocusedItem,
     deleteGlossary,

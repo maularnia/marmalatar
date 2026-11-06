@@ -140,9 +140,6 @@
   "waveformExtractionFailed": {
     "title": "Не атрымалася стварыць хвалевую форму аўдыё"
   },
-  "thumbnailGenerationFailed": {
-    "title": "Не атрымалася стварыць здымак відэа"
-  },
   "projectLoadFailed": {
     "title": "Памылка ладавання праекта"
   },

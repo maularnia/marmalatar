@@ -12,7 +12,6 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import TextArea from '@ui-toolkit/TextArea';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 import { useTranslation } from 'react-i18next';
-import { load } from '../dialogs/loader/loader';
 import Overlay from './Overlay';
 
 const emptyFormData: PromptTemplateFileDataType = {
@@ -35,18 +34,10 @@ export default function PromptOverlay() {
     promptTemplates.setData({ ...formData, [field]: value });
   };
 
-  const handleClose = async () => {
-    await load(
-      { messages: [t('messages:promptTemplate.savingLabel', { title: formData.title || '...' })] },
-      promptTemplates.save()
-    );
-    promptTemplates.closeEditor();
-  };
-
   if (!currentPromptTemplate) return null;
 
   return (
-    <Overlay onClose={() => void handleClose()}>
+    <Overlay onClose={() => void promptTemplates.saveAndClose()}>
       <FormsContent>
         <FormsRow>
           <FormsSection>
