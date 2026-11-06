@@ -9,22 +9,13 @@ import {
   ThemedDropdownPortalStyle,
   ThemedSelectWrapper,
 } from '@ui-toolkit/Select/partials';
-import { TIcon } from '@ui-toolkit/Icon/icons';
 import classNames from 'classnames';
 import { ReactNode, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import ReactSelectLib from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-
-export type TOptionSelect = {
-  value: string;
-  label: string | null;
-  color?: TColor;
-  isDisabled?: boolean;
-  icon?: TIcon;
-  emoji?: ReactNode;
-};
+import type { TOptionSelect } from './types';
 
 type SelectProps<T extends TOptionSelect = TOptionSelect> = {
   options: T[];

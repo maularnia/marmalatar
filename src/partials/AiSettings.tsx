@@ -1,6 +1,6 @@
 import { aiClients } from '@src/services/ai/connector/clients';
+import { aiClientSettingsForms } from '@src/services/ai/connector/settingsForms';
 import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
-import type { AiClient } from '@src/services/ai/connector/types';
 import { settings } from '@src/services/settings';
 import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
@@ -31,8 +31,7 @@ export default function AiSettings() {
   );
 
   const activeId = selectedIntegrationId ?? DEFAULT_AI_CLIENT_ID;
-  const activeClient = (aiClients as Record<string, AiClient>)[activeId];
-  const SelectedForm = activeClient?.SettingsForm;
+  const SelectedForm = aiClientSettingsForms[activeId];
 
   const [settingsValid, setSettingsValid] = useState(false);
 

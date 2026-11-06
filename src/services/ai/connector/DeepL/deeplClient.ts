@@ -3,28 +3,21 @@ import i18n from '@src/i18n';
 import { resolveBatchSize } from '@src/services/ai/connector/batchingUtils';
 import { translateBatchWithDeepL, translateWithDeepL } from './translateWithDeepL';
 import {
+  apiKeySettingKey,
+  DEEPL_CLIENT_ID,
   DEEPL_LANGUAGES_WITHOUT_FORMALITY_SUPPORT,
   DEEPL_LANGUAGES_WITHOUT_GLOSSARY_SUPPORT,
   DEFAULT_DEEPL_FORMALITY,
   DEFAULT_DEEPL_MODEL_TYPE,
+  formalitySettingKey,
+  glossaryIdSettingKey,
+  linesPerRequestSettingKey,
+  modelTypeSettingKey,
   resolveDeepLSourceLanguageCode,
   resolveDeepLTargetLanguageCode,
+  type DeepLSettingKey,
 } from './consts';
-import DeepLSettingsForm from './DeepLSettingsForm';
 import { IPC } from '@src/services/ipc/IPC';
-
-export type DeepLSettingKey =
-  | 'api_key'
-  | 'formality'
-  | 'model_type'
-  | 'lines_per_request'
-  | 'glossary_id';
-
-export const apiKeySettingKey: DeepLSettingKey = 'api_key';
-export const formalitySettingKey: DeepLSettingKey = 'formality';
-export const modelTypeSettingKey: DeepLSettingKey = 'model_type';
-export const linesPerRequestSettingKey: DeepLSettingKey = 'lines_per_request';
-export const glossaryIdSettingKey: DeepLSettingKey = 'glossary_id';
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -81,10 +74,9 @@ function resolveFormality(
 }
 
 class DeepLClient extends AiClient<DeepLSettingKey> {
-  readonly id = 'deepl';
+  readonly id = DEEPL_CLIENT_ID;
   readonly name = 'DeepL';
   readonly supportsContext = false;
-  readonly SettingsForm = DeepLSettingsForm;
 
   // Splits persistence: the API key goes through the dedicated safeStorage-backed channel,
   // everything else through the generic per-integration settings channel used by every other

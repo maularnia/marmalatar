@@ -11,23 +11,17 @@ import {
   translateBatchWithLMStudio,
   translateWithLMStudio,
 } from './translateWithLMStudio';
-import { DEFAULT_LMSTUDIO_CONTEXT_LENGTH } from './consts';
-import LMStudioSettingsForm from './LMStudioSettingsForm';
-
-export type LMStudioSettingKey =
-  | 'endpoint'
-  | 'model'
-  | 'context_length'
-  | 'reasoning_start_tag'
-  | 'reasoning_end_tag'
-  | 'lines_per_request';
-
-export const endpointSettingKey: LMStudioSettingKey = 'endpoint';
-export const modelSettingKey: LMStudioSettingKey = 'model';
-export const contextLengthSettingKey: LMStudioSettingKey = 'context_length';
-export const reasoningStartTagSettingKey: LMStudioSettingKey = 'reasoning_start_tag';
-export const reasoningEndTagSettingKey: LMStudioSettingKey = 'reasoning_end_tag';
-export const linesPerRequestSettingKey: LMStudioSettingKey = 'lines_per_request';
+import {
+  contextLengthSettingKey,
+  DEFAULT_LMSTUDIO_CONTEXT_LENGTH,
+  endpointSettingKey,
+  linesPerRequestSettingKey,
+  LMSTUDIO_CLIENT_ID,
+  modelSettingKey,
+  reasoningEndTagSettingKey,
+  reasoningStartTagSettingKey,
+  type LMStudioSettingKey,
+} from './consts';
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -47,10 +41,9 @@ function resolveReasoningTags(settings: Record<LMStudioSettingKey, string>): {
 }
 
 class LMStudioClient extends AiClient<LMStudioSettingKey> {
-  readonly id = 'lmstudio';
+  readonly id = LMSTUDIO_CLIENT_ID;
   readonly name = 'LM Studio';
   readonly supportsContext = true;
-  readonly SettingsForm = LMStudioSettingsForm;
 
   async ping(): Promise<boolean> {
     return this.guardBackendCall(async () => {

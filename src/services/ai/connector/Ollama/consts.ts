@@ -1,3 +1,15 @@
+// ── Client ─────────────────────────────────────────────────────────────────
+
+export const OLLAMA_CLIENT_ID = 'ollama';
+
+// Keys of the client's settings record, shared by the client and its settings form
+export type OllamaSettingKey = 'endpoint' | 'model' | 'context_length' | 'lines_per_request';
+
+export const endpointSettingKey: OllamaSettingKey = 'endpoint';
+export const modelSettingKey: OllamaSettingKey = 'model';
+export const contextLengthSettingKey: OllamaSettingKey = 'context_length';
+export const linesPerRequestSettingKey: OllamaSettingKey = 'lines_per_request';
+
 // The user-facing/validated default — always a real absolute URL, since it's now an editable
 // setting that gets parsed with `new URL()`. The dev-mode Vite proxy rewrite (see
 // `resolveOllamaFetchBase`) is an internal fetch-time detail, not something users configure.

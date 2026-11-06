@@ -1,7 +1,6 @@
 import i18n from '@src/i18n';
 import { TLanguage, TSubtitleLine } from '@src/types';
-import type { TOptionSelect } from '@ui-toolkit/Select/Select';
-import type { ComponentType } from 'react';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import { IPC } from '@src/services/ipc/IPC';
 
 const t = i18n.getFixedT(null, 'errors');
@@ -108,6 +107,9 @@ export type TranslationBulkJobState = {
 
 // ── AI client settings form ────────────────────────────────────────────────
 
+// Each client's settings form (registered in ./settingsForms.ts) owns its own layout, validation
+// and settings persistence, through its client. The app only ever learns whether the form is
+// currently valid, via `onSettingsValidChange` -- it never sees settings values.
 export type AiClientSettingsFormProps = {
   onSettingsValidChange: (isValid: boolean) => void;
 };
@@ -137,13 +139,6 @@ export abstract class AiClient<TSettingKey extends string = string> {
   abstract readonly id: string;
   abstract readonly name: string;
   abstract readonly supportsContext: boolean;
-  /**
-   * Owns its own layout, validation, and settings persistence (via the electron bridge, keyed
-   * by `id`). The app only ever learns whether this form is currently valid, via
-   * `onSettingsValidChange` — it never sees settings values.
-   */
-  abstract readonly SettingsForm: ComponentType<AiClientSettingsFormProps>;
-
   protected currentSettings: Record<TSettingKey, string> | null = null;
 
   /**

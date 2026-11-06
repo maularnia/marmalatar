@@ -1,8 +1,25 @@
 import { TLanguage } from '@src/types';
 import i18n from '@src/i18n';
 import { getLocalizedLanguageLabel } from '@src/utils/languageLabels';
-import { TOptionSelect } from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 
+// ── Client ─────────────────────────────────────────────────────────────────
+
+export const DEEPL_CLIENT_ID = 'deepl';
+
+// Keys of the client's settings record, shared by the client and its settings form
+export type DeepLSettingKey =
+  | 'api_key'
+  | 'formality'
+  | 'model_type'
+  | 'lines_per_request'
+  | 'glossary_id';
+
+export const apiKeySettingKey: DeepLSettingKey = 'api_key';
+export const formalitySettingKey: DeepLSettingKey = 'formality';
+export const modelTypeSettingKey: DeepLSettingKey = 'model_type';
+export const linesPerRequestSettingKey: DeepLSettingKey = 'lines_per_request';
+export const glossaryIdSettingKey: DeepLSettingKey = 'glossary_id';
 const t = i18n.getFixedT(null, 'errors');
 
 // deepl-node's TypeScript types are strict lowercase literal unions, and additionally distinguish

@@ -1,5 +1,5 @@
 import { TColor, TOpacity, TShade } from '@src/theme/definitions';
-import { TThemeVarsChapter } from '@src/theme/types';
+import type { TThemeVarsChapter } from '@src/theme/types/chapter';
 
 export type TThemeAppChapter = TThemeVarsChapter<{
   appScrollbarThumbColor: string;

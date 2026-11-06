@@ -1,17 +1,14 @@
 // Consolidated constants for the AI connectors in src/services/ai/connector (provider-specific
 // constants stay in each provider's own consts.ts, e.g. Ollama/consts.ts, LMStudio/consts.ts).
-import { TOptionSelect } from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import { ThemeColors } from '@src/theme/utils';
 import type { TColor } from '@src/theme/definitions';
 import type { ConnectionStatus } from './types';
+import { OLLAMA_CLIENT_ID } from './Ollama/consts';
 
 // ── Default AI client ────────────────────────────────────────────────────────
 
-// Intentionally a literal, not `ollamaClient.id` -- ollamaClient.ts imports its own
-// OllamaSettingsForm, which imports constants from this file, so importing ollamaClient here
-// would create a circular dependency (and a "Cannot access before initialization" crash at
-// runtime). Must match OllamaClient.id in ./Ollama/ollamaClient.ts.
-export const DEFAULT_AI_CLIENT_ID = 'ollama';
+export const DEFAULT_AI_CLIENT_ID = OLLAMA_CLIENT_ID;
 
 // ── Prompt templates ──────────────────────────────────────────────────────────
 

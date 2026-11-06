@@ -1,3 +1,23 @@
+// ── Client ─────────────────────────────────────────────────────────────────
+
+export const LMSTUDIO_CLIENT_ID = 'lmstudio';
+
+// Keys of the client's settings record, shared by the client and its settings form
+export type LMStudioSettingKey =
+  | 'endpoint'
+  | 'model'
+  | 'context_length'
+  | 'reasoning_start_tag'
+  | 'reasoning_end_tag'
+  | 'lines_per_request';
+
+export const endpointSettingKey: LMStudioSettingKey = 'endpoint';
+export const modelSettingKey: LMStudioSettingKey = 'model';
+export const contextLengthSettingKey: LMStudioSettingKey = 'context_length';
+export const reasoningStartTagSettingKey: LMStudioSettingKey = 'reasoning_start_tag';
+export const reasoningEndTagSettingKey: LMStudioSettingKey = 'reasoning_end_tag';
+export const linesPerRequestSettingKey: LMStudioSettingKey = 'lines_per_request';
+
 export const DEFAULT_LMSTUDIO_HOST = 'ws://127.0.0.1:1234';
 
 export const LMSTUDIO_CONTEXT_LENGTH_OPTIONS = [

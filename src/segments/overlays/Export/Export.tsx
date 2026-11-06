@@ -19,7 +19,8 @@ import {
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import Select, { TOptionSelect } from '@ui-toolkit/Select/Select';
+import Select from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import { parseCharacterList } from '@utils/characters';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

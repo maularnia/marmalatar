@@ -1,5 +1,6 @@
 import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
+import { aiClients } from '@src/services/ai/connector/clients';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { getErrorMessage } from '@src/utils/errors';
@@ -8,7 +9,8 @@ import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormSectionEntry, FormsSectionContent } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import Select, { TOptionSelect } from '@ui-toolkit/Select/Select';
+import Select from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import TextInput from '@ui-toolkit/TextInput';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -16,22 +18,20 @@ import { useTranslation } from 'react-i18next';
 import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/connector/types';
 import { listLMStudioModels } from './translateWithLMStudio';
 import {
+  contextLengthSettingKey,
   DEFAULT_LMSTUDIO_CONTEXT_LENGTH,
   DEFAULT_LMSTUDIO_HOST,
   DEFAULT_LMSTUDIO_REASONING_END_TAG,
   DEFAULT_LMSTUDIO_REASONING_START_TAG,
-  LMSTUDIO_CONTEXT_LENGTH_OPTIONS,
-} from './consts';
-import {
-  contextLengthSettingKey,
   endpointSettingKey,
   linesPerRequestSettingKey,
-  lmStudioClient,
+  LMSTUDIO_CLIENT_ID,
+  LMSTUDIO_CONTEXT_LENGTH_OPTIONS,
   modelSettingKey,
   reasoningEndTagSettingKey,
   reasoningStartTagSettingKey,
-} from './lmStudioClient';
-import type { LMStudioSettingKey } from './lmStudioClient';
+  type LMStudioSettingKey,
+} from './consts';
 import {
   ConnectionStatusMessageKey,
   ConnectionStatusToColor,
@@ -54,6 +54,9 @@ function validateEndpoint(value: string): string | undefined {
 const SETTINGS_COMMIT_DEBOUNCE_MS = 500;
 const RECONNECT_DEBOUNCE_MS = 500;
 
+// From the clients registry: the client doesn't import its form, so there's no cycle
+const client = aiClients[LMSTUDIO_CLIENT_ID];
+
 export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClientSettingsFormProps) {
   const { t: tSettings } = useTranslation('settings');
   const linesPerRequestOptions = useMemo(() => getLinesPerRequestOptions(tSettings), [tSettings]);
@@ -72,14 +75,13 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
     mode: 'onChange',
     defaultValues: {
       [endpointSettingKey]:
-        lmStudioClient.getCurrentSettings()?.[endpointSettingKey] ?? DEFAULT_LMSTUDIO_HOST,
+        client.getCurrentSettings()?.[endpointSettingKey] ?? DEFAULT_LMSTUDIO_HOST,
       [modelSettingKey]: '',
       [contextLengthSettingKey]: DEFAULT_LMSTUDIO_CONTEXT_LENGTH,
       [reasoningStartTagSettingKey]: DEFAULT_LMSTUDIO_REASONING_START_TAG,
       [reasoningEndTagSettingKey]: DEFAULT_LMSTUDIO_REASONING_END_TAG,
       [linesPerRequestSettingKey]:
-        lmStudioClient.getCurrentSettings()?.[linesPerRequestSettingKey] ??
-        DEFAULT_LINES_PER_REQUEST,
+        client.getCurrentSettings()?.[linesPerRequestSettingKey] ?? DEFAULT_LINES_PER_REQUEST,
     },
   });
 
@@ -105,11 +107,11 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
     setConnectionStatus('connecting');
     setConnectionError(undefined);
     try {
-      const connected = await lmStudioClient.ping();
-      if (!connected) throw new Error(t('shared.connectFailed', { name: lmStudioClient.name }));
+      const connected = await client.ping();
+      if (!connected) throw new Error(t('shared.connectFailed', { name: client.name }));
       const options = await listLMStudioModels({ host: getValues(endpointSettingKey) });
       setModelOptions(options);
-      lmStudioClient.setCachedOptions(options);
+      client.setCachedOptions(options);
       lastVerifiedEndpointRef.current = getValues(endpointSettingKey);
       if (!options.some((option) => option.value === getValues(modelSettingKey))) {
         setValue(modelSettingKey, options[0]?.value ?? '', { shouldValidate: true });
@@ -133,11 +135,10 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
   // elsewhere degrades it back to disconnected.
   useEffect(() => {
     (async () => {
-      const stored =
-        lmStudioClient.getCurrentSettings() ?? (await lmStudioClient.loadPersistedSettings());
+      const stored = client.getCurrentSettings() ?? (await client.loadPersistedSettings());
       if (!stored) return;
       reset(stored);
-      const cachedOptions = lmStudioClient.getCachedOptions();
+      const cachedOptions = client.getCachedOptions();
       if (connected && !pingError && cachedOptions !== null) {
         lastVerifiedEndpointRef.current = stored[endpointSettingKey];
         setModelOptions(cachedOptions);
@@ -163,7 +164,7 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
   // the context-window re-estimate below still waits for full validity, since it needs a real model.
   useEffect(() => {
     if (validateEndpoint(values.endpoint ?? '')) return;
-    lmStudioClient.setCurrentSettings(getValues());
+    client.setCurrentSettings(getValues());
     if (!isValid) return;
     if (commitDebounceRef.current) clearTimeout(commitDebounceRef.current);
     commitDebounceRef.current = setTimeout(() => {

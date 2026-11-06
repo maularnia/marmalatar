@@ -1,6 +1,7 @@
 import { TConfirmationWindowProps } from '@providers/ConfirmationProvider/types';
 import { TEntryCleanupOptions } from '@src/utils/data/entryCleanup';
-import Select, { TOptionSelect } from '@ui-toolkit/Select/Select';
+import Select from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import Span from '@ui-toolkit/Span';
 import Toggle from '@ui-toolkit/Toggle';
 import { useEffect, useRef, useState } from 'react';

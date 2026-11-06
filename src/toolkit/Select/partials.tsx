@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import styled, { createGlobalStyle, css } from 'styled-components';
-import { TOptionSelect } from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import Tag, { TTagSize } from '@ui-toolkit/Tag';
 import { TIconSize, TIcon } from '@ui-toolkit/Icon/icons';
 import { TColor, TOpacity } from '@src/theme/definitions';

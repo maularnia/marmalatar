@@ -14,16 +14,14 @@ import {
 import {
   buildOllamaChatEndpoint,
   buildOllamaPingEndpoint,
+  contextLengthSettingKey,
   DEFAULT_OLLAMA_CONTEXT_LENGTH,
+  endpointSettingKey,
+  linesPerRequestSettingKey,
+  modelSettingKey,
+  OLLAMA_CLIENT_ID,
+  type OllamaSettingKey,
 } from './consts';
-import OllamaSettingsForm from './OllamaSettingsForm';
-
-export type OllamaSettingKey = 'endpoint' | 'model' | 'context_length' | 'lines_per_request';
-
-export const endpointSettingKey: OllamaSettingKey = 'endpoint';
-export const modelSettingKey: OllamaSettingKey = 'model';
-export const contextLengthSettingKey: OllamaSettingKey = 'context_length';
-export const linesPerRequestSettingKey: OllamaSettingKey = 'lines_per_request';
 
 const t = i18n.getFixedT(null, 'errors');
 
@@ -34,10 +32,9 @@ function resolveContextLength(settings: Record<OllamaSettingKey, string>): numbe
 }
 
 class OllamaClient extends AiClient<OllamaSettingKey> {
-  readonly id = 'ollama';
+  readonly id = OLLAMA_CLIENT_ID;
   readonly name = 'Ollama';
   readonly supportsContext = true;
-  readonly SettingsForm = OllamaSettingsForm;
 
   async ping(): Promise<boolean> {
     return this.guardBackendCall(async () => {

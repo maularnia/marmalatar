@@ -1,5 +1,6 @@
 import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
+import { aiClients } from '@src/services/ai/connector/clients';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { getErrorMessage } from '@src/utils/errors';
@@ -8,7 +9,8 @@ import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormSectionEntry, FormsSectionContent } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import Select, { TOptionSelect } from '@ui-toolkit/Select/Select';
+import Select from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import TextInput from '@ui-toolkit/TextInput';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -17,18 +19,16 @@ import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/
 import { listOllamaModels } from './translateWithOllama';
 import {
   buildOllamaPingEndpoint,
+  contextLengthSettingKey,
   DEFAULT_OLLAMA_CONTEXT_LENGTH,
   DEFAULT_OLLAMA_ENDPOINT,
-  OLLAMA_CONTEXT_LENGTH_OPTIONS,
-} from './consts';
-import {
-  contextLengthSettingKey,
   endpointSettingKey,
   linesPerRequestSettingKey,
   modelSettingKey,
-  ollamaClient,
-} from './ollamaClient';
-import type { OllamaSettingKey } from './ollamaClient';
+  OLLAMA_CLIENT_ID,
+  OLLAMA_CONTEXT_LENGTH_OPTIONS,
+  type OllamaSettingKey,
+} from './consts';
 import {
   ConnectionStatusMessageKey,
   ConnectionStatusToColor,
@@ -51,6 +51,9 @@ function validateEndpoint(value: string): string | undefined {
 const SETTINGS_COMMIT_DEBOUNCE_MS = 500;
 const RECONNECT_DEBOUNCE_MS = 500;
 
+// From the clients registry: the client doesn't import its form, so there's no cycle
+const client = aiClients[OLLAMA_CLIENT_ID];
+
 export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSettingsFormProps) {
   const { t: tSettings } = useTranslation('settings');
   const linesPerRequestOptions = useMemo(() => getLinesPerRequestOptions(tSettings), [tSettings]);
@@ -69,11 +72,11 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
     mode: 'onChange',
     defaultValues: {
       [endpointSettingKey]:
-        ollamaClient.getCurrentSettings()?.[endpointSettingKey] ?? DEFAULT_OLLAMA_ENDPOINT,
+        client.getCurrentSettings()?.[endpointSettingKey] ?? DEFAULT_OLLAMA_ENDPOINT,
       [modelSettingKey]: '',
       [contextLengthSettingKey]: DEFAULT_OLLAMA_CONTEXT_LENGTH,
       [linesPerRequestSettingKey]:
-        ollamaClient.getCurrentSettings()?.[linesPerRequestSettingKey] ?? DEFAULT_LINES_PER_REQUEST,
+        client.getCurrentSettings()?.[linesPerRequestSettingKey] ?? DEFAULT_LINES_PER_REQUEST,
     },
   });
 
@@ -99,13 +102,13 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
     setConnectionStatus('connecting');
     setConnectionError(undefined);
     try {
-      const connected = await ollamaClient.ping();
-      if (!connected) throw new Error(t('shared.connectFailed', { name: ollamaClient.name }));
+      const connected = await client.ping();
+      if (!connected) throw new Error(t('shared.connectFailed', { name: client.name }));
       const options = await listOllamaModels({
         endpoint: buildOllamaPingEndpoint(getValues(endpointSettingKey)),
       });
       setModelOptions(options);
-      ollamaClient.setCachedOptions(options);
+      client.setCachedOptions(options);
       lastVerifiedEndpointRef.current = getValues(endpointSettingKey);
       if (!options.some((option) => option.value === getValues(modelSettingKey))) {
         setValue(modelSettingKey, options[0]?.value ?? '', { shouldValidate: true });
@@ -129,11 +132,10 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
   // elsewhere degrades it back to disconnected.
   useEffect(() => {
     (async () => {
-      const stored =
-        ollamaClient.getCurrentSettings() ?? (await ollamaClient.loadPersistedSettings());
+      const stored = client.getCurrentSettings() ?? (await client.loadPersistedSettings());
       if (!stored) return;
       reset(stored);
-      const cachedOptions = ollamaClient.getCachedOptions();
+      const cachedOptions = client.getCachedOptions();
       if (connected && !pingError && cachedOptions !== null) {
         lastVerifiedEndpointRef.current = stored[endpointSettingKey];
         setModelOptions(cachedOptions);
@@ -159,7 +161,7 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
   // the context-window re-estimate below still waits for full validity, since it needs a real model.
   useEffect(() => {
     if (validateEndpoint(values.endpoint ?? '')) return;
-    ollamaClient.setCurrentSettings(getValues());
+    client.setCurrentSettings(getValues());
     if (!isValid) return;
     if (commitDebounceRef.current) clearTimeout(commitDebounceRef.current);
     commitDebounceRef.current = setTimeout(() => {

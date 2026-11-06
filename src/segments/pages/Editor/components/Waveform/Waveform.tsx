@@ -11,6 +11,7 @@ import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useRenderCache } from '../../hooks/useRenderCache';
+import type { DragMode } from './types';
 import WaveformEntry from './WaveformEntry';
 import WaveformTile from './WaveformTile';
 import { getWaveformEntryFingerprint } from './useWaveformEntryFingerprint';
@@ -31,8 +32,6 @@ const WHEEL_SEEK_STEP_RATIO = 0.0005;
 // A single canvas wider than 65535px paints as a solid block in Chromium, and at PX_PER_SECOND a
 // feature-length timeline is far wider than that -- so the timeline is drawn as tiles instead.
 const WAVEFORM_TILE_WIDTH = 4096;
-
-export type DragMode = 'move' | 'resize-left' | 'resize-right';
 
 type DragState = {
   lineIndex: number;

@@ -1,5 +1,6 @@
 import { useAppSelectors } from '@store/hooks';
 import { ai } from '@src/services/ai';
+import { aiClients } from '@src/services/ai/connector/clients';
 import { projects } from '@src/services/project';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
@@ -9,13 +10,16 @@ import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormSectionEntry, FormsSectionContent } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import Select, { TOptionSelect } from '@ui-toolkit/Select/Select';
+import Select from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import TextInput from '@ui-toolkit/TextInput';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/connector/types';
 import {
+  apiKeySettingKey,
+  DEEPL_CLIENT_ID,
   DEEPL_FORMALITY_OPTIONS,
   DEEPL_LANGUAGES_WITHOUT_FORMALITY_SUPPORT,
   DEEPL_LANGUAGES_WITHOUT_GLOSSARY_SUPPORT,
@@ -23,16 +27,12 @@ import {
   DEEPL_NO_GLOSSARY_VALUE,
   DEFAULT_DEEPL_FORMALITY,
   DEFAULT_DEEPL_MODEL_TYPE,
-} from './consts';
-import {
-  apiKeySettingKey,
-  deeplClient,
   formalitySettingKey,
   glossaryIdSettingKey,
   linesPerRequestSettingKey,
   modelTypeSettingKey,
-} from './deeplClient';
-import type { DeepLSettingKey } from './deeplClient';
+  type DeepLSettingKey,
+} from './consts';
 import {
   ConnectionStatusMessageKey,
   ConnectionStatusToColor,
@@ -51,6 +51,9 @@ function validateApiKey(value: string): string | undefined {
 
 const SETTINGS_COMMIT_DEBOUNCE_MS = 500;
 const RECONNECT_DEBOUNCE_MS = 500;
+
+// From the clients registry: the client doesn't import its form, so there's no cycle
+const client = aiClients[DEEPL_CLIENT_ID];
 
 export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSettingsFormProps) {
   const { t: tSettings } = useTranslation('settings');
@@ -80,11 +83,11 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
   } = useForm<Record<DeepLSettingKey, string>>({
     mode: 'onChange',
     defaultValues: {
-      [apiKeySettingKey]: deeplClient.getCurrentSettings()?.[apiKeySettingKey] ?? '',
+      [apiKeySettingKey]: client.getCurrentSettings()?.[apiKeySettingKey] ?? '',
       [formalitySettingKey]: DEFAULT_DEEPL_FORMALITY,
       [modelTypeSettingKey]: DEFAULT_DEEPL_MODEL_TYPE,
       [linesPerRequestSettingKey]:
-        deeplClient.getCurrentSettings()?.[linesPerRequestSettingKey] ?? DEFAULT_LINES_PER_REQUEST,
+        client.getCurrentSettings()?.[linesPerRequestSettingKey] ?? DEFAULT_LINES_PER_REQUEST,
       [glossaryIdSettingKey]: DEEPL_NO_GLOSSARY_VALUE,
     },
   });
@@ -113,11 +116,11 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
     setConnectionError(undefined);
     try {
       const apiKey = getValues(apiKeySettingKey);
-      const connected = await deeplClient.ping();
-      if (!connected) throw new Error(t('shared.connectFailed', { name: deeplClient.name }));
+      const connected = await client.ping();
+      if (!connected) throw new Error(t('shared.connectFailed', { name: client.name }));
       const options = await IPC.deepl.listGlossaries(apiKey);
       setGlossaryOptions(options);
-      deeplClient.setCachedOptions(options);
+      client.setCachedOptions(options);
       lastVerifiedApiKeyRef.current = apiKey;
       setConnectionStatus('connected');
       ai.setIntegrationConnectionStatus({ connected: true });
@@ -142,11 +145,10 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
   // elsewhere degrades it back to disconnected.
   useEffect(() => {
     (async () => {
-      const stored =
-        deeplClient.getCurrentSettings() ?? (await deeplClient.loadPersistedSettings());
+      const stored = client.getCurrentSettings() ?? (await client.loadPersistedSettings());
       if (!stored) return;
       reset(stored);
-      const cachedOptions = deeplClient.getCachedOptions();
+      const cachedOptions = client.getCachedOptions();
       if (connected && !pingError && cachedOptions !== null) {
         lastVerifiedApiKeyRef.current = stored[apiKeySettingKey];
         setGlossaryOptions(cachedOptions);
@@ -170,7 +172,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
   // commit happened (via the re-estimate below).
   useEffect(() => {
     if (!isValid) return;
-    deeplClient.setCurrentSettings(getValues());
+    client.setCurrentSettings(getValues());
     if (commitDebounceRef.current) clearTimeout(commitDebounceRef.current);
     commitDebounceRef.current = setTimeout(() => {
       void ai.estimateContextWindowUsage();
