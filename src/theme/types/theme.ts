@@ -309,8 +309,8 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemBgOpacityActive: [TOpacity, false];
   listItemBgShadeActiveHover: [TShade, false];
   listItemBgOpacityActiveHover: [TOpacity, false];
-  listItemBgShadeFocused: [TShade, false];
-  listItemBgOpacityFocused: [TOpacity, false];
+  listItemBgShadeActiveFocus: [TShade, false];
+  listItemBgOpacityActiveFocus: [TOpacity, false];
   listItemBgShadeDisabled: [TShade, false];
   listItemBgOpacityDisabled: [TOpacity, false];
   listItemColorShade: [TShade, false];
@@ -323,8 +323,8 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemColorOpacityActive: [TOpacity, false];
   listItemColorShadeActiveHover: [TShade, false];
   listItemColorOpacityActiveHover: [TOpacity, false];
-  listItemColorShadeFocused: [TShade, false];
-  listItemColorOpacityFocused: [TOpacity, false];
+  listItemColorShadeActiveFocus: [TShade, false];
+  listItemColorOpacityActiveFocus: [TOpacity, false];
   listItemColorShadeDisabled: [TShade, false];
   listItemColorOpacityDisabled: [TOpacity, false];
 }>;

@@ -171,7 +171,7 @@ export function MainMenuListItem({
                 variant={TButtonVariant.TRANSPARENT}
                 size={TButtonSize.NANO}
                 icon={TIcon.EDIT}
-                color={ThemeColors.TEXT}
+                color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
                 onClick={(e) => {
                   e.stopPropagation();
                   menu.startRenaming(itemKey);
@@ -188,7 +188,7 @@ export function MainMenuListItem({
               >
                 <Button
                   variant={TButtonVariant.TRANSPARENT}
-                  color={ThemeColors.TEXT}
+                  color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
                   size={TButtonSize.NANO}
                   icon={TIcon.BIN}
                   onClick={(e) => {

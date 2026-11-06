@@ -88,7 +88,7 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
     &:focus-within,
     &.isFocused {
       color: ${CSSColor(
-        $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
+        $color,
         $theme.variables.listItemColorShadeFocus.value,
         $theme.variables.listItemColorOpacityFocus.value
       )};
@@ -100,14 +100,14 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
       border-color: ${CSSColor(
         $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
         $theme.variables.listItemBgShadeFocus.value,
-        10
+        0
       )};
     }
 
     &.isActive {
       cursor: default;
       color: ${CSSColor(
-        $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
+        $theme.colors[$color].text,
         $theme.variables.listItemColorShadeActive.value,
         $theme.variables.listItemColorOpacityActive.value
       )};
@@ -119,11 +119,11 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
       border-color: ${CSSColor(
         $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
         $theme.variables.listItemBgShadeActive.value,
-        30
+        0
       )};
       &:hover {
         color: ${CSSColor(
-          $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
+          $theme.colors[$color].text,
           $theme.variables.listItemColorShadeActiveHover.value,
           $theme.variables.listItemColorOpacityActiveHover.value
         )};
@@ -137,19 +137,19 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
       &:focus-within,
       &.isFocused {
         color: ${CSSColor(
-          $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
-          $theme.variables.listItemColorShadeFocus.value,
-          $theme.variables.listItemColorOpacityFocus.value
+          $theme.colors[$color].text,
+          $theme.variables.listItemColorShadeActiveFocus.value,
+          $theme.variables.listItemColorOpacityActiveFocus.value
         )};
         background-color: ${CSSColor(
           $color,
-          $theme.variables.listItemBgShadeFocus.value,
-          $theme.variables.listItemBgOpacityFocus.value
+          $theme.variables.listItemBgShadeActiveFocus.value,
+          $theme.variables.listItemBgOpacityActiveFocus.value
         )};
         border-color: ${CSSColor(
           $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
-          $theme.variables.listItemBgShadeFocus.value,
-          30
+          $theme.variables.listItemBgShadeActiveFocus.value,
+          0
         )};
       }
     }
