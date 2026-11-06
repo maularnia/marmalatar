@@ -312,14 +312,16 @@ type TVideoMedia = {
   videoPath: string | null;
   audioPath: string | null;
   waveformPeaks: number[];
-  previewImage: string | null;
+  thumbnail: string | null;
+  aspectRatio: number | null;
 };
 
 const NO_VIDEO: TVideoMedia = {
   videoPath: null,
   audioPath: null,
   waveformPeaks: [],
-  previewImage: null,
+  thumbnail: null,
+  aspectRatio: null,
 };
 
 async function applyLoadedProject(project: TProjectEntry, video: TVideoMedia): Promise<void> {
@@ -331,7 +333,11 @@ async function applyLoadedProject(project: TProjectEntry, video: TVideoMedia): P
   }
 
   media.loadVideo(video.videoPath, video.audioPath ?? undefined);
-  media.setVideoData({ thumbnail: video.previewImage, waveformPeaks: video.waveformPeaks });
+  media.setVideoData({
+    thumbnail: video.thumbnail,
+    aspectRatio: video.aspectRatio,
+    waveformPeaks: video.waveformPeaks,
+  });
   media.resetPlayback();
 
   toast.push(makeProjectLoadedMessage());
@@ -381,7 +387,11 @@ export async function changeProjectVideo(): Promise<void> {
     video?.addEventListener('loadedmetadata', onLoadedMetadata);
 
     media.loadVideo(result.videoPath, result.audioPath);
-    media.setVideoData({ thumbnail: result.previewImage, waveformPeaks: result.waveformPeaks });
+    media.setVideoData({
+      thumbnail: result.thumbnail,
+      aspectRatio: result.aspectRatio,
+      waveformPeaks: result.waveformPeaks,
+    });
 
     toast.push(makeVideoUpdatedMessage());
   } finally {

@@ -22,6 +22,7 @@ import {
   clearVideo,
   selectActiveLineIndex,
   selectThumbnail,
+  selectAspectRatio,
   selectVideoDurationMs,
   selectVideoFilePath,
   selectWaveformPeaks,
@@ -46,6 +47,7 @@ export const media = new Service('media', {
   selectors: {
     selectActiveLineIndex,
     selectThumbnail,
+    selectAspectRatio,
     selectVideoDurationMs,
     selectVideoFilePath,
     selectWaveformPeaks,

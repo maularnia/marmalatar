@@ -174,7 +174,9 @@ export function reportVideoUnplayable(): void {
 export type TProcessedVideo = {
   audioPath: string;
   waveformPeaks: number[];
-  previewImage: string | null;
+  thumbnail: string | null;
+  /** Displayed width / height, null when it couldn't be read */
+  aspectRatio: number | null;
 };
 
 type TProcessVideoOptions = {
@@ -185,7 +187,7 @@ type TProcessVideoOptions = {
 };
 
 /**
- * The one pipeline that prepares a video: checks it can be decoded, takes a thumbnail (optional),
+ * The one pipeline that prepares a video: checks it can be decoded, reads its metadata (thumbnail and aspect ratio, optional),
  * extracts its audio to AAC, checks the converted audio plays, and extracts the waveform. Reports
  * failures with a toast where there's something to tell; resolves null when a step failed or the
  * run was cancelled.
@@ -209,7 +211,7 @@ export async function processVideo(
   }
   if (isCancelled()) return null;
 
-  const previewImage = await IPC.media.generateThumbnail(videoPath).catch(() => null);
+  const metadata = await IPC.media.getVideoMetadata(videoPath).catch(() => null);
   if (isCancelled()) return null;
 
   // The original audio isn't pre-checked for native playability: codecs Chromium can't play (e.g.
@@ -243,7 +245,12 @@ export async function processVideo(
   if (isCancelled()) return null;
 
   onStatus?.(TWaveformStatus.SUCCESS);
-  return { audioPath, waveformPeaks, previewImage };
+  return {
+    audioPath,
+    waveformPeaks,
+    thumbnail: metadata?.thumbnail ?? null,
+    aspectRatio: metadata?.aspectRatio ?? null,
+  };
 }
 
 // ── User actions ─────────────────────────────────────────────────────────────

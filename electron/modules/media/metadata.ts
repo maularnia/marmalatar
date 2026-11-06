@@ -51,6 +51,45 @@ export async function getDuration(filePath: string): Promise<number | null> {
   return parsed.success ? parsed.data.format.duration : null;
 }
 
+const FfprobeVideoStreamSchema = z.object({
+  streams: z
+    .array(
+      z.object({
+        width: z.number(),
+        height: z.number(),
+        sample_aspect_ratio: z.string().optional(),
+        tags: z.object({ rotate: z.coerce.number().optional() }).optional(),
+      })
+    )
+    .min(1),
+});
+
+// "N:D" as a number; "0:1" (unknown) or anything unparseable counts as square pixels
+function parseSampleAspectRatio(value: string | undefined): number {
+  const [num, den] = (value ?? '').split(':').map(Number);
+  return num > 0 && den > 0 ? num / den : 1;
+}
+
+// The first video stream's displayed width / height (the CSS aspect-ratio order), or null if the
+// file has no video stream or can't be read. Corrects for non-square pixels (anamorphic video) and
+// for rotation metadata (phone footage stored landscape but shown portrait).
+export async function getAspectRatio(filePath: string): Promise<number | null> {
+  const output = await runFfprobe([
+    '-select_streams',
+    'v:0',
+    '-show_entries',
+    'stream=width,height,sample_aspect_ratio:stream_tags=rotate',
+    filePath,
+  ]);
+  const parsed = FfprobeVideoStreamSchema.safeParse(output);
+  if (!parsed.success) return null;
+  const { width, height, sample_aspect_ratio, tags } = parsed.data.streams[0];
+  if (width <= 0 || height <= 0) return null;
+  const ratio = (width * parseSampleAspectRatio(sample_aspect_ratio)) / height;
+  const isQuarterTurn = Math.abs(tags?.rotate ?? 0) % 180 === 90;
+  return isQuarterTurn ? 1 / ratio : ratio;
+}
+
 const FfprobeAudioStreamsSchema = z.object({
   streams: z.array(
     z.object({

@@ -106,7 +106,11 @@ export default function VideoFileSelect({
           return;
         }
         media.loadVideo(videoPath, result.audioPath);
-        media.setVideoData({ thumbnail: result.previewImage, waveformPeaks: result.waveformPeaks });
+        media.setVideoData({
+          thumbnail: result.thumbnail,
+          aspectRatio: result.aspectRatio,
+          waveformPeaks: result.waveformPeaks,
+        });
         onError(null);
       });
 

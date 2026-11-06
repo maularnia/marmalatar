@@ -9,7 +9,7 @@ import { ProjectService } from '../project/ProjectService';
 import { ScannerService } from '../scanner/ScannerService';
 import { Service } from '../service/Service';
 import type { TVersioning } from '../service/storeVersioning';
-import { getDuration, listAudioTracks } from './metadata';
+import { getAspectRatio, getDuration, listAudioTracks } from './metadata';
 
 // Forge's Vite plugin strips node_modules from the packaged app, so ffmpeg-static's
 // JS (and its own __dirname-based path lookup) isn't available at runtime. The binary
@@ -40,6 +40,9 @@ type TVideoFileMeta = {
   filePath: string;
   // Thumbnail, in .mrmlcache/previews
   thumb?: string;
+  // Displayed width / height (CSS aspect-ratio order). Undefined until probed, or when ffprobe
+  // couldn't read it, in which case the next request probes again.
+  aspectRatio?: number;
   // Undefined until the video's streams have been listed
   audioTracks?: TAudioTrackMeta[];
 };
@@ -245,9 +248,13 @@ async function migrateV0Media(
         entry.thumb = thumb;
       }
 
-      // 4. Audio tracks, listed the same way the service does at runtime. A file ffprobe can't
-      //    read gets its tracks listed on first use instead.
-      const tracks = await listAudioTracks(videoPath).catch(() => null);
+      // 4. Aspect ratio and audio tracks, probed the same way the service does at runtime. A file
+      //    ffprobe can't read gets them on first use instead.
+      const [aspectRatio, tracks] = await Promise.all([
+        getAspectRatio(videoPath),
+        listAudioTracks(videoPath).catch(() => null),
+      ]);
+      if (aspectRatio !== null) entry.aspectRatio = aspectRatio;
       if (!tracks) return [hash, entry];
       entry.audioTracks = tracks;
 
@@ -313,33 +320,17 @@ export class MediaService extends Service<TMediaData> {
       }
     ),
 
-    // A thumbnail of the video, as a base64 data URL ("data:image/jpeg;base64,...")
-    this.handle('generate-thumbnail', async (_: IpcMainInvokeEvent, videoPath: string) => {
-      const trackedFolder = ScannerService.getInstance().getWorkFolderPath();
+    // What the UI shows of the video before playing it: a thumbnail, as a base64 data URL
+    // ("data:image/jpeg;base64,..."), and its displayed aspect ratio (width / height). Both are
+    // cached in the video's entry; either is null when it can't be produced, without failing the
+    // other.
+    this.handle('get-video-metadata', async (_: IpcMainInvokeEvent, videoPath: string) => {
       const { hash, entry } = this.getEntry(videoPath);
-      const toDataUrl = (buf: Buffer) => `data:image/jpeg;base64,${buf.toString('base64')}`;
-
-      if (trackedFolder && entry.thumb) {
-        const cached = runWithFallback(
-          () => fs.readFileSync(path.join(cacheDir(trackedFolder, 'previews'), entry.thumb!)),
-          null
-        );
-        if (cached) return toDataUrl(cached);
-      }
-
-      const buf = await renderThumbnail(videoPath);
-      if (trackedFolder) {
-        const thumb = fileNames.thumb(hash);
-        try {
-          const dir = cacheDir(trackedFolder, 'previews');
-          ensureDir(dir);
-          fs.writeFileSync(path.join(dir, thumb), buf);
-          this.updateEntry(hash, { thumb });
-        } catch {
-          /* non-fatal */
-        }
-      }
-      return toDataUrl(buf);
+      const [thumbnail, aspectRatio] = await Promise.all([
+        this.loadThumbnail(hash, entry, videoPath),
+        this.loadAspectRatio(hash, entry, videoPath),
+      ]);
+      return { thumbnail, aspectRatio };
     }),
 
     // Every audio stream of the video, listed once with ffprobe and then served from the store
@@ -421,6 +412,56 @@ export class MediaService extends Service<TMediaData> {
 
   // Read-modify-write against the stored entry, so concurrent handlers don't drop each other's
   // updates
+  // The cached thumbnail, or a freshly rendered (and cached) one; null if rendering fails
+  private async loadThumbnail(
+    hash: string,
+    entry: TVideoFileMeta,
+    videoPath: string
+  ): Promise<string | null> {
+    const trackedFolder = ScannerService.getInstance().getWorkFolderPath();
+    const toDataUrl = (buf: Buffer) => `data:image/jpeg;base64,${buf.toString('base64')}`;
+
+    if (trackedFolder && entry.thumb) {
+      const cached = runWithFallback(
+        () => fs.readFileSync(path.join(cacheDir(trackedFolder, 'previews'), entry.thumb!)),
+        null
+      );
+      if (cached) return toDataUrl(cached);
+    }
+
+    let buf: Buffer;
+    try {
+      buf = await renderThumbnail(videoPath);
+    } catch (error) {
+      console.warn(error);
+      return null;
+    }
+    if (trackedFolder) {
+      const thumb = fileNames.thumb(hash);
+      try {
+        const dir = cacheDir(trackedFolder, 'previews');
+        ensureDir(dir);
+        fs.writeFileSync(path.join(dir, thumb), buf);
+        this.updateEntry(hash, { thumb });
+      } catch {
+        /* non-fatal */
+      }
+    }
+    return toDataUrl(buf);
+  }
+
+  // The cached aspect ratio, or a freshly probed one, cached when ffprobe could read it
+  private async loadAspectRatio(
+    hash: string,
+    entry: TVideoFileMeta,
+    videoPath: string
+  ): Promise<number | null> {
+    if (entry.aspectRatio) return entry.aspectRatio;
+    const aspectRatio = await getAspectRatio(videoPath);
+    if (aspectRatio !== null) this.updateEntry(hash, { aspectRatio });
+    return aspectRatio;
+  }
+
   private updateEntry(hash: string, patch: Partial<TVideoFileMeta>): void {
     const videos = this.readVideos();
     const entry = videos[hash];

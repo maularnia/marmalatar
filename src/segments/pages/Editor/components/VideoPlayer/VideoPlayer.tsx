@@ -56,6 +56,8 @@ const TopBarPanel = styled.div`
 const TopBarTag = styled(Tag)``;
 const TopBarBlurWrapper = styled.div``;
 
+const DEFAULT_ASPECT_RATIO = 16 / 9;
+
 const VideoStage = styled.div`
   position: relative;
 
@@ -64,13 +66,17 @@ const VideoStage = styled.div`
   }
 `;
 
+// The shell sizes the player box (height: 100% plus the video's aspect ratio, set inline from the
+// store); the progress bar and subtitles are positioned inside it. The height is capped at a third
+// of the screen so a tall (e.g. 9:21) video can't push the editor off it -- the width follows from
+// the capped height, so the box keeps the video's shape.
 const VideoPlayerShell = styled.div<{ $hidden?: boolean }>`
   height: 100%;
+  max-height: 50vh;
   position: relative;
   display: ${({ $hidden }) => ($hidden ? 'none' : 'flex')};
   flex-direction: column;
   margin: 0 auto;
-  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 100)};
   transition: transform 0.1s ease-in-out;
@@ -140,15 +146,25 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     projects.close();
     navigate('/');
   }, [navigate]);
-  const [lines, activeLineIndex, videoFilePath, characterPool, isSmallScreen, isVideoCollapsed] =
-    useAppSelectors(
-      editor.selectLines,
-      media.selectActiveLineIndex,
-      media.selectVideoFilePath,
-      editor.selectCharacterPool,
-      settings.selectIsSmallScreen,
-      editor.selectIsVideoCollapsed
-    );
+  const [
+    lines,
+    activeLineIndex,
+    videoFilePath,
+    videoAspectRatio,
+    characterPool,
+    isSmallScreen,
+    isVideoCollapsed,
+  ] = useAppSelectors(
+    editor.selectLines,
+    media.selectActiveLineIndex,
+    media.selectVideoFilePath,
+    media.selectAspectRatio,
+    editor.selectCharacterPool,
+    settings.selectIsSmallScreen,
+    editor.selectIsVideoCollapsed
+  );
+  // 16:9 until the video's own ratio is known (or when it couldn't be read)
+  const aspectRatio = videoAspectRatio ?? DEFAULT_ASPECT_RATIO;
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;
@@ -337,8 +353,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
         </TopBarPanel>
       </TopBar>
       {videoFilePath ? (
-        <VideoPlayerShell $hidden={effectiveCollapsed}>
-          <Video ref={media.registerVideoElement} playsInline muted />
+        <VideoPlayerShell $hidden={effectiveCollapsed} style={{ aspectRatio }}>
+          <Video ref={media.registerVideoElement} style={{ aspectRatio }} playsInline muted />
           <Audio ref={media.registerAudioElement} />
           <BottomPanel>
             <VideoProgressBar />

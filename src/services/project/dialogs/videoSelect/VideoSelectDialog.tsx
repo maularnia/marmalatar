@@ -23,7 +23,8 @@ export type VideoSelectResult = {
   audioPath: string;
   fileName: string;
   waveformPeaks: number[];
-  previewImage: string | null;
+  thumbnail: string | null;
+  aspectRatio: number | null;
 };
 
 export type VideoSelectDialogProps = {
