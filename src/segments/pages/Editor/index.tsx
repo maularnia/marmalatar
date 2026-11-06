@@ -170,7 +170,6 @@ export default function Editor() {
         isMergeMaster={isFocused && isAltShiftPressed}
         isFrozen={isFrozen}
         onFocus={() => {
-          editor.focusLine(lineIndex);
           media.seekToLine(lineIndex);
           media.pause();
         }}

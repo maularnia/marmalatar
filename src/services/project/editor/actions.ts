@@ -136,33 +136,49 @@ function setFocusedLine(lineIndex: number | null): void {
   splitCursor = null;
 }
 
-/** Focuses a line's input and makes it the focused line and column. Returns whether the input
- * exists (is rendered). */
-export function focusInput(lineIndex: number, column: TInputColumn, selectAll = false): boolean {
-  const el = getLineInput(lineIndex, column);
-  if (!el) return false;
-  if (column === 'output' || column === 'source') {
-    if (selectAll) selectAllContentEditable(el);
-    else focusContentEditableToEnd(el);
-  } else {
-    el.focus();
+// The column the current mode edits: edit mode hides the output column.
+const modeColumn = (): TInputColumn => (Service.select(selectIsEditMode) ? 'source' : 'output');
+
+/** Makes a line (and column) the focused one, moving DOM focus to its input unless the input
+ * already has it. `column` defaults to the one the current mode edits (source in edit mode, output
+ * in translation mode). Returns whether the input exists (is rendered). `focusLine(null)` only
+ * clears the focused column (the focus left the line's inputs), keeping the focused line. */
+export function focusLine(lineIndex: null): void;
+export function focusLine(lineIndex: number, column?: TInputColumn, selectAll?: boolean): boolean;
+export function focusLine(
+  lineIndex: number | null,
+  column: TInputColumn = modeColumn(),
+  selectAll = false
+): boolean | void {
+  if (lineIndex === null) {
+    Service.dispatch(setFocusedColumn(null));
+    return;
   }
-  el.scrollIntoView({ block: 'nearest' });
+  if (!lines()[lineIndex]) return false;
+  const el = getLineInput(lineIndex, column);
+  if (!el) {
+    // A line scrolled out of the virtualized list has no input, but still becomes focused.
+    setFocusedLine(lineIndex);
+    return false;
+  }
+  // Inputs call this from their own onFocus to sync the store: moving the caret or scrolling then
+  // would undo where the user just clicked. An explicit selectAll still applies.
+  if (selectAll || !el.contains(document.activeElement)) {
+    if (column === 'output' || column === 'source') {
+      if (selectAll) selectAllContentEditable(el);
+      else focusContentEditableToEnd(el);
+    } else {
+      el.focus();
+    }
+    el.scrollIntoView({ block: 'nearest' });
+  }
   setFocusedLine(lineIndex);
   Service.dispatch(setFocusedColumn(column));
   return true;
 }
 
-/** Syncs the focused line and column to an input that was focused through some element outside
- * the line inputs (e.g. a zone's generic fallback ref) -- the DOM focusing itself stays with the
- * caller, since only it knows which element that is. */
-export function setFocusedLineAndColumn(lineIndex: number, column: TInputColumn): void {
-  setFocusedLine(lineIndex);
-  Service.dispatch(setFocusedColumn(column));
-}
-
-/** Refocuses whatever was last focused, falling back to the first line's first available input
- * (output, then source) if nothing was focused yet or the editor has no lines. Returns whether
+/** Refocuses whatever was last focused, falling back to the first line's input for the current
+ * mode if nothing was focused yet or the editor has no lines. Returns whether
  * it actually found something to focus. */
 // Shared by "an overlay just closed" and "a project just opened": prefer wherever the user last
 // was, and otherwise land on the first line's first available input -- output normally, source
@@ -170,37 +186,31 @@ export function setFocusedLineAndColumn(lineIndex: number, column: TInputColumn)
 export function focusEditor(): boolean {
   const focusedLineIndex = Service.select(selectFocusedLineIndex);
   const focusedColumn = Service.select(selectFocusedColumn);
-  if (focusedLineIndex !== null && focusInput(focusedLineIndex, focusedColumn ?? 'output')) {
+  if (focusedLineIndex !== null && focusLine(focusedLineIndex, focusedColumn ?? undefined)) {
     return true;
   }
   if (lines().length === 0) return false;
-  return focusInput(0, 'output') || focusInput(0, 'source');
+  return focusLine(0);
 }
 
 // Several operations (split/merge/insert/remove line, undo/redo) dispatch a change that bumps the
 // render epoch, which remounts every visible row (see VirtualizedList's epoch-keyed Slots) -- that
 // destroys whatever was focused, so the refocus has to happen on the next frame, after the remount
 // has actually happened. Centralized here so every such operation recovers the same way.
-function refocusLineAfterRender(lineIndex: number, column: TInputColumn): void {
+function refocusLineAfterRender(lineIndex: number, column?: TInputColumn): void {
   requestAnimationFrame(() => {
-    focusInput(lineIndex, column, false);
+    focusLine(lineIndex, column);
   });
-}
-
-/** Makes an existing line the focused one, without moving DOM focus. */
-export function focusLine(lineIndex: number): void {
-  if (!lines()[lineIndex]) return;
-  setFocusedLine(lineIndex);
 }
 
 export function switchColumn(targetColumn: TInputColumn, lineIndex: number | null): void {
   if (lineIndex == null) {
     if (lines().length === 0) return;
-    focusInput(0, targetColumn);
+    focusLine(0, targetColumn);
     return;
   }
   if (!Service.select(selectFocusedColumn)) return;
-  focusInput(lineIndex, targetColumn);
+  focusLine(lineIndex, targetColumn);
 }
 
 function hasSelectedTextInElement(element: HTMLElement): boolean {
@@ -216,17 +226,17 @@ export function navigateLine(direction: 'up' | 'down', lineIndex: number | null)
   const activeElement = (document.activeElement as HTMLElement | null) ?? document.body;
   const lineCount = lines().length;
   const focusedColumn = Service.select(selectFocusedColumn);
-  const column = focusedColumn ?? 'output';
+  const column = focusedColumn ?? undefined;
   if (lineIndex == null) {
     if (lineCount === 0) return;
-    focusInput(0, column);
+    focusLine(0, column);
     media.seekToLine(0);
     return;
   }
   const targetIndex = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
   if (targetIndex < 0 || targetIndex >= lineCount) return;
   const selectAll = focusedColumn === 'output' && hasSelectedTextInElement(activeElement);
-  focusInput(targetIndex, column, selectAll);
+  focusLine(targetIndex, column, selectAll);
   media.seekToLine(targetIndex);
 }
 
@@ -268,7 +278,7 @@ export async function copySourceToOutput(lineIndex: number): Promise<void> {
     Service.dispatch(
       setLineCompleted({ lineIndex, completed: Boolean(line.input), skipHistory: true })
     );
-  focusInput(lineIndex, 'output', true);
+  focusLine(lineIndex, 'output', true);
   toast.push(makeTextCopiedMessage());
 }
 
@@ -281,7 +291,7 @@ export function insertLine(lineIndex: number, position: 'before' | 'after'): voi
     toast.push(makeLineTooShortToSplitMessage());
     return;
   }
-  const column = Service.select(selectFocusedColumn) ?? 'output';
+  const column = Service.select(selectFocusedColumn) ?? undefined;
   Service.dispatch(lineInserted({ lineIndex, position }));
   refocusLineAfterRender(position === 'before' ? lineIndex : lineIndex + 1, column);
 }
@@ -334,7 +344,7 @@ export async function mergeLines(lineIndex: number, direction: 'up' | 'down'): P
     }
   }
   Service.dispatch(linesMerged({ lineIndex, direction }));
-  refocusLineAfterRender(direction === 'up' ? partnerIndex : lineIndex, 'output');
+  refocusLineAfterRender(direction === 'up' ? partnerIndex : lineIndex);
   toast.push(makeLinesMergedMessage());
 }
 
@@ -366,7 +376,7 @@ export async function removeLine(lineIndex: number): Promise<void> {
   const hasPrev = lineIndex > 0;
   Service.dispatch(lineRemoved(lineIndex));
   const targetIndex = hasNext ? lineIndex : hasPrev ? lineIndex - 1 : null;
-  if (targetIndex != null) refocusLineAfterRender(targetIndex, 'output');
+  if (targetIndex != null) refocusLineAfterRender(targetIndex);
   else setFocusedLine(null);
   toast.push(makeLineDeletedMessage());
 }
@@ -378,12 +388,12 @@ export function toggleCompleted(lineIndex: number): void {
   Service.dispatch(setLineCompleted({ lineIndex, completed }));
   if (completed) {
     // Marking complete advances to the next line.
-    if (current[lineIndex + 1]) focusInput(lineIndex + 1, 'output', false);
+    if (current[lineIndex + 1]) focusLine(lineIndex + 1);
   } else {
     // Un-completing is a correction -- clicking the toggle itself moved DOM focus away from the
     // line's input, so restore it to whatever column was last focused rather than leaving focus
     // stranded on the toggle button.
-    focusInput(lineIndex, focusedColumn ?? 'output', false);
+    focusLine(lineIndex, focusedColumn ?? undefined);
   }
 }
 

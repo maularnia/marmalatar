@@ -462,7 +462,7 @@ function EditorShortcuts() {
     });
   };
 
-  // ctrl+2's real target: prefer the already-focused line (with editor.focusInput's
+  // ctrl+2's real target: prefer the already-focused line (with editor.focusLine's
   // richer cursor/scroll treatment) and only fall back to the zone's own ref (row 0's output
   // column, seeded by EditorTableLine, or whatever was last focused) when nothing was focused yet.
   // Registered once -- the closure below reads focus state fresh from the store when it actually
@@ -473,14 +473,14 @@ function EditorShortcuts() {
       const focusedColumn = editor.get.focusedColumn();
       if (
         focusedLineIndex !== null &&
-        editor.focusInput(focusedLineIndex, focusedColumn ?? 'output')
+        editor.focusLine(focusedLineIndex, focusedColumn ?? undefined)
       )
         return;
       const el = zoneRef.current;
       if (!el) return;
+      // The input's own onFocus syncs the focused line and column.
       focusContentEditableToEnd(el);
       el.scrollIntoView({ block: 'nearest' });
-      editor.setFocusedLineAndColumn(0, 'output');
     };
     setFocusOverride(focusOverride);
     return () => setFocusOverride(undefined);

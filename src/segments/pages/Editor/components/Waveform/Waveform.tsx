@@ -286,8 +286,8 @@ export default function Waveform({
     const handlePointerUp = () => {
       if (dragStateRef.current && !dragStateRef.current.hasMoved) {
         const lineIndex = dragStateRef.current.lineIndex;
-        editor.focusLine(lineIndex);
-        requestAnimationFrame(() => editor.focusInput(lineIndex, 'output', false));
+        media.seekToLine(lineIndex);
+        requestAnimationFrame(() => editor.focusLine(lineIndex));
       }
       dragStateRef.current = null;
       setDragLineIndex(null);

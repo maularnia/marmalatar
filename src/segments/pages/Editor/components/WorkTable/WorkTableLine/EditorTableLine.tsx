@@ -517,10 +517,9 @@ export default function EditorTableLine({
             data-line-no={lineNo}
             onFocus={() => {
               onFocus();
-              editor.setFocusedColumn('source');
+              editor.focusLine(lineIndex, 'source');
             }}
             onClick={() => {
-              editor.setFocusedColumn('source');
               updateSplitCursor();
             }}
             onSelect={() => {
@@ -547,7 +546,7 @@ export default function EditorTableLine({
         </NumberLineCell>
         <LineCell
           style={{ cursor: 'text' }}
-          onBlur={() => editor.setFocusedColumn(null)}
+          onBlur={() => editor.focusLine(null)}
           onClick={() => {
             if (isTranslationBusy || !characterInputRef.current?.inputRef) return;
             characterInputRef.current.inputRef.focus();
@@ -559,7 +558,7 @@ export default function EditorTableLine({
             characters={characterOptions}
             onFocus={() => {
               onFocus();
-              editor.setFocusedColumn('character');
+              editor.focusLine(lineIndex, 'character');
             }}
             value={selectedCharacters}
             disabled={isTranslationBusy}
@@ -592,10 +591,9 @@ export default function EditorTableLine({
               data-line-no={lineNo}
               onFocus={() => {
                 onFocus();
-                editor.setFocusedColumn('output');
+                editor.focusLine(lineIndex, 'output');
               }}
               onClick={() => {
-                editor.setFocusedColumn('output');
                 updateSplitCursor();
               }}
               onKeyUp={updateSplitCursor}
