@@ -72,6 +72,53 @@ export default tseslint.config(
     },
   },
 
+  // The renderer reaches the main process only through src/services/ipc
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/services/ipc/**', 'src/electron.d.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'window',
+          property: 'electronAPI',
+          message: 'Use the IPC singleton from src/services/ipc/IPC instead.',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/services/ipc/*', '!**/services/ipc/IPC'],
+              message: 'Use the IPC singleton from src/services/ipc/IPC.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // The one exception to the src/electron split: the renderer's window.electronAPI type is derived
+  // from the main-process services. Type-only, so no main-process code reaches the renderer bundle.
+  {
+    files: ['src/electron.d.ts'],
+    rules: {
+      'import-x/no-restricted-paths': [
+        'error',
+        {
+          zones: [
+            {
+              target: './src',
+              from: '.',
+              except: ['./src', './bridge', './node_modules', './electron'],
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   {
     files: ['src/theme/themes/*.ts', 'src/theme/variables/globals.ts'],
     rules: {

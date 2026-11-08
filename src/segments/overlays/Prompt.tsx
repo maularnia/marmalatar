@@ -1,12 +1,6 @@
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  selectCurrentPromptTemplate,
-  selectPromptTemplateData,
-  setPromptTemplateData,
-} from '@store/slices/aiPromptEditor';
-import { closeOverlays } from '@store/slices/overlays';
-import { savePromptTemplate } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { promptTemplates } from '@src/services/prompt';
 import {
   FormsContent,
   FormsRow,
@@ -18,7 +12,6 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import TextArea from '@ui-toolkit/TextArea';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 import { useTranslation } from 'react-i18next';
-import { useLoader } from '../dialogs/loader/useLoader';
 import Overlay from './Overlay';
 
 const emptyFormData: PromptTemplateFileDataType = {
@@ -30,29 +23,21 @@ const emptyFormData: PromptTemplateFileDataType = {
 
 export default function PromptOverlay() {
   const { t } = useTranslation(['prompt', 'messages']);
-  const dispatch = useAppDispatch();
-  const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
-  const promptTemplateData = useAppSelector(selectPromptTemplateData);
-  const { load } = useLoader();
+  const [currentPromptTemplate, promptTemplateData] = useAppSelectors(
+    promptTemplates.selectCurrent,
+    promptTemplates.selectData
+  );
 
   const formData = promptTemplateData ?? emptyFormData;
 
   const handleChange = (field: keyof PromptTemplateFileDataType, value: string) => {
-    dispatch(setPromptTemplateData({ ...formData, [field]: value }));
-  };
-
-  const handleClose = async () => {
-    await load(
-      { messages: [t('messages:promptTemplate.savingLabel', { title: formData.title || '...' })] },
-      dispatch(savePromptTemplate()) as Promise<unknown>
-    );
-    dispatch(closeOverlays());
+    promptTemplates.setData({ ...formData, [field]: value });
   };
 
   if (!currentPromptTemplate) return null;
 
   return (
-    <Overlay onClose={() => void handleClose()}>
+    <Overlay onClose={() => void promptTemplates.saveAndClose()}>
       <FormsContent>
         <FormsRow>
           <FormsSection>

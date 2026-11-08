@@ -95,5 +95,8 @@
   },
   "cacheCleanupSuccess": {
     "title": "Кэш быў ачышчаны"
+  },
+  "audioTracksLoader": {
+    "extracting": "Чытаем звесткі пра аўдыядарожкі"
   }
 }

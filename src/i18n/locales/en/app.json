@@ -3,16 +3,6 @@
     "supportedFormats": "Supported file formats are: .mp4, .m4v, .mkv, .webm, .mov, .avi, .wmv, .flv, .mpg, .mpeg, .m2ts, .mts, .ts, .3gp, .3g2, .ogv,.asf",
     "supportedCodecs": "Supported codecs: H.264, VP8, VP9, AV1"
   },
-  "videoFileStatus": {
-    "idle": "No file to process",
-    "loading": "Preparing the file...",
-    "success": "Selected file is valid and ready",
-    "error": "Error processing the file",
-    "unsupportedVideo": "Unplayable video. Unsupported video codec",
-    "extractingAudio": "Extracting audio track...",
-    "audioExtractionFailed": "Unable to extract or convert audio",
-    "unplayableConvertedAudio": "Unable to convert audio to playable format"
-  },
   "errorBoundary": {
     "title": "Something went wrong",
     "message": "The app has run into an unexpected error. Try restarting the app; your project is saved on disk and won't be lost.",

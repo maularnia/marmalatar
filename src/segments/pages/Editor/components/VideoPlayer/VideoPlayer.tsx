@@ -1,28 +1,27 @@
-import { useVideo } from '@providers/VideoProvider';
-import { selectIsSmallScreen } from '@src/store/slices/app';
-import {
-  selectActiveLineIndex,
-  selectCharacterPool,
-  selectIsVideoCollapsed,
-  selectLines,
-  setVideoCollapsed,
-} from '@src/store/slices/editor';
-import { selectVideoFilePath } from '@src/store/slices/project';
+import { media } from '@src/services/media';
+import { settings } from '@src/services/settings';
+import { editor } from '@src/services/project';
+import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { TCharacter } from '@src/types';
 import { msToHunanTime } from '@src/utils/time';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import classNames from 'classnames';
-import { Fragment, useEffect } from 'react';
+import { Fragment, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useVideoFileSwap } from './useVideoFileSwap';
 import VideoProgressBar from './VideoProgressBar';
+import { truncateText } from '@src/utils/truncateText';
+
+// The audio button sits in the player's top bar, next to the line's timing: long track titles
+// would push it over the video
+const AUDIO_TRACK_LABEL_MAX_LENGTH = 15;
 
 const TopBar = styled.div`
   position: absolute;
@@ -62,6 +61,8 @@ const TopBarPanel = styled.div`
 const TopBarTag = styled(Tag)``;
 const TopBarBlurWrapper = styled.div``;
 
+const DEFAULT_ASPECT_RATIO = 16 / 9;
+
 const VideoStage = styled.div`
   position: relative;
 
@@ -70,13 +71,17 @@ const VideoStage = styled.div`
   }
 `;
 
+// The shell sizes the player box (height: 100% plus the video's aspect ratio, set inline from the
+// store); the progress bar and subtitles are positioned inside it. The height is capped at a third
+// of the screen so a tall (e.g. 9:21) video can't push the editor off it -- the width follows from
+// the capped height, so the box keeps the video's shape.
 const VideoPlayerShell = styled.div<{ $hidden?: boolean }>`
   height: 100%;
+  max-height: 50vh;
   position: relative;
   display: ${({ $hidden }) => ($hidden ? 'none' : 'flex')};
   flex-direction: column;
   margin: 0 auto;
-  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 100)};
   transition: transform 0.1s ease-in-out;
@@ -139,22 +144,36 @@ type VideoPlayerProps = {
 
 export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: VideoPlayerProps) {
   const { t } = useTranslation('editor');
-  const dispatch = useAppDispatch();
-  const {
-    videoElementRef,
-    registerVideoElementRef,
-    audioElementRef,
-    registerAudioElementRef,
-    setCurrentTimeMs,
-    reportVideoUnplayable,
-  } = useVideo();
-  const lines = useAppSelector(selectLines);
-  const activeLineIndex = useAppSelector(selectActiveLineIndex);
-  const videoFilePath = useAppSelector(selectVideoFilePath);
-  const { swapVideo } = useVideoFileSwap();
-  const characterPool = useAppSelector(selectCharacterPool);
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const isVideoCollapsed = useAppSelector(selectIsVideoCollapsed);
+  const navigate = useNavigate();
+  // An unplayable video closes the project: the editor can't be used in sync with it
+  const reportVideoUnplayable = useCallback(() => {
+    media.reportVideoUnplayable();
+    projects.close();
+    navigate('/');
+  }, [navigate]);
+  const [
+    lines,
+    activeLineIndex,
+    videoFilePath,
+    videoAspectRatio,
+    characterPool,
+    isSmallScreen,
+    isVideoCollapsed,
+    audioTrackCount,
+    audioTrack,
+  ] = useAppSelectors(
+    editor.selectLines,
+    media.selectActiveLineIndex,
+    media.selectVideoFilePath,
+    media.selectAspectRatio,
+    editor.selectCharacterPool,
+    settings.selectIsSmallScreen,
+    editor.selectIsVideoCollapsed,
+    media.selectAudioTrackCount,
+    media.selectAudioTrack
+  );
+  // 16:9 until the video's own ratio is known (or when it couldn't be read)
+  const aspectRatio = videoAspectRatio ?? DEFAULT_ASPECT_RATIO;
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;
@@ -171,11 +190,11 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       : [];
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
-    const video = videoElementRef.current;
+    const video = media.getVideoElement();
     const emitCurrentTime = () => {
       if (!video) return;
-      setCurrentTimeMs(video.currentTime * 1000);
-      const audio = audioElementRef.current;
+      media.setCurrentTimeMs(video.currentTime * 1000);
+      const audio = media.getAudioElement();
       if (
         audio &&
         Math.abs(audio.currentTime - video.currentTime) > AUDIO_VIDEO_DRIFT_THRESHOLD_S
@@ -224,7 +243,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       reportVideoUnplayable();
     };
 
-    const audio = audioElementRef.current;
+    const audio = media.getAudioElement();
     const handleAudioError = () => {
       const err = audio?.error;
       if (!err || err.code === MediaError.MEDIA_ERR_ABORTED) return;
@@ -250,14 +269,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       video.removeEventListener('error', handleError);
       audio?.removeEventListener('error', handleAudioError);
     };
-  }, [
-    setCurrentTimeMs,
-    videoElementRef,
-    audioElementRef,
-    onPlaybackPause,
-    onPlaybackResume,
-    reportVideoUnplayable,
-  ]);
+  }, [onPlaybackPause, onPlaybackResume, reportVideoUnplayable]);
 
   return (
     <VideoStage className={classNames({ isCollapsed: effectiveCollapsed })} tabIndex={1}>
@@ -315,13 +327,27 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
           ) : null}
         </TopBarPanel>
         <TopBarPanel>
+          {videoFilePath && audioTrackCount > 1 && (
+            <TopBarBlurWrapper>
+              <Button
+                variant={TButtonVariant.PRIMARY}
+                color={ThemeColors.TEXT}
+                size={TButtonSize.SMALL}
+                icon={TIcon.AUDIO_TRACK}
+                onClick={() => void projects.changeAudioTrack()}
+              >
+                {audioTrack &&
+                  truncateText(media.getAudioTrackLabel(audioTrack), AUDIO_TRACK_LABEL_MAX_LENGTH)}
+              </Button>
+            </TopBarBlurWrapper>
+          )}
           <TopBarBlurWrapper>
             <Button
               variant={TButtonVariant.PRIMARY}
               color={ThemeColors.TEXT}
               size={TButtonSize.SMALL}
               icon={TIcon.VIDEO}
-              onClick={swapVideo}
+              onClick={() => void projects.changeVideo()}
             />
           </TopBarBlurWrapper>
           {isSmallScreen && (
@@ -331,16 +357,16 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
                 variant={TButtonVariant.PRIMARY}
                 size={TButtonSize.SMALL}
                 icon={isVideoCollapsed ? TIcon.ARROW_TOGGLE_DOWN : TIcon.ARROW_TOGGLE_UP}
-                onClick={() => dispatch(setVideoCollapsed(!isVideoCollapsed))}
+                onClick={() => editor.setVideoCollapsed(!isVideoCollapsed)}
               />
             </TopBarBlurWrapper>
           )}
         </TopBarPanel>
       </TopBar>
       {videoFilePath ? (
-        <VideoPlayerShell $hidden={effectiveCollapsed}>
-          <Video ref={registerVideoElementRef} playsInline muted />
-          <Audio ref={registerAudioElementRef} />
+        <VideoPlayerShell $hidden={effectiveCollapsed} style={{ aspectRatio }}>
+          <Video ref={media.registerVideoElement} style={{ aspectRatio }} playsInline muted />
+          <Audio ref={media.registerAudioElement} />
           <BottomPanel>
             <VideoProgressBar />
           </BottomPanel>

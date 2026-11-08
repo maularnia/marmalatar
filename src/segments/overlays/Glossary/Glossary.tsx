@@ -1,17 +1,9 @@
 import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
-import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
-import { useLoader } from '@src/segments/dialogs/loader/useLoader';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  selectCurrentGlossary,
-  selectGlossaryData,
-  setGlossaryData,
-} from '@store/slices/aiPromptEditor';
-import { closeOverlays } from '@store/slices/overlays';
-import { saveGlossary } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { glossaries } from '@src/services/glossary';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import {
@@ -44,45 +36,40 @@ const emptyFormData: AIGlossaryFileDataType = {
 export default function GlossaryOverlay() {
   const { t } = useTranslation(['glossary', 'tooltips', 'messages']);
   const languageOptions = useLanguageOptions();
-  const dispatch = useAppDispatch();
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
-  const glossaryData = useAppSelector(selectGlossaryData);
-  const { load } = useLoader();
-  const { handleSetFocusedPair, handleInsertPair, handleDeletePair } = useGlossaryActions();
+  const [currentGlossary, glossaryData] = useAppSelectors(
+    glossaries.selectCurrent,
+    glossaries.selectData
+  );
 
   const formData = glossaryData ?? emptyFormData;
 
-  const handleChange = useCallback(
-    <K extends keyof AIGlossaryFileDataType>(field: K, value: AIGlossaryFileDataType[K]) => {
-      dispatch(setGlossaryData({ ...formData, [field]: value }));
+  // Languages are part of the file header, which only the main process writes: they're saved right
+  // away rather than with the pairs on close
+  const handleLanguagesChange = useCallback(
+    (sourceLanguage: TLanguage, targetLanguage: TLanguage) => {
+      if (!currentGlossary) return;
+      void glossaries.updateLanguages(currentGlossary, sourceLanguage, targetLanguage);
     },
-    [dispatch, formData]
+    [currentGlossary]
   );
   const handleRowChange = useCallback(
     (index: number, field: 'original' | 'translation', value: string) => {
       const list = formData.list.map((entry, i) =>
         i === index ? { ...entry, [field]: value } : entry
       );
-      dispatch(setGlossaryData({ ...formData, list }));
+      glossaries.setData({ ...formData, list });
     },
-    [dispatch, formData]
+    [formData]
   );
 
   const handleAddRow = useCallback(() => {
-    handleInsertPair(formData.list.length - 1, 'after');
-  }, [handleInsertPair, formData.list.length]);
+    glossaries.insertPair(formData.list.length - 1, 'after');
+  }, [formData.list.length]);
 
-  const handleClose = async () => {
-    await load(
-      { messages: [t('messages:glossary.savingLabel', { title: formData.title || '...' })] },
-      dispatch(saveGlossary()) as Promise<unknown>
-    );
-    dispatch(closeOverlays());
-  };
   if (!currentGlossary) return null;
 
   return (
-    <Overlay onClose={() => void handleClose()}>
+    <Overlay onClose={() => void glossaries.saveAndClose()}>
       <GlossaryKeystrokeProvider>
         <FormsContent>
           <FormsRow>
@@ -95,7 +82,10 @@ export default function GlossaryOverlay() {
                   options={languageOptions}
                   value={formData.sourceLanguage}
                   onChange={([v]) =>
-                    handleChange('sourceLanguage', (v as TLanguage) ?? TLanguage.English)
+                    handleLanguagesChange(
+                      (v as TLanguage) ?? TLanguage.English,
+                      formData.targetLanguage
+                    )
                   }
                 />
                 <Icon icon={TIcon.ARROW_RIGHT} size={TIconSize.L} style={{ alignSelf: 'center' }} />
@@ -103,7 +93,10 @@ export default function GlossaryOverlay() {
                   options={languageOptions}
                   value={formData.targetLanguage}
                   onChange={([v]) =>
-                    handleChange('targetLanguage', (v as TLanguage) ?? TLanguage.Belarusian)
+                    handleLanguagesChange(
+                      formData.sourceLanguage,
+                      (v as TLanguage) ?? TLanguage.Belarusian
+                    )
                   }
                 />
               </FormsSectionContent>
@@ -124,12 +117,12 @@ export default function GlossaryOverlay() {
                       translation={entry.translation}
                       sourceLanguage={formData.sourceLanguage}
                       targetLanguage={formData.targetLanguage}
-                      onFocus={(column) => handleSetFocusedPair(index, column)}
+                      onFocus={(column) => glossaries.setFocusedPair({ pairIndex: index, column })}
                       onOriginalChange={(v) => handleRowChange(index, 'original', v)}
                       onTranslationChange={(v) => handleRowChange(index, 'translation', v)}
-                      onDelete={() => handleDeletePair(index)}
-                      onInsertBefore={() => handleInsertPair(index, 'before')}
-                      onInsertAfter={() => handleInsertPair(index, 'after')}
+                      onDelete={() => void glossaries.deletePair(index)}
+                      onInsertBefore={() => glossaries.insertPair(index, 'before')}
+                      onInsertAfter={() => glossaries.insertPair(index, 'after')}
                     />
                   ))}
                 </EGlossaryTable>

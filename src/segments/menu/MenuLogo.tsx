@@ -1,11 +1,11 @@
-import { SETTINGS_KEY } from '@providers/MenuActionsProvider';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
+import { menu, SETTINGS_KEY } from '@src/services/menu';
+import { glossaries } from '@src/services/glossary';
+import { promptTemplates } from '@src/services/prompt';
+import { settings } from '@src/services/settings';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { selectCurrentOverlay } from '@src/store/slices/overlays';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { openSettingsOverlay } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
@@ -15,7 +15,6 @@ import classNames from 'classnames';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useMenuState } from '../../providers/MenuStateProvider';
 import ThemeSelector from './ThemeSelector';
 
 const PanelSwitch = styled.div`
@@ -45,21 +44,32 @@ const Root = styled.div`
     }
   }
 `;
+// Overlays are exclusive: each owner keeps its own open state, and the caller closes the others
+// before opening one. Opening settings drops the prompt or glossary editor without saving, as
+// before.
+function openSettings(): void {
+  promptTemplates.closeEditor();
+  glossaries.closeEditor();
+  settings.closeExport();
+  settings.open();
+}
+
 export default function MenuLogo() {
   const { t } = useTranslation('menu');
-  const dispatch = useAppDispatch();
-  const { dynamic, compact } = useMenuState();
-  const overlay = useAppSelector(selectCurrentOverlay);
-  const { registerMenuItemRef } = useMenuRefs();
+  const [isSettingsOpen, dynamic, compact] = useAppSelectors(
+    settings.selectIsOpen,
+    menu.selectIsDynamic,
+    menu.selectIsCompact
+  );
   const { zoneRef } = useKeystrokeZone();
   const setSettingsRef = useCallback(
     (el: HTMLDivElement | null) => {
-      registerMenuItemRef(SETTINGS_KEY, el);
+      menu.registerItem(SETTINGS_KEY, el);
       // Seeds the menu zone's fallback focus target -- always-mounted, so ctrl+N has somewhere
       // reliable to go even before anything in the menu has ever been focused.
       zoneRef.current = el;
     },
-    [registerMenuItemRef, zoneRef]
+    [zoneRef]
   );
   return (
     <Root className={classNames({ dynamic })}>
@@ -85,8 +95,8 @@ export default function MenuLogo() {
             ref={setSettingsRef}
             compact={dynamic ? compact : true}
             icon={TIcon.SETTINGS}
-            isActive={overlay === 'settings'}
-            onClick={() => dispatch(openSettingsOverlay())}
+            isActive={isSettingsOpen}
+            onClick={openSettings}
           >
             {t('buttons.settings')}
           </ListItem>

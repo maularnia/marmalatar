@@ -1,7 +1,7 @@
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@src/services/settings';
 import {
   TButtonProps,
   TButtonSize,
@@ -735,7 +735,7 @@ export default function Button({
   ...props
 }: TButtonProps) {
   const iconSize = ButtonSizeToIconSize[size];
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   const effectiveColor =
     variant === TButtonVariant.TRANSPARENT_SPECIAL || variant === TButtonVariant.SECONDARY_SPECIAL
       ? ThemeColors.ACCENT2

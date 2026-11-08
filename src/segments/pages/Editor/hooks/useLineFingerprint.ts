@@ -1,19 +1,11 @@
+import { media } from '@src/services/media';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
-import { useVideo } from '@providers/VideoProvider';
-import { selectIntegrationIsConfigured } from '@src/store/slices/app';
-import {
-  selectActiveLineIndex,
-  selectCharacterPool,
-  selectFocusedLineIndex,
-  selectLines,
-} from '@src/store/slices/editor';
-import { selectEditorMode } from '@src/store/slices/project';
-import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
+import { settings } from '@src/services/settings';
+import { editor } from '@src/services/project';
 import { TSubtitleLine } from '@src/types';
-import { useAppSelector } from '@store/hooks';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import { useAppSelectors } from '@store/hooks';
+import { ai } from '@src/services/ai';
 import { useMemo } from 'react';
-import { shallowEqual } from 'react-redux';
 
 type LineRenderKeyProps = {
   lineNo: number;
@@ -56,11 +48,9 @@ function buildCacheKey(props: LineRenderKeyProps): string {
 }
 
 export function useLineFingerprint() {
-  const { videoDurationMs } = useVideo();
-
   const { isCtrlPressed, isAltPressed, isCtrlAltPressed, isAltShiftPressed } = useEditorKeystroke();
 
-  const {
+  const [
     translationLines,
     frozenLineNumbers,
     integrationIsConfigured,
@@ -69,18 +59,17 @@ export function useLineFingerprint() {
     focusedLineIndex,
     activeLineIndex,
     editorMode,
-  } = useAppSelector(
-    (state) => ({
-      translationLines: selectLines(state),
-      frozenLineNumbers: selectFrozenLineNumbers(state),
-      integrationIsConfigured: selectIntegrationIsConfigured(state),
-      translationIsBusy: selectTranslationIsBusy(state),
-      characterOptions: selectCharacterPool(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
-      activeLineIndex: selectActiveLineIndex(state),
-      editorMode: selectEditorMode(state),
-    }),
-    shallowEqual
+    videoDurationMs,
+  ] = useAppSelectors(
+    editor.selectLines,
+    editor.selectFrozenLineNumbers,
+    settings.selectIntegrationIsConfigured,
+    ai.selectIsBusy,
+    editor.selectCharacterPool,
+    editor.selectFocusedLineIndex,
+    media.selectActiveLineIndex,
+    editor.selectMode,
+    media.selectVideoDurationMs
   );
 
   const characterOptionsHash = useMemo(

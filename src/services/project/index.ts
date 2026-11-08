@@ -1,0 +1,218 @@
+import { folder } from '@src/services/folder';
+import { Service } from '@src/services/Service';
+import {
+  buildProjectEditorStateSaveData,
+  changeProjectAudioTrack,
+  changeProjectVideo,
+  closeProject,
+  createProject,
+  deleteProject,
+  openProject,
+  refreshProjects,
+  renameProject,
+  saveProjectLanguages,
+  saveProjectToDisk,
+  startNewProject,
+  updateProjectEmoji,
+  writeProjectEditorState,
+} from './actions';
+import {
+  adjustEndTime,
+  adjustEntryTime,
+  adjustStartTime,
+  autoMerge,
+  cleanup,
+  clearSplitCursor,
+  completeAllTranslatedLines,
+  copyAllSourceToOutput,
+  copySourceToOutput,
+  focusEditor,
+  focusLine,
+  getSourceSelection,
+  insertLine,
+  mergeLines,
+  navigateLine,
+  playFocusedLine,
+  registerLineInput,
+  removeLine,
+  setSplitCursor,
+  shiftAllLines,
+  splitLine,
+  switchColumn,
+  toggleCompleted,
+  toggleEditMode,
+  undoRedo,
+} from './editor/actions';
+import {
+  addFrozenLine,
+  addTranslatedLine,
+  autoMergeAdjacentLines,
+  cleanupLines,
+  clearFileData,
+  incrementRenderEpoch,
+  removeFrozenLine,
+  resetEditorMemoryState,
+  restoreHistory,
+  selectCanRedo,
+  selectCanUndo,
+  selectCharacterPool,
+  selectEditorMode,
+  selectFocusedColumn,
+  selectFocusedLineIndex,
+  selectFrozenLineNumbers,
+  selectIsEditMode,
+  selectIsVideoCollapsed,
+  selectLines,
+  selectRenderEpoch,
+  selectTextSelection,
+  setCharacterPool,
+  setEditorMode,
+  setFrozenLineNumbers,
+  setLineCompleted,
+  setLines,
+  setTextSelection,
+  setTotalLinesToTranslate,
+  setVideoCollapsed,
+  shiftAllLinesEarlier,
+  shiftAllLinesLater,
+  updateLineTiming,
+  updateSourceText,
+  updateTranslatedText,
+  updateTranslationCharacter,
+} from './editor/slice';
+
+import {
+  selectCurrentProjectFilePath,
+  selectIsProjectOpen,
+  selectProjectId,
+  selectProjectList,
+  selectProjectName,
+  selectProjectSourceLanguage,
+  selectProjectTargetLanguage,
+  setProjectList,
+  setProjectSourceLanguage,
+  setProjectTargetLanguage,
+} from './slice';
+
+// The project service: the tracked folder's projects and the open one -- its file, device
+// preferences, and the open/create/start-new/delete flows -- plus its editor (editor/). This file
+// is its only entry point and builds both facades: `projects` and `editor`.
+
+export { default as projectReducer } from './slice';
+export { projectAutosaveMiddleware } from './autosave';
+export type { TProjectEntry } from './slice';
+
+export const projects = new Service('project', {
+  actions: {
+    setProjectList,
+    setProjectSourceLanguage,
+    setProjectTargetLanguage,
+  },
+  selectors: {
+    selectCurrentProjectFilePath,
+    selectIsProjectOpen,
+    selectProjectId,
+    selectProjectList,
+    selectProjectName,
+    selectProjectSourceLanguage,
+    selectProjectTargetLanguage,
+  },
+  functions: {
+    buildProjectEditorStateSaveData,
+    changeProjectAudioTrack,
+    changeProjectVideo,
+    closeProject,
+    createProject,
+    deleteProject,
+    openProject,
+    refreshProjects,
+    renameProject,
+    saveProjectLanguages,
+    saveProjectToDisk,
+    startNewProject,
+    updateProjectEmoji,
+    writeProjectEditorState,
+  },
+});
+
+// The folder can't import this service, so it hands every listing over through its scan event
+folder.onScanComplete(() => refreshProjects());
+
+// The editor service: the open project's lines with their undo history, focus and navigation, line
+// edits, timing, bulk operations, the edit/translate mode, and the rendered line inputs. This file
+// is its only entry point: the slice lives in slice.ts, the operations in actions.ts.
+//
+// Operations that edit lines (editor.mergeLines(i, 'up')) do the whole job: they check settings and
+// the running AI job, ask for confirmation, edit, refocus and report. The slice's reducers behind
+// them are named as events (linesMerged) and stay internal.
+
+export { default as editorReducer } from './editor/slice';
+
+export const editor = new Service('editor', {
+  actions: {
+    addFrozenLine,
+    addTranslatedLine,
+    autoMergeAdjacentLines,
+    cleanupLines,
+    clearFileData,
+    incrementRenderEpoch,
+    removeFrozenLine,
+    resetEditorMemoryState,
+    restoreHistory,
+    setCharacterPool,
+    setEditorMode,
+    setFrozenLineNumbers,
+    setLineCompleted,
+    setLines,
+    setTextSelection,
+    setTotalLinesToTranslate,
+    setVideoCollapsed,
+    shiftAllLinesEarlier,
+    shiftAllLinesLater,
+    updateLineTiming,
+    updateSourceText,
+    updateTranslatedText,
+    updateTranslationCharacter,
+  },
+  selectors: {
+    selectCanRedo,
+    selectCanUndo,
+    selectCharacterPool,
+    selectEditorMode,
+    selectFocusedColumn,
+    selectFocusedLineIndex,
+    selectFrozenLineNumbers,
+    selectIsEditMode,
+    selectIsVideoCollapsed,
+    selectLines,
+    selectRenderEpoch,
+    selectTextSelection,
+  },
+  functions: {
+    adjustEndTime,
+    adjustEntryTime,
+    adjustStartTime,
+    autoMerge,
+    cleanup,
+    clearSplitCursor,
+    completeAllTranslatedLines,
+    copyAllSourceToOutput,
+    copySourceToOutput,
+    focusEditor,
+    focusLine,
+    getSourceSelection,
+    insertLine,
+    mergeLines,
+    navigateLine,
+    playFocusedLine,
+    registerLineInput,
+    removeLine,
+    setSplitCursor,
+    shiftAllLines,
+    splitLine,
+    switchColumn,
+    toggleCompleted,
+    toggleEditMode,
+    undoRedo,
+  },
+});

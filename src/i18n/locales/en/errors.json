@@ -17,9 +17,6 @@
     "originalRequired": "This field is required",
     "translationRequired": "This field is required"
   },
-  "videoSelect": {
-    "fileRequired": "This field is required"
-  },
   "mainMenuListItem": {
     "nameTooLong": "Max length is [{{maxLength}}]",
     "nameAlreadyExists": "File with this name already exists",
@@ -30,15 +27,6 @@
     "parseFailedFallback": "Failed to parse the file",
     "fileRequired": "This field is required",
     "noValidLines": "Invalid or empty file, nothing to work with"
-  },
-  "videoFileSelect": {
-    "fileRequired": "This field is required",
-    "pathUnresolved": "Unable to resolve file path",
-    "stillProcessing": "Video processing in progress",
-    "unsupportedVideoCodec": "Video can not be played. Unsupported video codec.",
-    "audioExtractionFailed": "Unable to extract or convert the audio track.",
-    "unplayableConvertedAudio": "Unable to convert audio to a playable format.",
-    "processingFailed": "Video file processing failed."
   },
   "import": {
     "projectTitleRequired": "This field is required",
@@ -80,16 +68,13 @@
     "workerFailed": "Could not start the spellchecker"
   },
   "project": {
-    "corrupted": "Corrupted project file",
     "invalidFile": "Corrupted data at [{{path}}]: {{message}}",
     "incompatibleVersion": "This project file was created by a newer version of the app and can't be opened here",
     "cannotRead": "Unable to read project file",
-    "cannotSaveWithoutName": "Project name is required",
     "nameRequired": "Project name is required",
     "alreadyExists": "File with the same name already exists",
     "folderNotTracked": "No working folder",
-    "editorStateReadFailed": "Unable to read editor state",
-    "progressPersistFailed": "Unable to save translation progress"
+    "editorStateReadFailed": "Unable to read editor state"
   },
   "createNewProject": {
     "emojiSelectionFailed": "Failed to pick a random project emoji",
@@ -115,9 +100,6 @@
     "fieldNamesEmpty": "Field can not be empty",
     "duplicateFieldName": "Field [{{fieldName}}] already exists"
   },
-  "confirmationProvider": {
-    "confirmDestroyed": "The confirmation provider message has already been destroyed"
-  },
   "videoPlaybackError": {
     "title": "Can not play video",
     "message": "Video may have been corrapted or deleted"
@@ -142,12 +124,6 @@
   },
   "videoFileCheckFailed": {
     "title": "Unable to check the video file"
-  },
-  "waveformExtractionFailed": {
-    "title": "Unable to extract audio waveform"
-  },
-  "thumbnailGenerationFailed": {
-    "title": "Unable to generate video thumbnail"
   },
   "projectLoadFailed": {
     "title": "Project can not be loaded"
@@ -202,5 +178,8 @@
   "cacheCleanupFailed": {
     "title": "Cache cleaning error",
     "message": "Unable to clean up the cache"
+  },
+  "audioTracksListFailed": {
+    "title": "Unable to read the video audio tracks"
   }
 }

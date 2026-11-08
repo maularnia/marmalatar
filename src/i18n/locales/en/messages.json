@@ -95,5 +95,8 @@
   },
   "cacheCleanupSuccess": {
     "title": "Cache has been cleaned up"
+  },
+  "audioTracksLoader": {
+    "extracting": "Extracting audio tracks information"
   }
 }

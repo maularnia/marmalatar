@@ -1,10 +1,10 @@
 import { PropsWithChildren, useEffect } from 'react';
 import { useAppSelector } from '@store/hooks';
-import { selectUiLocale } from '@store/slices/app';
+import { settings } from '@src/services/settings';
 import i18n from '@src/i18n';
 
 export function LocaleProvider({ children }: PropsWithChildren) {
-  const uiLocale = useAppSelector(selectUiLocale);
+  const uiLocale = useAppSelector(settings.selectUiLocale);
 
   useEffect(() => {
     void i18n.changeLanguage(uiLocale);

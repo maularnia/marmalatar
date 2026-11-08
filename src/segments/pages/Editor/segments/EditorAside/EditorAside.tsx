@@ -1,14 +1,9 @@
-import { useVideo } from '@providers/VideoProvider';
+import { projects } from '@src/services/project';
+import { media } from '@src/services/media';
 import GeneralSettings from '@src/partials/Settings';
-import {
-  selectActiveLineIndex,
-  selectFocusedLineIndex,
-  selectLines,
-  updateLineTiming,
-} from '@src/store/slices/editor';
-import { selectIsEditMode, selectVideoFilePath } from '@src/store/slices/project';
+import { editor } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
 import {
   FormRoot,
@@ -22,9 +17,7 @@ import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import P, { TPVariant } from '@ui-toolkit/P';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
-import { useVideoFileSwap } from '../../components/VideoPlayer/useVideoFileSwap';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import Waveform from '../../components/Waveform/Waveform';
 import AiTranslationStatusPanel from './components/AiTranslationStatusPanel';
@@ -62,19 +55,23 @@ const AsideVideoWrapper = styled.div``;
 
 export default function EditorAside() {
   const { t } = useTranslation(['editorAside', 'app']);
-  const dispatch = useAppDispatch();
-  const isEditMode = useAppSelector(selectIsEditMode);
-  const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
-    (state) => ({
-      translationLines: selectLines(state),
-      activeLineIndex: selectActiveLineIndex(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
-    }),
-    shallowEqual
+  const [
+    isEditMode,
+    videoDurationMs,
+    waveformPeaks,
+    videoFilePath,
+    translationLines,
+    activeLineIndex,
+    focusedLineIndex,
+  ] = useAppSelectors(
+    editor.selectIsEditMode,
+    media.selectVideoDurationMs,
+    media.selectWaveformPeaks,
+    media.selectVideoFilePath,
+    editor.selectLines,
+    media.selectActiveLineIndex,
+    editor.selectFocusedLineIndex
   );
-  const { videoDurationMs, waveformPeaks } = useVideo();
-  const videoFilePath = useAppSelector(selectVideoFilePath);
-  const { swapVideo } = useVideoFileSwap();
   return (
     <Aside tabIndex={1}>
       {videoFilePath && (
@@ -89,7 +86,7 @@ export default function EditorAside() {
             focusedLineIndex={focusedLineIndex}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
+              editor.updateLineTiming({ lineIndex, startTime, endTime });
             }}
           />
         </AsideVideoContainer>
@@ -103,7 +100,10 @@ export default function EditorAside() {
               </FormsSectionTitle>
               <FormsSectionContent>
                 <FormSectionEntry>
-                  <Button style={{ alignSelf: 'flex-start' }} onClick={swapVideo}>
+                  <Button
+                    style={{ alignSelf: 'flex-start' }}
+                    onClick={() => void projects.changeVideo()}
+                  >
                     {t('video.pickVideoButton')}
                   </Button>
                 </FormSectionEntry>

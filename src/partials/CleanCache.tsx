@@ -1,7 +1,4 @@
-import { useMessageHelmet } from '@providers/MessageHelmetProvider';
-import { emitCacheCleanupFailedMessage, emitCacheCleanupSuccessMessage } from '@src/messages';
-import { useLoader } from '@src/segments/dialogs/loader/useLoader';
-import { cleanupMediaCache } from '@src/utils/data/discIO';
+import { media } from '@src/services/media';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
@@ -10,17 +7,6 @@ import { useTranslation } from 'react-i18next';
 
 export default function CleanCache() {
   const { t } = useTranslation('settings');
-  const { pushMessage } = useMessageHelmet();
-  const { load } = useLoader();
-
-  const handleClean = async () => {
-    try {
-      await load({ messages: [] }, cleanupMediaCache());
-      emitCacheCleanupSuccessMessage(pushMessage);
-    } catch {
-      emitCacheCleanupFailedMessage(pushMessage);
-    }
-  };
 
   return (
     <FormsSection>
@@ -32,7 +18,7 @@ export default function CleanCache() {
           type="button"
           variant={TButtonVariant.SECONDARY}
           icon={TIcon.CLEANUP}
-          onClick={() => void handleClean()}
+          onClick={() => void media.cleanCache()}
         >
           {t('mediaCache.cleanButton')}
         </Button>

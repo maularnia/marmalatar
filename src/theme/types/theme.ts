@@ -1,5 +1,5 @@
 import { TColor, TOpacity, TShade } from '@src/theme/definitions';
-import { TThemeVarsChapter } from '@src/theme/types';
+import type { TThemeVarsChapter } from '@src/theme/types/chapter';
 
 export type TThemeAppChapter = TThemeVarsChapter<{
   appScrollbarThumbColor: string;
@@ -309,8 +309,8 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemBgOpacityActive: [TOpacity, false];
   listItemBgShadeActiveHover: [TShade, false];
   listItemBgOpacityActiveHover: [TOpacity, false];
-  listItemBgShadeFocused: [TShade, false];
-  listItemBgOpacityFocused: [TOpacity, false];
+  listItemBgShadeActiveFocus: [TShade, false];
+  listItemBgOpacityActiveFocus: [TOpacity, false];
   listItemBgShadeDisabled: [TShade, false];
   listItemBgOpacityDisabled: [TOpacity, false];
   listItemColorShade: [TShade, false];
@@ -323,8 +323,8 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemColorOpacityActive: [TOpacity, false];
   listItemColorShadeActiveHover: [TShade, false];
   listItemColorOpacityActiveHover: [TOpacity, false];
-  listItemColorShadeFocused: [TShade, false];
-  listItemColorOpacityFocused: [TOpacity, false];
+  listItemColorShadeActiveFocus: [TShade, false];
+  listItemColorOpacityActiveFocus: [TOpacity, false];
   listItemColorShadeDisabled: [TShade, false];
   listItemColorOpacityDisabled: [TOpacity, false];
 }>;

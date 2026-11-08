@@ -1,24 +1,28 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import type { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit';
-import appReducer from './slices/app';
-import projectReducer from './slices/project';
-import editorReducer from './slices/editor';
-import promptReducer from './slices/prompt';
-import discReducer from './slices/disc';
-import aiPromptEditorReducer from './slices/aiPromptEditor';
-import overlaysReducer from './slices/overlays';
-import aiTranslationReducer from './slices/aiTranslation';
+import { settingsReducer } from '@src/services/settings';
+import { projectReducer } from '@src/services/project';
+import { editorReducer } from '@src/services/project';
+import { promptReducer } from '@src/services/prompt';
+import { folderReducer } from '@src/services/folder';
+import { glossaryReducer } from '@src/services/glossary';
+import { aiReducer } from '@src/services/ai';
+import { mediaReducer } from '@src/services/media';
+import { menuReducer } from '@src/services/menu';
+import { modalReducer } from '@src/services/modal';
+import { toastReducer } from '@src/services/toast';
 
 export const rootReducer = combineReducers({
-  app: appReducer,
+  settings: settingsReducer,
   project: projectReducer,
   editor: editorReducer,
   prompt: promptReducer,
-  disc: discReducer,
-  aiPromptEditor: aiPromptEditorReducer,
-  overlays: overlaysReducer,
-  aiTranslation: aiTranslationReducer,
+  folder: folderReducer,
+  glossary: glossaryReducer,
+  ai: aiReducer,
+  media: mediaReducer,
+  menu: menuReducer,
+  modal: modalReducer,
+  toast: toastReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
-export type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction>;

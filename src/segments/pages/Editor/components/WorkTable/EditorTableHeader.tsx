@@ -1,16 +1,11 @@
+import { editor } from '@src/services/project';
 import Select from '@ui-toolkit/Select/Select';
-import { useAppDispatch, useAppSelector } from '@src/store/hooks';
-import {
-  selectIsEditMode,
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-  setProjectSourceLanguage,
-  setProjectTargetLanguage,
-} from '@src/store/slices/project';
+import { useAppSelectors } from '@src/store/hooks';
+import { projects } from '@src/services/project';
 import { CSSVar } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { reconcileGlossarySelectionWithDirection } from '@src/store/thunks';
+import { glossaries } from '@src/services/glossary';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -46,19 +41,20 @@ const Cell = styled.div`
 
 export const EditorTableHeader = () => {
   const { t } = useTranslation('editor');
-  const dispatch = useAppDispatch();
   const languageOptions = useLanguageOptions();
-  const sourceLanguage = useAppSelector(selectProjectSourceLanguage);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const [sourceLanguage, targetLanguage, isEditMode] = useAppSelectors(
+    projects.selectSourceLanguage,
+    projects.selectTargetLanguage,
+    editor.selectIsEditMode
+  );
   return (
     <Row>
       <Cell>
         <Select
           value={sourceLanguage ?? TLanguage.English}
           onChange={([value]) => {
-            dispatch(setProjectSourceLanguage(value as TLanguage));
-            dispatch(reconcileGlossarySelectionWithDirection());
+            projects.setSourceLanguage(value as TLanguage);
+            glossaries.reconcileSelectionWithDirection();
           }}
           options={languageOptions}
         />
@@ -69,8 +65,8 @@ export const EditorTableHeader = () => {
           <Select
             value={targetLanguage ?? TLanguage.Belarusian}
             onChange={([value]) => {
-              dispatch(setProjectTargetLanguage(value as TLanguage));
-              dispatch(reconcileGlossarySelectionWithDirection());
+              projects.setTargetLanguage(value as TLanguage);
+              glossaries.reconcileSelectionWithDirection();
             }}
             options={languageOptions}
           />

@@ -1,19 +1,8 @@
-import { useVideo } from '@providers/VideoProvider';
-import {
-  selectIsSmallScreen,
-  selectScreenSize,
-  selectScrollVideoIntoViewOnPlay,
-} from '@src/store/slices/app';
-import {
-  selectActiveLineIndex,
-  selectIsVideoCollapsed,
-  selectLines,
-  updateLineTiming,
-} from '@src/store/slices/editor';
-import { selectVideoFilePath } from '@src/store/slices/project';
+import { media } from '@src/services/media';
+import { settings } from '@src/services/settings';
+import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
+import { useAppSelectors } from '@store/hooks';
 import { RefObject, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
@@ -52,14 +41,25 @@ export default function FloatingVideoBlock({
   virtualizedListRef,
   focusedItemIndex,
 }: FloatingVideoBlockProps) {
-  const dispatch = useAppDispatch();
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const videoFilePath = useAppSelector(selectVideoFilePath);
-  const activeLineIndex = useAppSelector(selectActiveLineIndex);
-  const translationLines = useAppSelector(selectLines);
-  const screenSize = useAppSelector(selectScreenSize);
-  const isVideoCollapsed = useAppSelector(selectIsVideoCollapsed);
-  const { videoDurationMs, waveformPeaks, videoElementRef } = useVideo();
+  const [
+    isSmallScreen,
+    videoFilePath,
+    activeLineIndex,
+    translationLines,
+    screenSize,
+    isVideoCollapsed,
+    videoDurationMs,
+    waveformPeaks,
+  ] = useAppSelectors(
+    settings.selectIsSmallScreen,
+    media.selectVideoFilePath,
+    media.selectActiveLineIndex,
+    editor.selectLines,
+    settings.selectScreenSize,
+    editor.selectIsVideoCollapsed,
+    media.selectVideoDurationMs,
+    media.selectWaveformPeaks
+  );
   const isLargeScreen = screenSize !== TScreenSize.SMALL;
 
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
@@ -73,7 +73,7 @@ export default function FloatingVideoBlock({
   const handlePlaybackResume = () => {
     if (!scrollContainerRef.current) return;
     scrollBeforePlayRef.current = scrollContainerRef.current.scrollTop;
-    if (fromCurrentStore(selectScrollVideoIntoViewOnPlay))
+    if (settings.get.scrollVideoIntoViewOnPlay())
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollTop - videoContainerShiftRef.current,
         behavior: 'smooth',
@@ -92,15 +92,10 @@ export default function FloatingVideoBlock({
     if (!scrollContainer) return;
 
     const handleScroll = (event: Event) => {
-      if (
-        isLargeScreen ||
-        isVideoCollapsed ||
-        !videoContainerRef.current ||
-        !videoElementRef.current
-      )
-        return;
+      const videoElement = media.getVideoElement();
+      if (isLargeScreen || isVideoCollapsed || !videoContainerRef.current || !videoElement) return;
       const scrollTop = (event.currentTarget as HTMLElement).scrollTop;
-      const videoHeight = videoElementRef.current.clientHeight;
+      const videoHeight = videoElement.clientHeight;
       const maxShift = videoHeight * maxVideoShift.current;
 
       const focusedIndex = focusedItemIndexRef.current;
@@ -131,7 +126,7 @@ export default function FloatingVideoBlock({
 
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
-  }, [scrollContainerRef, virtualizedListRef, isLargeScreen, isVideoCollapsed, videoElementRef]);
+  }, [scrollContainerRef, virtualizedListRef, isLargeScreen, isVideoCollapsed]);
 
   useEffect(() => {
     if (focusedItemIndex < 0) return;
@@ -140,7 +135,7 @@ export default function FloatingVideoBlock({
         !virtualizedListRef.current ||
         !scrollContainerRef.current ||
         !videoContainerRef.current ||
-        !videoElementRef.current
+        !media.getVideoElement()
       )
         return;
       const listOffsetTop = virtualizedListRef.current.getListOffsetTop();
@@ -165,7 +160,7 @@ export default function FloatingVideoBlock({
         });
       }
     });
-  }, [focusedItemIndex, videoElementRef, scrollContainerRef, virtualizedListRef]);
+  }, [focusedItemIndex, scrollContainerRef, virtualizedListRef]);
 
   useEffect(() => {
     videoContainerShiftRef.current = 0;
@@ -207,7 +202,7 @@ export default function FloatingVideoBlock({
             focusedLineIndex={focusedItemIndex >= 0 ? focusedItemIndex : null}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
+              editor.updateLineTiming({ lineIndex, startTime, endTime });
             }}
           />
         </>

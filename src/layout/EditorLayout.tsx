@@ -1,7 +1,7 @@
 import { EditorKeystrokeProvider } from '@providers/EditorKeystrokeProvider';
 import { EditorControls } from '@src/segments/pages/Editor/segments/EditorControls';
 import EditorAside from '@src/segments/pages/Editor/segments/EditorAside/EditorAside';
-import { selectScreenSize } from '@src/store/slices/app';
+import { settings } from '@src/services/settings';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
@@ -24,7 +24,7 @@ const EditorControlsArea = styled.div`
 `;
 
 export default function EditorLayout() {
-  const screenSize = useAppSelector(selectScreenSize);
+  const screenSize = useAppSelector(settings.selectScreenSize);
   const isLargeScreen = screenSize !== TScreenSize.SMALL;
 
   return (

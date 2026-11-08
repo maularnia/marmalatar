@@ -1,13 +1,13 @@
 import { TColor } from '@src/theme/definitions';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { TThemeSelection } from '@src/types';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectThemeSelection, setThemeSelection } from '@store/slices/app';
+import { useAppSelectors } from '@store/hooks';
+import { settings } from '@src/services/settings';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
 import styled from 'styled-components';
-import { useMenuState } from '../../providers/MenuStateProvider';
+import { menu } from '@src/services/menu';
 import { ListItem } from '@ui-toolkit/ListItem';
 
 const ThemeShortcutList = styled.div`
@@ -47,12 +47,14 @@ const ThemeShortcuts: Array<{ key: string; label: string }> = [
 ];
 
 export default function ThemeSelector() {
-  const dispatch = useAppDispatch();
-  const selection = useAppSelector(selectThemeSelection);
-  const { dynamic, compact } = useMenuState();
+  const [selection, dynamic, compact] = useAppSelectors(
+    settings.selectThemeSelection,
+    menu.selectIsDynamic,
+    menu.selectIsCompact
+  );
   const toggleThemes = () => {
     const nextIndex = (themes.indexOf(selection) + 1) % themes.length;
-    dispatch(setThemeSelection(themes[nextIndex]));
+    settings.setThemeSelection(themes[nextIndex]);
   };
   return (
     <Tooltip

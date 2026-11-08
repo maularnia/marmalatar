@@ -1,4 +1,4 @@
-import { selectProjectName } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { exportAsSrt } from '@src/utils/data/parsers/srt';
 import { useAppSelector } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
@@ -18,7 +18,7 @@ export const ExportSRT = ({
   targetLanguage,
 }: ExporterProps) => {
   const { t } = useTranslation('export');
-  const showName = useAppSelector(selectProjectName) ?? '';
+  const showName = useAppSelector(projects.selectName) ?? '';
   return (
     <FormFooter>
       <Button

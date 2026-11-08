@@ -1,4 +1,4 @@
-import { selectProjectName } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import { TSubtitleLine } from '@src/types';
 import {
@@ -54,7 +54,7 @@ export const ExportJSON = ({
   lines,
   targetLanguage,
 }: ExporterProps) => {
-  const showName = useAppSelector(selectProjectName) ?? '';
+  const showName = useAppSelector(projects.selectName) ?? '';
   const [structure, setStructure] = useState<JsonExportStructure>(DEFAULT_JSON_STRUCTURE);
   const errors = validateJsonStructure(structure);
 

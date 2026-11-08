@@ -1,16 +1,17 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
-import { useVideo } from '@providers/VideoProvider';
+import { media } from '@src/services/media';
+import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { clamp } from '@src/utils/numbers';
-import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData, selectScreenSize } from '@store/slices/app';
+import { useAppSelectors } from '@store/hooks';
+import { settings } from '@src/services/settings';
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useRenderCache } from '../../hooks/useRenderCache';
+import type { DragMode } from './types';
 import WaveformEntry from './WaveformEntry';
 import WaveformTile from './WaveformTile';
 import { getWaveformEntryFingerprint } from './useWaveformEntryFingerprint';
@@ -31,8 +32,6 @@ const WHEEL_SEEK_STEP_RATIO = 0.0005;
 // A single canvas wider than 65535px paints as a solid block in Chromium, and at PX_PER_SECOND a
 // feature-length timeline is far wider than that -- so the timeline is drawn as tiles instead.
 const WAVEFORM_TILE_WIDTH = 4096;
-
-export type DragMode = 'move' | 'resize-left' | 'resize-right';
 
 type DragState = {
   lineIndex: number;
@@ -114,10 +113,7 @@ export default function Waveform({
   onLineTimingChange,
 }: WaveformProps) {
   const { t } = useTranslation('tooltips');
-  const { currentTimeRef, seekVideoToMs } = useVideo();
-  const { handleChangeFocusedLine, handleChangeFocusedColumn } = useEditorActions();
-  const size = useAppSelector(selectScreenSize);
-  const theme = useAppSelector(selectCurrentThemeData);
+  const [size, theme] = useAppSelectors(settings.selectScreenSize, settings.selectCurrentThemeData);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const waveformViewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -151,14 +147,14 @@ export default function Waveform({
       if (direction === 0) return;
 
       const step = videoDurationMs * WHEEL_SEEK_STEP_RATIO;
-      const newTime = clamp(currentTimeRef.current + direction * step, 0, videoDurationMs);
+      const newTime = clamp(media.getCurrentTimeMs() + direction * step, 0, videoDurationMs);
       setCurrentTimeMs(newTime);
-      seekVideoToMs(newTime);
+      media.seekToMs(newTime);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
-  }, [videoDurationMs, currentTimeRef, seekVideoToMs]);
+  }, [videoDurationMs]);
 
   function handleEntryPointerDown(lineIndex: number, mode: DragMode, clientX: number) {
     const line = translationLines[lineIndex];
@@ -182,12 +178,12 @@ export default function Waveform({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTimeMs(currentTimeRef.current);
+      setCurrentTimeMs(media.getCurrentTimeMs());
     }, 100);
     return () => {
       clearInterval(interval);
     };
-  }, [currentTimeRef]);
+  }, []);
 
   const cursorX = useMemo(() => {
     if (!videoDurationMs || videoDurationMs <= 0) {
@@ -283,15 +279,15 @@ export default function Waveform({
           videoDurationMs
         );
         setCurrentTimeMs(newTime);
-        seekVideoToMs(newTime);
+        media.seekToMs(newTime);
       }
     };
 
     const handlePointerUp = () => {
       if (dragStateRef.current && !dragStateRef.current.hasMoved) {
         const lineIndex = dragStateRef.current.lineIndex;
-        handleChangeFocusedLine(lineIndex);
-        requestAnimationFrame(() => handleChangeFocusedColumn(lineIndex, 'output', false));
+        media.seekToLine(lineIndex);
+        requestAnimationFrame(() => editor.focusLine(lineIndex));
       }
       dragStateRef.current = null;
       setDragLineIndex(null);
@@ -402,7 +398,7 @@ export default function Waveform({
             if (dragStateRef.current) return;
             waveformDragRef.current = {
               startX: event.clientX,
-              startTimeMs: currentTimeRef.current,
+              startTimeMs: media.getCurrentTimeMs(),
             };
             (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
           }}

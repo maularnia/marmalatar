@@ -2,7 +2,7 @@ import { TColor, TShade } from '@src/theme/definitions';
 import { TTheme } from '@src/theme/types';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@src/services/settings';
 import { CSSProperties, HTMLProps, MouseEvent, Ref } from 'react';
 import styled from 'styled-components';
 import Icon from './Icon/Icon';
@@ -165,7 +165,7 @@ export default function Tag({
   removeIcon = TIcon.CROSS,
   ...rootProps
 }: TagProps) {
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   return (
     <TagBrick
       ref={elementRef}

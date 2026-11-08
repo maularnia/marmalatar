@@ -2,33 +2,17 @@ import {
   CREATE_GLOSSARY_KEY,
   CREATE_PROJECT_KEY,
   CREATE_PROMPT_TEMPLATE_KEY,
-  useMenuActions,
-} from '@providers/MenuActionsProvider';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
-import i18n from '@src/i18n';
-import { selectIntegrationIsConfigured } from '@src/store/slices/app';
-import { selectProjectId } from '@src/store/slices/project';
+  menu,
+} from '@src/services/menu';
+import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
+import { settings } from '@src/services/settings';
+import { projects } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectCurrentGlossary, selectCurrentPromptTemplate } from '@store/slices/aiPromptEditor';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import {
-  renameProjectFile,
-  selectDiscIsBusy,
-  selectFolder,
-  selectGlossaryItems,
-  selectProjects,
-  selectPromptTemplateItems,
-  updateProjectEmoji,
-} from '@store/slices/disc';
-import {
-  createGlossaryFile,
-  createPromptTemplateFile,
-  renameGlossaryFile,
-  renamePromptTemplateFile,
-  updateGlossaryEmoji,
-  updatePromptTemplateEmoji,
-} from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { promptTemplates } from '@src/services/prompt';
+import { glossaries } from '@src/services/glossary';
+import { ai } from '@src/services/ai';
+import { folder } from '@src/services/folder';
 import H from '@ui-toolkit/H';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -39,7 +23,6 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { MainMenuListItem } from './MainMenuListItem';
-import { useMenuState } from '../../providers/MenuStateProvider';
 
 const Section = styled.div`
   display: flex;
@@ -66,93 +49,76 @@ const ListHeaderText = styled.div`
   text-overflow: ellipsis;
 `;
 
-const t = i18n.getFixedT(null, 'errors');
-
 export default function FileList() {
   const { t: tMenu } = useTranslation('menu');
-  const dispatch = useAppDispatch();
-  const folder = useAppSelector(selectFolder);
-  const projects = useAppSelector(selectProjects);
-  const promptTemplateItems = useAppSelector(selectPromptTemplateItems);
-  const glossaryItems = useAppSelector(selectGlossaryItems);
-  const discIsBusy = useAppSelector(selectDiscIsBusy);
-  const translationIsBusy = useAppSelector(selectTranslationIsBusy);
-  const listIsDisabled = discIsBusy || translationIsBusy;
-  const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
-  const { compact, dynamic } = useMenuState();
-  const currentProjectId = useAppSelector(selectProjectId);
-  const integrationIsConfigured = useAppSelector(selectIntegrationIsConfigured);
-
-  const {
+  const [
+    folderPath,
+    projectList,
+    currentProjectId,
+    promptTemplateItems,
+    currentPromptTemplate,
+    glossaryItems,
+    currentGlossary,
+    workingFolderIsBusy,
+    translationIsBusy,
+    integrationIsConfigured,
     isCreatingPromptTemplate,
-    handleSetIsCreatingPromptTemplate,
     isCreatingGlossary,
-    handleSetIsCreatingGlossary,
-    handleOpenProject,
-    handleOpenPromptTemplate,
-    handleOpenGlossary,
-    handleStartNewProject,
-    handleDeleteProject,
-    handleDeletePromptTemplate,
-    handleDeleteGlossary,
-    handleCancelCreatingPromptTemplate,
-    handleCancelCreatingGlossary,
-  } = useMenuActions();
-  const { registerMenuItemRef } = useMenuRefs();
+    compact,
+    dynamic,
+  ] = useAppSelectors(
+    folder.selectPath,
+    projects.selectList,
+    projects.selectId,
+    promptTemplates.selectItems,
+    promptTemplates.selectCurrent,
+    glossaries.selectItems,
+    glossaries.selectCurrent,
+    folder.selectIsBusy,
+    ai.selectIsBusy,
+    settings.selectIntegrationIsConfigured,
+    menu.selectIsCreatingPromptTemplate,
+    menu.selectIsCreatingGlossary,
+    menu.selectIsCompact,
+    menu.selectIsDynamic
+  );
+  const listIsDisabled = workingFolderIsBusy || translationIsBusy;
 
   const setCreateProjectRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_PROJECT_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROJECT_KEY, el),
+    []
   );
   const setCreatePromptTemplateRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_PROMPT_TEMPLATE_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROMPT_TEMPLATE_KEY, el),
+    []
   );
   const setCreateGlossaryRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_GLOSSARY_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(CREATE_GLOSSARY_KEY, el),
+    []
   );
 
-  const projectFileNames = useMemo(() => projects.map((p) => p.fileName), [projects]);
+  const projectFileNames = useMemo(() => projectList.map((p) => p.fileName), [projectList]);
   const promptTemplateFileNames = useMemo(
     () => promptTemplateItems.map((c) => c.fileName),
     [promptTemplateItems]
   );
   const glossaryFileNames = useMemo(() => glossaryItems.map((g) => g.fileName), [glossaryItems]);
 
-  const handleCommitProject = async (fileName: string | null, newTitle: string) => {
-    const project = projects.find((p) => p.fileName === fileName);
-    if (!project) throw new Error(t('fileList.projectNotFound'));
-    await dispatch(renameProjectFile(project.filePath, newTitle));
-  };
-
-  const handleCommitPromptTemplate = async (fileName: string | null, newTitle: string) => {
-    if (fileName) {
-      await dispatch(renamePromptTemplateFile(fileName, newTitle));
-    } else {
-      await dispatch(createPromptTemplateFile(newTitle));
-      handleSetIsCreatingPromptTemplate(false);
-    }
-  };
-
-  const handleCommitGlossary = async (fileName: string | null, newTitle: string) => {
-    if (fileName) {
-      await dispatch(renameGlossaryFile(fileName, newTitle));
-    } else {
-      await dispatch(createGlossaryFile(newTitle));
-      handleSetIsCreatingGlossary(false);
-    }
-  };
+  const handleCommitProject = (fileName: string | null, title: string) =>
+    menu.commitItemTitle('project', fileName, title);
+  const handleCommitPromptTemplate = (fileName: string | null, title: string) =>
+    menu.commitItemTitle('promptTemplate', fileName, title);
+  const handleCommitGlossary = (fileName: string | null, title: string) =>
+    menu.commitItemTitle('glossary', fileName, title);
 
   if (
-    !folder ||
-    (projects.length === 0 && promptTemplateItems.length === 0 && glossaryItems.length === 0)
+    !folderPath ||
+    (projectList.length === 0 && promptTemplateItems.length === 0 && glossaryItems.length === 0)
   )
     return null;
   return (
     <>
-      {projects.length > 0 && (
+      {projectList.length > 0 && (
         <>
           <Section>
             {!dynamic && (
@@ -161,36 +127,29 @@ export default function FileList() {
               </ListHeader>
             )}
             <List>
-              {projects.length
-                ? projects.map((project) => {
-                    const isActive = project.project.projectId === currentProjectId;
+              {projectList.length
+                ? projectList.map((project) => {
+                    const isActive = project.projectId === currentProjectId;
                     return (
                       <MainMenuListItem
                         key={project.filePath}
                         itemKey={project.filePath}
                         fileName={project.fileName}
-                        title={project.project.projectName}
+                        title={project.projectName}
                         isActive={isActive}
                         isDisabled={listIsDisabled}
                         compact={compact}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
                         progress={project.translationProgress}
-                        fileExtension=".mrml"
-                        slugFallback="project"
+                        toFileName={toProjectFileName}
                         existingFileNames={projectFileNames}
-                        emoji={project.project.emoji}
+                        emoji={project.emoji}
                         onEmojiSelect={(emoji) =>
-                          void dispatch(updateProjectEmoji(project.filePath, emoji))
+                          void projects.updateEmoji(project.projectId, emoji)
                         }
-                        onClick={() => void handleOpenProject(project, isActive)}
+                        onClick={() => void menu.openProject(project)}
                         onCommit={handleCommitProject}
-                        onDelete={() =>
-                          handleDeleteProject(
-                            project.filePath,
-                            project.project.projectName,
-                            project.project.projectId
-                          )
-                        }
+                        onDelete={() => menu.deleteProject(project)}
                       />
                     );
                   })
@@ -200,7 +159,7 @@ export default function FileList() {
                 icon={TIcon.PLUS}
                 compact={compact}
                 color={ThemeColors.ACCENT1}
-                onClick={handleStartNewProject}
+                onClick={menu.startNewProject}
               >
                 {tMenu('fileList.createButton')}
               </ListItem>
@@ -232,16 +191,15 @@ export default function FileList() {
                         compact={compact}
                         isDisabled={listIsDisabled}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                        fileExtension=".mrmlpt"
-                        slugFallback="prompt-template"
+                        toFileName={toPromptTemplateFileName}
                         existingFileNames={promptTemplateFileNames}
                         emoji={emoji}
                         onEmojiSelect={(newEmoji) =>
-                          void dispatch(updatePromptTemplateEmoji(fileName, newEmoji))
+                          void promptTemplates.updateEmoji(fileName, newEmoji)
                         }
-                        onClick={() => void handleOpenPromptTemplate(fileName, title)}
+                        onClick={() => void menu.openPromptTemplate(fileName, title)}
                         onCommit={handleCommitPromptTemplate}
-                        onDelete={() => handleDeletePromptTemplate(fileName, title)}
+                        onDelete={() => menu.deletePromptTemplate(fileName, title)}
                       />
                     );
                   })
@@ -252,11 +210,10 @@ export default function FileList() {
                   itemKey="##new-prompt-template##"
                   fileName={null}
                   title=""
-                  fileExtension=".mrmlpt"
-                  slugFallback="prompt-template"
+                  toFileName={toPromptTemplateFileName}
                   existingFileNames={promptTemplateFileNames}
                   onCommit={handleCommitPromptTemplate}
-                  onDiscard={handleCancelCreatingPromptTemplate}
+                  onDiscard={menu.cancelCreatingPromptTemplate}
                 />
               )}
               {!isCreatingPromptTemplate && (
@@ -265,7 +222,7 @@ export default function FileList() {
                   icon={TIcon.PLUS}
                   color={ThemeColors.ACCENT2}
                   compact={compact}
-                  onClick={() => handleSetIsCreatingPromptTemplate(true)}
+                  onClick={() => menu.setIsCreatingPromptTemplate(true)}
                 >
                   {tMenu('fileList.createButton')}
                 </ListItem>
@@ -296,16 +253,15 @@ export default function FileList() {
                           isActive={isActive}
                           isDisabled={listIsDisabled}
                           color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                          fileExtension=".mrmlg"
-                          slugFallback="glossary"
+                          toFileName={toGlossaryFileName}
                           existingFileNames={glossaryFileNames}
                           emoji={emoji}
                           onEmojiSelect={(newEmoji) =>
-                            void dispatch(updateGlossaryEmoji(fileName, newEmoji))
+                            void glossaries.updateEmoji(fileName, newEmoji)
                           }
-                          onClick={() => void handleOpenGlossary(fileName, title)}
+                          onClick={() => void menu.openGlossary(fileName, title)}
                           onCommit={handleCommitGlossary}
-                          onDelete={() => handleDeleteGlossary(fileName, title)}
+                          onDelete={() => menu.deleteGlossary(fileName, title)}
                         />
                       );
                     })
@@ -317,17 +273,16 @@ export default function FileList() {
                   itemKey="##new-glossary##"
                   fileName={null}
                   title=""
-                  fileExtension=".mrmlg"
-                  slugFallback="glossary"
+                  toFileName={toGlossaryFileName}
                   existingFileNames={glossaryFileNames}
                   onCommit={handleCommitGlossary}
-                  onDiscard={handleCancelCreatingGlossary}
+                  onDiscard={menu.cancelCreatingGlossary}
                 />
               )}
               {!isCreatingGlossary && (
                 <ListItem
                   ref={setCreateGlossaryRef}
-                  onClick={() => handleSetIsCreatingGlossary(true)}
+                  onClick={() => menu.setIsCreatingGlossary(true)}
                   color={ThemeColors.ACCENT2}
                   icon={TIcon.PLUS}
                   compact={compact}

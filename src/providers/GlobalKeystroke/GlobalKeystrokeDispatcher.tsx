@@ -1,9 +1,10 @@
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { setThemeSelection } from '@store/slices/app';
-import { closeOverlays, selectCurrentOverlay } from '@store/slices/overlays';
-import { openExportOverlay, openSettingsOverlay } from '@store/thunks';
+import { settings } from '@src/services/settings';
+import { glossaries } from '@src/services/glossary';
+import { promptTemplates } from '@src/services/prompt';
+import { modal } from '@src/services/modal';
+import { useAppSelector } from '@store/hooks';
 import { TThemeSelection } from '@src/types';
 import {
   KeyHubProvider,
@@ -209,12 +210,15 @@ const useAppGlobalKeystroke = (
   action: (event: KeyboardEvent) => void
 ) => useShortcut(keystroke, action);
 
-// Must render inside KeyHubProvider (needs its context for useShortcut/useShortcutPause) and must
-// itself wrap ConfirmationProvider, so Confirmation can reach `useGlobalKeystrokePause` via React
-// context regardless of where its dialogs are portaled.
+// Must render inside KeyHubProvider (needs its context for useShortcut/useShortcutPause).
+function closeOverlays(): void {
+  promptTemplates.closeEditor();
+  glossaries.closeEditor();
+  settings.close();
+  settings.closeExport();
+}
+
 function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
-  const dispatch = useAppDispatch();
-  const currentOverlay = useAppSelector(selectCurrentOverlay);
   const slotsRef = useRef(new Map<TKeystrokeSlot, () => void>());
   const pauseSourcesRef = useRef(new Set<string>());
   const [isPaused, setIsPaused] = useState(false);
@@ -239,7 +243,12 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
     setIsPaused(pauseSourcesRef.current.size > 0);
   }, []);
 
-  // While anything (currently: a confirmation dialog) has paused us, none of these shortcuts fire.
+  // The entire ctrl+1..0/esc isolation mechanism for dialogs: while a modal window is open, none of
+  // these shortcuts fire, so they can't steal focus from it
+  const isModalOpen = useAppSelector(modal.selectIsOpen);
+  useEffect(() => setPaused('modal', isModalOpen), [isModalOpen, setPaused]);
+
+  // While anything has paused us, none of these shortcuts fire.
   useShortcutPause(isPaused);
 
   useAppGlobalKeystroke('focusSlot1', () => focusSlot(1));
@@ -252,23 +261,27 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
   useAppGlobalKeystroke('focusSlot8', () => focusSlot(8));
   useAppGlobalKeystroke('focusSlot9', () => focusSlot(9));
   useAppGlobalKeystroke('focusSlot0', () => focusSlot(0));
+  // Overlays are exclusive: each owner keeps its own open state, and this caller closes the others
+  // before opening one. Esc closes whichever is open, without saving the prompt or glossary editor.
   useAppGlobalKeystroke('closeOverlay', () => {
-    if (currentOverlay !== null) dispatch(closeOverlays());
+    closeOverlays();
   });
   useAppGlobalKeystroke('openSettings', () => {
-    dispatch(openSettingsOverlay());
+    closeOverlays();
+    settings.open();
   });
   useAppGlobalKeystroke('openExport', () => {
-    dispatch(openExportOverlay());
+    closeOverlays();
+    settings.openExport();
   });
   useAppGlobalKeystroke('switchToDarkTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.DARK));
+    settings.setThemeSelection(TThemeSelection.DARK);
   });
   useAppGlobalKeystroke('switchToLightTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.LIGHT));
+    settings.setThemeSelection(TThemeSelection.LIGHT);
   });
   useAppGlobalKeystroke('switchToSystemTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.SYSTEM));
+    settings.setThemeSelection(TThemeSelection.SYSTEM);
   });
 
   const value = useMemoizedObject<TGlobalKeystrokeContext>({
@@ -283,8 +296,8 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
 }
 
 // The one deliberately `document`-scoped EventBus in the app -- these shortcuts must be reachable
-// regardless of where focus is. Isolation while a confirmation is open is achieved by
-// GlobalKeystrokeRegistry pausing this EventBus via React context, not by narrowing this target.
+// regardless of where focus is. Isolation while a modal is open is achieved by
+// GlobalKeystrokeRegistry pausing this EventBus, not by narrowing this target.
 export function GlobalKeystrokeDispatcher({ children }: PropsWithChildren) {
   return (
     <KeyHubProvider
@@ -302,12 +315,4 @@ export function GlobalKeystrokeDispatcher({ children }: PropsWithChildren) {
       <GlobalKeystrokeRegistry>{children}</GlobalKeystrokeRegistry>
     </KeyHubProvider>
   );
-}
-
-export function useGlobalKeystrokePause(paused: boolean, source = 'default') {
-  const { setPaused } = useGlobalKeystrokeRegistry();
-  useEffect(() => {
-    setPaused(source, paused);
-    return () => setPaused(source, false);
-  }, [paused, source, setPaused]);
 }

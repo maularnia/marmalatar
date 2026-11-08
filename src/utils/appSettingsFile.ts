@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { RootState } from '@store/root';
 import { TThemeSelection } from '@src/types';
-import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/config';
+import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
 import { SUPPORTED_UI_LOCALES } from '@src/i18n/locales';
 import { AppSettingsContractV1Schema } from '@bridge/definitions/appSettings';
 import {
@@ -43,21 +43,21 @@ export const AppSettingsSchema = AppSettingsContractV1Schema.extend({
 export type PersistedAppSettings = z.infer<typeof AppSettingsSchema>;
 
 export function buildAppSettingsSaveData(state: RootState): PersistedAppSettings {
-  const { app } = state;
+  const { settings } = state;
   return AppSettingsSchema.parse({
-    selectedIntegrationId: app.selectedIntegrationId,
-    AIintegrationEnabled: app.AIintegrationEnabled,
-    askBeforeMerge: app.askBeforeMerge,
-    askBeforeDelete: app.askBeforeDelete,
-    askBeforeAITranslate: app.askBeforeAITranslate,
-    askBeforeSplit: app.askBeforeSplit,
-    autoMergeThreshold: app.autoMergeThreshold,
-    scrollVideoIntoViewOnPlay: app.scrollVideoIntoViewOnPlay,
-    autoMarkLinesCompleted: app.autoMarkLinesCompleted,
-    timeAdjustmentStep: app.timeAdjustmentStep,
-    themeSelection: app.themeSelection,
-    checkGrammar: app.checkGrammar,
-    uiLocale: app.uiLocale,
+    selectedIntegrationId: settings.selectedIntegrationId,
+    AIintegrationEnabled: settings.AIintegrationEnabled,
+    askBeforeMerge: settings.askBeforeMerge,
+    askBeforeDelete: settings.askBeforeDelete,
+    askBeforeAITranslate: settings.askBeforeAITranslate,
+    askBeforeSplit: settings.askBeforeSplit,
+    autoMergeThreshold: settings.autoMergeThreshold,
+    scrollVideoIntoViewOnPlay: settings.scrollVideoIntoViewOnPlay,
+    autoMarkLinesCompleted: settings.autoMarkLinesCompleted,
+    timeAdjustmentStep: settings.timeAdjustmentStep,
+    themeSelection: settings.themeSelection,
+    checkGrammar: settings.checkGrammar,
+    uiLocale: settings.uiLocale,
   });
 }
 

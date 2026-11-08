@@ -1,21 +1,15 @@
-import { useEditorRefs } from '@providers/EditorRefsProvider';
-import { useVideo } from '@providers/VideoProvider';
+import { useAppSelectors } from '@store/hooks';
+import { media } from '@src/services/media';
 import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { selectFocusedColumn, setFocusedColumn, setTextSelection } from '@src/store/slices/editor';
-import {
-  selectIsEditMode,
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-} from '@src/store/slices/project';
+import { editor } from '@src/services/project';
+import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
-import { useAppDispatch } from '@store/hooks';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import { selectCheckGrammar } from '@store/slices/app';
-import { fromCurrentStore } from '@store/store';
+import { ai } from '@src/services/ai';
+import { settings } from '@src/services/settings';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
@@ -26,7 +20,6 @@ import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import classNames from 'classnames';
 import { type ClipboardEvent, type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { CharacterSelector, CharacterSelectorHandle } from './CharacterSelector/CharacterSelector';
 
@@ -380,15 +373,22 @@ export default function EditorTableLine({
   panelNode,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
-  const { splitCursorRef, registerLineInputRef } = useEditorRefs();
   const { zoneRef } = useKeystrokeZone();
-  const { videoDurationMs } = useVideo();
-  const dispatch = useAppDispatch();
-  const sourceLanguage = useSelector(selectProjectSourceLanguage);
-  const targetLanguage = useSelector(selectProjectTargetLanguage);
-  const isTranslationBusy = useSelector(selectTranslationIsBusy);
-  const isEditMode = useSelector(selectIsEditMode);
-  const checkGrammar = useSelector(selectCheckGrammar);
+  const [
+    videoDurationMs,
+    sourceLanguage,
+    targetLanguage,
+    isTranslationBusy,
+    isEditMode,
+    checkGrammar,
+  ] = useAppSelectors(
+    media.selectVideoDurationMs,
+    projects.selectSourceLanguage,
+    projects.selectTargetLanguage,
+    ai.selectIsBusy,
+    editor.selectIsEditMode,
+    settings.selectCheckGrammar
+  );
 
   const isNegativeStart = startTime < 0;
   const isBeyondVideo =
@@ -399,15 +399,15 @@ export default function EditorTableLine({
     if (!input) return;
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
-      dispatch(setTextSelection(''));
+      editor.setTextSelection('');
       return;
     }
     const range = selection.getRangeAt(0);
     if (!input.contains(range.commonAncestorContainer)) {
-      dispatch(setTextSelection(''));
+      editor.setTextSelection('');
       return;
     }
-    dispatch(setTextSelection(selection.toString()));
+    editor.setTextSelection(selection.toString());
   };
 
   const selectedCharacters = useMemo(() => parseCharacterList(character), [character]);
@@ -444,7 +444,7 @@ export default function EditorTableLine({
   }, []);
 
   const updateSplitCursor = () => {
-    const focusedColumn = fromCurrentStore(selectFocusedColumn);
+    const focusedColumn = editor.get.focusedColumn();
     const input =
       focusedColumn === 'output'
         ? translatedInputRef.current
@@ -460,24 +460,24 @@ export default function EditorTableLine({
     const preRange = document.createRange();
     preRange.selectNodeContents(input);
     preRange.setEnd(range.startContainer, range.startOffset);
-    splitCursorRef.current = preRange.toString().length;
+    editor.setSplitCursor(preRange.toString().length);
   };
 
   const characterInputRef = useRef<CharacterSelectorHandle>(null);
 
   useEffect(() => {
-    registerLineInputRef(lineIndex, 'source', sourceInputRef.current);
-    registerLineInputRef(lineIndex, 'output', translatedInputRef.current);
-    registerLineInputRef(lineIndex, 'character', characterInputRef.current?.inputRef ?? null);
+    editor.registerLineInput(lineIndex, 'source', sourceInputRef.current);
+    editor.registerLineInput(lineIndex, 'output', translatedInputRef.current);
+    editor.registerLineInput(lineIndex, 'character', characterInputRef.current?.inputRef ?? null);
     // Seeds the editor zone's fallback focus target with line 0's output column -- kept fresh on
     // every (re)mount of that specific row, including a full remount on project switch.
     if (lineIndex === 0) zoneRef.current = translatedInputRef.current;
     return () => {
-      registerLineInputRef(lineIndex, 'source', null);
-      registerLineInputRef(lineIndex, 'output', null);
-      registerLineInputRef(lineIndex, 'character', null);
+      editor.registerLineInput(lineIndex, 'source', null);
+      editor.registerLineInput(lineIndex, 'output', null);
+      editor.registerLineInput(lineIndex, 'character', null);
     };
-  }, [lineIndex, registerLineInputRef, isEditMode, zoneRef]);
+  }, [lineIndex, isEditMode, zoneRef]);
 
   return (
     <Line
@@ -517,10 +517,9 @@ export default function EditorTableLine({
             data-line-no={lineNo}
             onFocus={() => {
               onFocus();
-              dispatch(setFocusedColumn('source'));
+              editor.focusLine(lineIndex, 'source');
             }}
             onClick={() => {
-              dispatch(setFocusedColumn('source'));
               updateSplitCursor();
             }}
             onSelect={() => {
@@ -547,7 +546,7 @@ export default function EditorTableLine({
         </NumberLineCell>
         <LineCell
           style={{ cursor: 'text' }}
-          onBlur={() => dispatch(setFocusedColumn(null))}
+          onBlur={() => editor.focusLine(null)}
           onClick={() => {
             if (isTranslationBusy || !characterInputRef.current?.inputRef) return;
             characterInputRef.current.inputRef.focus();
@@ -559,7 +558,7 @@ export default function EditorTableLine({
             characters={characterOptions}
             onFocus={() => {
               onFocus();
-              dispatch(setFocusedColumn('character'));
+              editor.focusLine(lineIndex, 'character');
             }}
             value={selectedCharacters}
             disabled={isTranslationBusy}
@@ -592,10 +591,9 @@ export default function EditorTableLine({
               data-line-no={lineNo}
               onFocus={() => {
                 onFocus();
-                dispatch(setFocusedColumn('output'));
+                editor.focusLine(lineIndex, 'output');
               }}
               onClick={() => {
-                dispatch(setFocusedColumn('output'));
                 updateSplitCursor();
               }}
               onKeyUp={updateSplitCursor}

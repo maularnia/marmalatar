@@ -4,7 +4,7 @@ import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { DragMode } from './Waveform';
+import type { DragMode } from './types';
 
 const EDGE_HITBOX_PX = 10;
 

@@ -1,32 +1,13 @@
-import { aiClients } from '@src/services/ai/clients';
-import type { AiClient } from '@src/services/ai/types';
-import { selectAIintegrationEnabled, selectSelectedIntegrationId } from '@src/store/slices/app';
-import {
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-} from '@src/store/slices/project';
-import {
-  selectSelectedGlossaryFileNames,
-  selectSelectedPromptTemplateFileName,
-  setSelectedGlossaryFileNames,
-} from '@src/store/slices/prompt';
+import { aiClients } from '@src/services/ai/connector/clients';
+import type { AiClient } from '@src/services/ai/connector/types';
+import { settings } from '@src/services/settings';
+import { projects } from '@src/services/project';
+import { promptTemplates } from '@src/services/prompt';
 import { ThemeColors } from '@src/theme/utils';
 import ProgressBar from '@src/toolkit/ProgressBar';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectResolvedGlossaryEntries } from '@store/slices/aiPromptEditor';
-import {
-  applySelectedPromptTemplateFileName,
-  estimateContextWindowUsage,
-  selectContextWindowEstimate,
-  selectContextWindowEstimateStatus,
-  selectIntegrationConnected,
-  selectIntegrationPingError,
-  selectTranslationIsBusy,
-  setContextWindowEstimate,
-  setContextWindowEstimateStatus,
-} from '@store/slices/aiTranslation';
-import { selectGlossaryItems, selectPromptTemplateItems } from '@store/slices/disc';
-import { refreshResolvedGlossaryEntries } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { glossaries } from '@src/services/glossary';
+import { ai } from '@src/services/ai';
 import {
   FormSectionEntry,
   FormsRow,
@@ -40,27 +21,42 @@ import Select from '@ui-toolkit/Select/Select';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 
 const ESTIMATE_DEBOUNCE_MS = 500;
 
 export default function PromptSetupRow() {
   const { t } = useTranslation('settings');
-  const dispatch = useAppDispatch();
-  const promptTemplateItems = useAppSelector(selectPromptTemplateItems);
-  const glossaryItems = useAppSelector(selectGlossaryItems);
-  const isBusy = useAppSelector(selectTranslationIsBusy);
-  const sourceLanguage = useAppSelector(selectProjectSourceLanguage);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const selectedPromptTemplateFileName = useAppSelector(selectSelectedPromptTemplateFileName);
-  const selectedGlossaryFileNames = useAppSelector(selectSelectedGlossaryFileNames, shallowEqual);
-  const resolvedGlossaryEntries = useAppSelector(selectResolvedGlossaryEntries);
-  const selectedIntegrationId = useAppSelector(selectSelectedIntegrationId);
-  const aiTranslationEnabled = useAppSelector(selectAIintegrationEnabled);
-  const connected = useAppSelector(selectIntegrationConnected);
-  const pingError = useAppSelector(selectIntegrationPingError);
-  const estimation = useAppSelector(selectContextWindowEstimate);
-  const estimationStatus = useAppSelector(selectContextWindowEstimateStatus);
+  const [
+    promptTemplateItems,
+    glossaryItems,
+    isBusy,
+    sourceLanguage,
+    targetLanguage,
+    selectedPromptTemplateFileName,
+    resolvedGlossaryEntries,
+    selectedIntegrationId,
+    aiTranslationEnabled,
+    connected,
+    pingError,
+    estimation,
+    estimationStatus,
+    selectedGlossaryFileNames,
+  ] = useAppSelectors(
+    promptTemplates.selectItems,
+    glossaries.selectItems,
+    ai.selectIsBusy,
+    projects.selectSourceLanguage,
+    projects.selectTargetLanguage,
+    promptTemplates.selectSelectedFileName,
+    glossaries.selectResolvedEntries,
+    settings.selectSelectedIntegrationId,
+    settings.selectAIintegrationEnabled,
+    ai.selectIntegrationConnected,
+    ai.selectIntegrationPingError,
+    ai.selectContextWindowEstimate,
+    ai.selectContextWindowEstimateStatus,
+    glossaries.selectSelectedFileNames
+  );
 
   const activeClient = selectedIntegrationId
     ? (aiClients as Record<string, AiClient>)[selectedIntegrationId]
@@ -86,35 +82,35 @@ export default function PromptSetupRow() {
   );
 
   // Re-resolve glossary entries whenever the selection changes and nothing's cached yet --
-  // setSelectedGlossaryFileNames clears the cache, this repopulates it from disc.
+  // glossaries.setSelectedFileNames clears the cache, this repopulates it from disc.
   useEffect(() => {
     if (selectedGlossaryFileNames.length > 0 && resolvedGlossaryEntries.length === 0) {
-      void dispatch(refreshResolvedGlossaryEntries());
+      void glossaries.refreshResolvedEntries();
     }
-  }, [selectedGlossaryFileNames, resolvedGlossaryEntries.length, dispatch]);
+  }, [selectedGlossaryFileNames, resolvedGlossaryEntries.length]);
 
   // Never re-runs while a valid estimate is already showing ('success') -- whatever it actually
   // depends on (prompt template, glossary selection, direction) is instead degraded back to
-  // 'idle' at the exact point it changes (see the extraReducers matcher in aiTranslation.ts), so
+  // 'idle' at the exact point it changes (see the extraReducers matcher in ai.ts), so
   // simply mounting/re-rendering this component (e.g. opening Settings while the Editor aside's
   // own instance is already showing a valid estimate) never fires a redundant request. Otherwise
   // (disabled, misconfigured, or no template selected) the estimate is dropped and unavailable.
   useEffect(() => {
     if (!metricsSupported || !configured || !selectedPromptTemplateFileName) {
-      dispatch(setContextWindowEstimateStatus('idle'));
-      dispatch(setContextWindowEstimate(null));
+      ai.setContextWindowEstimateStatus('idle');
+      ai.setContextWindowEstimate(null);
       return;
     }
 
     if (estimationStatus === 'success') return;
 
-    dispatch(setContextWindowEstimateStatus('estimating'));
+    ai.setContextWindowEstimateStatus('estimating');
     const timer = setTimeout(() => {
-      void dispatch(estimateContextWindowUsage());
+      void ai.estimateContextWindowUsage();
     }, ESTIMATE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [metricsSupported, configured, selectedPromptTemplateFileName, estimationStatus, dispatch]);
+  }, [metricsSupported, configured, selectedPromptTemplateFileName, estimationStatus]);
 
   const utilizationPercent =
     estimationStatus === 'success' && estimation && estimation.contextWindow > 0
@@ -159,7 +155,7 @@ export default function PromptSetupRow() {
                     options={promptTemplateOptions}
                     value={selectedPromptTemplateFileName ?? ''}
                     onChange={([v]) =>
-                      void dispatch(applySelectedPromptTemplateFileName((v as string) || null))
+                      void ai.applySelectedPromptTemplateFileName((v as string) || null)
                     }
                     placeholder={t('aiSettings.prompt.promptTemplatePlaceholder')}
                     disabled={isBusy}
@@ -172,7 +168,7 @@ export default function PromptSetupRow() {
                     multiple
                     options={filteredGlossaryOptions}
                     value={selectedGlossaryFileNames}
-                    onChange={(values) => dispatch(setSelectedGlossaryFileNames(values))}
+                    onChange={(values) => glossaries.setSelectedFileNames(values)}
                     placeholder={t('aiSettings.prompt.glossariesPlaceholder')}
                     disabled={isBusy}
                   />

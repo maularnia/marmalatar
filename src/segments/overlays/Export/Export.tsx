@@ -1,12 +1,12 @@
+import { settings } from '@src/services/settings';
 import { exporterList } from './formats/list';
 import { ExportFormatlabels, ExportFormats, FrameRate } from './types';
 import Overlay from '@src/segments/overlays/Overlay';
-import { selectCharacterPool, selectLines } from '@src/store/slices/editor';
-import { closeOverlays } from '@src/store/slices/overlays';
-import { selectIsEditMode, selectProjectTargetLanguage } from '@src/store/slices/project';
+import { editor } from '@src/services/project';
+import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import { LANGUAGE_LABELS, TCharacter } from '@src/types';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import Toggle from '@ui-toolkit/Toggle';
 import {
   FormRoot,
@@ -19,7 +19,8 @@ import {
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import Select, { TOptionSelect } from '@ui-toolkit/Select/Select';
+import Select from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import { parseCharacterList } from '@utils/characters';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,11 +37,12 @@ interface CharacterOption extends TOptionSelect {
 
 export default function Export() {
   const { t } = useTranslation('export');
-  const dispatch = useAppDispatch();
-  const translationLines = useAppSelector(selectLines);
-  const characterPool = useAppSelector(selectCharacterPool);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const [translationLines, characterPool, targetLanguage, isEditMode] = useAppSelectors(
+    editor.selectLines,
+    editor.selectCharacterPool,
+    projects.selectTargetLanguage,
+    editor.selectIsEditMode
+  );
 
   const formatOptions = Object.values(ExportFormats).map((format) => ({
     value: format,
@@ -94,7 +96,7 @@ export default function Export() {
   const effectiveSourceFps = applyTimeCorrection ? sourceFps : FrameRate.FPS23P976;
   const effectiveResultFps = applyTimeCorrection ? resultFps : FrameRate.FPS23P976;
   return (
-    <Overlay onClose={() => dispatch(closeOverlays())}>
+    <Overlay onClose={() => settings.closeExport()}>
       <FormRoot>
         <FormsContent>
           <FormsRow>

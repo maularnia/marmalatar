@@ -1,0 +1,110 @@
+import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { TLanguage } from '@src/types';
+import { folder } from '@src/services/folder';
+
+export type TProjectEntry = TProjectListEntry;
+
+type ProjectState = {
+  // The tracked folder's projects, as the main process lists them
+  projects: TProjectEntry[];
+  currentProjectFilePath: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  emoji: string | null;
+  sourceLanguage: TLanguage | null;
+  targetLanguage: TLanguage | null;
+};
+
+const initialState: ProjectState = {
+  projects: [],
+  currentProjectFilePath: null,
+  projectId: null,
+  projectName: null,
+  emoji: null,
+  sourceLanguage: null,
+  targetLanguage: null,
+};
+
+const projectSlice = createSlice({
+  name: 'project',
+  initialState,
+  reducers: {
+    setProjectList(state, action: PayloadAction<TProjectEntry[]>) {
+      state.projects = action.payload;
+    },
+    // Replaces one project's list item with the entry the main process returned after a write, so
+    // the menu shows what the file now holds (name, emoji, progress) without listing the folder
+    // again
+    setProjectEntry(state, action: PayloadAction<TProjectEntry>) {
+      const idx = state.projects.findIndex((p) => p.projectId === action.payload.projectId);
+      if (idx >= 0) state.projects[idx] = action.payload;
+    },
+    setCurrentProjectFilePath(state, action: PayloadAction<string | null>) {
+      state.currentProjectFilePath = action.payload;
+    },
+    setProjectId(state, action: PayloadAction<string | null>) {
+      state.projectId = action.payload;
+    },
+    setProjectName(state, action: PayloadAction<string | null>) {
+      state.projectName = action.payload;
+    },
+    setProjectEmoji(state, action: PayloadAction<string | null>) {
+      state.emoji = action.payload;
+    },
+    setProjectSourceLanguage(state, action: PayloadAction<TLanguage | null>) {
+      state.sourceLanguage = action.payload;
+    },
+    setProjectTargetLanguage(state, action: PayloadAction<TLanguage | null>) {
+      state.targetLanguage = action.payload;
+    },
+    // Closes the open project only -- the list is the tracked folder's, not the open project's, and
+    // is deliberately kept
+    resetProject(state): ProjectState {
+      return { ...initialState, projects: state.projects };
+    },
+  },
+  extraReducers(builder) {
+    // Another folder: the open project belonged to the old one. The list is refreshed by the scan.
+    builder.addCase(
+      folder.pathChanged,
+      (state): ProjectState => ({
+        ...initialState,
+        projects: state.projects,
+      })
+    );
+  },
+  selectors: {
+    selectProjectList: (state) => state.projects,
+    selectCurrentProjectFilePath: (state) => state.currentProjectFilePath,
+    selectProjectId: (state) => state.projectId,
+    selectProjectName: (state) => state.projectName,
+    selectProjectSourceLanguage: (state) => state.sourceLanguage,
+    selectProjectTargetLanguage: (state) => state.targetLanguage,
+    selectIsProjectOpen: (state) => state.projectId !== null,
+  },
+});
+
+export const {
+  setProjectEntry,
+  setCurrentProjectFilePath,
+  setProjectId,
+  setProjectName,
+  setProjectEmoji,
+  setProjectList,
+  setProjectSourceLanguage,
+  setProjectTargetLanguage,
+  resetProject,
+} = projectSlice.actions;
+
+export const {
+  selectCurrentProjectFilePath,
+  selectProjectList,
+  selectProjectId,
+  selectProjectName,
+  selectProjectSourceLanguage,
+  selectProjectTargetLanguage,
+  selectIsProjectOpen,
+} = projectSlice.selectors;
+
+export default projectSlice.reducer;

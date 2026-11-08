@@ -9,8 +9,7 @@
 // to build each contract's version config and reader.
 import { defineVersionedContract, createVersionedReader } from './versioning';
 import { AppSettingsContractV1Schema } from './definitions/appSettings';
-import { ProjectStateV1Schema } from './definitions/projectState';
-import { FolderScanResultV1Schema } from './definitions/scanResult';
+import { ProjectStateV1Schema, ProjectStateV2Schema } from './definitions/projectState';
 import { OllamaSettingsV1Schema } from './definitions/ollamaSettings';
 import { LMStudioSettingsV1Schema } from './definitions/lmStudioSettings';
 import { DeepLSettingsV1Schema } from './definitions/deepLSettings';
@@ -28,28 +27,15 @@ export const readAppSettingsContract = createVersionedReader(AppSettingsVersioni
 const ProjectStateVersioning = defineVersionedContract({
   name: 'ProjectState',
   minSupportedVersion: 1,
-  currentVersion: 1,
-  schemas: { 1: ProjectStateV1Schema },
-  transforms: {},
-  current: ProjectStateV1Schema,
+  currentVersion: 2,
+  schemas: { 1: ProjectStateV1Schema, 2: ProjectStateV2Schema },
+  transforms: {
+    // Progress is recomputed from the file the next time the project service reads it
+    1: (data) => ({ ...(data as object), version: 2, translationProgress: 0, audioTrackId: null }),
+  },
+  current: ProjectStateV2Schema,
 });
 export const readProjectState = createVersionedReader(ProjectStateVersioning);
-
-// Its `transforms`/`schemas` will eventually need to fold in migrations of the nested
-// project/prompt-template/glossary records too, once a V2 exists -- nothing to do there today
-// since there's only one version. Individual cache entries (project/prompt-template/glossary)
-// are never read on their own -- only ever as part of this whole cache blob -- so there's no
-// per-entry versioned reader here, just the schemas each entry is validated against on write
-// (see the definitions/*CacheEntry.ts files and their call sites).
-const FolderScanResultVersioning = defineVersionedContract({
-  name: 'FolderScanResult',
-  minSupportedVersion: 1,
-  currentVersion: 1,
-  schemas: { 1: FolderScanResultV1Schema },
-  transforms: {},
-  current: FolderScanResultV1Schema,
-});
-export const readFolderScanResult = createVersionedReader(FolderScanResultVersioning);
 
 const OllamaSettingsVersioning = defineVersionedContract({
   name: 'OllamaSettings',

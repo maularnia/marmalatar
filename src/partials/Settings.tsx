@@ -1,25 +1,6 @@
-import {
-  selectAskBeforeAITranslate,
-  selectAskBeforeDelete,
-  selectAskBeforeMerge,
-  selectAskBeforeSplit,
-  selectAutoMarkLinesCompleted,
-  selectAutoMergeThreshold,
-  selectCheckGrammar,
-  selectScrollVideoIntoViewOnPlay,
-  selectTimeAdjustmentStep,
-  setAskBeforeAITranslate,
-  setAskBeforeDelete,
-  setAskBeforeMerge,
-  setAskBeforeSplit,
-  setAutoMarkLinesCompleted,
-  setAutoMergeThreshold,
-  setCheckGrammar,
-  setScrollVideoIntoViewOnPlay,
-  setTimeAdjustmentStep,
-} from '@src/store/slices/app';
+import { settings } from '@src/services/settings';
 import { ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
 import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
@@ -30,16 +11,27 @@ import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
   const { t } = useTranslation(['settings', 'errors']);
-  const dispatch = useAppDispatch();
-  const askBeforeMerge = useAppSelector(selectAskBeforeMerge);
-  const askBeforeDelete = useAppSelector(selectAskBeforeDelete);
-  const askBeforeAITranslate = useAppSelector(selectAskBeforeAITranslate);
-  const askBeforeSplit = useAppSelector(selectAskBeforeSplit);
-  const autoMergeThreshold = useAppSelector(selectAutoMergeThreshold);
-  const timeAdjustmentStep = useAppSelector(selectTimeAdjustmentStep);
-  const scrollVideoIntoViewOnPlay = useAppSelector(selectScrollVideoIntoViewOnPlay);
-  const autoMarkLinesCompleted = useAppSelector(selectAutoMarkLinesCompleted);
-  const checkGrammar = useAppSelector(selectCheckGrammar);
+  const [
+    askBeforeMerge,
+    askBeforeDelete,
+    askBeforeAITranslate,
+    askBeforeSplit,
+    autoMergeThreshold,
+    timeAdjustmentStep,
+    scrollVideoIntoViewOnPlay,
+    autoMarkLinesCompleted,
+    checkGrammar,
+  ] = useAppSelectors(
+    settings.selectAskBeforeMerge,
+    settings.selectAskBeforeDelete,
+    settings.selectAskBeforeAITranslate,
+    settings.selectAskBeforeSplit,
+    settings.selectAutoMergeThreshold,
+    settings.selectTimeAdjustmentStep,
+    settings.selectScrollVideoIntoViewOnPlay,
+    settings.selectAutoMarkLinesCompleted,
+    settings.selectCheckGrammar
+  );
 
   const {
     register,
@@ -64,7 +56,7 @@ export default function Settings() {
                 valueAsNumber: true,
                 onChange: (e) => {
                   const v = parseInt(e.currentTarget.value, 10);
-                  if (!isNaN(v) && v >= 1) dispatch(setAutoMergeThreshold(v));
+                  if (!isNaN(v) && v >= 1) settings.setAutoMergeThreshold(v);
                 },
               })}
             >
@@ -79,7 +71,7 @@ export default function Settings() {
                 valueAsNumber: true,
                 onChange: (e) => {
                   const v = parseInt(e.currentTarget.value, 10);
-                  if (!isNaN(v) && v >= 1) dispatch(setTimeAdjustmentStep(v));
+                  if (!isNaN(v) && v >= 1) settings.setTimeAdjustmentStep(v);
                 },
               })}
             >
@@ -94,7 +86,7 @@ export default function Settings() {
           <FormsSectionContent>
             <Toggle
               checked={scrollVideoIntoViewOnPlay}
-              onChange={(e) => dispatch(setScrollVideoIntoViewOnPlay(e.currentTarget.checked))}
+              onChange={(e) => settings.setScrollVideoIntoViewOnPlay(e.currentTarget.checked)}
             >
               {t('uxUi.scrollVideoIntoViewPrefix')}{' '}
               <Tag size={TTagSize.SMALL} variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT}>
@@ -110,25 +102,25 @@ export default function Settings() {
           <FormsSectionContent $columns={2}>
             <Toggle
               checked={askBeforeMerge}
-              onChange={(e) => dispatch(setAskBeforeMerge(e.currentTarget.checked))}
+              onChange={(e) => settings.setAskBeforeMerge(e.currentTarget.checked)}
             >
               {t('uxUi.askBeforeMerge')}
             </Toggle>
             <Toggle
               checked={askBeforeDelete}
-              onChange={(e) => dispatch(setAskBeforeDelete(e.currentTarget.checked))}
+              onChange={(e) => settings.setAskBeforeDelete(e.currentTarget.checked)}
             >
               {t('uxUi.askBeforeDelete')}
             </Toggle>
             <Toggle
               checked={askBeforeAITranslate}
-              onChange={(e) => dispatch(setAskBeforeAITranslate(e.currentTarget.checked))}
+              onChange={(e) => settings.setAskBeforeAITranslate(e.currentTarget.checked)}
             >
               {t('uxUi.askBeforeAITranslate')}
             </Toggle>
             <Toggle
               checked={askBeforeSplit}
-              onChange={(e) => dispatch(setAskBeforeSplit(e.currentTarget.checked))}
+              onChange={(e) => settings.setAskBeforeSplit(e.currentTarget.checked)}
             >
               {t('uxUi.askBeforeSplit')}
             </Toggle>
@@ -136,7 +128,7 @@ export default function Settings() {
           <FormsSectionContent>
             <Toggle
               checked={autoMarkLinesCompleted}
-              onChange={(e) => dispatch(setAutoMarkLinesCompleted(e.currentTarget.checked))}
+              onChange={(e) => settings.setAutoMarkLinesCompleted(e.currentTarget.checked)}
             >
               {t('uxUi.autoMarkLinesCompleted')}
             </Toggle>
@@ -144,7 +136,7 @@ export default function Settings() {
           <FormsSectionContent>
             <Toggle
               checked={checkGrammar}
-              onChange={(e) => dispatch(setCheckGrammar(e.currentTarget.checked))}
+              onChange={(e) => settings.setCheckGrammar(e.currentTarget.checked)}
             >
               {t('uxUi.checkGrammar')}
             </Toggle>

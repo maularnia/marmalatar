@@ -1,32 +1,13 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
-import { useVideo } from '@providers/VideoProvider';
-import { useEditorAIActions } from '@src/providers/EditorAIActionsProvider';
-import { useEditorRefs } from '@src/providers/EditorRefsProvider';
-import {
-  selectIntegrationIsConfigured,
-  selectIsSmallScreen,
-  selectTimeAdjustmentStep,
-} from '@src/store/slices/app';
-import {
-  selectCanRedo,
-  selectCanUndo,
-  selectFocusedColumn,
-  selectFocusedLineIndex,
-  selectLines,
-  selectTextSelection,
-  shiftAllLinesEarlier,
-  shiftAllLinesLater,
-} from '@src/store/slices/editor';
-import { selectIsEditMode, selectVideoFilePath } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
+import { media } from '@src/services/media';
+import { settings } from '@src/services/settings';
+import { editor } from '@src/services/project';
+import { glossaries } from '@src/services/glossary';
+import { promptTemplates } from '@src/services/prompt';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  cancelAutomatedBulkTranslation,
-  selectCurrentBulkJob,
-  selectTranslationIsBusy,
-} from '@store/slices/aiTranslation';
-import { openExportOverlay } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { ai } from '@src/services/ai';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
@@ -35,9 +16,7 @@ import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@u
 import { type CSSProperties, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
-import { useVideoFileSwap } from '../components/VideoPlayer/useVideoFileSwap';
 
 const Container = styled.div`
   display: flex;
@@ -92,43 +71,50 @@ const PanelButton: typeof Button = (props) => {
   );
 };
 
+// Overlays are exclusive: each owner keeps its own open state, and the caller closes the others
+// before opening one.
+function openExport(): void {
+  promptTemplates.closeEditor();
+  glossaries.closeEditor();
+  settings.close();
+  settings.openExport();
+}
+
 export function EditorControls() {
   const { t } = useTranslation('tooltips');
-  const dispatch = useAppDispatch();
-  const { integrationIsConfigured, focusedLineIndex, textSelection } = useAppSelector(
-    (state) => ({
-      integrationIsConfigured: selectIntegrationIsConfigured(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
-      textSelection: selectTextSelection(state),
-    }),
-    shallowEqual
+  const [integrationIsConfigured, focusedLineIndex, textSelection] = useAppSelectors(
+    settings.selectIntegrationIsConfigured,
+    editor.selectFocusedLineIndex,
+    editor.selectTextSelection
   );
-  const { splitCursorRef } = useEditorRefs();
-  const {
-    handleCopySourceToOutput,
-    handleInsertLine,
-    handleSplitLine,
-    handleAutoMerge,
-    handleCleanup,
-    handleCopyAllSourceToOutput,
-    handleCompleteAllTranslatedLines,
-    handleToggleEditMode,
-  } = useEditorActions();
-  const currentBulkJob = useAppSelector(selectCurrentBulkJob);
-  const isBusy = useAppSelector(selectTranslationIsBusy);
-  const allLines = useAppSelector(selectLines);
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const [
+    currentBulkJob,
+    isBusy,
+    allLines,
+    isSmallScreen,
+    isEditMode,
+    timeAdjustmentStep,
+    canUndo,
+    canRedo,
+    videoDurationMs,
+    videoPath,
+    focusedColumn,
+  ] = useAppSelectors(
+    ai.selectCurrentBulkJob,
+    ai.selectIsBusy,
+    editor.selectLines,
+    settings.selectIsSmallScreen,
+    editor.selectIsEditMode,
+    settings.selectTimeAdjustmentStep,
+    editor.selectCanUndo,
+    editor.selectCanRedo,
+    media.selectVideoDurationMs,
+    media.selectVideoFilePath,
+    editor.selectFocusedColumn
+  );
   const isAiAvailable = integrationIsConfigured && !isBusy && !isEditMode;
   const isAutoMergeAvailable = !currentBulkJob && !isBusy;
   const isExportAvailable = !currentBulkJob && !isBusy;
-  const timeAdjustmentStep = useAppSelector(selectTimeAdjustmentStep);
-  const canUndo = useAppSelector(selectCanUndo);
-  const canRedo = useAppSelector(selectCanRedo);
-  const { handleUndoRedo } = useEditorActions();
-  const { videoDurationMs } = useVideo();
-  const videoPath = useAppSelector(selectVideoFilePath);
-  const { swapVideo } = useVideoFileSwap();
   const earliestStartTime = allLines.length
     ? Math.min(...allLines.map((line) => line.start_time))
     : 0;
@@ -136,8 +122,6 @@ export function EditorControls() {
   const canShiftEarlier = allLines.length > 0 && earliestStartTime > 0;
   const canShiftLater =
     allLines.length > 0 && (videoDurationMs == null || latestEndTime < videoDurationMs);
-  const focusedColumn = useAppSelector(selectFocusedColumn);
-  const { handleAiTranslate, handleAiTranslateBulk, handleAddToGlossary } = useEditorAIActions();
 
   const aiSectionRef = useRef<HTMLDivElement>(null);
   const [showAiOptions, setShowAiOptions] = useState(false);
@@ -156,7 +140,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canUndo || isBusy}
             icon={TIcon.HISTORY_BACK}
-            onClick={() => handleUndoRedo('backward')}
+            onClick={() => editor.undoRedo('backward')}
           />
         </Tooltip>
         <Tooltip
@@ -170,7 +154,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canRedo || isBusy}
             icon={TIcon.HISTORY_FORWARD}
-            onClick={() => handleUndoRedo('forward')}
+            onClick={() => editor.undoRedo('forward')}
           />
         </Tooltip>
         <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
@@ -198,7 +182,7 @@ export function EditorControls() {
                 <PanelButton
                   icon={TIcon.STOP}
                   color={ThemeColors.RED}
-                  onClick={() => dispatch(cancelAutomatedBulkTranslation())}
+                  onClick={() => ai.cancelAutomatedBulk()}
                 />
               </AiTranslationProgressBar>
             ) : (
@@ -221,7 +205,7 @@ export function EditorControls() {
           <PanelButton
             icon={TIcon.GLOSSARY}
             disabled={!integrationIsConfigured || isBusy || isEditMode || textSelection.length <= 0}
-            onClick={() => handleAddToGlossary(textSelection)}
+            onClick={() => glossaries.addEntryFromText(textSelection)}
           />
         </Tooltip>
         <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
@@ -238,7 +222,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canShiftEarlier || isBusy}
             icon={TIcon.BACKWARD}
-            onClick={() => dispatch(shiftAllLinesEarlier(timeAdjustmentStep))}
+            onClick={() => editor.shiftAllLinesEarlier(timeAdjustmentStep)}
           />
         </Tooltip>
         <Tooltip
@@ -254,7 +238,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!canShiftLater || isBusy}
             icon={TIcon.FORWARD}
-            onClick={() => dispatch(shiftAllLinesLater(timeAdjustmentStep))}
+            onClick={() => editor.shiftAllLinesLater(timeAdjustmentStep)}
           />
         </Tooltip>
         <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
@@ -268,7 +252,7 @@ export function EditorControls() {
         >
           <PanelButton
             disabled={!isAutoMergeAvailable}
-            onClick={() => void handleAutoMerge()}
+            onClick={() => void editor.autoMerge()}
             icon={TIcon.MERGE}
           />
         </Tooltip>
@@ -283,7 +267,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!isAutoMergeAvailable}
             icon={TIcon.CLEANUP}
-            onClick={() => void handleCleanup()}
+            onClick={() => void editor.cleanup()}
           />
         </Tooltip>
         <Tooltip
@@ -297,7 +281,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!isAutoMergeAvailable || isEditMode}
             icon={TIcon.DOUBLE_RIGHT}
-            onClick={() => void handleCopyAllSourceToOutput()}
+            onClick={() => void editor.copyAllSourceToOutput()}
           />
         </Tooltip>
         <Tooltip
@@ -311,7 +295,7 @@ export function EditorControls() {
           <PanelButton
             disabled={!isAutoMergeAvailable}
             icon={TIcon.DOUBLE_TICK}
-            onClick={() => handleCompleteAllTranslatedLines()}
+            onClick={() => editor.completeAllTranslatedLines()}
           />
         </Tooltip>
         <Tooltip
@@ -326,7 +310,7 @@ export function EditorControls() {
             disabled={focusedLineIndex === null || isBusy}
             icon={TIcon.INSERT_BEFORE}
             onClick={() => {
-              if (focusedLineIndex !== null) handleInsertLine(focusedLineIndex, 'before');
+              if (focusedLineIndex !== null) editor.insertLine(focusedLineIndex, 'before');
             }}
           />
         </Tooltip>
@@ -342,7 +326,7 @@ export function EditorControls() {
             disabled={focusedLineIndex === null || isBusy}
             icon={TIcon.INSERT_AFTER}
             onClick={() => {
-              if (focusedLineIndex !== null) handleInsertLine(focusedLineIndex, 'after');
+              if (focusedLineIndex !== null) editor.insertLine(focusedLineIndex, 'after');
             }}
           />
         </Tooltip>
@@ -364,7 +348,7 @@ export function EditorControls() {
             icon={TIcon.RAZOR}
             onClick={() => {
               if (focusedLineIndex !== null) {
-                handleSplitLine(focusedLineIndex, splitCursorRef.current);
+                editor.splitLine(focusedLineIndex);
               }
             }}
           />
@@ -383,7 +367,7 @@ export function EditorControls() {
             icon={TIcon.ARROW_COPY_RIGHT}
             onClick={() => {
               if (focusedLineIndex !== null) {
-                handleCopySourceToOutput(focusedLineIndex);
+                editor.copySourceToOutput(focusedLineIndex);
               }
             }}
           />
@@ -408,7 +392,7 @@ export function EditorControls() {
             disabled={isBusy}
             variant={isEditMode ? TButtonVariant.PRIMARY : TButtonVariant.TRANSPARENT}
             icon={isEditMode ? TIcon.COLUMNS_2 : TIcon.COLUMNS_3}
-            onClick={() => handleToggleEditMode()}
+            onClick={() => editor.toggleEditMode()}
           />
         </Tooltip>
         {isSmallScreen && !videoPath && (
@@ -420,7 +404,7 @@ export function EditorControls() {
               color={ThemeColors.ACCENT2}
               disabled={isBusy}
               icon={TIcon.VIDEO_ABSENT}
-              onClick={swapVideo}
+              onClick={() => void projects.changeVideo()}
             />
           </Tooltip>
         )}
@@ -436,7 +420,7 @@ export function EditorControls() {
           <PanelButton
             color={ThemeColors.ACCENT1}
             disabled={!isExportAvailable}
-            onClick={() => dispatch(openExportOverlay())}
+            onClick={openExport}
             icon={TIcon.EXPORT}
           />
         </Tooltip>
@@ -464,7 +448,7 @@ export function EditorControls() {
               <PanelButton
                 variant={TButtonVariant.TRANSPARENT_SPECIAL}
                 disabled={!isAiAvailable}
-                onClick={handleAiTranslateBulk}
+                onClick={ai.translateUntranslatedLines}
                 icon={TIcon.AI_FILE}
               />
             </Tooltip>
@@ -482,7 +466,7 @@ export function EditorControls() {
                 icon={TIcon.AI_EDIT}
                 onClick={() => {
                   if (focusedLineIndex == null) return;
-                  handleAiTranslate(focusedLineIndex);
+                  ai.translateLine(focusedLineIndex);
                 }}
               />
             </Tooltip>

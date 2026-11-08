@@ -14,9 +14,6 @@
     "removeAudioCuesSuffix": "like [music], [sigh] etc.",
     "fixShortDashes": "Fix short dashes"
   },
-  "video": {
-    "sectionTitle": "Video"
-  },
   "projectTitle": {
     "sectionTitle": "Title"
   },

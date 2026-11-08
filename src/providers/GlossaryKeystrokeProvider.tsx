@@ -6,7 +6,7 @@ import {
   useShortcut,
 } from 'react-keyhub';
 import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
+import { glossaries } from '@src/services/glossary';
 import { PropsWithChildren } from 'react';
 
 const myShortcuts = {
@@ -119,47 +119,41 @@ export function GlossaryKeystrokeProvider({ children }: PropsWithChildren) {
 // Registers useShortcut handlers -- must render as KeystrokeZone's child so these hooks run inside
 // the KeyHubProvider context KeystrokeZone creates for `shortcuts`.
 function GlossaryShortcuts() {
-  const {
-    focusedPairIndex,
-    focusedColumn,
-    handleFocusPairInput,
-    handleMovePairFocus,
-    handleDeletePair,
-    handleInsertPair,
-  } = useGlossaryActions();
-
-  useAppGlossaryKeystroke('previousPairInput', () => handleMovePairFocus('up'));
-  useAppGlossaryKeystroke('nextPairInput', () => handleMovePairFocus('down'));
+  useAppGlossaryKeystroke('previousPairInput', () => glossaries.movePairFocus('up'));
+  useAppGlossaryKeystroke('nextPairInput', () => glossaries.movePairFocus('down'));
 
   useAppGlossaryKeystroke('focusOriginalColumn', () => {
-    if (focusedColumn === 'original') return;
-    handleFocusPairInput(focusedPairIndex ?? 0, 'original');
+    if (glossaries.get.focusedColumn() === 'original') return;
+    glossaries.focusPairInput(glossaries.get.focusedPairIndex() ?? 0, 'original');
   });
 
   useAppGlossaryKeystroke('focusTranslationColumn', () => {
-    if (focusedColumn === 'translation') return;
-    handleFocusPairInput(focusedPairIndex ?? 0, 'translation');
+    if (glossaries.get.focusedColumn() === 'translation') return;
+    glossaries.focusPairInput(glossaries.get.focusedPairIndex() ?? 0, 'translation');
   });
 
   const handleDeletePairKeystroke = (event: KeyboardEvent) => {
+    const focusedPairIndex = glossaries.get.focusedPairIndex();
     if (focusedPairIndex == null) return;
     event.preventDefault();
-    handleDeletePair(focusedPairIndex);
+    void glossaries.deletePair(focusedPairIndex);
   };
 
   useAppGlossaryKeystroke('deletePair', handleDeletePairKeystroke);
   useAppGlossaryKeystroke('deletePairDelete', handleDeletePairKeystroke);
 
   useAppGlossaryKeystroke('insertPairBefore', (event) => {
+    const focusedPairIndex = glossaries.get.focusedPairIndex();
     if (focusedPairIndex == null) return;
     event.preventDefault();
-    handleInsertPair(focusedPairIndex, 'before');
+    glossaries.insertPair(focusedPairIndex, 'before');
   });
 
   useAppGlossaryKeystroke('insertPairAfter', (event) => {
+    const focusedPairIndex = glossaries.get.focusedPairIndex();
     if (focusedPairIndex == null) return;
     event.preventDefault();
-    handleInsertPair(focusedPairIndex, 'after');
+    glossaries.insertPair(focusedPairIndex, 'after');
   });
 
   return null;

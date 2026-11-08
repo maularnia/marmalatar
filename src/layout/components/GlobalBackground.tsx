@@ -1,6 +1,7 @@
+import { useAppSelector } from '@store/hooks';
+import { media } from '@src/services/media';
 import styled from 'styled-components';
 import { CSSVar } from '@src/theme/utils';
-import { useVideo } from '@providers/VideoProvider';
 
 const Backdrop = styled.div`
   position: fixed;
@@ -26,7 +27,7 @@ const BackdropImage = styled.div.attrs<{ $image: string | null }>(({ $image }) =
 `;
 
 export default function GlobalBackground() {
-  const { thumbnail: imageUrl } = useVideo();
+  const imageUrl = useAppSelector(media.selectThumbnail);
   const hasImage = Boolean(imageUrl);
 
   return (

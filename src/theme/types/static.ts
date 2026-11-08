@@ -1,5 +1,5 @@
 import { TOpacity } from '@src/theme/definitions';
-import { TThemeVarsChapter } from '@src/theme/types';
+import type { TThemeVarsChapter } from '@src/theme/types/chapter';
 
 export type TThemeStaticFontsChapter = TThemeVarsChapter<{
   fontHeadingSansSerif: string;

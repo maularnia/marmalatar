@@ -95,5 +95,8 @@
   },
   "cacheCleanupSuccess": {
     "title": "Keš byŭ ačyščany"
+  },
+  "audioTracksLoader": {
+    "extracting": "Čytajem zviestki pra aŭdyjadarožki"
   }
 }

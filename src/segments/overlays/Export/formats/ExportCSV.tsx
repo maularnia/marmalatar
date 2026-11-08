@@ -1,4 +1,4 @@
-import { selectProjectName } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import {
   DEFAULT_CSV_COLUMN_FORMULA,
@@ -54,7 +54,7 @@ export const ExportCSV = ({
 }: ExporterProps) => {
   const [formula, setFormula] = useState<string>(DEFAULT_CSV_COLUMN_FORMULA);
   const [timeFormat, setTimeFormat] = useState<string>(DEFAULT_CSV_TIME_FORMAT);
-  const showName = useAppSelector(selectProjectName) ?? '';
+  const showName = useAppSelector(projects.selectName) ?? '';
   return (
     <>
       <FormsRow>

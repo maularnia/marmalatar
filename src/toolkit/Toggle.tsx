@@ -3,7 +3,7 @@ import { TColor } from '@src/theme/definitions';
 import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import { TTheme } from '@src/theme/types';
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@src/services/settings';
 import styled, { css } from 'styled-components';
 import P, { TPVariant } from './P';
 
@@ -141,7 +141,7 @@ export default function Toggle({
   enabledColor = ThemeColors.GREEN,
   ...props
 }: ToggleProps) {
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   return (
     <Root>
       <NativeInput

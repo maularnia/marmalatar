@@ -1,21 +1,7 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
+import { media } from '@src/services/media';
 import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
-import { useVideo } from '@providers/VideoProvider';
-import { selectAutoMarkLinesCompleted, selectIsSmallScreen } from '@src/store/slices/app';
-import {
-  incrementRenderEpoch,
-  selectActiveLineIndex,
-  selectCharacterPool,
-  selectFocusedLineIndex,
-  selectLines,
-  selectRenderEpoch,
-  setLineCompleted,
-  updateSourceText,
-  updateTranslatedText,
-  updateTranslationCharacter,
-} from '@src/store/slices/editor';
-import { selectIsEditMode } from '@src/store/slices/project';
-import { selectFrozenLineNumbers } from '@src/store/slices/prompt';
+import { settings } from '@src/services/settings';
+import { editor } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
@@ -23,12 +9,10 @@ import { TTagSize } from '@src/toolkit/Tag';
 import { TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
 import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
+import { useAppSelectors } from '@store/hooks';
 import classNames from 'classnames';
 import { CSSProperties, type ReactElement, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
 import FloatingVideoBlock from './components/FloatingVideoBlock/FloatingVideoBlock';
 import VirtualizedList, {
@@ -102,34 +86,36 @@ const overscrollAmount = 300;
 const estimatedRowHeight = 100;
 export default function Editor() {
   const { t } = useTranslation('tooltips');
-  const dispatch = useAppDispatch();
-  const activeLineIndex = useAppSelector(selectActiveLineIndex);
-  const focusedLineIndex = useAppSelector(selectFocusedLineIndex);
-  const { handleChangeFocusedLine, handleFocusEditor, handleMergeLines } = useEditorActions();
-  const { seekToLine, handlePause } = useVideo();
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
+  const [
+    activeLineIndex,
+    focusedLineIndex,
+    isSmallScreen,
+    isEditMode,
+    renderEpoch,
+    translationLines,
+    frozenLineNumbers,
+    characterOptions,
+  ] = useAppSelectors(
+    media.selectActiveLineIndex,
+    editor.selectFocusedLineIndex,
+    settings.selectIsSmallScreen,
+    editor.selectIsEditMode,
+    editor.selectRenderEpoch,
+    editor.selectLines,
+    editor.selectFrozenLineNumbers,
+    editor.selectCharacterPool
+  );
   const focusedItemIndex = focusedLineIndex ?? -1;
   const { isAltShiftPressed } = useEditorKeystroke();
-  const isEditMode = useAppSelector(selectIsEditMode);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const { translationLines, frozenLineNumbers, characterOptions } = useAppSelector(
-    (state) => ({
-      translationLines: selectLines(state),
-      frozenLineNumbers: selectFrozenLineNumbers(state),
-      characterOptions: selectCharacterPool(state),
-    }),
-    shallowEqual
-  );
-  const renderEpoch = useAppSelector(selectRenderEpoch);
 
   // This route element remounts fresh every time a project is opened (navigating away from
   // /workspace unmounts it) -- so a mount-only focus here means the editor always grabs focus as
   // soon as a project opens, landing on the first line's first available input via
-  // handleFocusEditor's own fallback (same "steal focus on mount" hook the static pages use, just
+  // editor.focus's own fallback (same "steal focus on mount" hook the static pages use, just
   // given the editor's own richer target instead of a container to search).
-  useAutoFocusFirst(handleFocusEditor);
+  useAutoFocusFirst(editor.focus);
 
   // The focused line must never be thrown out by virtualization -- otherwise scrolling it
   // off-screen (e.g. via ctrl+2/arrow navigation) would unmount it out from under its own focus.
@@ -184,21 +170,20 @@ export default function Editor() {
         isMergeMaster={isFocused && isAltShiftPressed}
         isFrozen={isFrozen}
         onFocus={() => {
-          handleChangeFocusedLine(lineIndex);
-          seekToLine(lineIndex);
-          handlePause();
+          media.seekToLine(lineIndex);
+          media.pause();
         }}
         onCharacterChange={(character) =>
-          dispatch(updateTranslationCharacter({ lineIndex, character }))
+          editor.updateTranslationCharacter({ lineIndex, character })
         }
         onOutputTextChange={(text) => {
-          dispatch(updateTranslatedText({ lineIndex, text }));
-          if (fromCurrentStore(selectAutoMarkLinesCompleted))
-            dispatch(setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true }));
+          editor.updateTranslatedText({ lineIndex, text });
+          if (settings.get.autoMarkLinesCompleted())
+            editor.setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true });
         }}
-        onSourceTextChange={(text) => dispatch(updateSourceText({ lineIndex, text }))}
-        onMergeUpClick={() => handleMergeLines(lineIndex, 'up')}
-        onMergeDownClick={() => handleMergeLines(lineIndex, 'down')}
+        onSourceTextChange={(text) => editor.updateSourceText({ lineIndex, text })}
+        onMergeUpClick={() => editor.mergeLines(lineIndex, 'up')}
+        onMergeDownClick={() => editor.mergeLines(lineIndex, 'down')}
       />
     );
 
@@ -229,7 +214,7 @@ export default function Editor() {
             overscanPx={overscrollAmount}
             estimatedRowHeight={estimatedRowHeight}
             renderEpoch={renderEpoch}
-            onRenderEpochEnded={() => dispatch(incrementRenderEpoch())}
+            onRenderEpochEnded={() => editor.incrementRenderEpoch()}
             renderItem={({ item, onMeasure }) => renderVirtualizedLine(item, onMeasure)}
           />
         </Root>
