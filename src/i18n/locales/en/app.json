@@ -16,5 +16,8 @@
     "BE_be": "Belarusian",
     "UK_uk": "Ukrainian",
     "PL_pl": "Polish"
+  },
+  "appTitle": {
+    "tagline": "Happy translating!"
   }
 }
