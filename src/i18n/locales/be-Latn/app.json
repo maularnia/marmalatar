@@ -3,16 +3,6 @@
     "supportedFormats": "Prahrama padtrymlivaje: .mp4, .m4v, .mkv, .webm, .mov, .avi, .wmv, .flv, .mpg, .mpeg, .m2ts, .mts, .ts, .3gp, .3g2, .ogv,.asf",
     "supportedCodecs": "Sumiaščalnyja kodeki: H.264, VP8, VP9, AV1"
   },
-  "videoFileStatus": {
-    "idle": "Abiarycie fajł dla apracoŭki",
-    "loading": "Apracoŭka fajła...",
-    "success": "Fajł apracavany",
-    "error": "Niemahčyma apracavać fajł",
-    "unsupportedVideo": "Nieprajhravalnaje videa. Niesumiaščalny kodek videa",
-    "extractingAudio": "Apracoŭka aŭdyjo...",
-    "audioExtractionFailed": "Nie atrymałasia apracavać aŭdyjo",
-    "unplayableConvertedAudio": "Nie atrymałasia pieraŭtvaryć aŭdyjo ŭ prajhravalny farmat"
-  },
   "errorBoundary": {
     "title": "Niešta pajšło nie tak",
     "message": "U prahramie adbyłasia niečakanaja pamyłka. Pasprabujcie pierazapuścić prahramu, vaš prajekt zachavany na dysku i nie budzie stračany.",

@@ -1,15 +1,17 @@
 import { Service } from '@src/services/Service';
+import { loadSavedVideo, pickVideo } from './videoFlow';
 import {
+  applyAudioTrack,
+  applyVideo,
   cleanMediaCache,
   getAudioElement,
+  getAudioTrackLabel,
   getCurrentTimeMs,
   getVideoElement,
-  loadVideo,
   pause,
   play,
   playPause,
   pickAudioTrack,
-  processVideo,
   registerAudioElement,
   registerVideoElement,
   reportVideoUnplayable,
@@ -23,12 +25,13 @@ import {
   selectActiveLineIndex,
   selectThumbnail,
   selectAspectRatio,
+  selectAudioTrack,
+  selectAudioTrackCount,
+  selectAudioTrackId,
   selectVideoDurationMs,
   selectVideoFilePath,
   selectWaveformPeaks,
   setActiveLineIndex,
-  setVideoData,
-  setVideoFilePath,
 } from './slice';
 
 // The media service: the open project's video file, its duration, thumbnail and waveform, the
@@ -36,33 +39,38 @@ import {
 // This file is its only entry point: the slice lives in slice.ts, the operations in actions.ts.
 
 export { default as mediaReducer } from './slice';
+export type { TVideoSelection } from './videoFlow';
 
 export const media = new Service('media', {
   actions: {
     clearVideo,
     setActiveLineIndex,
-    setVideoData,
-    setVideoFilePath,
   },
   selectors: {
     selectActiveLineIndex,
     selectThumbnail,
     selectAspectRatio,
+    selectAudioTrack,
+    selectAudioTrackCount,
+    selectAudioTrackId,
     selectVideoDurationMs,
     selectVideoFilePath,
     selectWaveformPeaks,
   },
   functions: {
+    applyAudioTrack,
+    applyVideo,
     cleanMediaCache,
     getAudioElement,
+    getAudioTrackLabel,
     getCurrentTimeMs,
     getVideoElement,
-    loadVideo,
+    loadSavedVideo,
     pause,
     play,
     playPause,
     pickAudioTrack,
-    processVideo,
+    pickVideo,
     registerAudioElement,
     registerVideoElement,
     reportVideoUnplayable,

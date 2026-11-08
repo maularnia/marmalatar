@@ -17,9 +17,6 @@
     "originalRequired": "This field is required",
     "translationRequired": "This field is required"
   },
-  "videoSelect": {
-    "fileRequired": "This field is required"
-  },
   "mainMenuListItem": {
     "nameTooLong": "Max length is [{{maxLength}}]",
     "nameAlreadyExists": "File with this name already exists",
@@ -30,15 +27,6 @@
     "parseFailedFallback": "Failed to parse the file",
     "fileRequired": "This field is required",
     "noValidLines": "Invalid or empty file, nothing to work with"
-  },
-  "videoFileSelect": {
-    "fileRequired": "This field is required",
-    "pathUnresolved": "Unable to resolve file path",
-    "stillProcessing": "Video processing in progress",
-    "unsupportedVideoCodec": "Video can not be played. Unsupported video codec.",
-    "audioExtractionFailed": "Unable to extract or convert the audio track.",
-    "unplayableConvertedAudio": "Unable to convert audio to a playable format.",
-    "processingFailed": "Video file processing failed."
   },
   "import": {
     "projectTitleRequired": "This field is required",
@@ -137,9 +125,6 @@
   "videoFileCheckFailed": {
     "title": "Unable to check the video file"
   },
-  "waveformExtractionFailed": {
-    "title": "Unable to extract audio waveform"
-  },
   "projectLoadFailed": {
     "title": "Project can not be loaded"
   },
@@ -193,5 +178,8 @@
   "cacheCleanupFailed": {
     "title": "Cache cleaning error",
     "message": "Unable to clean up the cache"
+  },
+  "audioTracksListFailed": {
+    "title": "Unable to read the video audio tracks"
   }
 }

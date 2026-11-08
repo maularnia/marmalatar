@@ -69,12 +69,12 @@ projectAutosaveMiddleware.startListening({
 
 // ── Device preferences ───────────────────────────────────────────────────────
 
-// Device-specific editor/UI preferences (editorMode, isVideoCollapsed, video path) -- these aren't
+// Device-specific editor/UI preferences (editorMode, isVideoCollapsed, video path and track) -- these aren't
 // project content, so they're persisted to electron-store keyed by projectId instead of triggering
 // a .mrml file rewrite.
 const EDITOR_STATE_WATCHED_PATHS = {
   editor: ['mode', 'isVideoCollapsed'],
-  media: ['videoFilePath'],
+  media: ['videoFilePath', 'audioTrack'],
 } as const satisfies {
   editor: readonly (keyof RootState['editor'])[];
   media: readonly (keyof RootState['media'])[];

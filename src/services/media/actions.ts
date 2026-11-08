@@ -5,25 +5,25 @@ import {
   makeCacheCleanupFailedMessage,
   makeCacheCleanupSuccessMessage,
   makeVideoPlaybackErrorMessage,
-  makeWaveformExtractionFailedMessage,
 } from '@src/services/media/toasts';
-import { selectAudioTrack } from './dialogs/selectAudioTrack/selectAudioTrack';
+import type { TAudioTrack } from '@bridge/definitions/audioTrack';
 import { IPC } from '@src/services/ipc/IPC';
-import { TWaveformStatus } from '@src/types';
-import {
-  checkAudioPlayability,
-  checkVideoDecodable,
-  pathToFileUrl,
-} from '@src/utils/checkVideoPlayability';
+import { getTrackOptionLabel } from './dialogs/selectAudioTrack/trackLabels';
+import { pathToFileUrl } from '@src/utils/checkVideoPlayability';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { Service } from '@src/services/Service';
 import {
   selectActiveLineIndex,
+  selectAudioTrackId,
   selectVideoFilePath,
   setActiveLineIndex,
+  setAudioTrack,
+  setVideoData,
   setVideoDurationMs,
+  setWaveformPeaks,
   videoChanged,
 } from './slice';
+import { pickVideoAudioTrack, type TAudioTrackData, type TVideoSelection } from './videoFlow';
 
 // The media service's operations: the video and audio elements (a muted video plus a separate
 // audio element, always driven together), play/pause/seek, and loading a video. They read their
@@ -47,11 +47,11 @@ export const getVideoElement = (): HTMLVideoElement | null => videoElement;
 export const getAudioElement = (): HTMLAudioElement | null => audioElement;
 export const getCurrentTimeMs = (): number => currentTimeMs;
 
-// Audio is extracted per video into the main process's content-addressed cache, so for a video
-// that was already imported this just resolves the cached file.
+// Audio is extracted per video and track into the main process's content-addressed cache, so for
+// a video that was already picked this just resolves the cached file.
 function attachExtractedAudio(path: string, element: HTMLAudioElement): void {
   IPC.media
-    .extractAudio(path)
+    .extractAudio(path, Service.select(selectAudioTrackId) ?? undefined)
     .then((resolvedAudioPath) => {
       // The element may have been swapped or unmounted meanwhile
       if (audioElement === element) element.src = pathToFileUrl(resolvedAudioPath);
@@ -89,10 +89,9 @@ function loadVideoDuration(url: string): Promise<number> {
   });
 }
 
-/** Switches to a video file (or none), with its audio when the path is known. The thumbnail and
- * waveform are set separately (`media.setVideoData`), since callers get them from the import or
- * reselect flow. */
-export function loadVideo(path: string | null, audioPath?: string): void {
+// Switches to a video file (or none), with its audio when the path is known. The thumbnail,
+// waveform and track are set by applyVideo, which is the only caller.
+function loadVideo(path: string | null, audioPath?: string): void {
   Service.dispatch(videoChanged(path));
   const url = path ? pathToFileUrl(path) : '';
   if (videoElement) {
@@ -108,8 +107,8 @@ export function loadVideo(path: string | null, audioPath?: string): void {
     .then((ms) => Service.dispatch(setVideoDurationMs(ms)))
     .catch(() => Service.dispatch(setVideoDurationMs(null)));
 
-  // Audio path wasn't already known (e.g. project reload, only videoPath is persisted) --
-  // re-derive it via the same content-addressed cache the import flow already populated.
+  // Audio path wasn't already known -- re-derive it via the same content-addressed cache the
+  // selection flow already populated.
   if (!audioPath && audioElement) attachExtractedAudio(path, audioElement);
 }
 
@@ -168,89 +167,35 @@ export function reportVideoUnplayable(): void {
   toast.push(makeVideoPlaybackErrorMessage());
 }
 
-// ── Video processing ─────────────────────────────────────────────────────────
+// ── Applying a selection ─────────────────────────────────────────────────────
 
-/** What the editor needs from a video, extracted by the main process. */
-export type TProcessedVideo = {
-  audioPath: string;
-  waveformPeaks: number[];
-  thumbnail: string | null;
-  /** Displayed width / height, null when it couldn't be read */
-  aspectRatio: number | null;
-};
+/** Shows a complete video selection (from media.pickVideo or loadSavedVideo) in the player, or no
+ * video for null. Only the store: persisting it is the caller's (the project service's) job. */
+export function applyVideo(selection: TVideoSelection | null): void {
+  loadVideo(selection?.videoPath ?? null, selection?.audioPath);
+  if (!selection) return;
+  Service.dispatch(
+    setVideoData({
+      thumbnail: selection.thumbnail,
+      aspectRatio: selection.aspectRatio,
+      waveformPeaks: selection.waveformPeaks,
+    })
+  );
+  Service.dispatch(
+    setAudioTrack({ track: selection.audioTrack, count: selection.audioTrackCount })
+  );
+}
 
-type TProcessVideoOptions = {
-  /** Each step as it starts, then how it ended: SUCCESS or the failed step's status */
-  onStatus?: (status: TWaveformStatus) => void;
-  /** Checked after every step: once true, the run stops quietly, reporting nothing */
-  isCancelled?: () => boolean;
-};
-
-/**
- * The one pipeline that prepares a video: checks it can be decoded, reads its metadata (thumbnail and aspect ratio, optional),
- * extracts its audio to AAC, checks the converted audio plays, and extracts the waveform. Reports
- * failures with a toast where there's something to tell; resolves null when a step failed or the
- * run was cancelled.
- */
-export async function processVideo(
-  videoPath: string,
-  { onStatus, isCancelled = () => false }: TProcessVideoOptions = {}
-): Promise<TProcessedVideo | null> {
-  const fail = (status: TWaveformStatus, report?: () => void): null => {
-    if (isCancelled()) return null;
-    onStatus?.(status);
-    report?.();
-    return null;
-  };
-
-  onStatus?.(TWaveformStatus.LOADING);
-  try {
-    await checkVideoDecodable(videoPath);
-  } catch {
-    return fail(TWaveformStatus.UNSUPPORTED_VIDEO);
+/** Switches the open video to another of its audio tracks (from media.pickAudioTrack), keeping the
+ * playback position. Paused first, so the new audio can't start out of sync with the video. */
+export function applyAudioTrack(track: TAudioTrackData): void {
+  pause();
+  Service.dispatch(setAudioTrack({ track: track.audioTrack }));
+  Service.dispatch(setWaveformPeaks(track.waveformPeaks));
+  if (audioElement) {
+    audioElement.src = pathToFileUrl(track.audioPath);
+    audioElement.currentTime = currentTimeMs / 1000;
   }
-  if (isCancelled()) return null;
-
-  const metadata = await IPC.media.getVideoMetadata(videoPath).catch(() => null);
-  if (isCancelled()) return null;
-
-  // The original audio isn't pre-checked for native playability: codecs Chromium can't play (e.g.
-  // EAC-3) are exactly what this conversion fixes. The converted file is checked instead.
-  onStatus?.(TWaveformStatus.EXTRACTING_AUDIO);
-  let audioPath: string;
-  try {
-    audioPath = await IPC.media.extractAudio(videoPath);
-  } catch (error) {
-    return fail(TWaveformStatus.AUDIO_EXTRACTION_FAILED, () =>
-      toast.push(makeAudioExtractionFailedMessage(toErrorMessage(error)))
-    );
-  }
-  if (isCancelled()) return null;
-
-  try {
-    await checkAudioPlayability(audioPath);
-  } catch {
-    return fail(TWaveformStatus.UNPLAYABLE_CONVERTED_AUDIO);
-  }
-  if (isCancelled()) return null;
-
-  let waveformPeaks: number[];
-  try {
-    waveformPeaks = await IPC.media.extractWaveformPeaks(videoPath);
-  } catch (error) {
-    return fail(TWaveformStatus.ERROR, () =>
-      toast.push(makeWaveformExtractionFailedMessage(toErrorMessage(error)))
-    );
-  }
-  if (isCancelled()) return null;
-
-  onStatus?.(TWaveformStatus.SUCCESS);
-  return {
-    audioPath,
-    waveformPeaks,
-    thumbnail: metadata?.thumbnail ?? null,
-    aspectRatio: metadata?.aspectRatio ?? null,
-  };
 }
 
 // ── User actions ─────────────────────────────────────────────────────────────
@@ -267,9 +212,16 @@ export async function cleanMediaCache(): Promise<void> {
   }
 }
 
-/** Asks which of the open video's audio tracks to use; resolves its id, or null on Cancel or
- * without a video. Applying the chosen track isn't wired yet. */
-export async function pickAudioTrack(): Promise<number | null> {
+/** Asks for another of the open video's audio tracks and extracts it; resolves its data, or null
+ * on Cancel, on failure, or without a video. Applying it (media.applyAudioTrack) and persisting it
+ * are the caller's. */
+export async function pickAudioTrack(): Promise<TAudioTrackData | null> {
   const path = Service.select(selectVideoFilePath);
-  return path ? selectAudioTrack(path) : null;
+  return path ? pickVideoAudioTrack(path, Service.select(selectAudioTrackId)) : null;
+}
+
+/** The track as the player's audio button shows it: id, language when known, and title (or a
+ * translated "Unnamed") -- the same label the track popup lists it with */
+export function getAudioTrackLabel(track: TAudioTrack): string {
+  return getTrackOptionLabel(track);
 }

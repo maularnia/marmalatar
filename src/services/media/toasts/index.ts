@@ -24,12 +24,8 @@ export function makeAudioExtractionFailedMessage(message?: string): TToastParams
   };
 }
 
-export function makeWaveformExtractionFailedMessage(message?: string): TToastParams {
-  return {
-    type: TMessageType.ERROR,
-    title: tErrors('waveformExtractionFailed.title'),
-    message,
-  };
+export function makeAudioTracksListFailedMessage(): TToastParams {
+  return { type: TMessageType.ERROR, title: tErrors('audioTracksListFailed.title') };
 }
 
 export function makeCacheCleanupSuccessMessage(): TToastParams {

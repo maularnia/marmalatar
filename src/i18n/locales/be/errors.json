@@ -17,9 +17,6 @@
     "originalRequired": "Нельга пакінуць пустым",
     "translationRequired": "Нельга пакінуць пустым"
   },
-  "videoSelect": {
-    "fileRequired": "Нельга пакінуць пустым"
-  },
   "mainMenuListItem": {
     "nameTooLong": "Значэнне даўжэй за [{{maxLength}}]",
     "nameAlreadyExists": "Такі файл ужо існуе",
@@ -30,15 +27,6 @@
     "parseFailedFallback": "Немагчыма прачытаць файл",
     "fileRequired": "Нельга пакінуць пустым",
     "noValidLines": "Файл пашкоджаны альбо пусты, няма з чым працаваць"
-  },
-  "videoFileSelect": {
-    "fileRequired": "Нельга пакінуць пустым",
-    "pathUnresolved": "Не атрымлася адшукаць шлях да файла",
-    "stillProcessing": "Апрацоўка відэа...",
-    "unsupportedVideoCodec": "Немагчыма прайграць відэа. Несумяшчальны кодэк відэа",
-    "audioExtractionFailed": "Не атрымалася апрацаваць аўдыё",
-    "unplayableConvertedAudio": "Не атрымалася пераўтварыць аўдыё ў прайгравальны фармат",
-    "processingFailed": "Памылка генерацыі артэфактаў. Несумяшчальны кодэк"
   },
   "import": {
     "projectTitleRequired": "Нельга пакінуць пустым",
@@ -137,9 +125,6 @@
   "videoFileCheckFailed": {
     "title": "Не атрымалася праверыць відэафайл"
   },
-  "waveformExtractionFailed": {
-    "title": "Не атрымалася стварыць хвалевую форму аўдыё"
-  },
   "projectLoadFailed": {
     "title": "Памылка ладавання праекта"
   },
@@ -193,5 +178,8 @@
   "cacheCleanupFailed": {
     "title": "Памылка ачысткі кэша",
     "message": "Не атрымалася ачысціць кэш"
+  },
+  "audioTracksListFailed": {
+    "title": "Не атрымалася прачытаць аўдыядарожкі відэа"
   }
 }

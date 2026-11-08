@@ -21,15 +21,12 @@ import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Select from '@ui-toolkit/Select/Select';
 import TextInput from '@ui-toolkit/TextInput';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import VideoFileSelect from './components/VideoFileSelect';
 
 type TImportFormValues = {
   subtitlesFile: File | null;
-  videoEnabled: boolean;
-  videoFile: File | null;
   projectName: string;
   sourceLanguage: TLanguage;
   targetLanguage: TLanguage;
@@ -47,8 +44,6 @@ export default function PageImport() {
   } = useForm<TImportFormValues>({
     defaultValues: {
       subtitlesFile: null,
-      videoEnabled: false,
-      videoFile: null,
       projectName: '',
       sourceLanguage: TLanguage.English,
       targetLanguage: TLanguage.Belarusian,
@@ -56,12 +51,10 @@ export default function PageImport() {
   });
 
   const subtitlesFile = useWatch({ control, name: 'subtitlesFile' });
-  const videoEnabled = useWatch({ control, name: 'videoEnabled' });
   const projectName = useWatch({ control, name: 'projectName' });
 
   const [cleanedLines, setCleanedLines] = useState<TSubtitleLine[]>([]);
   const [subtitleError, setSubtitleError] = useState<string | null>(null);
-  const [videoError, setVideoError] = useState<string | null>(null);
 
   const isProjectNameDirty = useRef(false);
   const rootRef = useRef<HTMLFormElement>(null);
@@ -76,12 +69,7 @@ export default function PageImport() {
     setValue('projectName', toHumanShowTitle(subtitlesFile.name), { shouldValidate: false });
   }, [subtitlesFile, setValue]);
 
-  const onToggleVideoEnabled = useCallback(
-    (enabled: boolean) => setValue('videoEnabled', enabled),
-    [setValue]
-  );
-
-  const formValid = !subtitleError && (!videoEnabled || !videoError);
+  const formValid = !subtitleError;
 
   const onSubmit = async (values: TImportFormValues) => {
     const trimmedProjectName = values.projectName.trim();
@@ -111,24 +99,6 @@ export default function PageImport() {
                 onBlur={field.onBlur}
                 onError={setSubtitleError}
                 onLinesChange={setCleanedLines}
-              />
-            )}
-          />
-        </FormsRow>
-        <Hr variant={THrVariant.DIMMED} />
-        <FormsRow>
-          <Controller
-            control={control}
-            name="videoFile"
-            render={({ field }) => (
-              <VideoFileSelect
-                name={field.name}
-                enabled={videoEnabled}
-                onToggleEnabled={onToggleVideoEnabled}
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                onError={setVideoError}
               />
             )}
           />

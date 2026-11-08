@@ -75,9 +75,7 @@
     "title": "Abiarycie aŭdyjadarožku",
     "selectButton": "Abrać",
     "placeholder": "Aŭdyjadarožka",
-    "listing": "Čytajem aŭdyjadarožki...",
-    "listingFailed": "Nie atrymałasia pračytać aŭdyjadarožki",
-    "noTracks": "U hetym videa niama aŭdyjadarožak"
+    "unnamed": "Biez nazvy"
   },
   "videoSelect": {
     "title": "Abiarycie videa-fajł",
@@ -85,6 +83,18 @@
     "selectVideoButton": "Abrać videa",
     "continueWithoutVideoButton": "Praciahnuć biaz videa",
     "savedFileNotFoundBanner": "Nie atrymałasia adšukać videa, dapasavanaje da prajekta",
-    "processingFailedBanner": "Nie atrymałasia apracavać videa, niesumiaščalny kodek"
+    "processingFailedBanner": "Nie atrymałasia apracavać videa, niesumiaščalny kodek",
+    "readingMetadata": "Čytajem mietadanyja videa...",
+    "metadataFailed": "Nie atrymałasia pračytać mietadanyja. Videa-fajł paškodžany abo nie padtrymlivajecca"
+  },
+  "audioDataFailed": {
+    "title": "Nie atrymałasia pračytać aŭdyjadanyja",
+    "message": "Niemahčyma pračytać zviestki pra aŭdyjadarožki, abo ŭ videa niama aŭdyjadarožak",
+    "selectAnotherVideoButton": "Abrać inšaje videa"
+  },
+  "waveformFailed": {
+    "title": "Nie atrymałasia vyličyć chvalevyja formy",
+    "message": "Niemahčyma pračytać danyja aŭdyjadarožki {{track}}. Fajł paškodžany abo zakadavany nieviadomym navucy kodekam",
+    "selectOtherTrackButton": "Abrać inšuju aŭdyjadarožku"
   }
 }

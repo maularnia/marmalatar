@@ -15,9 +15,8 @@ import {
   makeVideoUpdatedMessage,
 } from '@src/services/project/toasts';
 import { confirmDeleteProject } from './dialogs/deleteProject/deleteProjectConfirmation';
-import { selectVideo } from './dialogs/videoSelect/videoSelection';
 import { IPC } from '@src/services/ipc/IPC';
-import { media } from '@src/services/media';
+import { media, type TVideoSelection } from '@src/services/media';
 import { TLanguage, TSubtitleLine } from '@src/types';
 import { parseProjectFile } from '@src/utils/data/parsers/project';
 import {
@@ -147,13 +146,13 @@ async function deleteProjectOnDisk(projectId: string): Promise<void> {
   await IPC.projects.delete(projectId);
 }
 
-// The preferences the store holds. The audio track isn't among them yet, and set-state keeps
-// whatever isn't sent.
-export function buildProjectEditorStateSaveData(): Omit<TProjectStatePrefs, 'audioTrackId'> {
+// The preferences the store holds
+export function buildProjectEditorStateSaveData(): TProjectStatePrefs {
   return {
     editorMode: Service.select(selectEditorMode),
     isVideoCollapsed: Service.select(selectIsVideoCollapsed),
     videoPath: media.get.videoFilePath(),
+    audioTrackId: media.get.audioTrackId(),
   };
 }
 
@@ -172,24 +171,26 @@ export async function writeProjectEditorState(
 
 // ── Video path ───────────────────────────────────────────────────────────────
 
-/** Remembers the project's video on this device. A different video also drops the chosen audio
- * track; the main process takes care of it. */
-export async function saveProjectVideoPath(
+/** Remembers the project's video and audio track on this device. Resolves whether it was saved:
+ * callers apply the video to the store only then, so the store never shows what the file lacks. */
+async function saveProjectVideo(
   projectId: string,
-  videoPath: string | null
-): Promise<void> {
-  if (!videoPath) return;
+  videoPath: string | null,
+  audioTrackId: number
+): Promise<boolean> {
   try {
-    await writeProjectEditorState(projectId, { videoPath });
-    void folder.cleanupMediaCache().catch(() => {});
+    await writeProjectEditorState(projectId, { videoPath, audioTrackId });
   } catch (err) {
     toast.push(makeVideoPathSaveFailedMessage(toErrorMessage(err)));
+    return false;
   }
+  void folder.cleanupMediaCache().catch(() => {});
+  return true;
 }
 
-export async function removeProjectVideoPath(projectId: string): Promise<void> {
+async function removeProjectVideoPath(projectId: string): Promise<void> {
   try {
-    await writeProjectEditorState(projectId, { videoPath: null });
+    await writeProjectEditorState(projectId, { videoPath: null, audioTrackId: null });
     void folder.cleanupMediaCache().catch(() => {});
   } catch (err) {
     toast.push(makeVideoPathRemovalFailedMessage(toErrorMessage(err)));
@@ -300,31 +301,18 @@ async function loadProjectFromDisk(project: TProjectEntry): Promise<void> {
   }
   Service.dispatch(setEditorMode(editorState.editorMode));
   Service.dispatch(setVideoCollapsed(editorState.isVideoCollapsed));
-  // Restore the video that was attached when the project was last saved/closed.
-  media.setVideoFilePath(editorState.videoPath);
 
   Service.dispatch(setCurrentProjectFilePath(project.filePath));
 }
 
 // ── Open ─────────────────────────────────────────────────────────────────────
 
-type TVideoMedia = {
-  videoPath: string | null;
-  audioPath: string | null;
-  waveformPeaks: number[];
-  thumbnail: string | null;
-  aspectRatio: number | null;
-};
-
-const NO_VIDEO: TVideoMedia = {
-  videoPath: null,
-  audioPath: null,
-  waveformPeaks: [],
-  thumbnail: null,
-  aspectRatio: null,
-};
-
-async function applyLoadedProject(project: TProjectEntry, video: TVideoMedia): Promise<void> {
+// The video was resolved (or given up on) before this, so the project opens with a complete
+// selection or none
+async function applyLoadedProject(
+  project: TProjectEntry,
+  video: TVideoSelection | null
+): Promise<void> {
   try {
     await loadProjectFromDisk(project);
   } catch (error) {
@@ -332,50 +320,52 @@ async function applyLoadedProject(project: TProjectEntry, video: TVideoMedia): P
     return;
   }
 
-  media.loadVideo(video.videoPath, video.audioPath ?? undefined);
-  media.setVideoData({
-    thumbnail: video.thumbnail,
-    aspectRatio: video.aspectRatio,
-    waveformPeaks: video.waveformPeaks,
-  });
+  media.applyVideo(video);
   media.resetPlayback();
 
   toast.push(makeProjectLoadedMessage());
   navigate('/workspace');
 }
 
-// Prompts the user to reselect the video (used whenever a step of opening fails) and either
-// continues without video or opens with the new pick, which the dialog already validated and
-// converted.
+// Prompts the user to pick another video (used whenever the saved one can't be used) and either
+// continues without video or opens with the new pick, which the flow already validated and
+// extracted.
 async function openWithReselectedVideo(project: TProjectEntry, bannerKey: string): Promise<void> {
-  const result = await selectVideo(
-    tDialogs(bannerKey),
-    tDialogs('videoSelect.continueWithoutVideoButton')
-  );
-  if (!result) {
+  const selection = await media.pickVideo({
+    banner: tDialogs(bannerKey),
+    dismissLabel: tDialogs('videoSelect.continueWithoutVideoButton'),
+  });
+  if (
+    !selection ||
+    !(await saveProjectVideo(project.projectId, selection.videoPath, selection.audioTrack.id))
+  ) {
     await removeProjectVideoPath(project.projectId);
-    await applyLoadedProject(project, NO_VIDEO);
+    await applyLoadedProject(project, null);
     return;
   }
-  await saveProjectVideoPath(project.projectId, result.videoPath);
-  await applyLoadedProject(project, result);
+  await applyLoadedProject(project, selection);
 }
 
 // ── Video change ─────────────────────────────────────────────────────────────
 
 let isChangingVideo = false;
 
-/** Asks for another video for the open project, saves its path, loads it in the player at the
- * active line, and reports it. Does nothing when cancelled, or while a change is already running. */
+/** Asks for another video for the open project through the media service's popup chain, saves it,
+ * then loads it in the player at the active line and reports it. Nothing changes when the user
+ * gives up at any step or the save fails. Does nothing while a change is already running. */
 export async function changeProjectVideo(): Promise<void> {
   if (isChangingVideo) return;
   isChangingVideo = true;
   try {
-    const result = await selectVideo();
-    if (!result) return;
+    const selection = await media.pickVideo();
+    if (!selection) return;
 
     const projectId = Service.select(selectProjectId);
-    if (projectId) await saveProjectVideoPath(projectId, result.videoPath);
+    if (
+      projectId &&
+      !(await saveProjectVideo(projectId, selection.videoPath, selection.audioTrack.id))
+    )
+      return;
 
     // Back to the line being worked on, once the new video knows its duration
     const video = media.getVideoElement();
@@ -386,21 +376,35 @@ export async function changeProjectVideo(): Promise<void> {
     };
     video?.addEventListener('loadedmetadata', onLoadedMetadata);
 
-    media.loadVideo(result.videoPath, result.audioPath);
-    media.setVideoData({
-      thumbnail: result.thumbnail,
-      aspectRatio: result.aspectRatio,
-      waveformPeaks: result.waveformPeaks,
-    });
-
+    media.applyVideo(selection);
     toast.push(makeVideoUpdatedMessage());
   } finally {
     isChangingVideo = false;
   }
 }
 
-/** Opens a project with its saved video (asking for another one when it's missing or can't be
- * processed), then shows the editor. */
+/** Asks for another audio track of the open video, saves it, then plays it. Nothing changes when
+ * cancelled or when the save fails. */
+export async function changeProjectAudioTrack(): Promise<void> {
+  if (isChangingVideo) return;
+  isChangingVideo = true;
+  try {
+    const track = await media.pickAudioTrack();
+    if (!track) return;
+
+    const projectId = Service.select(selectProjectId);
+    const videoPath = media.get.videoFilePath();
+    if (projectId && !(await saveProjectVideo(projectId, videoPath, track.audioTrack.id))) {
+      return;
+    }
+    media.applyAudioTrack(track);
+  } finally {
+    isChangingVideo = false;
+  }
+}
+
+/** Opens a project with its saved video and track (asking for another video when it's missing or
+ * can't be used), then shows the editor. */
 export async function openProject(project: TProjectEntry): Promise<void> {
   let editorState: TProjectEditorState;
   try {
@@ -413,11 +417,11 @@ export async function openProject(project: TProjectEntry): Promise<void> {
 
   // No video was ever selected for this device: open without one
   if (!savedPath) {
-    await applyLoadedProject(project, NO_VIDEO);
+    await applyLoadedProject(project, null);
     return;
   }
 
-  // Saved path: verify it exists, then process it in the main process
+  // Saved path: verify it exists, then extract it in the main process
   let fileExists: boolean;
   try {
     fileExists = await folder.checkForeignFileExists(savedPath);
@@ -431,25 +435,17 @@ export async function openProject(project: TProjectEntry): Promise<void> {
     return;
   }
 
-  const extracted = await modal.load(
-    {
-      messages: [
-        tMessages('projectLoader.loadingVideo'),
-        tMessages('projectLoader.blamingProcessor'),
-        tMessages('projectLoader.reevaluatingExpectations'),
-        tMessages('projectLoader.computingWaveforms'),
-        tMessages('projectLoader.surfingWaveforms'),
-        tMessages('projectLoader.demandingRam'),
-      ],
-    },
-    media.processVideo(savedPath)
-  );
-  if (!extracted) {
+  const selection = await media.loadSavedVideo(savedPath, editorState.audioTrackId);
+  if (!selection) {
     await openWithReselectedVideo(project, 'videoSelect.processingFailedBanner');
     return;
   }
+  // The saved track may have been replaced by the first one (gone, or never chosen)
+  if (selection.audioTrack.id !== editorState.audioTrackId) {
+    await saveProjectVideo(project.projectId, savedPath, selection.audioTrack.id);
+  }
 
-  await applyLoadedProject(project, { videoPath: savedPath, ...extracted });
+  await applyLoadedProject(project, selection);
 }
 
 // ── Create and start new ─────────────────────────────────────────────────────
@@ -467,6 +463,8 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
   const { sourceLanguage, targetLanguage } = params;
 
   resetOpenProjectMemory();
+  // New projects start without a video; one is picked later from the editor's player
+  media.clearVideo();
   Service.dispatch(setVideoCollapsed(false));
 
   let emoji: string;
@@ -517,8 +515,8 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
   }
 }
 
-/** Creates a project from imported lines (the video was already attached by the import page),
- * then shows the editor. Failures are reported, not thrown. */
+/** Creates a project from imported lines, without a video, then shows the editor. Failures are
+ * reported, not thrown. */
 export async function createProject(params: TCreateProjectParams): Promise<void> {
   if (!folder.get.path()) return;
   try {
@@ -529,7 +527,6 @@ export async function createProject(params: TCreateProjectParams): Promise<void>
           'Counting subtitle entries',
           'Blamin processor for slow performance',
           'Re-evaluating expectations',
-          'Computing waveforms',
           'Surfing on waveforms',
           'Demanding more RAM',
         ],

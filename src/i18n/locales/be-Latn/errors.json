@@ -17,9 +17,6 @@
     "originalRequired": "Nielha pakinuć pustym",
     "translationRequired": "Nielha pakinuć pustym"
   },
-  "videoSelect": {
-    "fileRequired": "Nielha pakinuć pustym"
-  },
   "mainMenuListItem": {
     "nameTooLong": "Značeńnie daŭžej za [{{maxLength}}]",
     "nameAlreadyExists": "Taki fajł užo isnuje",
@@ -30,15 +27,6 @@
     "parseFailedFallback": "Niemahčyma pračytać fajł",
     "fileRequired": "Nielha pakinuć pustym",
     "noValidLines": "Fajł paškodžany albo pusty, niama ž čym pracavać"
-  },
-  "videoFileSelect": {
-    "fileRequired": "Nielha pakinuć pustym",
-    "pathUnresolved": "Nie atrymłasia adšukać šlach da fajła",
-    "stillProcessing": "Apracoŭka videa...",
-    "unsupportedVideoCodec": "Niemahčyma prajhrać videa. Niesumiaščalny kodek videa",
-    "audioExtractionFailed": "Nie atrymałasia apracavać aŭdyjo",
-    "unplayableConvertedAudio": "Nie atrymałasia pieraŭtvaryć aŭdyjo ŭ prajhravalny farmat",
-    "processingFailed": "Pamyłka hienieracyi artefaktaŭ. Niesumiaščalny kodek"
   },
   "import": {
     "projectTitleRequired": "Nielha pakinuć pustym",
@@ -137,9 +125,6 @@
   "videoFileCheckFailed": {
     "title": "Nie atrymałasia pravieryć videafajł"
   },
-  "waveformExtractionFailed": {
-    "title": "Nie atrymałasia stvaryć chvalevuju formu aŭdyjo"
-  },
   "projectLoadFailed": {
     "title": "Pasyłka ładavannia prajekta"
   },
@@ -193,5 +178,8 @@
   "cacheCleanupFailed": {
     "title": "Pamyłka ačystki keša",
     "message": "Nie atrymałasia ačyscić keš"
+  },
+  "audioTracksListFailed": {
+    "title": "Nie atrymałasia pračytać aŭdyjadarožki videa"
   }
 }

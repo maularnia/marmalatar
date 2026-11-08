@@ -17,6 +17,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import VideoProgressBar from './VideoProgressBar';
+import { truncateText } from '@src/utils/truncateText';
+
+// The audio button sits in the player's top bar, next to the line's timing: long track titles
+// would push it over the video
+const AUDIO_TRACK_LABEL_MAX_LENGTH = 15;
 
 const TopBar = styled.div`
   position: absolute;
@@ -154,6 +159,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     characterPool,
     isSmallScreen,
     isVideoCollapsed,
+    audioTrackCount,
+    audioTrack,
   ] = useAppSelectors(
     editor.selectLines,
     media.selectActiveLineIndex,
@@ -161,7 +168,9 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     media.selectAspectRatio,
     editor.selectCharacterPool,
     settings.selectIsSmallScreen,
-    editor.selectIsVideoCollapsed
+    editor.selectIsVideoCollapsed,
+    media.selectAudioTrackCount,
+    media.selectAudioTrack
   );
   // 16:9 until the video's own ratio is known (or when it couldn't be read)
   const aspectRatio = videoAspectRatio ?? DEFAULT_ASPECT_RATIO;
@@ -318,16 +327,18 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
           ) : null}
         </TopBarPanel>
         <TopBarPanel>
-          {videoFilePath && (
+          {videoFilePath && audioTrackCount > 1 && (
             <TopBarBlurWrapper>
               <Button
                 variant={TButtonVariant.PRIMARY}
                 color={ThemeColors.TEXT}
                 size={TButtonSize.SMALL}
                 icon={TIcon.AUDIO_TRACK}
-                // Not wired yet: the chosen track isn't applied
-                onClick={() => void media.pickAudioTrack()}
-              />
+                onClick={() => void projects.changeAudioTrack()}
+              >
+                {audioTrack &&
+                  truncateText(media.getAudioTrackLabel(audioTrack), AUDIO_TRACK_LABEL_MAX_LENGTH)}
+              </Button>
             </TopBarBlurWrapper>
           )}
           <TopBarBlurWrapper>

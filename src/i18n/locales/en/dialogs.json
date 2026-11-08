@@ -75,9 +75,7 @@
     "title": "Select audio track",
     "selectButton": "Select",
     "placeholder": "Audio track",
-    "listing": "Reading audio tracks...",
-    "listingFailed": "Unable to read audio tracks",
-    "noTracks": "This video has no audio tracks"
+    "unnamed": "Unnamed"
   },
   "videoSelect": {
     "title": "Select a video file",
@@ -85,6 +83,18 @@
     "selectVideoButton": "Select video",
     "continueWithoutVideoButton": "Continue without video",
     "savedFileNotFoundBanner": "Unable to find the video file assigned to this project. Please select another one",
-    "processingFailedBanner": "The video file can not be processed due to data corruption or unsupported audio/video codecs"
+    "processingFailedBanner": "The video file can not be processed due to data corruption or unsupported audio/video codecs",
+    "readingMetadata": "Reading video metadata...",
+    "metadataFailed": "Unable to extract metadata. The video file is corrupted or not supported"
+  },
+  "audioDataFailed": {
+    "title": "Extracting audio data failed",
+    "message": "Impossible to extract audio track information or the video has no audio tracks",
+    "selectAnotherVideoButton": "Select another video"
+  },
+  "waveformFailed": {
+    "title": "Extracting waveforms failed",
+    "message": "It is impossible to extract data from audio track {{track}}. The file is corrupted or encoded with a codec unknown to science",
+    "selectOtherTrackButton": "Select other audio track"
   }
 }
