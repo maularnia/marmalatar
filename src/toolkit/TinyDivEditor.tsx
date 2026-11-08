@@ -15,8 +15,10 @@ import {
   type InputEvent,
   type Ref,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { ListItem } from './ListItem';
+import { LogoLoader } from './LogoLoader';
 
 // How long to wait, after the user stops typing, before a spellcheck request is sent and its
 // result applied -- marks must never be requested/injected mid-keystroke.
@@ -134,7 +136,21 @@ function stripMarks(el: HTMLDivElement, text: string): void {
   if (caret !== null) setCaretOffset(el, caret);
 }
 
-type ActivePanel = { mark: SpellCheckMark; suggestions: string[]; top: number; left: number };
+// The panel opens as soon as the caret settles on a mark, before the suggestions arrive: LOADING
+// until they do, then READY, or EMPTY when the dictionary has none for the word
+enum TSuggestionsStatus {
+  LOADING = 'loading',
+  READY = 'ready',
+  EMPTY = 'empty',
+}
+
+type ActivePanel = {
+  mark: SpellCheckMark;
+  status: TSuggestionsStatus;
+  suggestions: string[];
+  top: number;
+  left: number;
+};
 
 export default function TinyDivEditor({
   ref: forwardedRef,
@@ -144,6 +160,7 @@ export default function TinyDivEditor({
   onInput,
   ...rest
 }: TinyDivEditorProps) {
+  const { t } = useTranslation('editor');
   const rootRef = useRef<HTMLDivElement>(null);
   const editableRef = useRef<HTMLDivElement>(null);
   const [activePanel, setActivePanel] = useState<ActivePanel | null>(null);
@@ -358,30 +375,52 @@ export default function TinyDivEditor({
       if (!mark) return;
 
       showTimeoutRef.current = setTimeout(() => {
-        // Suggestions take up to seconds per word, so they're only computed for the word the caret
-        // has settled on, and the panel opens once they arrive. A failure just leaves it closed --
-        // the mark itself is still valid.
-        void spellCheckClientRef.current
-          ?.suggest(mark.word)
-          .then((suggestions) => {
-            const root = rootRef.current;
-            const editable = editableRef.current;
-            if (!suggestions?.length || !root || !editable) return;
-            if (activeMarkIdRef.current !== id) return;
-            const liveTarget = editable.querySelector(`mark[data-mark-id="${id}"]`);
-            if (!liveTarget) return;
+        // The panel's position relative to Root, from the mark as it is in the DOM right now (it's
+        // replaced on every re-check), or null once the caret has left it or it's gone
+        const getPosition = (): Pick<ActivePanel, 'top' | 'left'> | null => {
+          const root = rootRef.current;
+          const editable = editableRef.current;
+          if (!root || !editable || activeMarkIdRef.current !== id) return null;
+          const liveTarget = editable.querySelector(`mark[data-mark-id="${id}"]`);
+          if (!liveTarget) return null;
+          const markRect = liveTarget.getBoundingClientRect();
+          const rootRect = root.getBoundingClientRect();
+          return { top: markRect.top - rootRect.top, left: markRect.left - rootRect.left };
+        };
 
-            const markRect = liveTarget.getBoundingClientRect();
-            const rootRect = root.getBoundingClientRect();
-            setActiveIndex(suggestions.length - 1);
+        const client = spellCheckClientRef.current;
+        const loadingPosition = getPosition();
+        if (!client || !loadingPosition) return;
+        setActivePanel({
+          mark,
+          status: TSuggestionsStatus.LOADING,
+          suggestions: [],
+          ...loadingPosition,
+        });
+
+        // Suggestions take up to seconds per word, so they're only computed for the word the caret
+        // has settled on. A superseded request (null) or a failure closes the panel -- the mark
+        // itself is still valid.
+        void client
+          .suggest(mark.word)
+          .then((suggestions) => {
+            if (activeMarkIdRef.current !== id) return;
+            const position = getPosition();
+            if (!suggestions || !position) {
+              setActivePanel(null);
+              return;
+            }
+            setActiveIndex(Math.max(suggestions.length - 1, 0));
             setActivePanel({
               mark,
+              status: suggestions.length ? TSuggestionsStatus.READY : TSuggestionsStatus.EMPTY,
               suggestions,
-              top: markRect.top - rootRect.top,
-              left: markRect.left - rootRect.left,
+              ...position,
             });
           })
-          .catch(() => {});
+          .catch(() => {
+            if (activeMarkIdRef.current === id) setActivePanel(null);
+          });
       }, SUGGESTIONS_SHOW_DELAY_MS);
     };
 
@@ -419,9 +458,16 @@ export default function TinyDivEditor({
   useEffect(() => {
     if (!activePanel) return;
     const { suggestions } = activePanel;
+    // Without suggestions to pick from, arrows and Enter keep their native behavior
+    const hasSuggestions = activePanel.status === TSuggestionsStatus.READY;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowDown') {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSuggestions({ keepSuppressed: true });
+      } else if (!hasSuggestions) {
+        return;
+      } else if (event.key === 'ArrowDown') {
         event.preventDefault();
         setActiveIndex((index) => (index + 1) % suggestions.length);
       } else if (event.key === 'ArrowUp') {
@@ -430,9 +476,6 @@ export default function TinyDivEditor({
       } else if (event.key === 'Enter') {
         event.preventDefault();
         applySuggestion(activePanel.mark, suggestions[activeIndex]);
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
-        closeSuggestions({ keepSuppressed: true });
       }
     };
 
@@ -467,6 +510,25 @@ export default function TinyDivEditor({
       {activePanel && (
         <SuggestionsPanel style={{ top: activePanel.top, left: activePanel.left }}>
           <SuggestionsList>
+            {activePanel.status === TSuggestionsStatus.LOADING && (
+              <li>
+                {/* mousedown would move focus off the editor, closing the panel */}
+                <ListItem
+                  isDisabled
+                  emoji={<LogoLoader size={16} />}
+                  onMouseDown={(event) => event.preventDefault()}
+                >
+                  {t('spellcheck.loadingSuggestions')}
+                </ListItem>
+              </li>
+            )}
+            {activePanel.status === TSuggestionsStatus.EMPTY && (
+              <li>
+                <ListItem isDisabled onMouseDown={(event) => event.preventDefault()}>
+                  {t('spellcheck.noSuggestions')}
+                </ListItem>
+              </li>
+            )}
             {activePanel.suggestions.map((suggestion, index) => (
               <li key={suggestion}>
                 <ListItem

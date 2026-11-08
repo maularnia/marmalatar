@@ -9,5 +9,9 @@
   },
   "videoPlayer": {
     "noCharacter": "No character"
+  },
+  "spellcheck": {
+    "loadingSuggestions": "Loading suggestions...",
+    "noSuggestions": "No suggestions"
   }
 }
