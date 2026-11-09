@@ -1,3 +1,9 @@
 {
-  "createNewProjectButton": "Pačać novy prajekt"
+  "createNewProjectButton": "Pačać novy prajekt",
+  "folderSetup": {
+    "title": "Pracoŭnaja papka",
+    "sectionTitle": "Jaščę adno, pierš čym pačać...",
+    "subtextHighlight": "Abiarycie papku,",
+    "subtextRest": "dzie buduć zachoŭvacca vašyja prajekty"
+  }
 }

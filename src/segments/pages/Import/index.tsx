@@ -87,7 +87,7 @@ export default function PageImport() {
 
   return (
     <FormRoot ref={rootRef} onSubmit={handleSubmit(onSubmit)} style={{ width: '580px' }}>
-      <FormTitle>Create project</FormTitle>
+      <FormTitle>{t('import:title')}</FormTitle>
       <FormsContent>
         <FormsRow>
           <Controller
@@ -145,48 +145,41 @@ export default function PageImport() {
           </>
         )}
         {subtitlesFile && (
-          <>
-            <Hr variant={THrVariant.DIMMED} />
-            <FormsRow>
-              <FormsSection>
-                <FormsSectionTitle
-                  icon={TIcon.LANGUAGE}
-                  subtext={t('import:translationDirection.subtext')}
-                >
-                  {t('import:translationDirection.sectionTitle')}
-                </FormsSectionTitle>
-                <FormsSectionContent $columns={3} $templateColumns={'1fr min-content 1fr'}>
-                  <Controller
-                    control={control}
-                    name="sourceLanguage"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onChange={([value]) => field.onChange(value as TLanguage)}
-                        options={languageOptions}
-                      />
-                    )}
-                  />
-                  <Icon
-                    style={{ alignSelf: 'center' }}
-                    icon={TIcon.ARROW_RIGHT}
-                    size={TIconSize.M}
-                  />
-                  <Controller
-                    control={control}
-                    name="targetLanguage"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onChange={([value]) => field.onChange(value as TLanguage)}
-                        options={languageOptions}
-                      />
-                    )}
-                  />
-                </FormsSectionContent>
-              </FormsSection>
-            </FormsRow>
-          </>
+          <FormsRow>
+            <FormsSection>
+              <FormsSectionTitle
+                icon={TIcon.LANGUAGE}
+                subtext={t('import:translationDirection.subtext')}
+              >
+                {t('import:translationDirection.sectionTitle')}
+              </FormsSectionTitle>
+              <FormsSectionContent $columns={3} $templateColumns={'1fr min-content 1fr'}>
+                <Controller
+                  control={control}
+                  name="sourceLanguage"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onChange={([value]) => field.onChange(value as TLanguage)}
+                      options={languageOptions}
+                    />
+                  )}
+                />
+                <Icon style={{ alignSelf: 'center' }} icon={TIcon.ARROW_RIGHT} size={TIconSize.M} />
+                <Controller
+                  control={control}
+                  name="targetLanguage"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onChange={([value]) => field.onChange(value as TLanguage)}
+                      options={languageOptions}
+                    />
+                  )}
+                />
+              </FormsSectionContent>
+            </FormsSection>
+          </FormsRow>
         )}
         <FormFooter>
           <Button

@@ -37,9 +37,16 @@ export const FormRoot = styled.form`
     padding-top: ${CSSVar('formSpacingY')};
   }
 `;
-
+const FormTitleElement = styled(H)`
+  margin: 0
+    calc(
+      ${CSSVar('formSpacingX')} + ${CSSVar('formRowSpacingX')} + ${CSSVar('formSectionSpacingX')}
+    )
+    ${CSSVar('formSpacingY')};
+  border-bottom: 1px solid ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 5)};
+`;
 export const FormTitle = ({ level = 4, ...rest }: HProps) => {
-  return <H level={level} {...rest} />;
+  return <FormTitleElement level={level} {...rest} />;
 };
 export const FormsRow = styled(motion.div).attrs<RowAttrs>(
   ({ $columns = 1, $templateColumns }) => ({

@@ -1,7 +1,7 @@
 {
   "shared": {
     "selectFileButton": "Абраць файл",
-    "noFileSelected": "Трэба нешта абраць"
+    "noFileSelected": "Пакуль нічога не абрана"
   },
   "subtitles": {
     "sectionTitle": "Надпісы",
@@ -22,5 +22,6 @@
     "subtext": "Абярыце мову крыніцы і перакладу"
   },
   "backButton": "Назад",
-  "startButton": "Пачаць"
+  "startButton": "Пачаць",
+  "title": "Стварыць новы праект"
 }

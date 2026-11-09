@@ -8,17 +8,21 @@ import {
   FormsSection,
   FormsSectionContent,
   FormsSectionTitle,
+  FormTitle,
 } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import SelectFolderButton from '@ui-toolkit/SelectFolderButton/SelectFolderButton';
 import Span from '@ui-toolkit/Span';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function FolderSetup() {
+  const { t } = useTranslation('home');
   const rootRef = useRef<HTMLFormElement>(null);
   useAutoFocusFirst(rootRef);
   return (
     <FormRoot ref={rootRef} style={{ alignSelf: 'center' }} onSubmit={(e) => e.preventDefault()}>
+      <FormTitle>{t('folderSetup.title')}</FormTitle>
       <FormsContent {...appearUpSpringSlow}>
         <FormsRow>
           <FormsSection>
@@ -27,13 +31,13 @@ export default function FolderSetup() {
               subtext={
                 <>
                   <Span color={ThemeColors.ACCENT1} bold>
-                    Select a folder
+                    {t('folderSetup.subtextHighlight')}
                   </Span>{' '}
-                  where you projects will be stored
+                  {t('folderSetup.subtextRest')}
                 </>
               }
             >
-              One thing before we start...
+              {t('folderSetup.sectionTitle')}
             </FormsSectionTitle>
             <FormsSectionContent>
               <SelectFolderButton />
