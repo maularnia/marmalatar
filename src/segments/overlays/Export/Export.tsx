@@ -96,7 +96,7 @@ export default function Export() {
   const effectiveSourceFps = applyTimeCorrection ? sourceFps : FrameRate.FPS23P976;
   const effectiveResultFps = applyTimeCorrection ? resultFps : FrameRate.FPS23P976;
   return (
-    <Overlay onClose={() => settings.closeExport()}>
+    <Overlay title={t('overlayTitle')} onClose={() => settings.closeExport()}>
       <FormRoot>
         <FormsContent>
           <FormsRow>

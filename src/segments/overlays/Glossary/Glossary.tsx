@@ -69,7 +69,7 @@ export default function GlossaryOverlay() {
   if (!currentGlossary) return null;
 
   return (
-    <Overlay onClose={() => void glossaries.saveAndClose()}>
+    <Overlay title={t('glossary:overlayTitle')} onClose={() => void glossaries.saveAndClose()}>
       <GlossaryKeystrokeProvider>
         <FormsContent>
           <FormsRow>

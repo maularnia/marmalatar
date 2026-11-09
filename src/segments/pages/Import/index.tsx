@@ -15,6 +15,7 @@ import {
   FormsSection,
   FormsSectionContent,
   FormsSectionTitle,
+  FormTitle,
 } from '@ui-toolkit/forms';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import Icon from '@ui-toolkit/Icon/Icon';
@@ -86,6 +87,7 @@ export default function PageImport() {
 
   return (
     <FormRoot ref={rootRef} onSubmit={handleSubmit(onSubmit)} style={{ width: '580px' }}>
+      <FormTitle>Create project</FormTitle>
       <FormsContent>
         <FormsRow>
           <Controller

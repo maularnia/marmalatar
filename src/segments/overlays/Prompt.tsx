@@ -37,7 +37,7 @@ export default function PromptOverlay() {
   if (!currentPromptTemplate) return null;
 
   return (
-    <Overlay onClose={() => void promptTemplates.saveAndClose()}>
+    <Overlay title={t('prompt:overlayTitle')} onClose={() => void promptTemplates.saveAndClose()}>
       <FormsContent>
         <FormsRow>
           <FormsSection>

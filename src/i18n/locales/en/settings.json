@@ -88,5 +88,6 @@
     "title": "Media cache",
     "subtext": "Auto-clean .mrmlcache folder",
     "cleanButton": "Clean cache"
-  }
+  },
+  "overlayTitle": "Settings"
 }

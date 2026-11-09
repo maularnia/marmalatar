@@ -12,6 +12,9 @@ const AppTitleContainer = styled.div`
   align-self: center;
   justify-self: center;
   flex-direction: column;
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: ${CSSVar('size92')};
 `;
 
 const Content = styled.div`
@@ -31,7 +34,7 @@ const LogoWrapper = styled.div`
 `;
 
 const LogoText = styled(H)`
-  line-height: 80% !important;
+  line-height: 82% !important;
 `;
 export const AppTitle = () => {
   const { t } = useTranslation('app');
