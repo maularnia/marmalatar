@@ -1,3 +1,9 @@
 {
-  "createNewProjectButton": "Пачаць новы праект"
+  "createNewProjectButton": "Пачаць новы праект",
+  "folderSetup": {
+    "title": "Працоўная папка",
+    "sectionTitle": "Пакуль мы не пачалі...",
+    "subtextHighlight": "Абярыце папку,",
+    "subtextRest": "дзе будуць захоўвацца вашыя праекты"
+  }
 }

@@ -22,5 +22,6 @@
     "subtext": "Choose what languages you are translationg from and to"
   },
   "backButton": "Back",
-  "startButton": "Start"
+  "startButton": "Start",
+  "title": "Create new project"
 }

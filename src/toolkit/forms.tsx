@@ -32,10 +32,22 @@ export const FormRoot = styled.form`
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  padding-top: ${CSSVar('formSpacingY')};
   ${FormsContent} + ${FormsContent} {
     padding-top: ${CSSVar('formSpacingY')};
   }
 `;
+const FormTitleElement = styled(H)`
+  margin: 0
+    calc(
+      ${CSSVar('formSpacingX')} + ${CSSVar('formRowSpacingX')} + ${CSSVar('formSectionSpacingX')}
+    )
+    ${CSSVar('formSpacingY')};
+  border-bottom: 1px solid ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 5)};
+`;
+export const FormTitle = ({ level = 4, ...rest }: HProps) => {
+  return <FormTitleElement level={level} {...rest} />;
+};
 export const FormsRow = styled(motion.div).attrs<RowAttrs>(
   ({ $columns = 1, $templateColumns }) => ({
     style: {
@@ -90,7 +102,7 @@ export const FormsSectionContent = styled.div.attrs<RowAttrs>(
   flex-direction: column;
 `;
 const SectionTitleRoot = styled.div`
-  padding: ${CSSVar('size6')} 0;
+  padding: ${CSSVar('size10')} 0 0;
   &.iconic ~ ${FormsSectionContent} {
     margin-left: calc(${CSSVar('formSpacingInnerX')} + ${IconSize.L}px);
   }
@@ -131,7 +143,7 @@ export const FormsSection = styled.div`
   background-color: ${CSSVar('formSectionBg')};
   border: ${CSSVar('formSectionBorderWidth')} solid ${CSSVar('formSectionBorderColor')};
   border-radius: ${CSSVar('formSectionBorderRadius')};
-  padding: ${CSSVar('formSectionSpacingY')} ${CSSVar('formSectionSpacingX')};
+  padding: 0 ${CSSVar('formSectionSpacingX')} ${CSSVar('formSectionSpacingY')};
   color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 80)};
   display: flex;
   flex-direction: column;

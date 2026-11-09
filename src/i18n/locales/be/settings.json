@@ -88,5 +88,6 @@
     "title": "Кэш медыя",
     "subtext": "Aўта-ачыстка папкі .mrmlcache",
     "cleanButton": "Ачысціць кэш"
-  }
+  },
+  "overlayTitle": "Налады"
 }

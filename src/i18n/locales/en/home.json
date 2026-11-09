@@ -1,3 +1,9 @@
 {
-  "createNewProjectButton": "Create new project"
+  "createNewProjectButton": "Create new project",
+  "folderSetup": {
+    "title": "Working folder",
+    "sectionTitle": "One thing before we start...",
+    "subtextHighlight": "Select a folder",
+    "subtextRest": "where your projects will be stored"
+  }
 }

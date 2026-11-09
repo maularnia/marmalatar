@@ -6,14 +6,15 @@ import SelectLanguage from '@src/partials/SelectLanguage';
 import Settings from '@src/partials/Settings';
 import { FormRoot, FormsContent, FormsRow } from '@ui-toolkit/forms';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
+import { useTranslation } from 'react-i18next';
 import Overlay from './Overlay';
 
 export default function SettingsOverlay() {
+  const { t } = useTranslation('settings');
   return (
-    <Overlay onClose={() => settings.close()}>
+    <Overlay title={t('overlayTitle')} onClose={() => settings.close()}>
       <FormRoot>
         <FormsContent>
-          <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
           <Settings />
           <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
           <AiSettings />

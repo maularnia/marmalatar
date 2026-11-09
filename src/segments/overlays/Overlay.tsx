@@ -1,6 +1,7 @@
 import { editor } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import H from '@src/toolkit/H';
 import { appearRightEase } from '@src/toolkit/motion/transitions';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
@@ -51,21 +52,27 @@ const OverlayInner = styled(motion.div).attrs(appearRightEase)`
 
 const OverlayButton = styled(Button)`
   position: absolute;
-  right: 0;
-  top: 0;
+  right: ${CSSVar('size10')};
+  top: ${CSSVar('size4')};
+`;
+
+const OverlayTitle = styled(H)`
+  padding: 0 ${CSSVar('size18')};
 `;
 
 type OverlayProps = PropsWithChildren<{
   onClose: () => void;
+  title: string;
 }>;
 
-export default function Overlay({ onClose, children }: OverlayProps) {
+export default function Overlay({ title, onClose, children }: OverlayProps) {
   return (
     <OverlayRoot>
       <OverlayBackdrop onClick={onClose} />
       <OverlayInner>
         <FocusTrap active onUnmount={editor.focus}>
           <>
+            <OverlayTitle level={3}>{title}</OverlayTitle>
             {children}
             <OverlayButton
               size={TButtonSize.REGULAR}
