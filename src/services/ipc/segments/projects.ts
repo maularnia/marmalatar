@@ -13,6 +13,7 @@ export class IPCProjects extends IPCSegment {
   readonly rename = this.bridgeCall('project', 'rename');
   readonly setEmoji = this.bridgeCall('project', 'setEmoji');
   readonly setLanguages = this.bridgeCall('project', 'setLanguages');
+  readonly setHidden = this.bridgeCall('project', 'setHidden');
   readonly delete = this.bridgeCall('project', 'delete');
   readonly getState = this.bridgeCall('project', 'getState');
   readonly setState = this.bridgeCall('project', 'setState');

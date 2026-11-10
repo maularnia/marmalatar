@@ -66,6 +66,12 @@ export type TThemeStaticBlurChapter = TThemeVarsChapter<{
 export type TThemeStaticScreenChapter = TThemeVarsChapter<{
   appScreenHorizontalSpacing: string;
   appScreenWidth: string;
+  appTableWidthSmall: string;
+  appTableWidthMedium: string;
+  appTableWidthLarge: string;
+  appAsideWidthSmall: string;
+  appAsideWidthMedium: string;
+  appAsideWidthLarge: string;
   appScrollbarWidth: string;
   appScrollbarBorderRadius: string;
 }>;

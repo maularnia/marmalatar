@@ -11,6 +11,7 @@ import { Service } from '@src/services/Service';
 import { glossaries } from '@src/services/glossary';
 import { settings } from '@src/services/settings';
 import { folder } from '@src/services/folder';
+import { toErrorMessage } from '@src/utils/toErrorMessage';
 import {
   menuRenamingStopped,
   selectIsCreatingGlossary,
@@ -64,32 +65,34 @@ export function registerMenuItem(key: string, el: HTMLElement | null): void {
 }
 
 // The navigable items in display order. Cheap to recompute from the store on every call, so it
-// isn't kept as state.
+// isn't kept as state. Each section's Create button sits in its header, so it comes before the
+// section's items.
 function getCombinedItems(): TMenuItemRef[] {
-  const projectList = projects.get.list();
-  const items: TMenuItemRef[] = [
-    { key: SETTINGS_KEY, kind: 'settings' },
-    ...projectList.map((p) => ({ key: p.filePath, kind: 'project' as const })),
-  ];
-  if (projectList.length > 0) {
+  const items: TMenuItemRef[] = [{ key: SETTINGS_KEY, kind: 'settings' }];
+  // Archived projects aren't listed, but the section (and its Create button) stays while any
+  // project exists, so the archive remains reachable
+  if (projects.get.list().length > 0) {
     items.push({ key: CREATE_PROJECT_KEY, kind: 'createProject' });
   }
+  items.push(
+    ...projects.get.visibleList().map((p) => ({ key: p.filePath, kind: 'project' as const }))
+  );
   if (settings.get.integrationIsConfigured()) {
+    if (!Service.select(selectIsCreatingPromptTemplate)) {
+      items.push({ key: CREATE_PROMPT_TEMPLATE_KEY, kind: 'createPromptTemplate' });
+    }
     items.push(
       ...promptTemplates.get.items().map((c) => ({
         key: c.fileName,
         kind: 'promptTemplate' as const,
       }))
     );
-    if (!Service.select(selectIsCreatingPromptTemplate)) {
-      items.push({ key: CREATE_PROMPT_TEMPLATE_KEY, kind: 'createPromptTemplate' });
+    if (!Service.select(selectIsCreatingGlossary)) {
+      items.push({ key: CREATE_GLOSSARY_KEY, kind: 'createGlossary' });
     }
     items.push(
       ...glossaries.get.items().map((g) => ({ key: g.fileName, kind: 'glossary' as const }))
     );
-    if (!Service.select(selectIsCreatingGlossary)) {
-      items.push({ key: CREATE_GLOSSARY_KEY, kind: 'createGlossary' });
-    }
   }
   return items;
 }
@@ -190,7 +193,7 @@ export function cancelCreatingGlossary(): void {
 
 // ── Open ─────────────────────────────────────────────────────────────────────
 
-type TOverlayKind = 'promptTemplate' | 'glossary' | 'settings' | 'export';
+type TOverlayKind = 'promptTemplate' | 'glossary' | 'settings' | 'export' | 'archive';
 
 // Overlays are exclusive: each owner keeps its own open state, and the menu, as the caller, closes
 // the others before opening one.
@@ -199,6 +202,7 @@ function closeOverlays(except?: TOverlayKind): void {
   if (except !== 'glossary') glossaries.closeEditor();
   if (except !== 'settings') settings.close();
   if (except !== 'export') settings.closeExport();
+  if (except !== 'archive') projects.closeArchive();
 }
 
 // Saves whichever editor is open. Runs right before opening something, so no minimum lifetime
@@ -213,6 +217,14 @@ export async function openProject(project: TProjectEntry): Promise<void> {
   await saveOpenEditors();
   closeOverlays();
   await projects.open(project);
+}
+
+/** Opens the Archive overlay, closing the others like any overlay */
+export async function openArchive(): Promise<void> {
+  if (isBusy()) return;
+  await saveOpenEditors();
+  closeOverlays('archive');
+  projects.openArchive();
 }
 
 export async function openPromptTemplate(fileName: string, title: string): Promise<void> {
@@ -332,6 +344,20 @@ export function deleteProject(project: TProjectEntry): Promise<void> {
   return deleteAndRefocus(project.filePath, () =>
     projects.delete(project.projectId, project.projectName)
   );
+}
+
+/** Moves a project to the archive, then focuses its neighbour, as deleting does. A failure is
+ * reported with a toast. */
+export function archiveProject(project: TProjectEntry): Promise<void> {
+  return deleteAndRefocus(project.filePath, async () => {
+    try {
+      await projects.archive(project.projectId);
+      return true;
+    } catch (e) {
+      toast.push(makeFileProcessingFailedMessage(toErrorMessage(e)));
+      return false;
+    }
+  });
 }
 
 export function deletePromptTemplate(fileName: string, title: string): Promise<void> {

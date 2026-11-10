@@ -5,20 +5,22 @@ import { MotionProps } from 'motion/react';
 // (the menu's own unanimated width switch) can derive their own timing from the same numbers
 // instead of hardcoding a second, potentially-drifting copy.
 export const menuExpandDelay = 0.3;
-export const menuWidthDuration = 0.3;
+export const menuWidthDuration = 0.2;
 
 const menuCompactWidth = 34;
-const menuExpandedWidth = 240;
+/** The expanded sidebar's width, in px: the static column on large screens, and the overlay a
+ * collapsed sidebar expands into on smaller ones */
+export const MENU_EXPANDED_WIDTH = 264;
 
 export const menuHoverExpand = {
   variants: {
     in: {
-      width: menuExpandedWidth,
-      transition: { type: 'spring', stiffness: 100, damping: 15, delay: menuExpandDelay },
+      width: MENU_EXPANDED_WIDTH,
+      transition: { ease: 'circOut', duration: menuWidthDuration, delay: menuExpandDelay },
     },
     out: {
       width: menuCompactWidth,
-      transition: { ease: 'easeOut', duration: menuWidthDuration },
+      transition: { ease: 'circOut', duration: menuWidthDuration },
     },
   },
 } satisfies MotionProps;

@@ -1,7 +1,12 @@
 import { useAppSelectors } from '@store/hooks';
 import { MenuKeystrokeProvider } from '@providers/MenuKeystrokeProvider';
 import { TShade } from '@src/theme/definitions';
-import { menuExpandDelay, menuHoverExpand, menuWidthDuration } from '@src/toolkit/motion/menu';
+import {
+  MENU_EXPANDED_WIDTH,
+  menuExpandDelay,
+  menuHoverExpand,
+  menuWidthDuration,
+} from '@src/toolkit/motion/menu';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
 import classNames from 'classnames';
@@ -81,7 +86,7 @@ const Root = styled.div`
     z-index: 21;
     width: ${CSSVar('size34')};
     &.expanded {
-      width: 240px;
+      width: ${MENU_EXPANDED_WIDTH}px;
     }
   }
 `;
@@ -122,7 +127,7 @@ export default function MainMenu() {
             <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
           </Header>
           <Scroll>
-            <FileList />
+            <FileList compact={!expanded} />
           </Scroll>
         </MenuKeystrokeProvider>
         <SidebarBottom></SidebarBottom>

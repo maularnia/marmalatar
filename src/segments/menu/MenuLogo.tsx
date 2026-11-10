@@ -1,3 +1,4 @@
+import { projects } from '@src/services/project';
 import { menu, SETTINGS_KEY } from '@src/services/menu';
 import { glossaries } from '@src/services/glossary';
 import { promptTemplates } from '@src/services/prompt';
@@ -51,6 +52,7 @@ function openSettings(): void {
   promptTemplates.closeEditor();
   glossaries.closeEditor();
   settings.closeExport();
+  projects.closeArchive();
   settings.open();
 }
 

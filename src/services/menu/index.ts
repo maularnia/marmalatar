@@ -1,5 +1,6 @@
 import { Service } from '@src/services/Service';
 import {
+  archiveProject,
   cancelCreatingGlossary,
   commitMenuItemTitle,
   cancelCreatingPromptTemplate,
@@ -9,6 +10,7 @@ import {
   deletePromptTemplate,
   focusMenuItem,
   moveMenuFocus,
+  openArchive,
   openFocusedItem,
   openGlossary,
   openProject,
@@ -59,6 +61,7 @@ export const menu = new Service('menu', {
     selectMenuRenamingKey,
   },
   functions: {
+    archiveProject,
     cancelCreatingGlossary,
     commitMenuItemTitle,
     cancelCreatingPromptTemplate,
@@ -68,6 +71,7 @@ export const menu = new Service('menu', {
     deletePromptTemplate,
     focusMenuItem,
     moveMenuFocus,
+    openArchive,
     openFocusedItem,
     openGlossary,
     openProject,

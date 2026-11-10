@@ -9,8 +9,13 @@ import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
 import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 
-const LARGE_COLUMN_TEMPLATE = `min-content minmax(0, min(50%, ${CSSVar('appScreenWidth')})) 1px 1fr`;
-const SMALL_COLUMN_TEMPLATE = `min-content auto`;
+// Controls, table, separator, aside -- the table and aside widths come from the theme, per screen
+// size. Small screens render no separator or aside, so those tracks stay empty.
+const COLUMN_TEMPLATES: Record<TScreenSize, string> = {
+  [TScreenSize.SMALL]: `min-content ${CSSVar('appTableWidthSmall')} 1px ${CSSVar('appAsideWidthSmall')}`,
+  [TScreenSize.MEDIUM]: `min-content ${CSSVar('appTableWidthMedium')} 1px ${CSSVar('appAsideWidthMedium')}`,
+  [TScreenSize.LARGE]: `min-content ${CSSVar('appTableWidthLarge')} 1px ${CSSVar('appAsideWidthLarge')}`,
+};
 
 const Screen = styled.div`
   position: relative;
@@ -32,7 +37,7 @@ export default function EditorLayout() {
       <Screen
         tabIndex={1}
         style={{
-          gridTemplateColumns: isLargeScreen ? LARGE_COLUMN_TEMPLATE : SMALL_COLUMN_TEMPLATE,
+          gridTemplateColumns: COLUMN_TEMPLATES[screenSize],
         }}
       >
         <EditorControlsArea>
