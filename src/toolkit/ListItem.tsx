@@ -22,6 +22,8 @@ interface ListItemProps extends Omit<ComponentPropsWithoutRef<'div'>, 'onChange'
   isError?: boolean;
   progress?: number;
   panel?: ReactNode;
+  /** Shows `panel` all the time instead of only while the item is hovered */
+  staticPanel?: boolean;
   emoji?: ReactNode;
   children?: string | null;
   onChange?: (value: string) => void;
@@ -224,6 +226,7 @@ export const ListItem = ({
   progress,
   children,
   panel,
+  staticPanel = false,
   emoji,
   onChange,
   onCommit,
@@ -325,7 +328,8 @@ export const ListItem = ({
         ) : (
           children && <ListItemText>{children}</ListItemText>
         ))}
-      {!compact && (
+      {!compact && staticPanel && panel != null && <PanelWrapper>{panel}</PanelWrapper>}
+      {!compact && !staticPanel && (
         <AnimatePresence>
           {isHovered && panel != null && (
             <PanelWrapper

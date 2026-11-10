@@ -10,7 +10,8 @@ import EmoPicker from '@ui-toolkit/EmoPicker';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@src/toolkit/Tooltip';
+import { useTranslation } from 'react-i18next';
 
 const MAX_NAME_LENGTH = 64;
 const t = i18n.getFixedT(null, 'errors');
@@ -29,8 +30,8 @@ type MainMenuListItemProps = {
   emoji?: string;
   compact?: boolean;
   onEmojiSelect?: (emoji: string) => void;
-  /** Shows the archive action (projects only for now; not wired yet) */
-  isArchivable?: boolean;
+  /** Shows the archive action first in the panel (projects only) */
+  onArchive?: () => void;
   onClick?: () => void;
   onCommit: (fileName: string | null, newTitle: string) => Promise<void>;
   onDelete?: (fileName: string, title: string) => void;
@@ -67,12 +68,13 @@ export function MainMenuListItem({
   existingFileNames,
   emoji,
   onEmojiSelect,
-  isArchivable = false,
+  onArchive,
   onClick,
   onCommit,
   onDelete,
   onDiscard,
 }: MainMenuListItemProps) {
+  const { t: tMenu } = useTranslation('menu');
   const renamingKey = useAppSelector(menu.selectRenamingKey);
   const isEditing = fileName === null || renamingKey === itemKey;
   const [draftValue, setDraftValue] = useState(title);
@@ -163,15 +165,20 @@ export function MainMenuListItem({
       panel={
         isEditing || isDisabled ? undefined : (
           <>
-            {isArchivable && (
-              // Not wired yet. Stops the click so it doesn't open the item.
-              <Button
-                variant={TButtonVariant.TRANSPARENT}
-                size={TButtonSize.NANO}
-                icon={TIcon.ARCHIVE}
-                color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
-                onClick={(e) => e.stopPropagation()}
-              />
+            {onArchive != null && (
+              <Tooltip label={<TooltipSimple>{tMenu('archive.archiveButton')}</TooltipSimple>}>
+                <Button
+                  variant={TButtonVariant.TRANSPARENT}
+                  size={TButtonSize.NANO}
+                  icon={TIcon.ARCHIVE}
+                  color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
+                  onClick={(e) => {
+                    // The row itself would open the project
+                    e.stopPropagation();
+                    onArchive();
+                  }}
+                />
+              </Tooltip>
             )}
             <Tooltip
               label={

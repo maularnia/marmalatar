@@ -77,6 +77,7 @@ function openExport(): void {
   promptTemplates.closeEditor();
   glossaries.closeEditor();
   settings.close();
+  projects.closeArchive();
   settings.openExport();
 }
 

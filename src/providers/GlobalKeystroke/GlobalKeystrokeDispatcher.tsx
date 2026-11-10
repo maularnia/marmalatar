@@ -1,3 +1,4 @@
+import { projects } from '@src/services/project';
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { settings } from '@src/services/settings';
@@ -216,6 +217,7 @@ function closeOverlays(): void {
   glossaries.closeEditor();
   settings.close();
   settings.closeExport();
+  projects.closeArchive();
 }
 
 function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {

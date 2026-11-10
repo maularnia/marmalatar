@@ -1,5 +1,5 @@
 import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TLanguage } from '@src/types';
 import { folder } from '@src/services/folder';
 
@@ -14,6 +14,8 @@ type ProjectState = {
   emoji: string | null;
   sourceLanguage: TLanguage | null;
   targetLanguage: TLanguage | null;
+  // The Archive overlay, listing the hidden projects
+  isArchiveOpen: boolean;
 };
 
 const initialState: ProjectState = {
@@ -24,7 +26,10 @@ const initialState: ProjectState = {
   emoji: null,
   sourceLanguage: null,
   targetLanguage: null,
+  isArchiveOpen: false,
 };
+
+const selectProjects = (state: ProjectState) => state.projects;
 
 const projectSlice = createSlice({
   name: 'project',
@@ -58,10 +63,13 @@ const projectSlice = createSlice({
     setProjectTargetLanguage(state, action: PayloadAction<TLanguage | null>) {
       state.targetLanguage = action.payload;
     },
+    setArchiveOpen(state, action: PayloadAction<boolean>) {
+      state.isArchiveOpen = action.payload;
+    },
     // Closes the open project only -- the list is the tracked folder's, not the open project's, and
-    // is deliberately kept
+    // is deliberately kept, as is the Archive overlay, which lists it
     resetProject(state): ProjectState {
-      return { ...initialState, projects: state.projects };
+      return { ...initialState, projects: state.projects, isArchiveOpen: state.isArchiveOpen };
     },
   },
   extraReducers(builder) {
@@ -75,7 +83,20 @@ const projectSlice = createSlice({
     );
   },
   selectors: {
+    // Every project, archived ones included: their files still exist (e.g. for name checks)
     selectProjectList: (state) => state.projects,
+    // What the menu lists, in the main process's order
+    selectVisibleProjectList: createSelector([selectProjects], (projects) =>
+      projects.filter((project) => !project.hidden)
+    ),
+    // What the Archive overlay lists, alphabetically
+    selectArchivedProjectList: createSelector([selectProjects], (projects) =>
+      projects
+        .filter((project) => project.hidden)
+        .sort((a, b) => a.projectName.localeCompare(b.projectName))
+    ),
+    selectHasArchivedProjects: (state) => state.projects.some((project) => project.hidden),
+    selectIsArchiveOpen: (state) => state.isArchiveOpen,
     selectCurrentProjectFilePath: (state) => state.currentProjectFilePath,
     selectProjectId: (state) => state.projectId,
     selectProjectName: (state) => state.projectName,
@@ -94,12 +115,17 @@ export const {
   setProjectList,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
+  setArchiveOpen,
   resetProject,
 } = projectSlice.actions;
 
 export const {
   selectCurrentProjectFilePath,
   selectProjectList,
+  selectVisibleProjectList,
+  selectArchivedProjectList,
+  selectHasArchivedProjects,
+  selectIsArchiveOpen,
   selectProjectId,
   selectProjectName,
   selectProjectSourceLanguage,

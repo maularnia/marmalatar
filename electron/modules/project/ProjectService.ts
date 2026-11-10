@@ -153,7 +153,8 @@ export class ProjectService extends Service<TProjectData> {
         const state = legacyState
           ? runWithFallback(() => readProjectState(legacyState), DEFAULT_STATE)
           : DEFAULT_STATE;
-        list[projectId] = buildEntry(file, extracted, { state }, index);
+        // Archiving didn't exist before this version: every migrated project starts visible
+        list[projectId] = buildEntry(file, extracted, { state, hidden: false }, index);
       });
 
       // Version 0 always played the video's first audio stream, so that stays the chosen track
@@ -235,6 +236,15 @@ export class ProjectService extends Service<TProjectData> {
     this.handle('delete', (_: IpcMainInvokeEvent, projectId: string) => {
       ScannerService.getInstance().deleteFile(this.getEntry(projectId).fileName);
     }),
+    // Archives (hidden) or restores a project. Its cache isn't touched here: the next cache cleanup
+    // treats a hidden project as deleted (see listVideoPaths).
+    this.handle('set-hidden', (_: IpcMainInvokeEvent, projectId: string, hidden: boolean) => {
+      const list = this.readList();
+      const entry = list[projectId];
+      if (!entry) throw new Error(`No project with id ${projectId} in the tracked folder`);
+      this.store.set('list', { ...list, [projectId]: { ...entry, hidden } });
+      return this.getListEntry(projectId);
+    }),
     this.handle('get-state', (_: IpcMainInvokeEvent, projectId: string) => {
       const entry = this.readList()[projectId];
       return entry ? readState(entry.state) : null;
@@ -266,9 +276,11 @@ export class ProjectService extends Service<TProjectData> {
   ] as const;
 
   // Video paths of every listed project, so the media service keeps their cached audio, previews
-  // and waveforms
+  // and waveforms. Archived (hidden) projects count as deleted: their cache goes with the next
+  // cleanup, and is extracted again when the project is restored and opened.
   listVideoPaths(): string[] {
     return Object.values(this.readList())
+      .filter((entry) => !entry.hidden)
       .map((entry) => readState(entry.state).videoPath)
       .filter((videoPath): videoPath is string => Boolean(videoPath));
   }

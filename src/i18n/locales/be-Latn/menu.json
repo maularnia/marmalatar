@@ -7,5 +7,13 @@
   },
   "buttons": {
     "settings": "Nałady"
+  },
+  "archive": {
+    "overlayTitle": "Archiŭ",
+    "openButton": "Archiŭ",
+    "archiveButton": "Pieranieści ŭ archiŭ",
+    "restoreButton": "Adnavić",
+    "deleteButton": "Vydalić",
+    "empty": "Archiŭ pusty"
   }
 }

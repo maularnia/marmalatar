@@ -23,6 +23,7 @@ import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { ListHeader } from './ListHeader';
 import { MainMenuListItem } from './MainMenuListItem';
 
@@ -46,6 +47,8 @@ export default function FileList() {
   const [
     folderPath,
     projectList,
+    visibleProjectList,
+    hasArchivedProjects,
     currentProjectId,
     promptTemplateItems,
     currentPromptTemplate,
@@ -61,6 +64,8 @@ export default function FileList() {
   ] = useAppSelectors(
     folder.selectPath,
     projects.selectList,
+    projects.selectVisibleList,
+    projects.selectHasArchived,
     projects.selectId,
     promptTemplates.selectItems,
     promptTemplates.selectCurrent,
@@ -117,21 +122,26 @@ export default function FileList() {
               <ListHeader
                 className={classNames({ compact })}
                 actionBar={
-                  // Not wired yet
-                  <Button
-                    type="button"
-                    size={TButtonSize.SMALL}
-                    variant={TButtonVariant.TRANSPARENT}
-                    icon={TIcon.ARCHIVE}
-                  />
+                  // Only while there's something archived
+                  hasArchivedProjects && (
+                    <Tooltip label={<TooltipSimple>{tMenu('archive.openButton')}</TooltipSimple>}>
+                      <Button
+                        type="button"
+                        size={TButtonSize.SMALL}
+                        variant={TButtonVariant.TRANSPARENT}
+                        icon={TIcon.ARCHIVE}
+                        onClick={() => void menu.openArchive()}
+                      />
+                    </Tooltip>
+                  )
                 }
               >
                 {tMenu('fileList.projectsHeader')}
               </ListHeader>
             )}
             <List>
-              {projectList.length
-                ? projectList.map((project) => {
+              {visibleProjectList.length
+                ? visibleProjectList.map((project) => {
                     const isActive = project.projectId === currentProjectId;
                     return (
                       <MainMenuListItem
@@ -144,7 +154,7 @@ export default function FileList() {
                         compact={compact}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
                         progress={project.translationProgress}
-                        isArchivable
+                        onArchive={() => void menu.archiveProject(project)}
                         toFileName={toProjectFileName}
                         existingFileNames={projectFileNames}
                         emoji={project.emoji}

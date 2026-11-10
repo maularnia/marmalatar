@@ -97,4 +97,5 @@ export enum TIcon {
   DOUBLE_TICK = 'double-tick',
   AUDIO_TRACK = 'audio-track',
   ARCHIVE = 'archive',
+  RESTORE = 'restore',
 }

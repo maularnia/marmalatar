@@ -7,5 +7,13 @@
   },
   "buttons": {
     "settings": "Налады"
+  },
+  "archive": {
+    "overlayTitle": "Архіў",
+    "openButton": "Архіў",
+    "archiveButton": "Перанесці ў архіў",
+    "restoreButton": "Аднавіць",
+    "deleteButton": "Выдаліць",
+    "empty": "Архіў пусты"
   }
 }

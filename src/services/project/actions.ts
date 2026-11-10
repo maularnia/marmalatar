@@ -60,6 +60,7 @@ import {
   setProjectName,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
+  setArchiveOpen,
   type TProjectEntry,
 } from './slice';
 
@@ -536,18 +537,49 @@ export async function createProject(params: TCreateProjectParams): Promise<void>
   }
 }
 
+// Saves the open project, if any, then closes it and clears the editor. The editor's line inputs
+// clean themselves as the rows unmount.
+async function saveAndCloseOpenProject(): Promise<void> {
+  if (!Service.select(selectIsProjectOpen)) return;
+  await saveProjectToDisk();
+  Service.dispatch(resetEditorMemoryState());
+  clearSplitCursor();
+  media.resetPlayback();
+  closeProject();
+  Service.dispatch(clearFileData());
+}
+
 /** Saves and closes the open project, if any, and goes to the import page. No confirmation: the
- * save makes it non-destructive. The editor's line inputs clean themselves as the rows unmount. */
+ * save makes it non-destructive. */
 export async function startNewProject(): Promise<void> {
-  if (Service.select(selectIsProjectOpen)) {
-    await saveProjectToDisk();
-    Service.dispatch(resetEditorMemoryState());
-    clearSplitCursor();
-    media.resetPlayback();
-    closeProject();
-    Service.dispatch(clearFileData());
-  }
+  await saveAndCloseOpenProject();
   navigate('/intro/import');
+}
+
+// ── Archive ──────────────────────────────────────────────────────────────────
+
+/** Hides a project from the menu; it's listed in the Archive overlay instead. The open project is
+ * saved and closed first, and the app goes home, as when it's deleted. No confirmation: restoring
+ * undoes it. Its media cache stays until the next cache cleanup, which treats it as deleted. */
+export async function archiveProject(projectId: string): Promise<void> {
+  if (projectId === Service.select(selectProjectId)) {
+    await saveAndCloseOpenProject();
+    navigate('/');
+  }
+  Service.dispatch(setProjectEntry(await IPC.projects.setHidden(projectId, true)));
+}
+
+/** Puts an archived project back in the menu, at its old place */
+export async function restoreProject(projectId: string): Promise<void> {
+  Service.dispatch(setProjectEntry(await IPC.projects.setHidden(projectId, false)));
+}
+
+export function openArchive(): void {
+  Service.dispatch(setArchiveOpen(true));
+}
+
+export function closeArchive(): void {
+  Service.dispatch(setArchiveOpen(false));
 }
 
 // ── Delete ───────────────────────────────────────────────────────────────────
