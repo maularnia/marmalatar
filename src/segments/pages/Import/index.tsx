@@ -151,7 +151,9 @@ export default function PageImport() {
             <Hr variant={THrVariant.DIMMED} />
             <FormsRow>
               <FormsSection>
-                <FormsSectionTitle icon={TIcon.LOGO}>Праект</FormsSectionTitle>
+                <FormsSectionTitle icon={TIcon.LOGO}>
+                  {t('import:project.sectionTitle')}
+                </FormsSectionTitle>
                 <FormsSectionContent $columns={2} $templateColumns={'min-content 1fr'}>
                   <Controller
                     control={control}

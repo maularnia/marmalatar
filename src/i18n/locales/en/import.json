@@ -14,6 +14,9 @@
     "removeAudioCuesSuffix": "like [music], [sigh] etc.",
     "fixShortDashes": "Fix short dashes"
   },
+  "project": {
+    "sectionTitle": "Project"
+  },
   "languageAndMode": {
     "sectionTitle": "Language and mode",
     "subtext": "Choose whether you will translate or edit the subtitles, and their languages",

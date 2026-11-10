@@ -14,6 +14,9 @@
     "removeAudioCuesSuffix": "кшталту [music], [sigh] і т.п.",
     "fixShortDashes": "Выправіць кароткія злучкі на доўгія"
   },
+  "project": {
+    "sectionTitle": "Праект"
+  },
   "languageAndMode": {
     "sectionTitle": "Мова і рэжым",
     "subtext": "Абярыце, ці будзеце вы перакладаць ці рэдагаваць субцітры, і іх мовы",
