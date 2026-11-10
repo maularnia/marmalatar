@@ -77,7 +77,6 @@
     "editorStateReadFailed": "Nie atrymałasia pračytać stan redaktara"
   },
   "createNewProject": {
-    "emojiSelectionFailed": "Nie atrymałasia padabrać emodzi dla prajekta",
     "fileSaveFailed": "Nie atrymałasia zachavać fajł prajekta na dysk",
     "editorStateSaveFailed": "Nie atrymałasia zachavać stan redaktara prajekta",
     "cacheUpdateFailed": "Nie atrymałasia dadać prajekt u keš"

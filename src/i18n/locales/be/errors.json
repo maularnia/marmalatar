@@ -77,7 +77,6 @@
     "editorStateReadFailed": "Не атрымалася прачытаць стан рэдактара"
   },
   "createNewProject": {
-    "emojiSelectionFailed": "Не атрымалася падабраць эмодзі для праекта",
     "fileSaveFailed": "Не атрымалася захаваць файл праекта на дыск",
     "editorStateSaveFailed": "Не атрымалася захаваць стан рэдактара праекта",
     "cacheUpdateFailed": "Не атрымалася дадаць праект у кэш"

@@ -246,7 +246,8 @@ export type TThemeStaticFormsChapter = TThemeVarsChapter<{
   formSectionSpacingX: string;
   formSectionBorderWidth: string;
   formSectionSpacingY: string;
-  formSectionSpacingInner: string;
+  formSectionSpacingInnerX: string;
+  formSectionSpacingInnerY: string;
   formSectionBorderRadius: string;
   formSectionEntrySpacingX: string;
   formSectionEntrySpacingY: string;

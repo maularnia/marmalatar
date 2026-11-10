@@ -26,7 +26,6 @@ import {
   type TProjectFileBody,
   type TProjectFileData,
 } from '@src/utils/data/schemas';
-import { pickRandomCreationEmoji } from '@src/utils/emoji';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { Service } from '@src/services/Service';
 import { glossaries } from '@src/services/glossary';
@@ -453,6 +452,9 @@ export async function openProject(project: TProjectEntry): Promise<void> {
 type TCreateProjectParams = {
   lines: TSubtitleLine[];
   projectName: string;
+  /** Picked on the Import page, which starts from a random one */
+  emoji: string;
+  editorMode: TProjectStatePrefs['editorMode'];
   sourceLanguage: TLanguage;
   targetLanguage: TLanguage;
 };
@@ -460,19 +462,12 @@ type TCreateProjectParams = {
 async function createProjectFromLines(params: TCreateProjectParams): Promise<void> {
   const projectName = params.projectName.trim();
   if (!projectName) throw new Error(t('project.nameRequired'));
-  const { sourceLanguage, targetLanguage } = params;
+  const { emoji, editorMode, sourceLanguage, targetLanguage } = params;
 
   resetOpenProjectMemory();
   // New projects start without a video; one is picked later from the editor's player
   media.clearVideo();
   Service.dispatch(setVideoCollapsed(false));
-
-  let emoji: string;
-  try {
-    emoji = await pickRandomCreationEmoji();
-  } catch {
-    throw new Error(t('createNewProject.emojiSelectionFailed'));
-  }
 
   // The main process names the file and assigns the projectId, so the project exists on disk
   // before anything is applied to the editor
@@ -499,7 +494,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
     editor: editorData,
   });
 
-  Service.dispatch(setEditorMode('translate'));
+  Service.dispatch(setEditorMode(editorMode));
   Service.dispatch(setCurrentProjectFilePath(entry.filePath));
 
   try {
