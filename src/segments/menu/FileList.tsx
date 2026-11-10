@@ -7,6 +7,7 @@ import {
 import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
 import { settings } from '@src/services/settings';
 import { projects } from '@src/services/project';
+import type { TColor } from '@src/theme/definitions';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
 import { promptTemplates } from '@src/services/prompt';
@@ -17,7 +18,6 @@ import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import { ListItem } from '@ui-toolkit/ListItem';
 import classNames from 'classnames';
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo } from 'react';
@@ -42,7 +42,15 @@ const List = styled.div`
   width: 100%;
 `;
 
-export default function FileList() {
+type TFileListProps = {
+  /** Whether the sidebar is collapsed. MainMenu derives it from the menu's compact state:
+   * collapsing is immediate, expanding waits for the backdrop's animation, so full titles and
+   * actions don't spill out of a sidebar that's still narrow. Everything here follows this prop,
+   * never the store's compact state. */
+  compact: boolean;
+};
+
+export default function FileList({ compact }: TFileListProps) {
   const { t: tMenu } = useTranslation('menu');
   const [
     folderPath,
@@ -59,8 +67,6 @@ export default function FileList() {
     integrationIsConfigured,
     isCreatingPromptTemplate,
     isCreatingGlossary,
-    compact,
-    dynamic,
   ] = useAppSelectors(
     folder.selectPath,
     projects.selectList,
@@ -75,23 +81,40 @@ export default function FileList() {
     ai.selectIsBusy,
     settings.selectIntegrationIsConfigured,
     menu.selectIsCreatingPromptTemplate,
-    menu.selectIsCreatingGlossary,
-    menu.selectIsCompact,
-    menu.selectIsDynamic
+    menu.selectIsCreatingGlossary
   );
   const listIsDisabled = workingFolderIsBusy || translationIsBusy;
 
   const setCreateProjectRef = useCallback(
-    (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROJECT_KEY, el),
+    (el: HTMLButtonElement | null) => menu.registerItem(CREATE_PROJECT_KEY, el),
     []
   );
   const setCreatePromptTemplateRef = useCallback(
-    (el: HTMLDivElement | null) => menu.registerItem(CREATE_PROMPT_TEMPLATE_KEY, el),
+    (el: HTMLButtonElement | null) => menu.registerItem(CREATE_PROMPT_TEMPLATE_KEY, el),
     []
   );
   const setCreateGlossaryRef = useCallback(
-    (el: HTMLDivElement | null) => menu.registerItem(CREATE_GLOSSARY_KEY, el),
+    (el: HTMLButtonElement | null) => menu.registerItem(CREATE_GLOSSARY_KEY, el),
     []
+  );
+
+  // A section's "+" in its header: icon only, with the label as tooltip
+  const renderCreateButton = (
+    ref: (el: HTMLButtonElement | null) => void,
+    color: TColor,
+    onClick: () => void
+  ) => (
+    <Tooltip label={<TooltipSimple>{tMenu('fileList.createButton')}</TooltipSimple>}>
+      <Button
+        ref={ref}
+        type="button"
+        size={TButtonSize.SMALL}
+        variant={TButtonVariant.TRANSPARENT}
+        color={color}
+        icon={TIcon.PLUS}
+        onClick={onClick}
+      />
+    </Tooltip>
   );
 
   const projectFileNames = useMemo(() => projectList.map((p) => p.fileName), [projectList]);
@@ -118,12 +141,12 @@ export default function FileList() {
       {projectList.length > 0 && (
         <>
           <Section>
-            {!dynamic && (
-              <ListHeader
-                className={classNames({ compact })}
-                actionBar={
-                  // Only while there's something archived
-                  hasArchivedProjects && (
+            <ListHeader
+              compact={compact}
+              actionBar={
+                <>
+                  {/* Only while there's something archived */}
+                  {hasArchivedProjects && (
                     <Tooltip label={<TooltipSimple>{tMenu('archive.openButton')}</TooltipSimple>}>
                       <Button
                         type="button"
@@ -133,12 +156,17 @@ export default function FileList() {
                         onClick={() => void menu.openArchive()}
                       />
                     </Tooltip>
-                  )
-                }
-              >
-                {tMenu('fileList.projectsHeader')}
-              </ListHeader>
-            )}
+                  )}
+                  {renderCreateButton(
+                    setCreateProjectRef,
+                    ThemeColors.ACCENT1,
+                    menu.startNewProject
+                  )}
+                </>
+              }
+            >
+              {tMenu('fileList.projectsHeader')}
+            </ListHeader>
             <List>
               {visibleProjectList.length
                 ? visibleProjectList.map((project) => {
@@ -168,15 +196,6 @@ export default function FileList() {
                     );
                   })
                 : null}
-              <ListItem
-                ref={setCreateProjectRef}
-                icon={TIcon.PLUS}
-                compact={compact}
-                color={ThemeColors.ACCENT1}
-                onClick={menu.startNewProject}
-              >
-                {tMenu('fileList.createButton')}
-              </ListItem>
             </List>
           </Section>
           <Hr variant={THrVariant.DIMMED} />
@@ -186,11 +205,19 @@ export default function FileList() {
       {integrationIsConfigured && (
         <>
           <Section>
-            {!dynamic && (
-              <ListHeader className={classNames({ compact })}>
-                {tMenu('fileList.promptTemplatesHeader')}
-              </ListHeader>
-            )}
+            <ListHeader
+              className={classNames({ compact })}
+              compact={compact}
+              actionBar={
+                // Hidden while the new item's name is being typed
+                !isCreatingPromptTemplate &&
+                renderCreateButton(setCreatePromptTemplateRef, ThemeColors.ACCENT2, () =>
+                  menu.setIsCreatingPromptTemplate(true)
+                )
+              }
+            >
+              {tMenu('fileList.promptTemplatesHeader')}
+            </ListHeader>
             <List>
               {promptTemplateItems.length
                 ? promptTemplateItems.map(({ fileName, title, emoji }) => {
@@ -230,28 +257,25 @@ export default function FileList() {
                   onDiscard={menu.cancelCreatingPromptTemplate}
                 />
               )}
-              {!isCreatingPromptTemplate && (
-                <ListItem
-                  ref={setCreatePromptTemplateRef}
-                  icon={TIcon.PLUS}
-                  color={ThemeColors.ACCENT2}
-                  compact={compact}
-                  onClick={() => menu.setIsCreatingPromptTemplate(true)}
-                >
-                  {tMenu('fileList.createButton')}
-                </ListItem>
-              )}
             </List>
           </Section>
 
           <Hr variant={THrVariant.DIMMED} />
 
           <Section>
-            {!dynamic && (
-              <ListHeader className={classNames({ compact })}>
-                {tMenu('fileList.glossariesHeader')}
-              </ListHeader>
-            )}
+            <ListHeader
+              className={classNames({ compact })}
+              compact={compact}
+              actionBar={
+                // Hidden while the new item's name is being typed
+                !isCreatingGlossary &&
+                renderCreateButton(setCreateGlossaryRef, ThemeColors.ACCENT2, () =>
+                  menu.setIsCreatingGlossary(true)
+                )
+              }
+            >
+              {tMenu('fileList.glossariesHeader')}
+            </ListHeader>
             <List>
               <AnimatePresence>
                 {glossaryItems.length
@@ -292,17 +316,6 @@ export default function FileList() {
                   onCommit={handleCommitGlossary}
                   onDiscard={menu.cancelCreatingGlossary}
                 />
-              )}
-              {!isCreatingGlossary && (
-                <ListItem
-                  ref={setCreateGlossaryRef}
-                  onClick={() => menu.setIsCreatingGlossary(true)}
-                  color={ThemeColors.ACCENT2}
-                  icon={TIcon.PLUS}
-                  compact={compact}
-                >
-                  {tMenu('fileList.createButton')}
-                </ListItem>
               )}
             </List>
           </Section>

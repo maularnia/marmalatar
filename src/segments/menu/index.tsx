@@ -127,7 +127,7 @@ export default function MainMenu() {
             <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
           </Header>
           <Scroll>
-            <FileList />
+            <FileList compact={!expanded} />
           </Scroll>
         </MenuKeystrokeProvider>
         <SidebarBottom></SidebarBottom>

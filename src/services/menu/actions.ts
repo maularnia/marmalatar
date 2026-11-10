@@ -65,33 +65,34 @@ export function registerMenuItem(key: string, el: HTMLElement | null): void {
 }
 
 // The navigable items in display order. Cheap to recompute from the store on every call, so it
-// isn't kept as state.
+// isn't kept as state. Each section's Create button sits in its header, so it comes before the
+// section's items.
 function getCombinedItems(): TMenuItemRef[] {
+  const items: TMenuItemRef[] = [{ key: SETTINGS_KEY, kind: 'settings' }];
   // Archived projects aren't listed, but the section (and its Create button) stays while any
   // project exists, so the archive remains reachable
-  const items: TMenuItemRef[] = [
-    { key: SETTINGS_KEY, kind: 'settings' },
-    ...projects.get.visibleList().map((p) => ({ key: p.filePath, kind: 'project' as const })),
-  ];
   if (projects.get.list().length > 0) {
     items.push({ key: CREATE_PROJECT_KEY, kind: 'createProject' });
   }
+  items.push(
+    ...projects.get.visibleList().map((p) => ({ key: p.filePath, kind: 'project' as const }))
+  );
   if (settings.get.integrationIsConfigured()) {
+    if (!Service.select(selectIsCreatingPromptTemplate)) {
+      items.push({ key: CREATE_PROMPT_TEMPLATE_KEY, kind: 'createPromptTemplate' });
+    }
     items.push(
       ...promptTemplates.get.items().map((c) => ({
         key: c.fileName,
         kind: 'promptTemplate' as const,
       }))
     );
-    if (!Service.select(selectIsCreatingPromptTemplate)) {
-      items.push({ key: CREATE_PROMPT_TEMPLATE_KEY, kind: 'createPromptTemplate' });
+    if (!Service.select(selectIsCreatingGlossary)) {
+      items.push({ key: CREATE_GLOSSARY_KEY, kind: 'createGlossary' });
     }
     items.push(
       ...glossaries.get.items().map((g) => ({ key: g.fileName, kind: 'glossary' as const }))
     );
-    if (!Service.select(selectIsCreatingGlossary)) {
-      items.push({ key: CREATE_GLOSSARY_KEY, kind: 'createGlossary' });
-    }
   }
   return items;
 }
