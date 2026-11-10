@@ -79,6 +79,7 @@ import iconCleanup from '@src/assets/icons/icon-cleanup.svg?react';
 import iconDoubleRight from '@src/assets/icons/icon-double-right.svg?react';
 import iconDoubleTick from '@src/assets/icons/icon-double-tick.svg?react';
 import iconAudioTrack from '@src/assets/icons/icon-audio-track.svg?react';
+import iconArchive from '@src/assets/icons/icon-archive.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -185,6 +186,7 @@ const ICON_COMPONENTS: {
   [TIcon.DOUBLE_RIGHT]: iconDoubleRight,
   [TIcon.DOUBLE_TICK]: iconDoubleTick,
   [TIcon.AUDIO_TRACK]: iconAudioTrack,
+  [TIcon.ARCHIVE]: iconArchive,
 };
 
 const Wrapper = styled.div`

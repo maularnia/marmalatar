@@ -8,12 +8,14 @@ export const menuExpandDelay = 0.3;
 export const menuWidthDuration = 0.3;
 
 const menuCompactWidth = 34;
-const menuExpandedWidth = 240;
+/** The expanded sidebar's width, in px: the static column on large screens, and the overlay a
+ * collapsed sidebar expands into on smaller ones */
+export const MENU_EXPANDED_WIDTH = 264;
 
 export const menuHoverExpand = {
   variants: {
     in: {
-      width: menuExpandedWidth,
+      width: MENU_EXPANDED_WIDTH,
       transition: { type: 'spring', stiffness: 100, damping: 15, delay: menuExpandDelay },
     },
     out: {

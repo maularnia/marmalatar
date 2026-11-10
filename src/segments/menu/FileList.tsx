@@ -13,7 +13,8 @@ import { promptTemplates } from '@src/services/prompt';
 import { glossaries } from '@src/services/glossary';
 import { ai } from '@src/services/ai';
 import { folder } from '@src/services/folder';
-import H from '@ui-toolkit/H';
+import Button from '@ui-toolkit/Button/Button';
+import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
@@ -22,6 +23,7 @@ import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import { ListHeader } from './ListHeader';
 import { MainMenuListItem } from './MainMenuListItem';
 
 const Section = styled.div`
@@ -37,16 +39,6 @@ const List = styled.div`
   flex-direction: column;
   gap: ${CSSVar('projectListSpacingInnerY')};
   width: 100%;
-`;
-
-const ListHeader = styled(H)`
-  padding: ${CSSVar('size6')} ${CSSVar('size6')} 0;
-`;
-
-const ListHeaderText = styled.div`
-  line-height: ${CSSVar('buttonHeightNano')};
-  white-space: nowrap;
-  text-overflow: ellipsis;
 `;
 
 export default function FileList() {
@@ -122,8 +114,19 @@ export default function FileList() {
         <>
           <Section>
             {!dynamic && (
-              <ListHeader className={classNames({ compact })} level={6}>
-                <ListHeaderText>{tMenu('fileList.projectsHeader')}</ListHeaderText>
+              <ListHeader
+                className={classNames({ compact })}
+                actionBar={
+                  // Not wired yet
+                  <Button
+                    type="button"
+                    size={TButtonSize.SMALL}
+                    variant={TButtonVariant.TRANSPARENT}
+                    icon={TIcon.ARCHIVE}
+                  />
+                }
+              >
+                {tMenu('fileList.projectsHeader')}
               </ListHeader>
             )}
             <List>
@@ -141,6 +144,7 @@ export default function FileList() {
                         compact={compact}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
                         progress={project.translationProgress}
+                        isArchivable
                         toFileName={toProjectFileName}
                         existingFileNames={projectFileNames}
                         emoji={project.emoji}
@@ -173,8 +177,8 @@ export default function FileList() {
         <>
           <Section>
             {!dynamic && (
-              <ListHeader className={classNames({ compact })} level={6}>
-                <ListHeaderText>{tMenu('fileList.promptTemplatesHeader')}</ListHeaderText>
+              <ListHeader className={classNames({ compact })}>
+                {tMenu('fileList.promptTemplatesHeader')}
               </ListHeader>
             )}
             <List>
@@ -234,8 +238,8 @@ export default function FileList() {
 
           <Section>
             {!dynamic && (
-              <ListHeader className={classNames({ compact })} level={6}>
-                <ListHeaderText>{tMenu('fileList.glossariesHeader')}</ListHeaderText>
+              <ListHeader className={classNames({ compact })}>
+                {tMenu('fileList.glossariesHeader')}
               </ListHeader>
             )}
             <List>

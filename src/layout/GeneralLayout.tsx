@@ -8,13 +8,14 @@ import Overlays from '../segments/overlays/Overlays';
 import { menu } from '@src/services/menu';
 import { useAppSelector } from '@store/hooks';
 import classNames from 'classnames';
+import { MENU_EXPANDED_WIDTH } from '@src/toolkit/motion/menu';
 
 const Root = styled.div`
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 240px 1px auto;
+  grid-template-columns: ${MENU_EXPANDED_WIDTH}px 1px auto;
   position: relative;
   &.dynamic {
     grid-template-columns: 34px 1px auto;

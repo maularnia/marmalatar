@@ -29,6 +29,8 @@ type MainMenuListItemProps = {
   emoji?: string;
   compact?: boolean;
   onEmojiSelect?: (emoji: string) => void;
+  /** Shows the archive action (projects only for now; not wired yet) */
+  isArchivable?: boolean;
   onClick?: () => void;
   onCommit: (fileName: string | null, newTitle: string) => Promise<void>;
   onDelete?: (fileName: string, title: string) => void;
@@ -65,6 +67,7 @@ export function MainMenuListItem({
   existingFileNames,
   emoji,
   onEmojiSelect,
+  isArchivable = false,
   onClick,
   onCommit,
   onDelete,
@@ -160,6 +163,16 @@ export function MainMenuListItem({
       panel={
         isEditing || isDisabled ? undefined : (
           <>
+            {isArchivable && (
+              // Not wired yet. Stops the click so it doesn't open the item.
+              <Button
+                variant={TButtonVariant.TRANSPARENT}
+                size={TButtonSize.NANO}
+                icon={TIcon.ARCHIVE}
+                color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
             <Tooltip
               label={
                 <TooltipComplex title={'Rename'}>

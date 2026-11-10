@@ -152,6 +152,13 @@ const blur: TThemeStaticBlurChapter = {
 const screen: TThemeStaticScreenChapter = {
   ...new ThemeVariable('appScreenHorizontalSpacing', CSSVar('size2')).register(),
   ...new ThemeVariable('appScreenWidth', `920px`).register(),
+  // Editor columns per screen size (see EditorLayout). Small screens have no aside.
+  ...new ThemeVariable('appTableWidthSmall', '1fr').register(),
+  ...new ThemeVariable('appTableWidthMedium', '720px').register(),
+  ...new ThemeVariable('appTableWidthLarge', '760px').register(),
+  ...new ThemeVariable('appAsideWidthSmall', '0px').register(),
+  ...new ThemeVariable('appAsideWidthMedium', '1fr').register(),
+  ...new ThemeVariable('appAsideWidthLarge', '1fr').register(),
   ...new ThemeVariable('appScrollbarWidth', CSSVar('size2')).register(),
   ...new ThemeVariable('appScrollbarBorderRadius', CSSVar('inputBorderRadius')).register(),
 };
