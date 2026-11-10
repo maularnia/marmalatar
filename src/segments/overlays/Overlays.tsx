@@ -8,7 +8,7 @@ import ArchiveOverlay from './Archive/ArchiveOverlay';
 import ExportOverlay from './Export/Export';
 import GlossaryOverlay from './Glossary/Glossary';
 import PromptOverlay from './Prompt';
-import SettingsOverlay from './Settings';
+import SettingsOverlay from './Settings/Settings';
 
 // Each overlay's open state belongs to its owner: the prompt and glossary services own their
 // editors, the settings service owns settings and export, the project service the archive. Callers close the others before opening

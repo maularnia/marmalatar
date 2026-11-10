@@ -13,7 +13,6 @@
     "askBeforeAITranslate": "Pytać pierad aŭta-pierakładam",
     "askBeforeSplit": "Pytać pierad razrazańniem radka",
     "autoMarkLinesCompleted": "Adzančać radki jak \"Hatovyja\" aŭtamatyčna",
-    "checkGrammar": "Praviarać pravapis",
     "appLanguage": "Mova prahramy"
   },
   "aiSettings": {
@@ -89,5 +88,14 @@
     "subtext": "Aŭta-ačystka papki .mrmlcache",
     "cleanButton": "Ačyscić keš"
   },
-  "overlayTitle": "Nałady"
+  "overlayTitle": "Nałady",
+  "spellcheck": {
+    "title": "Pravierka pravapisu",
+    "checkGrammar": "Praviarać pravapis"
+  },
+  "tabs": {
+    "general": "Ahulnyja",
+    "ai": "ŠI",
+    "spellchecker": "Pravapis"
+  }
 }
