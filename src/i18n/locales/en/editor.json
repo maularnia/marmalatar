@@ -12,6 +12,8 @@
   },
   "spellcheck": {
     "loadingSuggestions": "Loading suggestions...",
-    "noSuggestions": "No suggestions"
+    "noSuggestions": "No suggestions",
+    "addToProject": "Project",
+    "addToGlobal": "Global"
   }
 }

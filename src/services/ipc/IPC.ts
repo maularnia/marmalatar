@@ -8,6 +8,7 @@ import { IPCMedia } from './segments/media';
 import { IPCProjects } from './segments/projects';
 import { IPCPromptTemplates } from './segments/promptTemplates';
 import { IPCSettings } from './segments/settings';
+import { IPCSpellcheck } from './segments/spellcheck';
 
 // Every segment IPC exposes. Adding a class here is all it takes: IPC's type is derived from this
 // list, so the new segment shows up as a typed property.
@@ -21,6 +22,7 @@ const SEGMENTS = [
   IPCLmStudio,
   IPCDeepl,
   IPCEncryption,
+  IPCSpellcheck,
 ] as const;
 
 // What IPC needs from a segment class: the name it's exposed under, and a constructor taking the

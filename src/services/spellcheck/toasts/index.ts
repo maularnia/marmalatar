@@ -14,3 +14,11 @@ export function makeSpellcheckUnavailableMessage(message: string): TToastParams 
     message,
   };
 }
+
+export function makeDictionaryUpdateFailedMessage(message?: string): TToastParams {
+  return {
+    type: TMessageType.ERROR,
+    title: tErrors('spellcheckDictionaryUpdateFailed.title'),
+    message,
+  };
+}

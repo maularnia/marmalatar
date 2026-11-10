@@ -97,6 +97,7 @@ import {
   selectProjectSourceLanguage,
   selectProjectTargetLanguage,
   selectVisibleProjectList,
+  fileLoaded,
   setProjectList,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
@@ -112,6 +113,7 @@ export type { TProjectEntry } from './slice';
 
 export const projects = new Service('project', {
   actions: {
+    fileLoaded,
     setProjectList,
     setProjectSourceLanguage,
     setProjectTargetLanguage,

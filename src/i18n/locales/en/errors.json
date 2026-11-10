@@ -180,5 +180,8 @@
   },
   "audioTracksListFailed": {
     "title": "Unable to read the video audio tracks"
+  },
+  "spellcheckDictionaryUpdateFailed": {
+    "title": "Could not add the word to the dictionary"
   }
 }

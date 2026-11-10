@@ -7,6 +7,7 @@ import { LmStudioService } from './modules/ai/LmStudioService';
 import { EncryptionService } from './modules/encryption/EncryptionService';
 import { GlossaryService } from './modules/glossary/GlossaryService';
 import { MediaService } from './modules/media/MediaService';
+import { SpellcheckService } from './modules/spellcheck/SpellcheckService';
 import { ProjectService } from './modules/project/ProjectService';
 import { PromptTemplateService } from './modules/promptTemplate/PromptTemplateService';
 import { ScannerService } from './modules/scanner/ScannerService';
@@ -29,6 +30,7 @@ const SERVICES = [
   LmStudioService,
   DeeplService,
   MediaService,
+  SpellcheckService,
 ] as const;
 
 type TServices = (typeof SERVICES)[number];

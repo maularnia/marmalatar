@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import { ProjectSpellcheckSchema } from './spellcheckDictionary';
+
+// The .mrml format the project service writes. Version 2 added the `spellcheck` property; version 1
+// files are still read (the renderer's contract upgrades them) and written as version 2 next time.
+export const PROJECT_FILE_VERSION = 2;
 
 // One subtitle line as stored in a .mrml file
 export const ProjectLineSchema = z.object({
@@ -15,7 +20,8 @@ export const ProjectLineSchema = z.object({
 // renderer narrows them to its TLanguage enum, which must not be imported into the bridge. They
 // stay in the file, so they travel with it to another device.
 export const ProjectFileHeaderSchema = z.object({
-  version: z.literal(1).default(1),
+  // Any version: listing reads files of every version, the renderer's contract checks it on open
+  version: z.number().default(PROJECT_FILE_VERSION),
   project: z.object({
     projectId: z.string(),
     projectName: z.string(),
@@ -35,6 +41,12 @@ export const ProjectFileBodySchema = z.object({
   }),
 });
 export type TProjectFileBody = z.infer<typeof ProjectFileBodySchema>;
+
+// The project's own spellcheck dictionary. Written only by the project service (add-to-dictionary);
+// a file without it (version 1) has none.
+export const ProjectFileSpellcheckSchema = z.object({
+  spellcheck: ProjectSpellcheckSchema.catch({}).default({}),
+});
 
 // What a new project's header starts from. The project service assigns the projectId.
 export type TProjectCreateInput = Omit<TProjectFileHeader['project'], 'projectId'>;

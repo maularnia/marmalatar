@@ -1,6 +1,6 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { Service } from '@src/services/Service';
-import { ProjectSaveV1Schema, type TProjectFileBody } from '@src/utils/data/schemas';
+import { ProjectSaveSchema, type TProjectFileBody } from '@src/utils/data/schemas';
 import type { RootState } from '@store/root';
 import {
   buildProjectEditorStateSaveData,
@@ -25,7 +25,7 @@ type PersistedEditorFields = keyof TProjectFileBody['editor'];
 // what's watched for autosave can never silently drift apart -- the `satisfies` clause fails to
 // compile if the schema names a field that doesn't exist on the editor slice.
 const AUTO_SAVE_WATCHED_EDITOR_FIELDS = Object.keys(
-  ProjectSaveV1Schema.shape.editor.shape
+  ProjectSaveSchema.shape.editor.shape
 ) as PersistedEditorFields[] satisfies readonly (keyof RootState['editor'])[];
 
 function hasAutoSaveStateChanged(prev: RootState, next: RootState): boolean {

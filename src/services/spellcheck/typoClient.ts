@@ -90,10 +90,11 @@ function ensureDictionary(language: TLanguage): Promise<void> {
 }
 
 export type SpellCheckClient = {
-  /** Requests a check for `text`. Resolves to `null` if a newer `request()`/`cancel()` call on
-   * this same client superseded it before the dictionary lookup finished -- callers should treat
-   * a `null` result as "discard, do nothing" rather than apply stale marks. */
-  request: (text: string) => Promise<SpellCheckMark[] | null>;
+  /** Requests a check for `text`, skipping `ignoredWords` (lowercased, from the user
+   * dictionaries). Resolves to `null` if a newer `request()`/`cancel()` call on this same client
+   * superseded it before the dictionary lookup finished -- callers should treat a `null` result as
+   * "discard, do nothing" rather than apply stale marks. */
+  request: (text: string, ignoredWords: readonly string[]) => Promise<SpellCheckMark[] | null>;
   /** Requests suggestions for one misspelled word. These take seconds, so they're only computed
    * for words the user actually looks at. Resolves to `null` if a newer `suggest()`/`cancel()`
    * call on this same client superseded it. */
@@ -117,13 +118,18 @@ export function createSpellCheckClient(language: TLanguage): SpellCheckClient {
   };
 
   return {
-    async request(text: string): Promise<SpellCheckMark[] | null> {
+    async request(text: string, ignoredWords: readonly string[]): Promise<SpellCheckMark[] | null> {
       const token = ++checkToken;
       cancelJob(activeCheckId);
       await ensureDictionary(language);
       if (token !== checkToken) return null;
 
-      const { id, result } = startJob({ type: 'check', language, text });
+      const { id, result } = startJob({
+        type: 'check',
+        language,
+        text,
+        ignored: [...ignoredWords],
+      });
       activeCheckId = id;
       const marks = (await result) as SpellCheckMark[] | null;
       return token === checkToken ? marks : null;

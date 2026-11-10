@@ -10,6 +10,7 @@ import { mediaReducer } from '@src/services/media';
 import { menuReducer } from '@src/services/menu';
 import { modalReducer } from '@src/services/modal';
 import { toastReducer } from '@src/services/toast';
+import { spellcheckReducer } from '@src/services/spellcheck';
 
 export const rootReducer = combineReducers({
   settings: settingsReducer,
@@ -23,6 +24,7 @@ export const rootReducer = combineReducers({
   menu: menuReducer,
   modal: modalReducer,
   toast: toastReducer,
+  spellcheck: spellcheckReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

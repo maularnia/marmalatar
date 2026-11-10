@@ -180,5 +180,8 @@
   },
   "audioTracksListFailed": {
     "title": "Не атрымалася прачытаць аўдыядарожкі відэа"
+  },
+  "spellcheckDictionaryUpdateFailed": {
+    "title": "Не атрымалася дадаць слова ў слоўнік"
   }
 }

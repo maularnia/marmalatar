@@ -21,7 +21,7 @@ import { TLanguage, TSubtitleLine } from '@src/types';
 import { parseProjectFile } from '@src/utils/data/parsers/project';
 import {
   ProjectEditorStateSchema,
-  ProjectSaveV1Schema,
+  ProjectSaveSchema,
   type TProjectEditorState,
   type TProjectFileBody,
   type TProjectFileData,
@@ -61,6 +61,7 @@ import {
   setProjectSourceLanguage,
   setProjectTargetLanguage,
   setArchiveOpen,
+  fileLoaded,
   type TProjectEntry,
 } from './slice';
 
@@ -94,7 +95,7 @@ async function readProjectFile(projectId: string): Promise<TProjectFileData> {
 
 function buildProjectBody(): TProjectFileBody {
   return {
-    editor: ProjectSaveV1Schema.shape.editor.parse({
+    editor: ProjectSaveSchema.shape.editor.parse({
       lines: Service.select(selectLines),
       characterPool: Service.select(selectCharacterPool),
     }),
@@ -260,7 +261,7 @@ function resetOpenProjectMemory(): void {
   media.resetPlayback();
 }
 
-function applyProjectData(data: Pick<TProjectFileData, 'project' | 'editor'>): void {
+function applyProjectData(data: Pick<TProjectFileData, 'project' | 'editor' | 'spellcheck'>): void {
   Service.dispatch(setProjectId(data.project.projectId));
   Service.dispatch(setProjectName(data.project.projectName));
   Service.dispatch(setProjectEmoji(data.project.emoji));
@@ -274,6 +275,7 @@ function applyProjectData(data: Pick<TProjectFileData, 'project' | 'editor'>): v
 
   Service.dispatch(setLines(data.editor.lines));
   Service.dispatch(setTotalLinesToTranslate(data.editor.lines.length));
+  Service.dispatch(fileLoaded({ spellcheck: data.spellcheck }));
 }
 
 /** Closes the open project and its video. The project list is the tracked folder's and stays. */
@@ -493,6 +495,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
       targetLanguage,
     },
     editor: editorData,
+    spellcheck: {},
   });
 
   Service.dispatch(setEditorMode(editorMode));

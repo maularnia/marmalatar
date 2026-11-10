@@ -14,21 +14,53 @@ const workerScope = self as unknown as Worker;
 type TLoadedDictionary = { typo: Typo; locale: string };
 type TQueuedJob = TSpellcheckJob & { id: number };
 
+// Digits only, in any script, possibly joined by hyphens (a range like 1-2): not words to check
+const ONLY_DIGITS = /^\p{Nd}+(?:[-\u2010\u2011]\p{Nd}+)*$/u;
+
+// Hyphen-minus, hyphen and non-breaking hyphen: what joins the parts of one word (дзе-небудзь)
+const WORD_HYPHENS = new Set(['-', '\u2010', '\u2011']);
+
+type TWord = { word: string; index: number };
+
+// The words of `text`. Intl.Segmenter splits at hyphens, so a word, a single hyphen and a word
+// directly after one another are joined back into one: Hunspell knows hyphenated words as a whole.
+function splitWords(text: string, locale: string): TWord[] {
+  const segments = [...new Intl.Segmenter(locale, { granularity: 'word' }).segment(text)];
+  const words: TWord[] = [];
+  for (let i = 0; i < segments.length; i++) {
+    const { segment, index, isWordLike } = segments[i];
+    if (!isWordLike || !segment.trim()) continue;
+    let word = segment;
+    // Segments are contiguous, so adjacency in the list means adjacency in the text
+    while (WORD_HYPHENS.has(segments[i + 1]?.segment ?? '') && segments[i + 2]?.isWordLike) {
+      word += segments[i + 1].segment + segments[i + 2].segment;
+      i += 2;
+    }
+    words.push({ word, index });
+  }
+  return words;
+}
+
 const dictionaries = new Map<TLanguage, TLoadedDictionary>();
 const queue: TQueuedJob[] = [];
 let isScheduled = false;
 
-function checkText({ typo, locale }: TLoadedDictionary, text: string): SpellCheckMark[] {
-  const segmenter = new Intl.Segmenter(locale, { granularity: 'word' });
+function checkText(
+  { typo, locale }: TLoadedDictionary,
+  text: string,
+  ignored: ReadonlySet<string>
+): SpellCheckMark[] {
   const marks: SpellCheckMark[] = [];
-  for (const { segment, index, isWordLike } of segmenter.segment(text)) {
-    if (!isWordLike || !segment.trim()) continue;
-    if (typo.check(segment)) continue;
+  for (const { word, index } of splitWords(text, locale)) {
+    if (ONLY_DIGITS.test(word)) continue;
+    // Words from the user dictionaries are accepted as they are, in any letter case
+    if (ignored.has(word.toLocaleLowerCase())) continue;
+    if (typo.check(word)) continue;
     marks.push({
-      id: `${index}-${index + segment.length}`,
+      id: `${index}-${index + word.length}`,
       start: index,
-      end: index + segment.length,
-      word: segment,
+      end: index + word.length,
+      word,
     });
   }
   return marks;
@@ -49,7 +81,7 @@ function runJob(job: TQueuedJob): TSpellcheckResult {
       });
       return null;
     case 'check':
-      return checkText(getDictionary(job.language), job.text);
+      return checkText(getDictionary(job.language), job.text, new Set(job.ignored));
     case 'suggest':
       return getDictionary(job.language).typo.suggest(job.word);
   }
