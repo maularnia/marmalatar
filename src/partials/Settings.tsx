@@ -20,7 +20,6 @@ export default function Settings() {
     timeAdjustmentStep,
     scrollVideoIntoViewOnPlay,
     autoMarkLinesCompleted,
-    checkGrammar,
   ] = useAppSelectors(
     settings.selectAskBeforeMerge,
     settings.selectAskBeforeDelete,
@@ -29,8 +28,7 @@ export default function Settings() {
     settings.selectAutoMergeThreshold,
     settings.selectTimeAdjustmentStep,
     settings.selectScrollVideoIntoViewOnPlay,
-    settings.selectAutoMarkLinesCompleted,
-    settings.selectCheckGrammar
+    settings.selectAutoMarkLinesCompleted
   );
 
   const {
@@ -131,14 +129,6 @@ export default function Settings() {
               onChange={(e) => settings.setAutoMarkLinesCompleted(e.currentTarget.checked)}
             >
               {t('uxUi.autoMarkLinesCompleted')}
-            </Toggle>
-          </FormsSectionContent>
-          <FormsSectionContent>
-            <Toggle
-              checked={checkGrammar}
-              onChange={(e) => settings.setCheckGrammar(e.currentTarget.checked)}
-            >
-              {t('uxUi.checkGrammar')}
             </Toggle>
           </FormsSectionContent>
         </FormsSection>

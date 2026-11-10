@@ -13,7 +13,6 @@
     "askBeforeAITranslate": "Confirm AI translation",
     "askBeforeSplit": "Confirm splitting a line",
     "autoMarkLinesCompleted": "Mark lines as completed automatically",
-    "checkGrammar": "Allow spellcheck",
     "appLanguage": "Interface language"
   },
   "aiSettings": {
@@ -89,5 +88,14 @@
     "subtext": "Auto-clean .mrmlcache folder",
     "cleanButton": "Clean cache"
   },
-  "overlayTitle": "Settings"
+  "overlayTitle": "Settings",
+  "spellcheck": {
+    "title": "Spellchecker",
+    "checkGrammar": "Allow spellcheck"
+  },
+  "tabs": {
+    "general": "General",
+    "ai": "AI",
+    "spellchecker": "Spellchecker"
+  }
 }

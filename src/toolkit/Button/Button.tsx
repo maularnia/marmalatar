@@ -3,6 +3,7 @@ import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
 import { settings } from '@src/services/settings';
 import {
+  BUTTON_BORDER_RADIUS_VAR,
   TButtonProps,
   TButtonSize,
   TButtonStyledProps,
@@ -69,6 +70,9 @@ const ButtonPaddingToSizeMap = {
     iconic: CSSVar('inputSpacingXNanoIconic'),
   },
 };
+
+// Overridable per button through BUTTON_BORDER_RADIUS_VAR, set by a parent (e.g. Tab)
+const buttonBorderRadius = `var(${BUTTON_BORDER_RADIUS_VAR}, ${CSSVar('inputBorderRadius')})`;
 
 const buttonStyle = css`
   display: inline-flex;
@@ -141,7 +145,7 @@ const StyledButtonDefault = styled(motion.button).attrs<TButtonStyledProps>(
   opacity: ${CSSVar('inputOpacity')};
 
   &:before {
-    border-radius: ${CSSVar('inputBorderRadius')};
+    border-radius: ${buttonBorderRadius};
   }
 
   &[disabled] {
@@ -231,7 +235,7 @@ const StyledButtonSecondary = styled(motion.button).attrs<TButtonStyledProps>(
   opacity: ${CSSVar('inputOpacity')};
 
   &:before {
-    border-radius: ${CSSVar('inputBorderRadius')};
+    border-radius: ${buttonBorderRadius};
   }
 
   &[disabled] {
@@ -323,7 +327,7 @@ const StyledButtonSpecial = styled(motion.button).attrs<TButtonStyledProps>(
   opacity: ${CSSVar('inputOpacity')};
 
   &:before {
-    border-radius: ${CSSVar('inputBorderRadius')};
+    border-radius: ${buttonBorderRadius};
   }
 
   &[disabled] {
@@ -475,7 +479,7 @@ const StyledButtonSecondarySpecial = styled(motion.button).attrs<TButtonStyledPr
   }
 
   &:before {
-    border-radius: ${CSSVar('inputBorderRadius')};
+    border-radius: ${buttonBorderRadius};
     padding: ${CSSVar('inputBorderWidth')};
     background-clip: padding-box;
     mask:
@@ -655,7 +659,7 @@ const StyledInputTransparent = styled(motion.button).attrs<TButtonStyledProps>(
   opacity: ${CSSVar('inputOpacity')};
 
   &:before {
-    border-radius: ${CSSVar('inputBorderRadius')};
+    border-radius: ${buttonBorderRadius};
     background: ${CSSColor(ThemeColors.TRANSPARENT, TShade.DEFAULT, 100)};
     opacity: ${CSSVar('opacity-20')};
   }

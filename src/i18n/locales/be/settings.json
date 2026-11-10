@@ -13,7 +13,6 @@
     "askBeforeAITranslate": "Пытаць перад аўта-перакладам",
     "askBeforeSplit": "Пытаць перад разразаннем радка",
     "autoMarkLinesCompleted": "Адзначаць радкі як \"Гатовыя\" аўтаматычна",
-    "checkGrammar": "Правяраць правапіс",
     "appLanguage": "Мова праграмы"
   },
   "aiSettings": {
@@ -89,5 +88,14 @@
     "subtext": "Aўта-ачыстка папкі .mrmlcache",
     "cleanButton": "Ачысціць кэш"
   },
-  "overlayTitle": "Налады"
+  "overlayTitle": "Налады",
+  "spellcheck": {
+    "title": "Праверка правапісу",
+    "checkGrammar": "Правяраць правапіс"
+  },
+  "tabs": {
+    "general": "Агульныя",
+    "ai": "ШІ",
+    "spellchecker": "Правапіс"
+  }
 }

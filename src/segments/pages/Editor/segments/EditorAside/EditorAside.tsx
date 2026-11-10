@@ -1,6 +1,7 @@
 import { projects } from '@src/services/project';
 import { media } from '@src/services/media';
 import GeneralSettings from '@src/partials/Settings';
+import { SpellcheckSettings } from '@src/partials/SpellcheckSettings';
 import { editor } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
@@ -123,6 +124,8 @@ export default function EditorAside() {
       <Hr variant={THrVariant.DIMMED} />
       {!isEditMode && <AiTranslationStatusPanel />}
       <GeneralSettings />
+      {/* Was part of the UI/UX section until the settings overlay got a Spellchecker tab */}
+      <SpellcheckSettings />
     </Aside>
   );
 }
