@@ -98,7 +98,7 @@ export const FormsSectionContent = styled.div.attrs<RowAttrs>(
 )`
   display: grid;
   align-items: flex-end;
-  gap: ${CSSVar('formSectionSpacingInner')};
+  gap: ${CSSVar('formSectionSpacingInnerY')};
   flex-direction: column;
 `;
 const SectionTitleRoot = styled.div`
@@ -148,10 +148,10 @@ export const FormsSection = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: stretch;
-  gap: ${CSSVar('formSectionSpacingInner')};
+  gap: ${CSSVar('formSectionSpacingInnerY')};
   ${FormsSectionContent} + ${FormsSectionContent} {
     border-top: ${CSSVar('formSectionBorderWidth')} solid ${CSSVar('formSectionBorderColor')};
-    padding: ${CSSVar('formSectionSpacingInner')} 0;
+    padding: 0;
   }
 `;
 

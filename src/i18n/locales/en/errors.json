@@ -77,7 +77,6 @@
     "editorStateReadFailed": "Unable to read editor state"
   },
   "createNewProject": {
-    "emojiSelectionFailed": "Failed to pick a random project emoji",
     "fileSaveFailed": "Failed to save the project file to disk",
     "editorStateSaveFailed": "Failed to save the project editor state",
     "cacheUpdateFailed": "Failed to add the project to the project cache"

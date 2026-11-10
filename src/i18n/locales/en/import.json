@@ -14,12 +14,15 @@
     "removeAudioCuesSuffix": "like [music], [sigh] etc.",
     "fixShortDashes": "Fix short dashes"
   },
-  "projectTitle": {
-    "sectionTitle": "Title"
+  "project": {
+    "sectionTitle": "Project"
   },
-  "translationDirection": {
-    "sectionTitle": "Translation direction",
-    "subtext": "Choose what languages you are translationg from and to"
+  "languageAndMode": {
+    "sectionTitle": "Language and mode",
+    "subtext": "Choose whether you will translate or edit the subtitles, and their languages",
+    "modePrefix": "I am going to",
+    "translateButton": "translate",
+    "editButton": "edit"
   },
   "backButton": "Back",
   "startButton": "Start",

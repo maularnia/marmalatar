@@ -4,7 +4,7 @@
     "noFileSelected": "Пакуль нічога не абрана"
   },
   "subtitles": {
-    "sectionTitle": "Надпісы",
+    "sectionTitle": "Субцітры",
     "linesToProcessSubtext": "{{count}} радкоў да апрацоўкі",
     "supportedFormats": "Падтрымліваюцца файлы .srt/.ass",
     "dropHtmlTags": "Прыбраць html",
@@ -14,12 +14,15 @@
     "removeAudioCuesSuffix": "кшталту [music], [sigh] і т.п.",
     "fixShortDashes": "Выправіць кароткія злучкі на доўгія"
   },
-  "projectTitle": {
-    "sectionTitle": "Назва"
+  "project": {
+    "sectionTitle": "Праект"
   },
-  "translationDirection": {
-    "sectionTitle": "Кірунак перакладу",
-    "subtext": "Абярыце мову крыніцы і перакладу"
+  "languageAndMode": {
+    "sectionTitle": "Мова і рэжым",
+    "subtext": "Абярыце, ці будзеце вы перакладаць ці рэдагаваць субцітры, і іх мовы",
+    "modePrefix": "Я збіраюся",
+    "translateButton": "перакладаць",
+    "editButton": "рэдагаваць"
   },
   "backButton": "Назад",
   "startButton": "Пачаць",
