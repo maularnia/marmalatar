@@ -547,8 +547,9 @@ export async function copyAllSourceToOutput(): Promise<void> {
   Service.dispatch(allSourceCopiedToOutput({ overrideExisting }));
 }
 
+// Translate mode only: edit mode has no translations to complete
 export function completeAllTranslatedLines(): void {
-  if (isBulkTranslationRunning()) return;
+  if (isBulkTranslationRunning() || Service.select(selectIsEditMode)) return;
   Service.dispatch(allTranslatedLinesCompleted());
 }
 
