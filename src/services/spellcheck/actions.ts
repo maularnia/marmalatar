@@ -44,3 +44,14 @@ export async function addToProjectDictionary(language: string, word: string): Pr
     toast.push(makeDictionaryUpdateFailedMessage(toErrorMessage(error)));
   }
 }
+
+/** Removes a word from a language's global dictionary (deleting its file with the last word).
+ * Editors check the word again from their next check on. Failures are reported with a toast. */
+export async function removeFromGlobalDictionary(language: string, word: string): Promise<void> {
+  try {
+    const words = await IPC.spellcheck.removeFromDictionary(language, word);
+    Service.dispatch(setGlobalDictionary({ language, words }));
+  } catch (error) {
+    toast.push(makeDictionaryUpdateFailedMessage(toErrorMessage(error)));
+  }
+}

@@ -91,7 +91,8 @@
   "overlayTitle": "Налады",
   "spellcheck": {
     "title": "Праверка правапісу",
-    "checkGrammar": "Правяраць правапіс"
+    "checkGrammar": "Правяраць правапіс",
+    "dictionariesEmpty": "У агульныя слоўнікі яшчэ не дададзена ніводнага слова"
   },
   "tabs": {
     "general": "Агульныя",

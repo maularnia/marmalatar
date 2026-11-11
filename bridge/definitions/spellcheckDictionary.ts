@@ -22,3 +22,8 @@ export function addDictionaryWord(words: readonly string[], word: string): strin
     ? [...words]
     : [...words, trimmed];
 }
+
+/** The word list without `word`, the entry exactly as stored */
+export function removeDictionaryWord(words: readonly string[], word: string): string[] {
+  return words.filter((existing) => existing !== word);
+}

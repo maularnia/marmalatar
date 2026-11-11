@@ -25,8 +25,11 @@ const spellcheckSlice = createSlice({
     setGlobalDictionaries(state, action: PayloadAction<Record<string, string[]>>) {
       state.globalDictionaries = action.payload;
     },
+    // An empty list means the language's file is gone: no dictionary for it any more
     setGlobalDictionary(state, action: PayloadAction<{ language: string; words: string[] }>) {
-      state.globalDictionaries[action.payload.language] = action.payload.words;
+      const { language, words } = action.payload;
+      if (words.length) state.globalDictionaries[language] = words;
+      else delete state.globalDictionaries[language];
     },
     setProjectDictionaries(state, action: PayloadAction<TProjectSpellcheck>) {
       state.projectDictionaries = action.payload;

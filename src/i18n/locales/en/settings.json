@@ -91,7 +91,8 @@
   "overlayTitle": "Settings",
   "spellcheck": {
     "title": "Spellchecker",
-    "checkGrammar": "Allow spellcheck"
+    "checkGrammar": "Allow spellcheck",
+    "dictionariesEmpty": "No words added to the global dictionaries yet"
   },
   "tabs": {
     "general": "General",

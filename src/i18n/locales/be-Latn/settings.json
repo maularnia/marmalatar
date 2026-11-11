@@ -91,7 +91,8 @@
   "overlayTitle": "Nałady",
   "spellcheck": {
     "title": "Pravierka pravapisu",
-    "checkGrammar": "Praviarać pravapis"
+    "checkGrammar": "Praviarać pravapis",
+    "dictionariesEmpty": "U ahulnyja słoŭniki jaščę nie dadadziena nivodnaha słova"
   },
   "tabs": {
     "general": "Ahulnyja",

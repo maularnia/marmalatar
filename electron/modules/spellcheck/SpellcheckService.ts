@@ -1,6 +1,7 @@
 import type { IpcMainInvokeEvent } from 'electron';
 import {
   addDictionaryWord,
+  removeDictionaryWord,
   SpellcheckDictionaryFileSchema,
 } from '../../../bridge/definitions/spellcheckDictionary';
 import {
@@ -14,7 +15,7 @@ import type { TVersioning } from '../service/storeVersioning';
 
 // Global spellcheck dictionaries: one {languageCode}.mrmlspell file per language in the tracked
 // folder, holding words the spellcheck accepts in every project. A language's file is created only
-// when its first word is added. Nothing is kept in the store: the files are the dictionaries.
+// when its first word is added, and deleted with its last one. Nothing is kept in the store: the files are the dictionaries.
 export class SpellcheckService extends Service {
   static readonly serviceName = 'spellcheck';
 
@@ -45,6 +46,22 @@ export class SpellcheckService extends Service {
           fileName,
           SpellcheckDictionaryFileSchema.parse({ wordlist })
         );
+        return wordlist;
+      }
+    ),
+    // Removes a word (as stored) from a language's dictionary. Removing the last word deletes the
+    // file, the mirror of creating it on the first. Returns the remaining words.
+    this.handle(
+      'remove-from-dictionary',
+      (_: IpcMainInvokeEvent, languageCode: string, word: string) => {
+        const fileName = toSpellcheckFileName(languageCode);
+        const wordlist = removeDictionaryWord(this.readWords(fileName), word);
+        const scanner = ScannerService.getInstance();
+        if (wordlist.length) {
+          scanner.writeFile(fileName, SpellcheckDictionaryFileSchema.parse({ wordlist }));
+        } else {
+          scanner.deleteFile(fileName);
+        }
         return wordlist;
       }
     ),

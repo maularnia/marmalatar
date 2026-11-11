@@ -1,6 +1,11 @@
 import { folder } from '@src/services/folder';
 import { Service } from '@src/services/Service';
-import { addToGlobalDictionary, addToProjectDictionary, loadGlobalDictionaries } from './actions';
+import {
+  addToGlobalDictionary,
+  addToProjectDictionary,
+  loadGlobalDictionaries,
+  removeFromGlobalDictionary,
+} from './actions';
 import {
   selectAvailableDictionaries,
   selectCanAddToProjectDictionary,
@@ -29,6 +34,7 @@ export const spellcheck = new Service('spellcheck', {
     addToGlobalDictionary,
     addToProjectDictionary,
     loadGlobalDictionaries,
+    removeFromGlobalDictionary,
   },
 });
 

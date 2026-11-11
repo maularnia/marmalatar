@@ -7,4 +7,5 @@ export class IPCSpellcheck extends IPCSegment {
 
   readonly list = this.bridgeCall('spellcheck', 'list');
   readonly addToDictionary = this.bridgeCall('spellcheck', 'addToDictionary');
+  readonly removeFromDictionary = this.bridgeCall('spellcheck', 'removeFromDictionary');
 }
