@@ -14,7 +14,7 @@ export default function SettingsOverlay() {
     <Overlay title={t('overlayTitle')} onClose={() => settings.close()}>
       <FormRoot onSubmit={(e) => e.preventDefault()}>
         <Tabs
-          tabSize={TButtonSize.SMALL}
+          tabSize={TButtonSize.REGULAR}
           tabs={[
             { id: 'general', title: t('tabs.general'), default: true },
             { id: 'ai', title: t('tabs.ai') },

@@ -57,7 +57,7 @@ const OverlayButton = styled(Button)`
 `;
 
 const OverlayTitle = styled(H)`
-  padding: 0 ${CSSVar('size18')};
+  padding: 0 ${CSSVar('formSpacingX')};
 `;
 
 type OverlayProps = PropsWithChildren<{

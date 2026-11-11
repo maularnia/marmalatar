@@ -122,7 +122,7 @@ export function AlphaTagList({
   dictionary,
   tagSize = TTagSize.SMALL,
   onRemove,
-  height = 200,
+  height = 400,
   label,
   locale,
 }: TAlphaTagListProps) {
@@ -132,7 +132,7 @@ export function AlphaTagList({
   return (
     <Root>
       <Label $theme={theme}>{label}</Label>
-      <Box $theme={theme} style={{ height }}>
+      <Box $theme={theme} style={{ maxHeight: height }}>
         {groups.map(({ letter, words }) => (
           <Group key={letter}>
             <GroupHeader>
