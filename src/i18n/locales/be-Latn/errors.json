@@ -180,5 +180,8 @@
   },
   "audioTracksListFailed": {
     "title": "Nie atrymałasia pračytać aŭdyjadarožki videa"
+  },
+  "spellcheckDictionaryUpdateFailed": {
+    "title": "Nie atrymałasia dadać słova ŭ słoŭnik"
   }
 }

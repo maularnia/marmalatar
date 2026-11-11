@@ -3,8 +3,10 @@ import type { IpcMainInvokeEvent } from 'electron';
 import { z } from 'zod';
 import { readProjectState } from '../../../bridge/contracts';
 import {
+  PROJECT_FILE_VERSION,
   ProjectFileBodySchema,
   ProjectFileHeaderSchema,
+  ProjectFileSpellcheckSchema,
   type TProjectCreateInput,
   type TProjectFileBody,
   type TProjectFileHeader,
@@ -15,7 +17,12 @@ import {
   type ProjectState,
   type TProjectStatePrefs,
 } from '../../../bridge/definitions/projectState';
-import { PROJECT_EXTENSION, toProjectFileName } from '../../../bridge/fileNames';
+import { isLanguageCode, PROJECT_EXTENSION, toProjectFileName } from '../../../bridge/fileNames';
+import {
+  addDictionaryWord,
+  removeDictionaryWord,
+  type TProjectSpellcheck,
+} from '../../../bridge/definitions/spellcheckDictionary';
 import { readJsonFile } from '../../utils/readJsonFile';
 import { runWithFallback } from '../../utils/runWithFallback';
 import { normalizeEntries } from '../scanner/normalizeEntries';
@@ -115,16 +122,26 @@ function headerOf(entry: TProjectEntry): THeader {
   return { projectId, projectName, emoji, sourceLanguage, targetLanguage };
 }
 
-// The whole .mrml file. The header comes from the project service, the body from the renderer.
-// Both are validated, so a stale list entry can't write a file the list would then drop.
+// The whole .mrml file, always in the current version. The header and the spellcheck dictionary
+// come from the project service, the body from the renderer. All are validated, so a stale list
+// entry can't write a file the list would then drop.
 function assembleFile(
   header: THeader,
-  body: TProjectFileBody
-): TProjectFileHeader & TProjectFileBody {
+  body: TProjectFileBody,
+  spellcheck: TProjectSpellcheck
+): TProjectFileHeader & TProjectFileBody & { spellcheck: TProjectSpellcheck } {
   return {
-    ...ProjectFileHeaderSchema.parse({ project: header }),
+    ...ProjectFileHeaderSchema.parse({ version: PROJECT_FILE_VERSION, project: header }),
     ...ProjectFileBodySchema.parse(body),
+    ...ProjectFileSpellcheckSchema.parse({ spellcheck }),
   };
+}
+
+// The stored file's spellcheck dictionary, kept on every rewrite since the renderer never sends it.
+// A version 1 file (or an unreadable one) has none.
+function readSpellcheck(fileName: string): TProjectSpellcheck {
+  return ProjectFileSpellcheckSchema.parse(ScannerService.getInstance().readFile(fileName) ?? {})
+    .spellcheck;
 }
 
 export class ProjectService extends Service<TProjectData> {
@@ -186,7 +203,10 @@ export class ProjectService extends Service<TProjectData> {
     // computed from the new lines.
     this.handle('set', (_: IpcMainInvokeEvent, projectId: string, body: TProjectFileBody) => {
       const entry = this.getEntry(projectId);
-      ScannerService.getInstance().writeFile(entry.fileName, assembleFile(headerOf(entry), body));
+      ScannerService.getInstance().writeFile(
+        entry.fileName,
+        assembleFile(headerOf(entry), body, readSpellcheck(entry.fileName))
+      );
       return this.getListEntry(projectId);
     }),
     // The file is named after the project. null when a file with that name already exists.
@@ -198,7 +218,7 @@ export class ProjectService extends Service<TProjectData> {
         const fileName = toProjectFileName(header.projectName);
         const scanner = ScannerService.getInstance();
         if (scanner.fileExists(fileName)) return null;
-        scanner.writeFile(fileName, assembleFile(header, body));
+        scanner.writeFile(fileName, assembleFile(header, body, {}));
         return this.getListEntry(header.projectId);
       }
     ),
@@ -230,6 +250,42 @@ export class ProjectService extends Service<TProjectData> {
           this.writeHeader(entry, { sourceLanguage, targetLanguage });
         }
         return this.getListEntry(projectId);
+      }
+    ),
+    // Adds a word to the project's spellcheck dictionary for one language, creating that
+    // language's list on first use. Written to the file at once; returns the whole dictionary.
+    this.handle(
+      'add-to-dictionary',
+      (_: IpcMainInvokeEvent, projectId: string, languageCode: string, word: string) => {
+        if (!isLanguageCode(languageCode))
+          throw new Error(`Invalid language code: ${languageCode}`);
+        const entry = this.getEntry(projectId);
+        const scanner = ScannerService.getInstance();
+        const body = ProjectFileBodySchema.safeParse(scanner.readFile(entry.fileName));
+        if (!body.success) throw new Error(`Cannot read project file ${entry.fileName}`);
+        const current = readSpellcheck(entry.fileName);
+        const spellcheck = {
+          ...current,
+          [languageCode]: addDictionaryWord(current[languageCode] ?? [], word),
+        };
+        scanner.writeFile(entry.fileName, assembleFile(headerOf(entry), body.data, spellcheck));
+        return spellcheck;
+      }
+    ),
+    // Removes a word (as stored) from the project's dictionary for one language; the language's
+    // key goes with its last word. Written to the file at once; returns the whole dictionary.
+    this.handle(
+      'remove-from-dictionary',
+      (_: IpcMainInvokeEvent, projectId: string, languageCode: string, word: string) => {
+        const entry = this.getEntry(projectId);
+        const scanner = ScannerService.getInstance();
+        const body = ProjectFileBodySchema.safeParse(scanner.readFile(entry.fileName));
+        if (!body.success) throw new Error(`Cannot read project file ${entry.fileName}`);
+        const { [languageCode]: words = [], ...others } = readSpellcheck(entry.fileName);
+        const remaining = removeDictionaryWord(words, word);
+        const spellcheck = remaining.length ? { ...others, [languageCode]: remaining } : others;
+        scanner.writeFile(entry.fileName, assembleFile(headerOf(entry), body.data, spellcheck));
+        return spellcheck;
       }
     ),
     // The entry, with its state, goes with the file on the next read
@@ -301,7 +357,10 @@ export class ProjectService extends Service<TProjectData> {
     const scanner = ScannerService.getInstance();
     const body = ProjectFileBodySchema.safeParse(scanner.readFile(entry.fileName));
     if (!body.success) throw new Error(`Cannot read project file ${entry.fileName}`);
-    scanner.writeFile(entry.fileName, assembleFile({ ...headerOf(entry), ...patch }, body.data));
+    scanner.writeFile(
+      entry.fileName,
+      assembleFile({ ...headerOf(entry), ...patch }, body.data, readSpellcheck(entry.fileName))
+    );
   }
 
   // The list, renormalized against the scanner's current listing

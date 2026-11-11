@@ -91,7 +91,13 @@
   "overlayTitle": "Settings",
   "spellcheck": {
     "title": "Spellchecker",
-    "checkGrammar": "Allow spellcheck"
+    "checkGrammar": "Allow spellcheck",
+    "dictionariesEmpty": "No words added to the global dictionaries yet",
+    "tabs": {
+      "global": "Global",
+      "project": "Project"
+    },
+    "dictionaries": "Dictionaries"
   },
   "tabs": {
     "general": "General",

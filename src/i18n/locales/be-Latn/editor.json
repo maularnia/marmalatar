@@ -12,6 +12,8 @@
   },
   "spellcheck": {
     "loadingSuggestions": "Šukajem varyjanty...",
-    "noSuggestions": "Niama varyjantaŭ"
+    "noSuggestions": "Niama varyjantaŭ",
+    "addToProject": "Prajekt",
+    "addToGlobal": "Ahulny"
   }
 }

@@ -5,10 +5,14 @@ import { contentEditableHtmlToText, textToContentEditableHtml } from '@utils/str
 import { getMarkCss, type SpellCheckMark } from '@ui-toolkit/Mark';
 import { makeSpellcheckUnavailableMessage } from '@src/services/spellcheck/toasts';
 import { createSpellCheckClient, type SpellCheckClient } from '@src/services/spellcheck/typoClient';
+import { spellcheck } from '@src/services/spellcheck';
+import { useAppSelector } from '@store/hooks';
+import { TIcon } from '@ui-toolkit/Icon/icons';
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type FocusEvent,
@@ -19,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { ListItem } from './ListItem';
 import { LogoLoader } from './LogoLoader';
+import Hr from './Hr/Hr';
 
 // How long to wait, after the user stops typing, before a spellcheck request is sent and its
 // result applied -- marks must never be requested/injected mid-keystroke.
@@ -82,6 +87,12 @@ const SuggestionsList = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
+const NO_WORDS: readonly string[] = [];
+
+// The dictionaries the marked word can be added to, listed as the panel's first items. The project's is
+// offered only while a project is open.
+type TDictionaryTarget = 'project' | 'global';
 
 function getCaretOffset(root: HTMLElement): number | null {
   const selection = window.getSelection();
@@ -180,6 +191,23 @@ export default function TinyDivEditor({
   const hasReportedSpellCheckErrorRef = useRef(false);
   const effectiveLanguage = checkSpelling ? language : null;
 
+  // Words from the user dictionaries: never sent to the dictionary check, never marked
+  const ignoredWords = useAppSelector((state) =>
+    effectiveLanguage ? spellcheck.selectIgnoredWords(state, effectiveLanguage) : NO_WORDS
+  );
+  const ignoredWordsRef = useRef(ignoredWords);
+  ignoredWordsRef.current = ignoredWords;
+  const appliedMarksRef = useRef(appliedMarks);
+  appliedMarksRef.current = appliedMarks;
+  const canAddToProject = useAppSelector(spellcheck.selectCanAddToProjectDictionary);
+  const dictionaryTargets = useMemo<TDictionaryTarget[]>(
+    () => (canAddToProject ? ['project', 'global'] : ['global']),
+    [canAddToProject]
+  );
+  // Read by the suggestions callback, which outlives the render it was created in
+  const dictionaryTargetCountRef = useRef(dictionaryTargets.length);
+  dictionaryTargetCountRef.current = dictionaryTargets.length;
+
   const editableRefCallback = useCallback(
     (el: HTMLDivElement | null) => {
       editableRef.current = el;
@@ -225,7 +253,7 @@ export default function TinyDivEditor({
     }
 
     return client
-      .request(text)
+      .request(text, ignoredWordsRef.current)
       .then((result) => {
         if (result === null) return false;
         const el = editableRef.current;
@@ -282,6 +310,24 @@ export default function TinyDivEditor({
       spellCheckClientRef.current = null;
     };
   }, [effectiveLanguage]);
+
+  // A word was added to a user dictionary (or the open project changed): marks on words now
+  // accepted are dropped at once, focused or not, without asking the dictionary again. The text
+  // counts as unchecked, so the next check uses the new list.
+  useEffect(() => {
+    checkedTextRef.current = null;
+    const ignored = new Set(ignoredWords);
+    const marks = appliedMarksRef.current;
+    const remaining = marks.filter((mark) => !ignored.has(mark.word.toLocaleLowerCase()));
+    if (remaining.length === marks.length) return;
+    setAppliedMarks(remaining);
+    const el = editableRef.current;
+    if (!el) return;
+    const isFocused = document.activeElement === el;
+    const caret = isFocused ? getCaretOffset(el) : null;
+    el.innerHTML = textToContentEditableHtml(contentEditableHtmlToText(el.innerHTML), remaining);
+    if (caret !== null) setCaretOffset(el, caret);
+  }, [ignoredWords]);
 
   // Syncs the DOM to an externally-changed `value` (not an echo of our own onInput -- those never
   // touch this prop until the DOM already matches it). The text is always kept in sync regardless
@@ -391,6 +437,8 @@ export default function TinyDivEditor({
         const client = spellCheckClientRef.current;
         const loadingPosition = getPosition();
         if (!client || !loadingPosition) return;
+        // Nothing highlighted until there are suggestions: Enter stays a plain Enter
+        setActiveIndex(-1);
         setActivePanel({
           mark,
           status: TSuggestionsStatus.LOADING,
@@ -410,11 +458,22 @@ export default function TinyDivEditor({
               setActivePanel(null);
               return;
             }
-            setActiveIndex(Math.max(suggestions.length - 1, 0));
+            // Hunspell lists its best guess first; the panel opens above the word, so the list is
+            // reversed to put that guess last, right next to the word, where it's highlighted
+            // (after the dictionary items; nothing when there are no suggestions)
+            // A dictionary item the user already highlighted while they loaded stays highlighted
+            // (those come first, so its index still points at it)
+            setActiveIndex((current) =>
+              current >= 0
+                ? current
+                : suggestions.length
+                  ? dictionaryTargetCountRef.current + suggestions.length - 1
+                  : -1
+            );
             setActivePanel({
               mark,
               status: suggestions.length ? TSuggestionsStatus.READY : TSuggestionsStatus.EMPTY,
-              suggestions,
+              suggestions: [...suggestions].reverse(),
               ...position,
             });
           })
@@ -453,35 +512,58 @@ export default function TinyDivEditor({
     [value, closeSuggestions, runSpellCheck, onInput]
   );
 
-  // While the panel is open, arrow keys cycle the highlighted suggestion and Enter applies it,
-  // overriding the contentEditable's native caret-movement/newline behavior for those keys.
+  // Adds the marked word to a user dictionary. The mark goes once the dictionary is updated (see
+  // the ignored-words effect above).
+  const addToDictionary = useCallback(
+    (target: TDictionaryTarget, mark: SpellCheckMark) => {
+      if (!effectiveLanguage) return;
+      closeSuggestions();
+      if (target === 'project')
+        void spellcheck.addToProjectDictionary(effectiveLanguage, mark.word);
+      else void spellcheck.addToGlobalDictionary(effectiveLanguage, mark.word);
+    },
+    [effectiveLanguage, closeSuggestions]
+  );
+
+  // While the panel is open, arrow keys cycle one list -- the dictionary buttons, then the
+  // suggestions -- and Enter activates the highlighted item, overriding the contentEditable's
+  // native caret-movement/newline behavior for those keys. With nothing highlighted, Enter is a
+  // plain Enter.
   useEffect(() => {
     if (!activePanel) return;
     const { suggestions } = activePanel;
-    // Without suggestions to pick from, arrows and Enter keep their native behavior
-    const hasSuggestions = activePanel.status === TSuggestionsStatus.READY;
+    const count = dictionaryTargets.length + suggestions.length;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
         closeSuggestions({ keepSuppressed: true });
-      } else if (!hasSuggestions) {
-        return;
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
-        setActiveIndex((index) => (index + 1) % suggestions.length);
+        setActiveIndex((index) => (index + 1) % count);
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
-        setActiveIndex((index) => (index - 1 + suggestions.length) % suggestions.length);
-      } else if (event.key === 'Enter') {
+        setActiveIndex((index) => (index <= 0 ? count - 1 : index - 1));
+      } else if (event.key === 'Enter' && activeIndex >= 0) {
         event.preventDefault();
-        applySuggestion(activePanel.mark, suggestions[activeIndex]);
+        if (activeIndex < dictionaryTargets.length) {
+          addToDictionary(dictionaryTargets[activeIndex], activePanel.mark);
+        } else {
+          applySuggestion(activePanel.mark, suggestions[activeIndex - dictionaryTargets.length]);
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activePanel, activeIndex, applySuggestion, closeSuggestions]);
+  }, [
+    activePanel,
+    activeIndex,
+    applySuggestion,
+    addToDictionary,
+    closeSuggestions,
+    dictionaryTargets,
+  ]);
 
   return (
     <Root ref={rootRef}>
@@ -510,6 +592,25 @@ export default function TinyDivEditor({
       {activePanel && (
         <SuggestionsPanel style={{ top: activePanel.top, left: activePanel.left }}>
           <SuggestionsList>
+            {dictionaryTargets.map((target, index) => (
+              <li key={target}>
+                {/* mousedown would move focus off the editor, closing the panel */}
+                <ListItem
+                  icon={TIcon.PLUS}
+                  color={ThemeColors.ACCENT1}
+                  isActive={index === activeIndex}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => addToDictionary(target, activePanel.mark)}
+                >
+                  {target === 'project'
+                    ? t('spellcheck.addToProject')
+                    : t('spellcheck.addToGlobal')}
+                </ListItem>
+              </li>
+            ))}
+            <li>
+              <Hr />
+            </li>
             {activePanel.status === TSuggestionsStatus.LOADING && (
               <li>
                 {/* mousedown would move focus off the editor, closing the panel */}
@@ -529,10 +630,12 @@ export default function TinyDivEditor({
                 </ListItem>
               </li>
             )}
+            {/* Already in display order (reversed when they arrived), so list index = highlight
+                index and the arrow keys move the way they point */}
             {activePanel.suggestions.map((suggestion, index) => (
               <li key={suggestion}>
                 <ListItem
-                  isActive={index === activeIndex}
+                  isActive={dictionaryTargets.length + index === activeIndex}
                   onClick={() => applySuggestion(activePanel.mark, suggestion)}
                 >
                   {suggestion}

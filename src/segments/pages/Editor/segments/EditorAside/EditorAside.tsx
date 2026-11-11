@@ -124,7 +124,7 @@ export default function EditorAside() {
       <Hr variant={THrVariant.DIMMED} />
       {!isEditMode && <AiTranslationStatusPanel />}
       <GeneralSettings />
-      {/* Was part of the UI/UX section until the settings overlay got a Spellchecker tab */}
+      {/* The same spellcheck switch and dictionaries as the Settings overlay's Spellchecker tab */}
       <SpellcheckSettings />
     </Aside>
   );

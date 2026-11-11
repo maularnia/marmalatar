@@ -25,7 +25,7 @@ export function DeleteGlossaryDialog({ title }: DeleteGlossaryProps) {
         <DialogTitleContent>{t('deleteGlossary.title')}</DialogTitleContent>
       </DialogTitle>
       <DialogContent>
-        <H level={3} style={{ textAlign: 'center' }}>
+        <H level={5} style={{ textAlign: 'center' }}>
           <DialogNameSpan color={ThemeColors.ACCENT2}>{title}</DialogNameSpan>
         </H>
         <DialogWarningMessage

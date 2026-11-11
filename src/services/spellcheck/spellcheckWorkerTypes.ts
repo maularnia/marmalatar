@@ -3,7 +3,8 @@ import type { SpellCheckMark } from '@ui-toolkit/Mark';
 
 export type TSpellcheckJob =
   | { type: 'load'; language: TLanguage; locale: string; affData: string; wordsData: string }
-  | { type: 'check'; language: TLanguage; text: string }
+  // ignored: lowercased words from the user dictionaries, never checked or marked
+  | { type: 'check'; language: TLanguage; text: string; ignored: string[] }
   | { type: 'suggest'; language: TLanguage; word: string };
 
 export type TSpellcheckResult = SpellCheckMark[] | string[] | null;

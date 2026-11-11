@@ -25,7 +25,7 @@ export function DeleteProjectDialog({ projectName }: DeleteProjectProps) {
         <DialogTitleContent>{t('deleteProject.title')}</DialogTitleContent>
       </DialogTitle>
       <DialogContent>
-        <H level={3} style={{ textAlign: 'center' }}>
+        <H level={5} style={{ textAlign: 'center' }}>
           <DialogNameSpan color={ThemeColors.ACCENT2}>{projectName}</DialogNameSpan>
         </H>
         <DialogWarningMessage

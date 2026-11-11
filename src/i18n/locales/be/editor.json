@@ -12,6 +12,8 @@
   },
   "spellcheck": {
     "loadingSuggestions": "Шукаем варыянты...",
-    "noSuggestions": "Няма варыянтаў"
+    "noSuggestions": "Няма варыянтаў",
+    "addToProject": "Праект",
+    "addToGlobal": "Агульны"
   }
 }

@@ -1,4 +1,5 @@
 import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
+import type { TProjectSpellcheck } from '@bridge/definitions/spellcheckDictionary';
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TLanguage } from '@src/types';
 import { folder } from '@src/services/folder';
@@ -63,6 +64,10 @@ const projectSlice = createSlice({
     setProjectTargetLanguage(state, action: PayloadAction<TLanguage | null>) {
       state.targetLanguage = action.payload;
     },
+    // A project's file was loaded (opened or just created). Changes nothing here: it's for services
+    // that keep part of the file themselves (the spellcheck service, the project's dictionary),
+    // since this service doesn't import them.
+    fileLoaded(_state, _action: PayloadAction<{ spellcheck: TProjectSpellcheck }>) {},
     setArchiveOpen(state, action: PayloadAction<boolean>) {
       state.isArchiveOpen = action.payload;
     },
@@ -116,6 +121,7 @@ export const {
   setProjectSourceLanguage,
   setProjectTargetLanguage,
   setArchiveOpen,
+  fileLoaded,
   resetProject,
 } = projectSlice.actions;
 
