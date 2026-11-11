@@ -92,7 +92,12 @@
   "spellcheck": {
     "title": "Pravierka pravapisu",
     "checkGrammar": "Praviarać pravapis",
-    "dictionariesEmpty": "U ahulnyja słoŭniki jaščę nie dadadziena nivodnaha słova"
+    "dictionariesEmpty": "U ahulnyja słoŭniki jaščę nie dadadziena nivodnaha słova",
+    "tabs": {
+      "global": "Ahulny",
+      "project": "Prajekt"
+    },
+    "dictionaries": "Słoŭniki"
   },
   "tabs": {
     "general": "Ahulnyja",

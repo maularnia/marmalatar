@@ -1,84 +1,54 @@
 import { spellcheck } from '@src/services/spellcheck';
-import { CSSVar, ThemeColors } from '@src/theme/utils';
+import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
-import { useLanguageLabels } from '@src/utils/languageLabels';
-import { useAppSelectors } from '@store/hooks';
-import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
+import { getLanguageLocale, useLanguageLabels } from '@src/utils/languageLabels';
+import { useAppSelector } from '@store/hooks';
+import { AlphaTagList } from '@ui-toolkit/AlphaTagList';
+import { FormsRow, FormsSection } from '@ui-toolkit/forms';
 import P, { TPVariant } from '@ui-toolkit/P';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
 
-const Words = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${CSSVar('size4')};
-`;
-
-/** Every global spellcheck dictionary, one section per language, its words removable one by one */
+/** Every global spellcheck dictionary with words, one row per language, its words removable */
 export function GlobalDictionaries() {
   const { t } = useTranslation('settings');
   const labels = useLanguageLabels();
-  const [languages, dictionaries] = useAppSelectors(
-    spellcheck.selectAvailableDictionaries,
-    spellcheck.selectGlobalDictionaries
-  );
+  const dictionaries = useAppSelector(spellcheck.selectGlobalDictionaries);
 
-  // A code this build doesn't know (a file from a newer one) is shown as is. Words are sorted by
-  // their own language's alphabet (BE_be → be: і after и, ў after у), ignoring letter case.
+  // Sorted by language name. A code this build doesn't know (a file from a newer one) is shown as is.
   const sections = useMemo(
     () =>
-      languages
-        .map((language) => {
-          const collator = new Intl.Collator(language.split('_')[1], {
-            sensitivity: 'base',
-            numeric: true,
-          });
-          return {
-            language,
-            label: labels[language as TLanguage] ?? language,
-            words: [...(dictionaries[language] ?? [])].sort(collator.compare),
-          };
-        })
+      Object.entries(dictionaries)
+        .filter(([, words]) => words.length)
+        .map(([language, words]) => ({
+          language,
+          words,
+          label: labels[language as TLanguage] ?? language,
+        }))
         .sort((a, b) => a.label.localeCompare(b.label)),
-    [languages, dictionaries, labels]
+    [dictionaries, labels]
   );
 
   if (!sections.length) {
     return (
-      <FormsRow>
-        <P color={ThemeColors.TEXT} variant={TPVariant.TERTIARY}>
-          {t('spellcheck.dictionariesEmpty')}
-        </P>
-      </FormsRow>
+      <P color={ThemeColors.TEXT} variant={TPVariant.TERTIARY}>
+        {t('spellcheck.dictionariesEmpty')}
+      </P>
     );
   }
 
   return (
-    <>
-      {sections.map(({ language, label, words }) => (
-        <FormsRow key={language}>
-          <FormsSection>
-            <FormsSectionTitle>{label}</FormsSectionTitle>
-            <FormsSectionContent>
-              <Words>
-                {words.map((word) => (
-                  <Tag
-                    key={word}
-                    variant={TTagVariant.SECONDARY}
-                    size={TTagSize.SMALL}
-                    color={ThemeColors.TEXT}
-                    onRemove={() => void spellcheck.removeFromGlobalDictionary(language, word)}
-                  >
-                    {word}
-                  </Tag>
-                ))}
-              </Words>
-            </FormsSectionContent>
-          </FormsSection>
-        </FormsRow>
+    <FormsRow>
+      {sections.map(({ language, words, label }) => (
+        <FormsSection key={language}>
+          <AlphaTagList
+            label={label}
+            dictionary={words}
+            locale={getLanguageLocale(language)}
+            onRemove={(word) => void spellcheck.removeFromGlobalDictionary(language, word)}
+          />
+        </FormsSection>
       ))}
-    </>
+    </FormsRow>
   );
 }

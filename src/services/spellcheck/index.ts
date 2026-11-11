@@ -5,6 +5,7 @@ import {
   addToProjectDictionary,
   loadGlobalDictionaries,
   removeFromGlobalDictionary,
+  removeFromProjectDictionary,
 } from './actions';
 import {
   selectAvailableDictionaries,
@@ -13,6 +14,7 @@ import {
   selectGlobalDictionary,
   selectIgnoredWords,
   selectProjectDictionaries,
+  selectProjectDictionariesWithWords,
 } from './slice';
 
 // The spellcheck service: the user dictionaries (the tracked folder's global ones and the open
@@ -29,12 +31,14 @@ export const spellcheck = new Service('spellcheck', {
     selectGlobalDictionary,
     selectIgnoredWords,
     selectProjectDictionaries,
+    selectProjectDictionariesWithWords,
   },
   functions: {
     addToGlobalDictionary,
     addToProjectDictionary,
     loadGlobalDictionaries,
     removeFromGlobalDictionary,
+    removeFromProjectDictionary,
   },
 });
 

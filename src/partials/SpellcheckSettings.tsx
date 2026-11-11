@@ -12,7 +12,7 @@ export function SpellcheckSettings() {
   return (
     <FormsRow>
       <FormsSection>
-        <FormsSectionTitle icon={TIcon.TICK}>{t('spellcheck.title')}</FormsSectionTitle>
+        <FormsSectionTitle icon={TIcon.SPELLCHECK}>{t('spellcheck.title')}</FormsSectionTitle>
         <FormsSectionContent>
           <Toggle
             checked={checkGrammar}

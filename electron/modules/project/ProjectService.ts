@@ -20,6 +20,7 @@ import {
 import { isLanguageCode, PROJECT_EXTENSION, toProjectFileName } from '../../../bridge/fileNames';
 import {
   addDictionaryWord,
+  removeDictionaryWord,
   type TProjectSpellcheck,
 } from '../../../bridge/definitions/spellcheckDictionary';
 import { readJsonFile } from '../../utils/readJsonFile';
@@ -267,6 +268,22 @@ export class ProjectService extends Service<TProjectData> {
           ...current,
           [languageCode]: addDictionaryWord(current[languageCode] ?? [], word),
         };
+        scanner.writeFile(entry.fileName, assembleFile(headerOf(entry), body.data, spellcheck));
+        return spellcheck;
+      }
+    ),
+    // Removes a word (as stored) from the project's dictionary for one language; the language's
+    // key goes with its last word. Written to the file at once; returns the whole dictionary.
+    this.handle(
+      'remove-from-dictionary',
+      (_: IpcMainInvokeEvent, projectId: string, languageCode: string, word: string) => {
+        const entry = this.getEntry(projectId);
+        const scanner = ScannerService.getInstance();
+        const body = ProjectFileBodySchema.safeParse(scanner.readFile(entry.fileName));
+        if (!body.success) throw new Error(`Cannot read project file ${entry.fileName}`);
+        const { [languageCode]: words = [], ...others } = readSpellcheck(entry.fileName);
+        const remaining = removeDictionaryWord(words, word);
+        const spellcheck = remaining.length ? { ...others, [languageCode]: remaining } : others;
         scanner.writeFile(entry.fileName, assembleFile(headerOf(entry), body.data, spellcheck));
         return spellcheck;
       }

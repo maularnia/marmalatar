@@ -15,6 +15,7 @@ export class IPCProjects extends IPCSegment {
   readonly setLanguages = this.bridgeCall('project', 'setLanguages');
   readonly setHidden = this.bridgeCall('project', 'setHidden');
   readonly addToDictionary = this.bridgeCall('project', 'addToDictionary');
+  readonly removeFromDictionary = this.bridgeCall('project', 'removeFromDictionary');
   readonly delete = this.bridgeCall('project', 'delete');
   readonly getState = this.bridgeCall('project', 'getState');
   readonly setState = this.bridgeCall('project', 'setState');

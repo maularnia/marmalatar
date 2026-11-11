@@ -55,3 +55,16 @@ export async function removeFromGlobalDictionary(language: string, word: string)
     toast.push(makeDictionaryUpdateFailedMessage(toErrorMessage(error)));
   }
 }
+
+/** Removes a word from the open project's dictionary for one language. Written to the project file
+ * at once; does nothing without an open project. Failures are reported with a toast. */
+export async function removeFromProjectDictionary(language: string, word: string): Promise<void> {
+  const projectId = projects.get.id();
+  if (!projectId) return;
+  try {
+    const dictionaries = await IPC.projects.removeFromDictionary(projectId, language, word);
+    if (projects.get.id() === projectId) Service.dispatch(setProjectDictionaries(dictionaries));
+  } catch (error) {
+    toast.push(makeDictionaryUpdateFailedMessage(toErrorMessage(error)));
+  }
+}

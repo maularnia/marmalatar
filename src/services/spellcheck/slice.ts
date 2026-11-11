@@ -94,6 +94,18 @@ export const selectIgnoredWords = createSelector(
   ]
 );
 
+/** The open project's dictionaries that have words, by language code; none without a project */
+export const selectProjectDictionariesWithWords = createSelector(
+  [
+    (state: TSpellcheckRootState) => projects.selectIsOpen(state),
+    (state: TSpellcheckRootState) => state.spellcheck.projectDictionaries,
+  ],
+  (isOpen, dictionaries): TProjectSpellcheck =>
+    isOpen
+      ? Object.fromEntries(Object.entries(dictionaries).filter(([, words]) => words.length))
+      : {}
+);
+
 /** Whether there's a project dictionary to add words to: only while a project is open */
 export const selectCanAddToProjectDictionary = (state: TSpellcheckRootState): boolean =>
   projects.selectIsOpen(state);

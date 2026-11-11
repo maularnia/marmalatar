@@ -92,7 +92,12 @@
   "spellcheck": {
     "title": "Spellchecker",
     "checkGrammar": "Allow spellcheck",
-    "dictionariesEmpty": "No words added to the global dictionaries yet"
+    "dictionariesEmpty": "No words added to the global dictionaries yet",
+    "tabs": {
+      "global": "Global",
+      "project": "Project"
+    },
+    "dictionaries": "Dictionaries"
   },
   "tabs": {
     "general": "General",

@@ -98,4 +98,6 @@ export enum TIcon {
   AUDIO_TRACK = 'audio-track',
   ARCHIVE = 'archive',
   RESTORE = 'restore',
+  SPELLCHECK = 'spellcheck',
+  DICTIONARY = 'dictionary',
 }

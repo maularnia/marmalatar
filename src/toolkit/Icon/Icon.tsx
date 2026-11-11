@@ -81,6 +81,8 @@ import iconDoubleTick from '@src/assets/icons/icon-double-tick.svg?react';
 import iconAudioTrack from '@src/assets/icons/icon-audio-track.svg?react';
 import iconArchive from '@src/assets/icons/icon-archive.svg?react';
 import iconRestore from '@src/assets/icons/icon-restore.svg?react';
+import iconSpellcheck from '@src/assets/icons/icon-spellcheck.svg?react';
+import iconDictionary from '@src/assets/icons/icon-dictionary.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -189,6 +191,8 @@ const ICON_COMPONENTS: {
   [TIcon.AUDIO_TRACK]: iconAudioTrack,
   [TIcon.ARCHIVE]: iconArchive,
   [TIcon.RESTORE]: iconRestore,
+  [TIcon.SPELLCHECK]: iconSpellcheck,
+  [TIcon.DICTIONARY]: iconDictionary,
 };
 
 const Wrapper = styled.div`
