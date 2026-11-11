@@ -4,7 +4,6 @@ import { TLanguage } from '@src/types';
 import { useLanguageLabels } from '@src/utils/languageLabels';
 import { useAppSelectors } from '@store/hooks';
 import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
-import { TIcon } from '@ui-toolkit/Icon/icons';
 import P, { TPVariant } from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { useMemo } from 'react';
@@ -26,13 +25,24 @@ export function GlobalDictionaries() {
     spellcheck.selectGlobalDictionaries
   );
 
-  // A code this build doesn't know (a file from a newer one) is shown as is
+  // A code this build doesn't know (a file from a newer one) is shown as is. Words are sorted by
+  // their own language's alphabet (BE_be → be: і after и, ў after у), ignoring letter case.
   const sections = useMemo(
     () =>
       languages
-        .map((language) => ({ language, label: labels[language as TLanguage] ?? language }))
+        .map((language) => {
+          const collator = new Intl.Collator(language.split('_')[1], {
+            sensitivity: 'base',
+            numeric: true,
+          });
+          return {
+            language,
+            label: labels[language as TLanguage] ?? language,
+            words: [...(dictionaries[language] ?? [])].sort(collator.compare),
+          };
+        })
         .sort((a, b) => a.label.localeCompare(b.label)),
-    [languages, labels]
+    [languages, dictionaries, labels]
   );
 
   if (!sections.length) {
@@ -47,25 +57,23 @@ export function GlobalDictionaries() {
 
   return (
     <>
-      {sections.map(({ language, label }) => (
+      {sections.map(({ language, label, words }) => (
         <FormsRow key={language}>
           <FormsSection>
-            <FormsSectionTitle icon={TIcon.LANGUAGE}>{label}</FormsSectionTitle>
+            <FormsSectionTitle>{label}</FormsSectionTitle>
             <FormsSectionContent>
               <Words>
-                {[...(dictionaries[language] ?? [])]
-                  .sort((a, b) => a.localeCompare(b))
-                  .map((word) => (
-                    <Tag
-                      key={word}
-                      variant={TTagVariant.SECONDARY}
-                      size={TTagSize.SMALL}
-                      color={ThemeColors.TEXT}
-                      onRemove={() => void spellcheck.removeFromGlobalDictionary(language, word)}
-                    >
-                      {word}
-                    </Tag>
-                  ))}
+                {words.map((word) => (
+                  <Tag
+                    key={word}
+                    variant={TTagVariant.SECONDARY}
+                    size={TTagSize.SMALL}
+                    color={ThemeColors.TEXT}
+                    onRemove={() => void spellcheck.removeFromGlobalDictionary(language, word)}
+                  >
+                    {word}
+                  </Tag>
+                ))}
               </Words>
             </FormsSectionContent>
           </FormsSection>

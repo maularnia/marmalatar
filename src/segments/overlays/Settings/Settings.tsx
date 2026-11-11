@@ -8,6 +8,7 @@ import Overlay from '../Overlay';
 import { AiTab } from './AiTab';
 import { GeneralTab } from './GeneralTab';
 import { SpellcheckTab } from './SpellcheckTab';
+import { TButtonSize } from '@src/toolkit/Button/types';
 
 // The tab bar lines up with the form rows below it, which carry their own side padding
 const SettingsTabs = styled.div`
@@ -23,6 +24,7 @@ export default function SettingsOverlay() {
       <FormRoot onSubmit={(e) => e.preventDefault()}>
         <SettingsTabs>
           <Tabs
+            tabSize={TButtonSize.SMALL}
             tabs={[
               { id: 'general', title: t('tabs.general'), default: true },
               { id: 'ai', title: t('tabs.ai') },
