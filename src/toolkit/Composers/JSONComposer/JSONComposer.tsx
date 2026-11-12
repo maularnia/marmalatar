@@ -53,6 +53,7 @@ export default function JSONComposer({ value, options, onChange, errors }: JSONC
         {value.map(([fieldName, optionValue], index) => {
           const option = optionByValue.get(optionValue);
           return (
+            // eslint-disable-next-line @eslint-react/no-array-index-key -- controlled rows with no id: the field name is what's being typed, so it can't be the key
             <EntryRow key={index}>
               <FieldNameInput
                 value={fieldName}

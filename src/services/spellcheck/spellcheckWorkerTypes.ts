@@ -10,9 +10,7 @@ export type TSpellcheckJob =
 export type TSpellcheckResult = SpellCheckMark[] | string[] | null;
 
 export type TSpellcheckWorkerRequest =
-  | (TSpellcheckJob & { id: number })
-  | { type: 'cancel'; id: number };
+  (TSpellcheckJob & { id: number }) | { type: 'cancel'; id: number };
 
 export type TSpellcheckWorkerResponse =
-  | { id: number; result: TSpellcheckResult }
-  | { id: number; error: string };
+  { id: number; result: TSpellcheckResult } | { id: number; error: string };

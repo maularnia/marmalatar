@@ -289,7 +289,7 @@ async function loadProjectFromDisk(project: TProjectEntry): Promise<void> {
   try {
     data = await readProjectFile(project.projectId);
   } catch (err) {
-    throw new Error(err instanceof Error ? err.message : t('project.cannotRead'));
+    throw new Error(err instanceof Error ? err.message : t('project.cannotRead'), { cause: err });
   }
 
   resetOpenProjectMemory();
@@ -299,7 +299,9 @@ async function loadProjectFromDisk(project: TProjectEntry): Promise<void> {
   try {
     editorState = await getProjectEditorState(data.project.projectId);
   } catch (err) {
-    throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'));
+    throw new Error(err instanceof Error ? err.message : t('project.editorStateReadFailed'), {
+      cause: err,
+    });
   }
   Service.dispatch(setEditorMode(editorState.editorMode));
   Service.dispatch(setVideoCollapsed(editorState.isVideoCollapsed));

@@ -18,8 +18,6 @@
     "translationRequired": "Нельга пакінуць пустым"
   },
   "mainMenuListItem": {
-    "nameTooLong": "Значэнне даўжэй за [{{maxLength}}]",
-    "nameAlreadyExists": "Такі файл ужо існуе",
     "unreachableCommitError": "Як вы сюды трапілі? [НЕДАСЯЖНАЯ 01]"
   },
   "subtitleFileSelect": {

@@ -9,7 +9,6 @@ import {
   FocusEvent,
   PropsWithChildren,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -78,14 +77,10 @@ const HINT_TOOLTIP_SIDE: Record<KeystrokeZoneHintCorner, 'top' | 'bottom'> = {
   'bottom-right': 'top',
 };
 
-const KeystrokeZoneContext = createContext<KeystrokeZoneContextType>({
+export const KeystrokeZoneContext = createContext<KeystrokeZoneContextType>({
   zoneRef: { current: null },
   setFocusOverride: () => {},
 });
-
-export function useKeystrokeZone(): KeystrokeZoneContextType {
-  return useContext(KeystrokeZoneContext);
-}
 
 // Must render inside ScopedKeyHubProvider's own KeyHubProvider (useShortcutPause reads the
 // nearest one via useKeyHub()).
@@ -159,7 +154,7 @@ export default function KeystrokeZone({
 
   return (
     <ZoneRoot ref={containerRef} tabIndex={0} onFocus={handleFocus} onBlur={handleBlur} $fit={fit}>
-      <KeystrokeZoneContext.Provider value={contextValue}>
+      <KeystrokeZoneContext value={contextValue}>
         {shortcuts ? (
           <ScopedKeyHubProvider
             shortcuts={shortcuts}
@@ -171,7 +166,7 @@ export default function KeystrokeZone({
         ) : (
           children
         )}
-      </KeystrokeZoneContext.Provider>
+      </KeystrokeZoneContext>
       {hint && slot !== null && (
         <Tooltip
           label={

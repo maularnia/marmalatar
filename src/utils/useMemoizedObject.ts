@@ -4,5 +4,6 @@ import { useMemo } from 'react';
 // need its keys listed twice. The keys must stay the same between renders, because they become the
 // dependency array -- pass an object literal, not an object with optional or computed keys.
 export function useMemoizedObject<T extends object>(value: T): T {
+  // eslint-disable-next-line @eslint-react/exhaustive-deps
   return useMemo(() => value, Object.values(value));
 }

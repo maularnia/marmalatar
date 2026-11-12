@@ -64,8 +64,8 @@ export default function FloatingVideoBlock({
 
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
   const videoContainerShiftRef = useRef<number>(0);
-  const maxVideoShift = useRef<number>(1);
-  const currentAnchor = useRef(0);
+  const maxVideoShiftRef = useRef<number>(1);
+  const currentAnchorRef = useRef(0);
   const focusedItemIndexRef = useRef(focusedItemIndex);
   focusedItemIndexRef.current = focusedItemIndex;
   const scrollBeforePlayRef = useRef<number | null>(null);
@@ -96,7 +96,7 @@ export default function FloatingVideoBlock({
       if (isLargeScreen || isVideoCollapsed || !videoContainerRef.current || !videoElement) return;
       const scrollTop = (event.currentTarget as HTMLElement).scrollTop;
       const videoHeight = videoElement.clientHeight;
-      const maxShift = videoHeight * maxVideoShift.current;
+      const maxShift = videoHeight * maxVideoShiftRef.current;
 
       const focusedIndex = focusedItemIndexRef.current;
       if (focusedIndex >= 0 && virtualizedListRef.current) {
@@ -108,16 +108,16 @@ export default function FloatingVideoBlock({
         if (focusedLineScreenTop < videoBottomAfterMaxShift) {
           videoContainerShiftRef.current = maxShift;
           videoContainerRef.current.style.transform = `translateY(-${maxShift}px)`;
-          currentAnchor.current = scrollTop - videoContainerRef.current.offsetHeight - maxShift;
+          currentAnchorRef.current = scrollTop - videoContainerRef.current.offsetHeight - maxShift;
           return;
         }
       }
 
       const relativeScroll = scrollTop - videoContainerRef.current.offsetHeight;
-      const distance = relativeScroll - currentAnchor.current;
+      const distance = relativeScroll - currentAnchorRef.current;
 
-      if (distance >= maxShift) currentAnchor.current = relativeScroll - maxShift;
-      if (distance <= 0) currentAnchor.current = relativeScroll;
+      if (distance >= maxShift) currentAnchorRef.current = relativeScroll - maxShift;
+      if (distance <= 0) currentAnchorRef.current = relativeScroll;
 
       videoContainerShiftRef.current =
         distance < maxShift ? (distance < 0 ? 0 : distance) : maxShift;
@@ -164,7 +164,7 @@ export default function FloatingVideoBlock({
 
   useEffect(() => {
     videoContainerShiftRef.current = 0;
-    currentAnchor.current = 0;
+    currentAnchorRef.current = 0;
     if (videoContainerRef.current) {
       videoContainerRef.current.style.transform = '';
     }
@@ -180,10 +180,10 @@ export default function FloatingVideoBlock({
       videoContainerRef.current.style.transform = '';
     }
     if (!isVideoCollapsed && scrollContainerRef.current && videoContainerRef.current) {
-      currentAnchor.current =
+      currentAnchorRef.current =
         scrollContainerRef.current.scrollTop - videoContainerRef.current.offsetHeight;
     } else {
-      currentAnchor.current = 0;
+      currentAnchorRef.current = 0;
     }
   }, [isVideoCollapsed, scrollContainerRef]);
 

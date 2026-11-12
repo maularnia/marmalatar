@@ -18,8 +18,6 @@
     "translationRequired": "Nielha pakinuć pustym"
   },
   "mainMenuListItem": {
-    "nameTooLong": "Značeńnie daŭžej za [{{maxLength}}]",
-    "nameAlreadyExists": "Taki fajł užo isnuje",
     "unreachableCommitError": "Jak vy siudy trapili? [NIEDASIAŽNAJA 01]"
   },
   "subtitleFileSelect": {

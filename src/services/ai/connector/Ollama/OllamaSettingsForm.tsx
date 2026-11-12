@@ -12,7 +12,7 @@ import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
 import Select from '@ui-toolkit/Select/Select';
 import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import TextInput from '@ui-toolkit/TextInput';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/connector/types';
@@ -98,7 +98,7 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
   const connectionStatusRef = useRef<ConnectionStatus>(connectionStatus);
   connectionStatusRef.current = connectionStatus;
 
-  const handleConnect = async () => {
+  const handleConnect = useCallback(async () => {
     setConnectionStatus('connecting');
     setConnectionError(undefined);
     try {
@@ -123,7 +123,7 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
         error: getErrorMessage(err),
       });
     }
-  };
+  }, [getValues, setValue]);
 
   // Hydrate from whatever's already cached (e.g. set at boot) or, failing that, persisted storage.
   // If the integration is already known-good (Redux says connected, and a model list was already
@@ -144,7 +144,7 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
       }
       void handleConnect();
     })();
-  }, []);
+  }, [pingError, reset, connected, handleConnect]);
 
   useEffect(() => {
     onSettingsValidChangeRef.current(false);
@@ -167,7 +167,14 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
     commitDebounceRef.current = setTimeout(() => {
       void ai.estimateContextWindowUsage();
     }, SETTINGS_COMMIT_DEBOUNCE_MS);
-  }, [isValid, values.endpoint, values.model, values.context_length, values.lines_per_request]);
+  }, [
+    isValid,
+    values.endpoint,
+    values.model,
+    values.context_length,
+    values.lines_per_request,
+    getValues,
+  ]);
 
   // Re-ping/re-list-models after the user finishes editing the endpoint, decoupled from the
   // cheap settings-commit above. Skipped if already connected and the endpoint hasn't actually
@@ -189,7 +196,7 @@ export default function OllamaSettingsForm({ onSettingsValidChange }: AiClientSe
     return () => {
       if (reconnectDebounceRef.current) clearTimeout(reconnectDebounceRef.current);
     };
-  }, [values.endpoint]);
+  }, [values.endpoint, handleConnect]);
 
   return (
     <>

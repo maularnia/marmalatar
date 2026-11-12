@@ -1,17 +1,17 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import reactPlugin from 'eslint-plugin-react';
+import eslintReact from '@eslint-react/eslint-plugin';
 import { importX } from 'eslint-plugin-import-x';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'eslint.config.mjs', '.vite', 'out', '.vscode', '.claude'] },
+  { ignores: ['dist', 'node_modules', 'eslint.config.mjs', '.vite', 'out', 'release', '.vscode', '.claude'] },
 
   js.configs.recommended,
   tseslint.configs.recommended,
-  reactPlugin.configs.flat.recommended,
-  reactPlugin.configs.flat['jsx-runtime'],
+  // React rules for TypeScript code (eslint-plugin-react didn't support ESLint 10)
+  { files: ['**/*.{ts,tsx}'], ...eslintReact.configs['recommended-typescript'] },
   {
     languageOptions: {
       globals: {
@@ -20,9 +20,6 @@ export default tseslint.config(
         ...globals.node,
       },
     },
-    settings: {
-      react: { version: 'detect' },
-    },
   },
 
   prettierRecommended,
@@ -30,7 +27,6 @@ export default tseslint.config(
   {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'react/prop-types': 'off',
     },
   },
 

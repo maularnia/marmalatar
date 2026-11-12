@@ -1,6 +1,6 @@
 import { useAppSelectors } from '@store/hooks';
 import { media } from '@src/services/media';
-import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
+import { KeystrokeZoneContext } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/project';
 import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
@@ -18,7 +18,7 @@ import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import TinyDivEditor from '@ui-toolkit/TinyDivEditor';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import classNames from 'classnames';
-import { type ClipboardEvent, type ReactNode, useEffect, useMemo, useRef } from 'react';
+import { type ClipboardEvent, type ReactNode, use, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { CharacterSelector, CharacterSelectorHandle } from './CharacterSelector/CharacterSelector';
@@ -373,7 +373,7 @@ export default function EditorTableLine({
   panelNode,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
-  const { zoneRef } = useKeystrokeZone();
+  const { zoneRef } = use(KeystrokeZoneContext);
   const [
     videoDurationMs,
     sourceLanguage,
@@ -415,8 +415,8 @@ export default function EditorTableLine({
   const lineRef = useRef<HTMLDivElement>(null);
   const translatedInputRef = useRef<HTMLDivElement>(null);
   const sourceInputRef = useRef<HTMLDivElement>(null);
-  const lineTextChangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sourceTextChangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lineTextChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sourceTextChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let to: ReturnType<typeof setTimeout>;
@@ -434,11 +434,11 @@ export default function EditorTableLine({
 
   useEffect(() => {
     return () => {
-      if (lineTextChangeTimeout.current) {
-        clearTimeout(lineTextChangeTimeout.current);
+      if (lineTextChangeTimeoutRef.current) {
+        clearTimeout(lineTextChangeTimeoutRef.current);
       }
-      if (sourceTextChangeTimeout.current) {
-        clearTimeout(sourceTextChangeTimeout.current);
+      if (sourceTextChangeTimeoutRef.current) {
+        clearTimeout(sourceTextChangeTimeoutRef.current);
       }
     };
   }, []);
@@ -537,10 +537,10 @@ export default function EditorTableLine({
             onPaste={handlePlainTextPaste}
             onInput={(text) => {
               if (isTranslationBusy) return;
-              if (sourceTextChangeTimeout.current) {
-                clearTimeout(sourceTextChangeTimeout.current);
+              if (sourceTextChangeTimeoutRef.current) {
+                clearTimeout(sourceTextChangeTimeoutRef.current);
               }
-              sourceTextChangeTimeout.current = setTimeout(() => onSourceTextChange(text), 300);
+              sourceTextChangeTimeoutRef.current = setTimeout(() => onSourceTextChange(text), 300);
             }}
           />
         </NumberLineCell>
@@ -563,8 +563,8 @@ export default function EditorTableLine({
             value={selectedCharacters}
             disabled={isTranslationBusy}
             onChange={(value) => {
-              if (lineTextChangeTimeout.current) {
-                clearTimeout(lineTextChangeTimeout.current);
+              if (lineTextChangeTimeoutRef.current) {
+                clearTimeout(lineTextChangeTimeoutRef.current);
               }
               onCharacterChange(serializeCharacterList(value));
             }}
@@ -601,10 +601,10 @@ export default function EditorTableLine({
               onPaste={handlePlainTextPaste}
               onInput={(text) => {
                 if (isTranslationBusy) return;
-                if (lineTextChangeTimeout.current) {
-                  clearTimeout(lineTextChangeTimeout.current);
+                if (lineTextChangeTimeoutRef.current) {
+                  clearTimeout(lineTextChangeTimeoutRef.current);
                 }
-                lineTextChangeTimeout.current = setTimeout(() => onOutputTextChange(text), 300);
+                lineTextChangeTimeoutRef.current = setTimeout(() => onOutputTextChange(text), 300);
               }}
             />
           </LineCell>

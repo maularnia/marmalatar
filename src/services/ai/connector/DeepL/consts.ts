@@ -9,11 +9,7 @@ export const DEEPL_CLIENT_ID = 'deepl';
 
 // Keys of the client's settings record, shared by the client and its settings form
 export type DeepLSettingKey =
-  | 'api_key'
-  | 'formality'
-  | 'model_type'
-  | 'lines_per_request'
-  | 'glossary_id';
+  'api_key' | 'formality' | 'model_type' | 'lines_per_request' | 'glossary_id';
 
 export const apiKeySettingKey: DeepLSettingKey = 'api_key';
 export const formalitySettingKey: DeepLSettingKey = 'formality';

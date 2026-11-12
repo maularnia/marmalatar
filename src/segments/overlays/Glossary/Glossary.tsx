@@ -111,6 +111,7 @@ export default function GlossaryOverlay() {
                   <GlossaryTableHeader />
                   {formData.list.map((entry, index) => (
                     <GlossaryTableLine
+                      // eslint-disable-next-line @eslint-react/no-array-index-key -- controlled rows with no id: their text changes while typing and new rows are empty, so it can't be the key
                       key={index}
                       pairIndex={index}
                       original={entry.original}

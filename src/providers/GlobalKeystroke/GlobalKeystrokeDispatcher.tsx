@@ -19,8 +19,8 @@ import {
 import {
   createContext,
   PropsWithChildren,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -203,7 +203,7 @@ const GlobalKeystrokeContext = createContext<TGlobalKeystrokeContext>({
 });
 
 export function useGlobalKeystrokeRegistry(): TGlobalKeystrokeContext {
-  return useContext(GlobalKeystrokeContext);
+  return use(GlobalKeystrokeContext);
 }
 
 const useAppGlobalKeystroke = (
@@ -292,9 +292,7 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
     setPaused,
   });
 
-  return (
-    <GlobalKeystrokeContext.Provider value={value}>{children}</GlobalKeystrokeContext.Provider>
-  );
+  return <GlobalKeystrokeContext value={value}>{children}</GlobalKeystrokeContext>;
 }
 
 // The one deliberately `document`-scoped EventBus in the app -- these shortcuts must be reachable

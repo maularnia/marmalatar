@@ -82,16 +82,16 @@ export default function PageImport() {
   const [cleanedLines, setCleanedLines] = useState<TSubtitleLine[]>([]);
   const [subtitleError, setSubtitleError] = useState<string | null>(null);
 
-  const isProjectNameDirty = useRef(false);
+  const isProjectNameDirtyRef = useRef(false);
   const rootRef = useRef<HTMLFormElement>(null);
   useAutoFocusFirst(rootRef);
 
   useEffect(() => {
     if (!subtitlesFile) {
-      isProjectNameDirty.current = false;
+      isProjectNameDirtyRef.current = false;
       return;
     }
-    if (isProjectNameDirty.current) return;
+    if (isProjectNameDirtyRef.current) return;
     setValue('projectName', toHumanShowTitle(subtitlesFile.name), { shouldValidate: false });
   }, [subtitlesFile, setValue]);
 
@@ -185,7 +185,7 @@ export default function PageImport() {
                             errors.projectName?.message ? [errors.projectName.message] : undefined
                           }
                           onChange={(e) => {
-                            isProjectNameDirty.current = true;
+                            isProjectNameDirtyRef.current = true;
                             field.onChange(e);
                           }}
                         />

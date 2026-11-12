@@ -5,19 +5,19 @@ import { HTMLMotionProps } from 'motion/react';
 import { PropsWithChildren, Ref } from 'react';
 
 export enum TButtonSize {
-  'LARGE' = 'large',
-  'REGULAR' = 'default',
-  'SMALL' = 'small',
-  'NANO' = 'nano',
+  LARGE = 'large',
+  REGULAR = 'default',
+  SMALL = 'small',
+  NANO = 'nano',
 }
 
 export enum TButtonVariant {
-  'SPECIAL' = 'special',
-  'SECONDARY_SPECIAL' = 'secondary-special',
-  'PRIMARY' = 'primary',
-  'SECONDARY' = 'secondary',
-  'TRANSPARENT' = 'transparent',
-  'TRANSPARENT_SPECIAL' = 'transparent-speacial',
+  SPECIAL = 'special',
+  SECONDARY_SPECIAL = 'secondary-special',
+  PRIMARY = 'primary',
+  SECONDARY = 'secondary',
+  TRANSPARENT = 'transparent',
+  TRANSPARENT_SPECIAL = 'transparent-speacial',
 }
 
 interface ButtonLocalProps {

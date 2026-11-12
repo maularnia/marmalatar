@@ -2,5 +2,5 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["vite.renderer.config.ts"],
   "project": ["src/**/*.{ts,tsx}", "electron/**/*.ts", "bridge/**/*.ts"],
-  "ignoreDependencies": ["ffmpeg-static", "ffprobe-static", "@eslint/js", "@swc/plugin-styled-components"]
+  "ignoreDependencies": ["ffmpeg-static", "ffprobe-static", "@swc/plugin-styled-components"]
 }

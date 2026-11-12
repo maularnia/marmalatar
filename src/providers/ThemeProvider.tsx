@@ -22,18 +22,18 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     settings.selectThemeSelection,
     settings.selectResolvedThemeName
   );
-  const matcher = useRef<MediaQueryList>(null);
+  const matcherRef = useRef<MediaQueryList>(null);
   useEffect(() => {
     const onMatchChage = () => {
-      if (matcher.current) matcher.current.removeEventListener('change', onMatchChage);
+      if (matcherRef.current) matcherRef.current.removeEventListener('change', onMatchChage);
       const [mc, size] = getCurrentMatcher();
-      matcher.current = mc;
-      matcher.current.addEventListener('change', onMatchChage);
+      matcherRef.current = mc;
+      matcherRef.current.addEventListener('change', onMatchChage);
       settings.setScreenSize(size);
     };
     onMatchChage();
     return () => {
-      if (matcher.current) matcher.current.removeEventListener('change', onMatchChage);
+      if (matcherRef.current) matcherRef.current.removeEventListener('change', onMatchChage);
     };
   }, []);
 

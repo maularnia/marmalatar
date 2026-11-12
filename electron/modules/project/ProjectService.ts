@@ -95,8 +95,7 @@ function buildEntry(
   // The entry stored under the same projectId, so a re-saved or renamed file keeps what the file
   // doesn't hold
   previous:
-    | (Pick<TProjectEntry, 'state'> & Partial<Pick<TProjectEntry, 'order' | 'hidden'>>)
-    | undefined,
+    (Pick<TProjectEntry, 'state'> & Partial<Pick<TProjectEntry, 'order' | 'hidden'>>) | undefined,
   order: number
 ): TProjectEntry {
   return {

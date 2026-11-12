@@ -12,7 +12,7 @@ import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
 import Select from '@ui-toolkit/Select/Select';
 import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import TextInput from '@ui-toolkit/TextInput';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/connector/types';
@@ -103,7 +103,7 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
   const connectionStatusRef = useRef<ConnectionStatus>(connectionStatus);
   connectionStatusRef.current = connectionStatus;
 
-  const handleConnect = async () => {
+  const handleConnect = useCallback(async () => {
     setConnectionStatus('connecting');
     setConnectionError(undefined);
     try {
@@ -126,7 +126,7 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
         error: getErrorMessage(err),
       });
     }
-  };
+  }, [getValues, setValue]);
 
   // Hydrate from whatever's already cached (e.g. set at boot) or, failing that, persisted storage.
   // If the integration is already known-good (Redux says connected, and a model list was already
@@ -145,9 +145,9 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
         setConnectionStatus('connected');
         return;
       }
-      void handleConnect();
+      handleConnect();
     })();
-  }, []);
+  }, [connected, handleConnect, pingError, reset]);
 
   useEffect(() => {
     onSettingsValidChangeRef.current(false);
@@ -178,6 +178,7 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
     values.reasoning_start_tag,
     values.reasoning_end_tag,
     values.lines_per_request,
+    getValues,
   ]);
 
   // Re-ping/re-list-models after the user finishes editing the endpoint. Skipped if already
@@ -200,7 +201,7 @@ export default function LMStudioSettingsForm({ onSettingsValidChange }: AiClient
     return () => {
       if (reconnectDebounceRef.current) clearTimeout(reconnectDebounceRef.current);
     };
-  }, [values.endpoint]);
+  }, [values.endpoint, handleConnect]);
 
   return (
     <>

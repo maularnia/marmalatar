@@ -79,13 +79,10 @@ const projectSlice = createSlice({
   },
   extraReducers(builder) {
     // Another folder: the open project belonged to the old one. The list is refreshed by the scan.
-    builder.addCase(
-      folder.pathChanged,
-      (state): ProjectState => ({
-        ...initialState,
-        projects: state.projects,
-      })
-    );
+    builder.addCase(folder.pathChanged, (state): ProjectState => ({
+      ...initialState,
+      projects: state.projects,
+    }));
   },
   selectors: {
     // Every project, archived ones included: their files still exist (e.g. for name checks)

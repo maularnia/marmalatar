@@ -262,7 +262,7 @@ export const ListItem = ({
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
-  }, [isEditable]);
+  }, [isEditable, children]);
 
   useEffect(() => {
     if (isError && !prevIsErrorRef.current && rootRef.current) {

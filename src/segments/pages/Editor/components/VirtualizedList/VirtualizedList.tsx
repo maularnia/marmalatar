@@ -2,6 +2,7 @@ import {
   ReactElement,
   Ref,
   RefObject,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -76,14 +77,14 @@ export default function VirtualizedList<T extends VirtualizedItem>({
   const containerRef = useRef<HTMLDivElement>(null);
   const pinnedIndexSet = useMemo(() => new Set(pinnedIndices ?? []), [pinnedIndices]);
   const slotNodesRef = useRef<Map<string | number, HTMLDivElement>>(new Map());
-  const rowHeightEstimate = useRef<number>(estimatedRowHeight);
+  const rowHeightEstimateRef = useRef<number>(estimatedRowHeight);
   const visibleKeyRef = useRef('');
   const itemHeightsRef = useRef<Map<string | number, number>>(new Map());
   const [visiblePortion, setVisiblePortion] = useState<Array<VisiblePortion<T>>>([]);
   const visiblePortionRef = useRef<Array<VisiblePortion<T>>>([]);
   visiblePortionRef.current = visiblePortion;
 
-  const getItemKey = (item: T) => item.line_no;
+  const getItemKey = useCallback((item: T) => item.line_no, []);
   const getListOffsetTop = () => containerRef.current?.offsetTop ?? 0;
 
   useEffect(() => {
@@ -93,11 +94,11 @@ export default function VirtualizedList<T extends VirtualizedItem>({
         itemHeightsRef.current.delete(key);
       }
     }
-  }, [items]);
+  }, [items, getItemKey]);
 
   const recalculateRef = useRef<() => boolean>(() => false);
 
-  const recalculateVisiblePortion = () => {
+  const recalculateVisiblePortion = useCallback(() => {
     if (!scrollContainerRef.current || !containerRef.current) return false;
 
     const scrollContainer = scrollContainerRef.current;
@@ -114,7 +115,7 @@ export default function VirtualizedList<T extends VirtualizedItem>({
       const item = items[index];
       const key = getItemKey(item);
       const fingerprint = getItemFingerprint ? getItemFingerprint(item) : '';
-      const height = itemHeightsRef.current.get(key) ?? rowHeightEstimate.current;
+      const height = itemHeightsRef.current.get(key) ?? rowHeightEstimateRef.current;
       const itemTop = acc;
       const itemBottom = itemTop + height;
       if ((itemTop < bottomLimit && itemBottom > topLimit) || pinnedIndexSet.has(index)) {
@@ -123,7 +124,7 @@ export default function VirtualizedList<T extends VirtualizedItem>({
       acc += height;
     }
 
-    rowHeightEstimate.current = items.length ? acc / items.length : rowHeightEstimate.current;
+    rowHeightEstimateRef.current = items.length ? acc / items.length : rowHeightEstimateRef.current;
     containerRef.current.style.height = `${acc}px`;
 
     const nextVisibleKey = nextVisible
@@ -136,7 +137,7 @@ export default function VirtualizedList<T extends VirtualizedItem>({
     visibleKeyRef.current = nextVisibleKey;
     setVisiblePortion(nextVisible);
     return true;
-  };
+  }, [getItemFingerprint, getItemKey, items, overscanPx, pinnedIndexSet, scrollContainerRef]);
 
   recalculateRef.current = recalculateVisiblePortion;
 
@@ -144,38 +145,34 @@ export default function VirtualizedList<T extends VirtualizedItem>({
     let acc = 0;
     for (let i = 0; i < index && i < items.length; i++) {
       const key = getItemKey(items[i]);
-      acc += itemHeightsRef.current.get(key) ?? rowHeightEstimate.current;
+      acc += itemHeightsRef.current.get(key) ?? rowHeightEstimateRef.current;
     }
     return acc;
   };
   const getElementPositionByIndexRef = useRef(getElementPositionByIndexImpl);
   getElementPositionByIndexRef.current = getElementPositionByIndexImpl;
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      containerRef,
-      scrollToIndex: (index, options) => {
-        const scrollContainer = scrollContainerRef.current;
-        if (!scrollContainer) return;
-        const position = getElementPositionByIndexRef.current(index);
-        const target = getListOffsetTop() + position + (options?.offset ?? 0);
-        scrollContainer.scrollTo({
-          top: target,
-          behavior: options?.animate ? 'smooth' : 'instant',
-        });
-      },
-      getListOffsetTop,
-      getElementPositionByIndex: (index) => getElementPositionByIndexRef.current(index),
-      isRenderedByIndex: (index) =>
-        visiblePortionRef.current.some((portion) => portion.index === index),
-      forceRerender: () => {
-        visibleKeyRef.current = '';
-        recalculateRef.current();
-      },
-    }),
-    []
-  );
+  useImperativeHandle(ref, () => ({
+    containerRef,
+    scrollToIndex: (index, options) => {
+      const scrollContainer = scrollContainerRef.current;
+      if (!scrollContainer) return;
+      const position = getElementPositionByIndexRef.current(index);
+      const target = getListOffsetTop() + position + (options?.offset ?? 0);
+      scrollContainer.scrollTo({
+        top: target,
+        behavior: options?.animate ? 'smooth' : 'instant',
+      });
+    },
+    getListOffsetTop,
+    getElementPositionByIndex: (index) => getElementPositionByIndexRef.current(index),
+    isRenderedByIndex: (index) =>
+      visiblePortionRef.current.some((portion) => portion.index === index),
+    forceRerender: () => {
+      visibleKeyRef.current = '';
+      recalculateRef.current();
+    },
+  }));
 
   useEffect(() => {
     let to: ReturnType<typeof setTimeout>;
@@ -187,7 +184,7 @@ export default function VirtualizedList<T extends VirtualizedItem>({
     };
     measure();
     return () => clearTimeout(to);
-  }, [items, overscanPx, scrollContainerRef, pinnedIndexSet]);
+  }, [items, overscanPx, scrollContainerRef, pinnedIndexSet, recalculateVisiblePortion]);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -262,7 +259,10 @@ export default function VirtualizedList<T extends VirtualizedItem>({
   // Always look up items from the current `items` prop, not from visiblePortion.
   // visiblePortion is updated via an effect (one render behind) so its item references
   // can be stale. Using the latest items ensures renderItem always gets fresh data.
-  const itemsByKey = useMemo(() => new Map(items.map((item) => [getItemKey(item), item])), [items]);
+  const itemsByKey = useMemo(
+    () => new Map(items.map((item) => [getItemKey(item), item])),
+    [items, getItemKey]
+  );
 
   const renderedVisibleItems = visiblePortion.map(({ key, top }) => {
     const item = itemsByKey.get(Number(key));

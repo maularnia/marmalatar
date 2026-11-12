@@ -2,7 +2,7 @@ import { TColor, TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { clamp } from '@src/utils/numbers';
 import classNames from 'classnames';
-import { createRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import styled, { css } from 'styled-components';
 
 export enum TProgressBarSize {
@@ -85,14 +85,14 @@ export default function ProgressBar({
   allowTransition = true,
   animateLoading = false,
 }: ProgressBarProps) {
-  const runnerRef = createRef<HTMLDivElement>();
+  const runnerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!runnerRef.current) return;
     const precisePercentage = total > 0 ? clamp((value / total) * 100, 0, 100) : 0;
     const percentage = precise ? precisePercentage : Math.round(precisePercentage);
 
     runnerRef.current.style.setProperty('--runner-width', `${percentage}%`);
-  }, [value, total, runnerRef]);
+  }, [value, total, runnerRef, precise]);
   useEffect(() => {
     if (!runnerRef.current) return;
     runnerRef.current.style.setProperty(
