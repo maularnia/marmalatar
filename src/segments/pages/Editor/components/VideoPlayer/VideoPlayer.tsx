@@ -376,13 +376,15 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
               <VideoSubtitleText>
                 <span>
                   {activeLineWordArray.map((line, lineIndex) => (
-                    <Fragment key={line}>
+                    // eslint-disable-next-line @eslint-react/no-array-index-key -- derived read-only text; a dialogue line can repeat (— Дабрыдзень.\n— Дабрыдзень.)
+                    <Fragment key={lineIndex}>
                       {lineIndex > 0 && <br />}
                       {line
                         .split(' ')
                         .filter(Boolean)
-                        .map((word) => (
-                          <Word key={word}>{word}</Word>
+                        .map((word, wordIndex) => (
+                          // eslint-disable-next-line @eslint-react/no-array-index-key -- derived read-only text; words repeat within a line
+                          <Word key={wordIndex}>{word}</Word>
                         ))}
                     </Fragment>
                   ))}
