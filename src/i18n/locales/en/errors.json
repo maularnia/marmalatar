@@ -18,8 +18,6 @@
     "translationRequired": "This field is required"
   },
   "mainMenuListItem": {
-    "nameTooLong": "Max length is [{{maxLength}}]",
-    "nameAlreadyExists": "File with this name already exists",
     "unreachableCommitError": "How did you get that message? [UNREACHABLE 01]"
   },
   "subtitleFileSelect": {

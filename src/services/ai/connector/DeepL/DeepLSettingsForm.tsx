@@ -13,7 +13,7 @@ import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
 import Select from '@ui-toolkit/Select/Select';
 import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import TextInput from '@ui-toolkit/TextInput';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { AiClientSettingsFormProps, ConnectionStatus } from '@src/services/ai/connector/types';
@@ -111,7 +111,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
   const connectionStatusRef = useRef<ConnectionStatus>(connectionStatus);
   connectionStatusRef.current = connectionStatus;
 
-  const handleConnect = async () => {
+  const handleConnect = useCallback(async () => {
     setConnectionStatus('connecting');
     setConnectionError(undefined);
     try {
@@ -132,7 +132,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
         error: getErrorMessage(err),
       });
     }
-  };
+  }, [getValues]);
 
   useEffect(() => {
     void IPC.encryption.isAvailable().then(setEncryptionAvailable);
@@ -157,7 +157,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
       }
       void handleConnect();
     })();
-  }, []);
+  }, [connected, handleConnect, pingError, reset]);
 
   useEffect(() => {
     onSettingsValidChangeRef.current(false);
@@ -184,6 +184,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
     values.model_type,
     values.lines_per_request,
     values.glossary_id,
+    getValues,
   ]);
 
   // Re-ping/re-list-glossaries after the user finishes editing the API key, decoupled from the
@@ -204,7 +205,7 @@ export default function DeepLSettingsForm({ onSettingsValidChange }: AiClientSet
     return () => {
       if (reconnectDebounceRef.current) clearTimeout(reconnectDebounceRef.current);
     };
-  }, [values.api_key]);
+  }, [values.api_key, handleConnect]);
 
   return (
     <>

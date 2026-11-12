@@ -14,16 +14,17 @@ export function parseProjectFile(json: unknown): TProjectFileData {
       err instanceof IncompatibleSchemaVersionError ||
       err instanceof UnsupportedLegacyVersionError
     ) {
-      throw new Error(t('project.incompatibleVersion'));
+      throw new Error(t('project.incompatibleVersion'), { cause: err });
     }
     if (err instanceof z.ZodError) {
       const issue = err.issues[0];
       const path = issue?.path.join('.') ?? 'unknown';
       const msg = issue?.message ?? 'Invalid project file.';
-      throw new Error(t('project.invalidFile', { path, message: msg }));
+      throw new Error(t('project.invalidFile', { path, message: msg }), { cause: err });
     }
     throw new Error(
-      t('project.invalidFile', { path: 'unknown', message: 'Invalid project file.' })
+      t('project.invalidFile', { path: 'unknown', message: 'Invalid project file.' }),
+      { cause: err }
     );
   }
 }

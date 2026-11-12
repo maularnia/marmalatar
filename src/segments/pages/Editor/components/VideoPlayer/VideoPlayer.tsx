@@ -376,13 +376,13 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
               <VideoSubtitleText>
                 <span>
                   {activeLineWordArray.map((line, lineIndex) => (
-                    <Fragment key={lineIndex}>
+                    <Fragment key={line}>
                       {lineIndex > 0 && <br />}
                       {line
                         .split(' ')
                         .filter(Boolean)
-                        .map((word, index) => (
-                          <Word key={index + word}>{word}</Word>
+                        .map((word) => (
+                          <Word key={word}>{word}</Word>
                         ))}
                     </Fragment>
                   ))}

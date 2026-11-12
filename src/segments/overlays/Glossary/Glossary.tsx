@@ -111,7 +111,7 @@ export default function GlossaryOverlay() {
                   <GlossaryTableHeader />
                   {formData.list.map((entry, index) => (
                     <GlossaryTableLine
-                      key={index}
+                      key={entry.original + entry.translation}
                       pairIndex={index}
                       original={entry.original}
                       translation={entry.translation}

@@ -2,19 +2,19 @@
  * Special system color values
  */
 export enum TColorSystem {
-  'TEXT' = 'text',
-  'BG' = 'bg',
-  'WHITE' = 'white',
-  'BLACK' = 'black',
-  'TRANSPARENT' = 'transparent',
+  TEXT = 'text',
+  BG = 'bg',
+  WHITE = 'white',
+  BLACK = 'black',
+  TRANSPARENT = 'transparent',
 }
 
 /**
  * Theme accent colors can be as meany as needed. Usually, but not necessarily, proxy names for custom colors
  */
 export enum TColorAccent {
-  'ACCENT1' = 'accent1',
-  'ACCENT2' = 'accent2',
+  ACCENT1 = 'accent1',
+  ACCENT2 = 'accent2',
 }
 
 /**
@@ -57,11 +57,11 @@ export enum TColorCustom {
  * List of shade names for each color
  */
 export enum TShade {
-  'DARK' = 'dark',
-  'DIMM' = 'dimm',
-  'BRIGHT' = 'bright',
-  'DEFAULT' = 'default',
-  'PALE' = 'light',
+  DARK = 'dark',
+  DIMM = 'dimm',
+  BRIGHT = 'bright',
+  DEFAULT = 'default',
+  PALE = 'light',
 }
 
 /**
@@ -96,9 +96,7 @@ export type TColor = TColorSystem | TColorAccent | TColorCustom;
  * System color value format
  */
 export type TCSSColorValue =
-  | `hsl(${number}, ${number}%, ${number}%)`
-  | `hsl(${number} ${number}% ${number}%)`
-  | 'transparent';
+  `hsl(${number}, ${number}%, ${number}%)` | `hsl(${number} ${number}% ${number}%)` | 'transparent';
 
 export type TCSSColorVarName = `--color-${TColor}-${TShade | 'text'}-${TOpacity}`;
 
@@ -110,6 +108,6 @@ export type TColorDefinition = {
 export type TThemeColorMap = { [key in TColor]: TColorDefinition };
 
 export enum TThemeName {
-  'LIGHT' = 'light',
-  'DARK' = 'dark',
+  LIGHT = 'light',
+  DARK = 'dark',
 }

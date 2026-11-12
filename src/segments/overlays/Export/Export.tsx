@@ -26,7 +26,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 enum SpecialCharacterOptions {
-  'ALL' = 'All',
+  ALL = 'All',
 }
 
 interface CharacterOption extends TOptionSelect {

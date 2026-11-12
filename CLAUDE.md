@@ -134,7 +134,7 @@ Side effects only, no context:
 ### Coding patterns
 
 Context shape:
-- One context per file: `createContext` with a full default value, an exported `function useX()` hook, and a named `export function XProvider`. The context object itself is never exported
+- One context per file: `createContext` with a full default value, an exported `function useX()` hook (reading it with React 19's `use(XContext)`, not `useContext`), and a named `export function XProvider` (rendering `<XContext value={...}>`, not `<XContext.Provider>`). The context object itself is never exported
 - The file name matches the provider name, and context types are named `TXContext`
 - Function defaults use a `const noop = providerNoop('XContext')` from `src/utils/noop.ts`, which throws when called without the provider. A context that holds a value uses the value's empty state (`PopperPortalProvider` defaults to `undefined` until its root mounts)
 - Function props are wrapped in `useCallback`. Context values that are objects go through `useMemoizedObject` from `src/utils`, never an inline `value={{ ... }}`

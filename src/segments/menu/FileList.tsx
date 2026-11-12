@@ -26,6 +26,13 @@ import styled from 'styled-components';
 import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { ListHeader } from './ListHeader';
 import { MainMenuListItem } from './MainMenuListItem';
+import { makeNameValidator, useMenuRename } from './useMenuRename';
+
+// Keys of the rows where a new prompt template's / glossary's name is typed
+const NEW_PROMPT_TEMPLATE_KEY = '##new-prompt-template##';
+const NEW_GLOSSARY_KEY = '##new-glossary##';
+
+type TMenuFileKind = 'project' | 'promptTemplate' | 'glossary';
 
 const Section = styled.div`
   display: flex;
@@ -67,6 +74,7 @@ export default function FileList({ compact }: TFileListProps) {
     integrationIsConfigured,
     isCreatingPromptTemplate,
     isCreatingGlossary,
+    renamingKey,
   ] = useAppSelectors(
     folder.selectPath,
     projects.selectList,
@@ -81,7 +89,8 @@ export default function FileList({ compact }: TFileListProps) {
     ai.selectIsBusy,
     settings.selectIntegrationIsConfigured,
     menu.selectIsCreatingPromptTemplate,
-    menu.selectIsCreatingGlossary
+    menu.selectIsCreatingGlossary,
+    menu.selectRenamingKey
   );
   const listIsDisabled = workingFolderIsBusy || translationIsBusy;
 
@@ -124,12 +133,42 @@ export default function FileList({ compact }: TFileListProps) {
   );
   const glossaryFileNames = useMemo(() => glossaryItems.map((g) => g.fileName), [glossaryItems]);
 
-  const handleCommitProject = (fileName: string | null, title: string) =>
-    menu.commitItemTitle('project', fileName, title);
-  const handleCommitPromptTemplate = (fileName: string | null, title: string) =>
-    menu.commitItemTitle('promptTemplate', fileName, title);
-  const handleCommitGlossary = (fileName: string | null, title: string) =>
-    menu.commitItemTitle('glossary', fileName, title);
+  // The rows in edit mode: the one being renamed, and a new file's row while its name is typed
+  const editingKeys = [
+    ...(renamingKey != null ? [renamingKey] : []),
+    ...(isCreatingPromptTemplate ? [NEW_PROMPT_TEMPLATE_KEY] : []),
+    ...(isCreatingGlossary ? [NEW_GLOSSARY_KEY] : []),
+  ];
+  const rename = useMenuRename(editingKeys);
+
+  // A row's edit-mode props: whether it's edited, its typed name's validity, and committing it as
+  // a rename (or, for a new file's row with `fileName` null, as the new file's title)
+  const editing = ({
+    kind,
+    itemKey,
+    fileName,
+    title,
+    existingFileNames,
+    toFileName,
+    cancel = () => menu.stopRenaming(itemKey),
+  }: {
+    kind: TMenuFileKind;
+    itemKey: string;
+    fileName: string | null;
+    title: string;
+    existingFileNames: string[];
+    toFileName: (title: string) => string;
+    cancel?: () => void;
+  }) => ({
+    isEditing: editingKeys.includes(itemKey),
+    ...rename.row({
+      itemKey,
+      title,
+      isValidName: makeNameValidator(fileName, existingFileNames, toFileName),
+      commit: (name) => menu.commitItemTitle(kind, fileName, name),
+      cancel,
+    }),
+  });
 
   if (
     !folderPath ||
@@ -175,22 +214,26 @@ export default function FileList({ compact }: TFileListProps) {
                       <MainMenuListItem
                         key={project.filePath}
                         itemKey={project.filePath}
-                        fileName={project.fileName}
                         title={project.projectName}
+                        {...editing({
+                          kind: 'project',
+                          itemKey: project.filePath,
+                          fileName: project.fileName,
+                          title: project.projectName,
+                          existingFileNames: projectFileNames,
+                          toFileName: toProjectFileName,
+                        })}
                         isActive={isActive}
                         isDisabled={listIsDisabled}
                         compact={compact}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
                         progress={project.translationProgress}
                         onArchive={() => void menu.archiveProject(project)}
-                        toFileName={toProjectFileName}
-                        existingFileNames={projectFileNames}
                         emoji={project.emoji}
                         onEmojiSelect={(emoji) =>
                           void projects.updateEmoji(project.projectId, emoji)
                         }
                         onClick={() => void menu.openProject(project)}
-                        onCommit={handleCommitProject}
                         onDelete={() => menu.deleteProject(project)}
                       />
                     );
@@ -226,20 +269,24 @@ export default function FileList({ compact }: TFileListProps) {
                       <MainMenuListItem
                         key={fileName}
                         itemKey={fileName}
-                        fileName={fileName}
                         title={title}
+                        {...editing({
+                          kind: 'promptTemplate',
+                          itemKey: fileName,
+                          fileName,
+                          title,
+                          existingFileNames: promptTemplateFileNames,
+                          toFileName: toPromptTemplateFileName,
+                        })}
                         isActive={isActive}
                         compact={compact}
                         isDisabled={listIsDisabled}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                        toFileName={toPromptTemplateFileName}
-                        existingFileNames={promptTemplateFileNames}
                         emoji={emoji}
                         onEmojiSelect={(newEmoji) =>
                           void promptTemplates.updateEmoji(fileName, newEmoji)
                         }
                         onClick={() => void menu.openPromptTemplate(fileName, title)}
-                        onCommit={handleCommitPromptTemplate}
                         onDelete={() => menu.deletePromptTemplate(fileName, title)}
                       />
                     );
@@ -247,14 +294,18 @@ export default function FileList({ compact }: TFileListProps) {
                 : null}
               {isCreatingPromptTemplate && (
                 <MainMenuListItem
-                  key="##new-prompt-template##"
-                  itemKey="##new-prompt-template##"
-                  fileName={null}
+                  key={NEW_PROMPT_TEMPLATE_KEY}
+                  itemKey={NEW_PROMPT_TEMPLATE_KEY}
                   title=""
-                  toFileName={toPromptTemplateFileName}
-                  existingFileNames={promptTemplateFileNames}
-                  onCommit={handleCommitPromptTemplate}
-                  onDiscard={menu.cancelCreatingPromptTemplate}
+                  {...editing({
+                    kind: 'promptTemplate',
+                    itemKey: NEW_PROMPT_TEMPLATE_KEY,
+                    fileName: null,
+                    title: '',
+                    existingFileNames: promptTemplateFileNames,
+                    toFileName: toPromptTemplateFileName,
+                    cancel: menu.cancelCreatingPromptTemplate,
+                  })}
                 />
               )}
             </List>
@@ -285,20 +336,24 @@ export default function FileList({ compact }: TFileListProps) {
                         <MainMenuListItem
                           key={fileName}
                           itemKey={fileName}
-                          fileName={fileName}
                           title={title}
+                          {...editing({
+                            kind: 'glossary',
+                            itemKey: fileName,
+                            fileName,
+                            title,
+                            existingFileNames: glossaryFileNames,
+                            toFileName: toGlossaryFileName,
+                          })}
                           compact={compact}
                           isActive={isActive}
                           isDisabled={listIsDisabled}
                           color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                          toFileName={toGlossaryFileName}
-                          existingFileNames={glossaryFileNames}
                           emoji={emoji}
                           onEmojiSelect={(newEmoji) =>
                             void glossaries.updateEmoji(fileName, newEmoji)
                           }
                           onClick={() => void menu.openGlossary(fileName, title)}
-                          onCommit={handleCommitGlossary}
                           onDelete={() => menu.deleteGlossary(fileName, title)}
                         />
                       );
@@ -307,14 +362,18 @@ export default function FileList({ compact }: TFileListProps) {
               </AnimatePresence>
               {isCreatingGlossary && (
                 <MainMenuListItem
-                  key="##new-glossary##"
-                  itemKey="##new-glossary##"
-                  fileName={null}
+                  key={NEW_GLOSSARY_KEY}
+                  itemKey={NEW_GLOSSARY_KEY}
                   title=""
-                  toFileName={toGlossaryFileName}
-                  existingFileNames={glossaryFileNames}
-                  onCommit={handleCommitGlossary}
-                  onDiscard={menu.cancelCreatingGlossary}
+                  {...editing({
+                    kind: 'glossary',
+                    itemKey: NEW_GLOSSARY_KEY,
+                    fileName: null,
+                    title: '',
+                    existingFileNames: glossaryFileNames,
+                    toFileName: toGlossaryFileName,
+                    cancel: menu.cancelCreatingGlossary,
+                  })}
                 />
               )}
             </List>

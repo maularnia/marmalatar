@@ -1,4 +1,4 @@
-import { createContext, PropsWithChildren, useContext, useState } from 'react';
+import { createContext, PropsWithChildren, use, useState } from 'react';
 import styled from 'styled-components';
 
 const OverlaysRoot = styled.div`
@@ -21,7 +21,7 @@ type TPopperPortalContext = HTMLDivElement | undefined;
 const PopperPortalContext = createContext<TPopperPortalContext>(undefined);
 
 export function usePopperPortal(): TPopperPortalContext {
-  return useContext(PopperPortalContext);
+  return use(PopperPortalContext);
 }
 
 export function PopperPortalProvider({ children }: PropsWithChildren) {
@@ -34,7 +34,7 @@ export function PopperPortalProvider({ children }: PropsWithChildren) {
           setValue(instance ?? undefined);
         }}
       />
-      <PopperPortalContext.Provider value={value}>{children}</PopperPortalContext.Provider>
+      <PopperPortalContext value={value}>{children}</PopperPortalContext>
     </>
   );
 }

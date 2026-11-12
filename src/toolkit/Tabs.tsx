@@ -131,6 +131,7 @@ export function Tabs({
   children,
 }: TTabsProps) {
   const contents = new Map<string, ReactElement<TTabContentProps>>();
+  // eslint-disable-next-line @eslint-react/no-children-to-array
   Children.toArray(children).forEach((child) => {
     if (isValidElement<TTabContentProps>(child) && child.type === TabContent) {
       contents.set(child.props.id, child);

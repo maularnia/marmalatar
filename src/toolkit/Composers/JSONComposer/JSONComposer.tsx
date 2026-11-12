@@ -53,7 +53,7 @@ export default function JSONComposer({ value, options, onChange, errors }: JSONC
         {value.map(([fieldName, optionValue], index) => {
           const option = optionByValue.get(optionValue);
           return (
-            <EntryRow key={index}>
+            <EntryRow key={fieldName + optionValue}>
               <FieldNameInput
                 value={fieldName}
                 onChange={(e) => handleFieldNameChange(index, e.target.value)}

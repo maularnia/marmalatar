@@ -349,6 +349,7 @@ export default function TinyDivEditor({
     if (isFocused) {
       void runSpellCheck(value);
     }
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [value, runSpellCheck]);
 
   // Hides the panel. By default also clears `activeMarkIdRef`, so the caret re-entering the same

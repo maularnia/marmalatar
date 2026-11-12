@@ -3,7 +3,7 @@ import { menu, SETTINGS_KEY } from '@src/services/menu';
 import { glossaries } from '@src/services/glossary';
 import { promptTemplates } from '@src/services/prompt';
 import { settings } from '@src/services/settings';
-import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
+import { KeystrokeZoneContext } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
@@ -13,7 +13,7 @@ import { ListItem } from '@ui-toolkit/ListItem';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
-import { useCallback } from 'react';
+import { use, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import ThemeSelector from './ThemeSelector';
@@ -63,7 +63,7 @@ export default function MenuLogo() {
     menu.selectIsDynamic,
     menu.selectIsCompact
   );
-  const { zoneRef } = useKeystrokeZone();
+  const { zoneRef } = use(KeystrokeZoneContext);
   const setSettingsRef = useCallback(
     (el: HTMLDivElement | null) => {
       menu.registerItem(SETTINGS_KEY, el);

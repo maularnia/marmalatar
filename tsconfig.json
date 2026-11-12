@@ -17,7 +17,7 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "lib": ["ES2020", "ES2022.Intl", "DOM"],
+    "lib": ["ES2020", "ES2022.Intl", "ES2022.Error", "DOM"],
     // src/electron.d.ts imports ElectronAPI from electron/main.ts, so main-process code is
     // type-checked here too
     "types": ["node"]

@@ -1,11 +1,11 @@
 import KeystrokeZone, {
-  useKeystrokeZone,
+  KeystrokeZoneContext,
 } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/project';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
 import { ai } from '@src/services/ai';
 import { glossaries } from '@src/services/glossary';
-import { createContext, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
+import { createContext, PropsWithChildren, use, useEffect, useReducer } from 'react';
 import {
   ShortcutScope,
   ShortcutSettings,
@@ -395,7 +395,7 @@ function modifierReducer(
 const EditorKeystrokeContext = createContext<TEditorKeystrokeContext>(modifierInitialState);
 
 export function useEditorKeystroke(): TEditorKeystrokeContext {
-  return useContext(EditorKeystrokeContext);
+  return use(EditorKeystrokeContext);
 }
 
 export function EditorKeystrokeProvider({ children }: PropsWithChildren) {
@@ -437,10 +437,10 @@ function EditorKeystrokeOuter({ children }: PropsWithChildren) {
       }}
       hint={{ corner: 'bottom-left' }}
     >
-      <EditorKeystrokeContext.Provider value={modifierState}>
+      <EditorKeystrokeContext value={modifierState}>
         <EditorShortcuts />
         {children}
-      </EditorKeystrokeContext.Provider>
+      </EditorKeystrokeContext>
     </KeystrokeZone>
   );
 }
@@ -448,7 +448,7 @@ function EditorKeystrokeOuter({ children }: PropsWithChildren) {
 // Registers useShortcut handlers -- must render as KeystrokeZone's child so these hooks run inside
 // the KeyHubProvider context KeystrokeZone creates for `shortcuts`.
 function EditorShortcuts() {
-  const { zoneRef, setFocusOverride } = useKeystrokeZone();
+  const { zoneRef, setFocusOverride } = use(KeystrokeZoneContext);
 
   // AI-translation-in-flight gating -- orthogonal to focus containment, which KeystrokeZone's own
   // ShortcutPauseBridge already handles at the EventBus level.
