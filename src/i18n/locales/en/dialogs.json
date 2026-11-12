@@ -33,6 +33,7 @@
     "cleanAssStyling": "Drop extended formatting {} blocks and other ASS styles",
     "cleanAudioCues": "Remove audio cues like [music], [sigh] etc.",
     "fixShortDashes": "Fix short dashes",
+    "removeEmptyLines": "Remove empty lines",
     "confirmButton": "Run cleanup"
   },
   "copyAllSourceToOutput": {

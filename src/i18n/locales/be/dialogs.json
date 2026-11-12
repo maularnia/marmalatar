@@ -33,6 +33,7 @@
     "cleanAssStyling": "Прыбраць пашыранае фарматаванне (блокі {} і іншыя стылі ASS)",
     "cleanAudioCues": "Прыбраць аўдыё-падказкі кшталту [music], [sigh] і інш.",
     "fixShortDashes": "Замяніць кароткія злучкі на доўгія",
+    "removeEmptyLines": "Выдаліць пустыя радкі",
     "confirmButton": "Ачысціць"
   },
   "copyAllSourceToOutput": {

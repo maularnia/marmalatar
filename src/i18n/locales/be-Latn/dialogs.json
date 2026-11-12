@@ -33,6 +33,7 @@
     "cleanAssStyling": "Prybrać pašyranaje farmatavańnie (błoki {} i inšyja styli ASS)",
     "cleanAudioCues": "Prybrać aŭdyjo-padkazki kštałtu [music], [sigh] i inš.",
     "fixShortDashes": "Zamianić karotkija złučki na doŭhija",
+    "removeEmptyLines": "Vydalić pustyja radki",
     "confirmButton": "Ačyścić"
   },
   "copyAllSourceToOutput": {

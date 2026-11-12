@@ -45,6 +45,8 @@ function applyCleanup(lines: TSubtitleLine[], options: TCleanupOptions): TSubtit
       cleanAssStyling: options.clearExtendedFormatting,
       cleanAudioCues: options.clearSquareBrackets,
       fixShortDashes: options.fixShortDashes,
+      // Import has no use for lines that end up blank; the editor's cleanup asks instead
+      removeEmptyLines: true,
     },
     (line) => line.input,
     (line, text) => ({ ...line, input: text, output: text })
