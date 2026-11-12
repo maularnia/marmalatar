@@ -259,7 +259,10 @@ export default function VirtualizedList<T extends VirtualizedItem>({
   // Always look up items from the current `items` prop, not from visiblePortion.
   // visiblePortion is updated via an effect (one render behind) so its item references
   // can be stale. Using the latest items ensures renderItem always gets fresh data.
-  const itemsByKey = useMemo(() => new Map(items.map((item) => [getItemKey(item), item])), [items]);
+  const itemsByKey = useMemo(
+    () => new Map(items.map((item) => [getItemKey(item), item])),
+    [items, getItemKey]
+  );
 
   const renderedVisibleItems = visiblePortion.map(({ key, top }) => {
     const item = itemsByKey.get(Number(key));
