@@ -15,7 +15,7 @@ import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import TinyDivEditor from '@ui-toolkit/TinyDivEditor';
+import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import classNames from 'classnames';
 import { type ClipboardEvent, type ReactNode, use, useEffect, useMemo, useRef } from 'react';
