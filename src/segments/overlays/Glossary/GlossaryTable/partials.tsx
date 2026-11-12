@@ -1,5 +1,5 @@
 import { CSSVar } from '@src/theme/utils';
-import TinyDivEditor from '@ui-toolkit/TinyDivEditor';
+import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
 import styled from 'styled-components';
 
 export const EGlossaryTable = styled.div`
