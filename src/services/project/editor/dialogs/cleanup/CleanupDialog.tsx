@@ -33,6 +33,8 @@ export function CleanupDialog({ isEditMode, onValuesChange }: CleanupDialogProps
   const [cleanAssStyling, setCleanAssStyling] = useState(true);
   const [cleanAudioCues, setCleanAudioCues] = useState(true);
   const [fixShortDashes, setFixShortDashes] = useState(true);
+  // Off by default: a line whose column is empty is still a line to translate or fill
+  const [removeEmptyLines, setRemoveEmptyLines] = useState(false);
 
   const onValuesChangeRef = useRef(onValuesChange);
   onValuesChangeRef.current = onValuesChange;
@@ -44,8 +46,17 @@ export function CleanupDialog({ isEditMode, onValuesChange }: CleanupDialogProps
       cleanAssStyling,
       cleanAudioCues,
       fixShortDashes,
+      removeEmptyLines,
     });
-  }, [isEditMode, targetColumn, cleanHtmlTags, cleanAssStyling, cleanAudioCues, fixShortDashes]);
+  }, [
+    isEditMode,
+    targetColumn,
+    cleanHtmlTags,
+    cleanAssStyling,
+    cleanAudioCues,
+    fixShortDashes,
+    removeEmptyLines,
+  ]);
 
   const columnOptions: TOptionSelect[] = [
     { value: 'output', label: t('cleanup.columnOutput') },
@@ -85,6 +96,12 @@ export function CleanupDialog({ isEditMode, onValuesChange }: CleanupDialogProps
           onChange={(e) => setFixShortDashes(e.currentTarget.checked)}
         >
           <Span>{t('cleanup.fixShortDashes')}</Span>
+        </Toggle>
+        <Toggle
+          checked={removeEmptyLines}
+          onChange={(e) => setRemoveEmptyLines(e.currentTarget.checked)}
+        >
+          <Span>{t('cleanup.removeEmptyLines')}</Span>
         </Toggle>
       </DialogContent>
     </DialogBodyStandard>
