@@ -1,4 +1,5 @@
 import { projects } from '@src/services/project';
+import { normalizeKeyboardEvent } from '@utils/keyboard';
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
 import { settings } from '@src/services/settings';
@@ -298,7 +299,15 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
 // The one deliberately `document`-scoped EventBus in the app -- these shortcuts must be reachable
 // regardless of where focus is. Isolation while a modal is open is achieved by
 // GlobalKeystrokeRegistry pausing this EventBus, not by narrowing this target.
+// It also owns the one `document`-level keydown normaliser: in the capture phase, before React's
+// root listener and every EventBus (this one and the zones'), each keydown is made to read as its
+// US-layout key, so `keyCombo`s written for a Latin layout fire under any (ctrl+з is ctrl+z).
 export function GlobalKeystrokeDispatcher({ children }: PropsWithChildren) {
+  useEffect(() => {
+    document.addEventListener('keydown', normalizeKeyboardEvent, true);
+    return () => document.removeEventListener('keydown', normalizeKeyboardEvent, true);
+  }, []);
+
   return (
     <KeyHubProvider
       shortcuts={globalShortcuts}

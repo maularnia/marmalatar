@@ -160,6 +160,7 @@ Keystrokes:
 - Wrap the tree in `KeystrokeZone`. Handlers live in a child component that returns `null` (`EditorShortcuts`, `MenuShortcuts`, `GlossaryShortcuts`), because `useShortcut` needs the `KeyHubProvider` that `KeystrokeZone` creates
 - Keep `scope: ShortcutScope.GLOBAL` in zone shortcuts: scoping comes from the zone's DOM target, and `KeystrokeZone` pauses the shortcuts while focus is outside it
 - Only `GlobalKeystrokeDispatcher` may target `document`. Pausing is keyed by a `source` string so independent callers can't un-pause each other. The registry pauses itself (source `'modal'`) while `modal.selectIsOpen` is true, so global shortcuts are blocked while a dialog is open
+- `keyCombo`s are written for a Latin (US) layout and work under any: `GlobalKeystrokeDispatcher` normalises every keydown at `document` capture with `normalizeKeyboardEvent` (`src/utils/keyboard.ts`, built on Chromium's `keyCode`), so `event.key` reads `'z'` for ctrl+з. Code that reads a letter from a keydown itself uses `getLatinKey` from the same file
 
 Dialogs:
 - Services own the loaders, dialogs and toasts of their operations. UI components call the operation (`promptTemplates.saveAndClose()`, `menu.commitItemTitle(kind, fileName, title)`, `projects.changeVideo()`, `projects.changeAudioTrack()`, `media.cleanCache()`) and only await the result, or catch an error to show it inline -- they never call `modal.*` or a service's dialogs to orchestrate one
