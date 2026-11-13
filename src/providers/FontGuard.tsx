@@ -1,4 +1,5 @@
 import { preloadThemeFonts } from '@src/theme/fontPreload';
+import { CSSVar } from '@src/theme/utils';
 import { LogoLoader } from '@ui-toolkit/LogoLoader';
 import { PropsWithChildren, useEffect, useState } from 'react';
 import styled from 'styled-components';
@@ -12,7 +13,7 @@ const Screen = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-default-100);
+  background: ${CSSVar('appBgOverlay')};
 `;
 
 // Mounts its children only once the theme's fonts are loaded (preloadThemeFonts), showing the
@@ -33,12 +34,11 @@ export function FontGuard({ children }: PropsWithChildren) {
     };
   }, []);
 
-  if (!fontsReady) {
-    return (
-      <Screen>
-        <LogoLoader size={128} />
-      </Screen>
-    );
-  }
-  return children;
+  return fontsReady ? (
+    children
+  ) : (
+    <Screen>
+      <LogoLoader size={128} />
+    </Screen>
+  );
 }

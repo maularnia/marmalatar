@@ -55,42 +55,85 @@ const sizeValues = {
   size92: '92px',
 };
 
-const weightValues = {
-  black: 900,
-  bold: 700,
+// Every weight fonts.css declares, by its CSS name. The weights and text chapters below and the
+// families' weight lists all read from here, so a number is written once
+const fontWeightValues = {
+  thin: 100,
+  extralight: 200,
   light: 300,
-  extralight: 100,
   regular: 400,
+  medium: 500,
   semibold: 600,
+  bold: 700,
+  extrabold: 800,
+  black: 900,
+} as const;
+const allFontWeights: readonly number[] = Object.values(fontWeightValues);
+
+type TFontStyle = 'normal' | 'italic';
+export type TFontFamily = {
+  name: string;
+  weights: readonly number[];
+  styles: readonly TFontStyle[];
 };
+
+// The families fonts.css declares that the UI uses, with the weights and styles it declares for
+// each -- what preloadThemeFonts loads at startup (src/theme/fontPreload.ts). The font stacks
+// below are built from the names, so a family is added here, once. The Condensed and 18pt/36pt/48pt
+// families fonts.css also declares are not listed: nothing uses them, so they stay lazy.
+const fontFamilies = {
+  belarusFlagOverride: {
+    name: 'Belarus Flag Override',
+    weights: [fontWeightValues.regular],
+    styles: ['normal'],
+  },
+  twemojiMozilla: {
+    name: 'Twemoji Mozilla',
+    weights: [fontWeightValues.regular],
+    styles: ['normal'],
+  },
+  sofiaSans: { name: 'Sofia Sans', weights: allFontWeights, styles: ['normal', 'italic'] },
+  sourceSerif4: {
+    name: 'Source Serif 4',
+    weights: allFontWeights.filter((weight) => weight >= fontWeightValues.extralight),
+    styles: ['normal', 'italic'],
+  },
+  notoSans: { name: 'Noto Sans', weights: allFontWeights, styles: ['normal', 'italic'] },
+  notoSansMono: { name: 'Noto Sans Mono', weights: allFontWeights, styles: ['normal'] },
+} as const satisfies Record<string, TFontFamily>;
+export const themeFontFamilies: readonly TFontFamily[] = Object.values(fontFamilies);
+
+const quoted = (family: TFontFamily): string => `"${family.name}"`;
 
 // Prepended to every font stack below -- scoped via unicode-range (see fonts.css) to emoji/flag
 // code points only, so it never affects normal text rendering, just fills in flag glyphs that
 // Windows' default emoji font doesn't ship. "Belarus Flag Override" goes first: it only defines a
 // ligature for the BY flag sequence, so it overrides just that one flag before Twemoji Mozilla
 // handles everything else.
-const emojiFontFallback = `"Belarus Flag Override", "Twemoji Mozilla", `;
+const emojiFontFallback = `${quoted(fontFamilies.belarusFlagOverride)}, ${quoted(fontFamilies.twemojiMozilla)}, `;
 
+// The generic fallbacks ("Arial", "Times New Roman", sans-serif...) stay literal: they're the
+// system's, not ours to load
 const fonts: TThemeStaticFontsChapter = {
   ...new ThemeVariable(
     'fontHeadingSansSerif',
-    `${emojiFontFallback}"Sofia Sans", "Arial", sans-serif`
+    `${emojiFontFallback}${quoted(fontFamilies.sofiaSans)}, "Arial", sans-serif`
   ).register(),
   ...new ThemeVariable(
     'fontHeadingSerif',
-    `${emojiFontFallback}"Source Serif 4", "Times New Roman", serif`
+    `${emojiFontFallback}${quoted(fontFamilies.sourceSerif4)}, "Times New Roman", serif`
   ).register(),
   ...new ThemeVariable(
     'fontTextSansSerif',
-    `${emojiFontFallback}"Noto Sans", "Arial", sans-serif`
+    `${emojiFontFallback}${quoted(fontFamilies.notoSans)}, "Arial", sans-serif`
   ).register(),
   ...new ThemeVariable(
     'fontTextSerif',
-    `${emojiFontFallback}"Source Serif 4", "Times New Roman", serif`
+    `${emojiFontFallback}${quoted(fontFamilies.sourceSerif4)}, "Times New Roman", serif`
   ).register(),
   ...new ThemeVariable(
     'fontMonospace',
-    `${emojiFontFallback}"Noto Sans Mono", monospace`
+    `${emojiFontFallback}${quoted(fontFamilies.notoSansMono)}, monospace`
   ).register(),
 };
 
@@ -111,35 +154,37 @@ const sizes: TThemeStaticSizesChapter = {
 };
 
 const weights: TThemeStaticWeightsChapter = {
-  ...new ThemeVariable('black', weightValues.black).register(),
-  ...new ThemeVariable('bold', weightValues.bold).register(),
-  ...new ThemeVariable('light', weightValues.light).register(),
-  ...new ThemeVariable('extralight', weightValues.extralight).register(),
-  ...new ThemeVariable('regular', weightValues.regular).register(),
-  ...new ThemeVariable('semibold', weightValues.semibold).register(),
+  ...new ThemeVariable('black', fontWeightValues.black).register(),
+  ...new ThemeVariable('bold', fontWeightValues.bold).register(),
+  ...new ThemeVariable('light', fontWeightValues.light).register(),
+  // Kept at 100 (CSS 'thin'), which is what this variable has always been: switching it to the
+  // CSS extralight (200) would make every text using it heavier
+  ...new ThemeVariable('extralight', fontWeightValues.thin).register(),
+  ...new ThemeVariable('regular', fontWeightValues.regular).register(),
+  ...new ThemeVariable('semibold', fontWeightValues.semibold).register(),
 };
 
 const text: TThemeStaticTextChapter = {
   ...new ThemeVariable('sizeH1', sizeValues.size92).register(),
-  ...new ThemeVariable('weightH1', weightValues.black).register(),
+  ...new ThemeVariable('weightH1', fontWeightValues.black).register(),
   ...new ThemeVariable('sizeH2', sizeValues.size56).register(),
-  ...new ThemeVariable('weightH2', weightValues.black).register(),
+  ...new ThemeVariable('weightH2', fontWeightValues.black).register(),
   ...new ThemeVariable('sizeH3', sizeValues.size34).register(),
-  ...new ThemeVariable('weightH3', weightValues.black).register(),
+  ...new ThemeVariable('weightH3', fontWeightValues.black).register(),
   ...new ThemeVariable('sizeH4', sizeValues.size24).register(),
-  ...new ThemeVariable('weightH4', weightValues.bold).register(),
+  ...new ThemeVariable('weightH4', fontWeightValues.bold).register(),
   ...new ThemeVariable('sizeH5', sizeValues.size18).register(),
-  ...new ThemeVariable('weightH5', weightValues.black).register(),
+  ...new ThemeVariable('weightH5', fontWeightValues.black).register(),
   ...new ThemeVariable('sizeH6', sizeValues.size16).register(),
-  ...new ThemeVariable('weightH6', weightValues.black).register(),
+  ...new ThemeVariable('weightH6', fontWeightValues.black).register(),
   ...new ThemeVariable('sizeTextLarge', sizeValues.size18).register(),
-  ...new ThemeVariable('weightTextLarge', weightValues.regular).register(),
+  ...new ThemeVariable('weightTextLarge', fontWeightValues.regular).register(),
   ...new ThemeVariable('sizeTextNano', sizeValues.size10).register(),
-  ...new ThemeVariable('weightTextNano', weightValues.light).register(),
+  ...new ThemeVariable('weightTextNano', fontWeightValues.light).register(),
   ...new ThemeVariable('sizeTextRegular', sizeValues.size14).register(),
-  ...new ThemeVariable('weightTextRegular', weightValues.light).register(),
+  ...new ThemeVariable('weightTextRegular', fontWeightValues.light).register(),
   ...new ThemeVariable('sizeTextSmall', sizeValues.size12).register(),
-  ...new ThemeVariable('weightTextSmall', weightValues.semibold).register(),
+  ...new ThemeVariable('weightTextSmall', fontWeightValues.semibold).register(),
 };
 
 const blur: TThemeStaticBlurChapter = {
