@@ -8,7 +8,9 @@
     "title": "Temp",
     "maxLinesPerEntryLabel": "Maks. radkoŭ u nadpisie",
     "maxCharsPerLineLabel": "Maks. simvałaŭ u radku",
-    "minDurationMsLabel": "Min. praciahłaść (ms)"
+    "minDurationMsLabel": "Min. praciahłaść (ms)",
+    "minIntervalFramesLabel": "Min. interval (kadraŭ)",
+    "highlightOverlaps": "Padsviečvać radki, jakija pierakryvajucca"
   },
   "uxUi": {
     "title": "UI/UX",

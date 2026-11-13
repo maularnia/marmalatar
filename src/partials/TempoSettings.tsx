@@ -7,12 +7,20 @@ import Toggle from '@ui-toolkit/Toggle';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-type TTempoField = 'maxLinesPerEntry' | 'maxCharsPerLine' | 'minDurationMs';
+type TTempoField = 'maxLinesPerEntry' | 'maxCharsPerLine' | 'minDurationMs' | 'minIntervalFrames';
+
+const LIMIT_FIELDS: readonly TTempoField[] = [
+  'maxLinesPerEntry',
+  'maxCharsPerLine',
+  'minDurationMs',
+  'minIntervalFrames',
+];
 
 const FIELD_ICONS: Record<TTempoField, TIcon> = {
   maxLinesPerEntry: TIcon.LINE_OUT,
   maxCharsPerLine: TIcon.SPACING,
   minDurationMs: TIcon.TIME_CONFIG,
+  minIntervalFrames: TIcon.STEP,
 };
 
 // The open project's subtitle limits (stored in its file): the toggle that switches the editor's
@@ -21,13 +29,20 @@ const FIELD_ICONS: Record<TTempoField, TIcon> = {
 export default function TempoSettings() {
   const { t } = useTranslation(['settings', 'errors']);
   const [tempo, isProjectOpen] = useAppSelectors(projects.selectTempo, projects.selectIsOpen);
-  const { enabled, maxLinesPerEntry, maxCharsPerLine, minDurationMs } = tempo;
+  const {
+    enabled,
+    maxLinesPerEntry,
+    maxCharsPerLine,
+    minDurationMs,
+    minIntervalFrames,
+    highlightOverlaps,
+  } = tempo;
 
   const {
     register,
     formState: { errors },
   } = useForm({
-    values: { maxLinesPerEntry, maxCharsPerLine, minDurationMs },
+    values: { maxLinesPerEntry, maxCharsPerLine, minDurationMs, minIntervalFrames },
     mode: 'onChange',
   });
 
@@ -61,18 +76,29 @@ export default function TempoSettings() {
           {t('tempo.title')}
         </FormsSectionTitle>
         {enabled && (
-          <FormsSectionContent $columns={3}>
-            {(['maxLinesPerEntry', 'maxCharsPerLine', 'minDurationMs'] as const).map((field) => (
-              <TextInput
-                key={field}
-                icon={FIELD_ICONS[field]}
-                errors={errors[field] ? [errors[field].message] : []}
-                {...registerLimit(field)}
+          <>
+            {/* Two per row: the section also sits in the narrow editor aside */}
+            <FormsSectionContent $columns={4}>
+              {LIMIT_FIELDS.map((field) => (
+                <TextInput
+                  key={field}
+                  icon={FIELD_ICONS[field]}
+                  errors={errors[field] ? [errors[field].message] : []}
+                  {...registerLimit(field)}
+                >
+                  {t(`tempo.${field}Label`)}
+                </TextInput>
+              ))}
+            </FormsSectionContent>
+            <FormsSectionContent>
+              <Toggle
+                checked={highlightOverlaps}
+                onChange={(e) => projects.setTempo({ highlightOverlaps: e.currentTarget.checked })}
               >
-                {t(`tempo.${field}Label`)}
-              </TextInput>
-            ))}
-          </FormsSectionContent>
+                {t('tempo.highlightOverlaps')}
+              </Toggle>
+            </FormsSectionContent>
+          </>
         )}
       </FormsSection>
     </FormsRow>

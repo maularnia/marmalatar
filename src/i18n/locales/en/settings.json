@@ -8,7 +8,9 @@
     "title": "Tempo",
     "maxLinesPerEntryLabel": "Max lines per entry",
     "maxCharsPerLineLabel": "Max characters per line",
-    "minDurationMsLabel": "Min duration (ms)"
+    "minDurationMsLabel": "Min duration (ms)",
+    "minIntervalFramesLabel": "Min interval (frames)",
+    "highlightOverlaps": "Highlight overlapping lines"
   },
   "uxUi": {
     "title": "UI/UX",

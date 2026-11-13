@@ -1,4 +1,4 @@
-import { useAppSelectors } from '@store/hooks';
+import { useAppSelector, useAppSelectors } from '@store/hooks';
 import { media } from '@src/services/media';
 import { KeystrokeZoneContext } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/project';
@@ -413,12 +413,20 @@ export default function EditorTableLine({
   const isNegativeStart = startTime < 0;
   const isBeyondVideo =
     videoDurationMs != null && (startTime > videoDurationMs || endTime > videoDurationMs);
+  // The rules between lines (too close to a neighbour, overlapping another line) depend on the
+  // other lines, so they come from one memoized list the row indexes into. Its own subscription,
+  // on purpose: the row then re-renders only when its flag flips, which is also what lets a row the
+  // parent reuses from its render cache pick the change up.
+  const hasTimingIssue = useAppSelector(
+    (state) => editor.selectTempoTimingIssues(state)[lineIndex] ?? false
+  );
   // Each row checks itself against the project's limits on every render, so it follows both the
   // text (once the editor commits it) and a settings change at once. The column measured is the
   // one being edited in the current mode.
   const isTempoFailed =
     tempo.enabled &&
-    !passesTempo(isEditMode ? sourceText : translatedText, startTime, endTime, tempo);
+    (hasTimingIssue ||
+      !passesTempo(isEditMode ? sourceText : translatedText, startTime, endTime, tempo));
 
   const updateSourceSelection = () => {
     const input = sourceInputRef.current;
