@@ -114,7 +114,8 @@ const Backdrop = styled.div`
   width: 100%;
   height: 100%;
   opacity: ${CSSVar('mainTableLineBackdropOpacity')};
-  border: ${CSSVar('mainTableLineBackdropBorderWidth')} solid;
+  border: ${CSSVar('mainTableLineBackdropBorderWidth')} solid
+    ${CSSVar('mainTableLineBackdropBorderColor')};
   will-change: background-color, opacity;
   overflow: hidden;
 `;
@@ -274,8 +275,10 @@ const Line = styled.div`
      everything else from the error state: dimmed, but still red. */
   &.isTempoFailed:not(.isFrozen) ${Backdrop} {
     background: ${CSSVar('mainTableLineBackdropBgError')};
-    border-color: ${CSSVar('mainTableLineBackdropBorderColorError')};
     border-width: ${CSSVar('mainTableLineBackdropBorderWidthError')};
+  }
+  &.isTempoFailed.isFocused:not(.isFrozen) ${Backdrop} {
+    border-color: ${CSSVar('mainTableLineBackdropBorderColorError')};
   }
   &.isTempoFailed:not(.isFrozen):not(.isCompleted) ${Backdrop} {
     opacity: ${CSSVar('mainTableLineBackdropOpacityError')};

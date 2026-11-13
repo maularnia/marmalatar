@@ -92,7 +92,7 @@ Bridges (`src/providers/bridges`) hand provider APIs to code outside React, the 
 
 Mount points:
 
-- App-wide, in this order (`src/main.tsx`): `LocaleProvider` > `ThemeProvider` > `PopperPortalProvider` > `GlobalKeystrokeDispatcher`, with `App`, the modal host `Modals` (from `src/services/modal`) and the toast host `Toasts` (from `src/services/toast`) side by side inside. The order matters: each one may use the ones above it.
+- App-wide, in this order (`src/main.tsx`): `LocaleProvider` > `ThemeProvider` > `FontGuard` > `PopperPortalProvider` > `GlobalKeystrokeDispatcher`, with `App`, the modal host `Modals` (from `src/services/modal`) and the toast host `Toasts` (from `src/services/toast`) side by side inside. The order matters: each one may use the ones above it; nothing below `FontGuard` mounts until the fonts are loaded.
 - Editor: `EditorKeystrokeProvider` in `src/layout/EditorLayout.tsx`
 - Menu: `MenuKeystrokeProvider` in `src/segments/menu/index.tsx`
 - Glossary: `GlossaryKeystrokeProvider` in `src/segments/overlays/Glossary/Glossary.tsx`
@@ -130,6 +130,7 @@ Dialogs and messages:
 Side effects only, no context:
 - `LocaleProvider` - syncs i18n with the store's UI locale
 - `ThemeProvider` - syncs screen size and resolved theme into the store, sets the `theme-*` class on `body`
+- `FontGuard` - shows the animated logo (no text) until `preloadThemeFonts` (`src/theme/fontPreload.ts`) has loaded every face of the UI's font families, then mounts its children. The families, their weights and styles, the font stacks and the weights chapter are all described once in `fontFamilies` / `fontWeights` in `src/theme/static.ts`
 
 ### Coding patterns
 

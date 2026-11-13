@@ -1,3 +1,4 @@
+import { FontGuard } from '@providers/FontGuard';
 import { GlobalKeystrokeDispatcher } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { PopperPortalProvider } from '@providers/PopperPortalProvider';
 import { NavigationBridge } from '@providers/bridges/NavigationBridge';
@@ -20,7 +21,8 @@ import './assets/variables.css';
 
 // Startup. Settings are awaited, so the first render already has the theme and language; the
 // folder's lists (from the main process's cached listing, no live scan) and the AI integration
-// load in the background.
+// load in the background, as do the fonts -- behind FontGuard's logo, which is all that shows
+// until they're in and the UI mounts.
 async function hydrate(): Promise<void> {
   await settings.load();
   void folder.loadTracked();
@@ -36,13 +38,15 @@ void hydrate().then(() => {
           <Provider store={store}>
             <LocaleProvider>
               <ThemeProvider>
-                <PopperPortalProvider>
-                  <GlobalKeystrokeDispatcher>
-                    <App />
-                    <Modals />
-                    <Toasts />
-                  </GlobalKeystrokeDispatcher>
-                </PopperPortalProvider>
+                <FontGuard>
+                  <PopperPortalProvider>
+                    <GlobalKeystrokeDispatcher>
+                      <App />
+                      <Modals />
+                      <Toasts />
+                    </GlobalKeystrokeDispatcher>
+                  </PopperPortalProvider>
+                </FontGuard>
               </ThemeProvider>
             </LocaleProvider>
           </Provider>
