@@ -11,7 +11,9 @@
     "autoMergeThresholdRequired": "Нельга пакінуць пустым",
     "autoMergeThresholdMin": "Значэнне мае быць > 1",
     "timeAdjustmentStepRequired": "Нельга пакінуць пустым",
-    "timeAdjustmentStepMin": "Значэнне мае быць > 1"
+    "timeAdjustmentStepMin": "Значэнне мае быць > 1",
+    "tempoRequired": "Нельга пакінуць пустым",
+    "tempoMin": "Значэнне мае быць ≥ 1"
   },
   "glossaryPairForm": {
     "originalRequired": "Нельга пакінуць пустым",

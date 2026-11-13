@@ -9,9 +9,11 @@ import {
   type TGlossaryListEntry,
 } from '@bridge/definitions/glossaryEntry';
 import {
+  PROJECT_TEMPO_DEFAULTS,
   ProjectFileBodySchema,
   ProjectFileHeaderSchema,
   ProjectLineSchema,
+  ProjectTempoSchema,
 } from '@bridge/definitions/projectEntry';
 import { ProjectSpellcheckSchema } from '@bridge/definitions/spellcheckDictionary';
 import {
@@ -76,18 +78,21 @@ const ProjectSaveV1Schema = ProjectFileHeaderSchema.extend({
   }),
 });
 
-// Version 2 adds the project's own spellcheck dictionary, per language code. The project service
-// writes it (projects.addToDictionary); the renderer only reads it.
+// Version 2 adds the project's own spellcheck dictionary, per language code (the project service
+// writes it, projects.addToDictionary; the renderer only reads it) and the project's subtitle
+// limits, `tempo`, which the renderer writes with the body. Version 2 files from before `tempo`
+// read with its defaults.
 const ProjectSaveV2Schema = ProjectSaveV1Schema.extend({
   version: z.literal(2),
   spellcheck: ProjectSpellcheckSchema,
+  tempo: ProjectTempoSchema.default(PROJECT_TEMPO_DEFAULTS),
 });
 
 // The current file format
 export const ProjectSaveSchema = ProjectSaveV2Schema;
 
 // The part of the file the renderer writes; the project service owns the rest
-export type TProjectFileBody = Pick<TProjectFileData, 'editor'>;
+export type TProjectFileBody = Pick<TProjectFileData, 'editor' | 'tempo'>;
 
 export type TProjectFileData = z.infer<typeof ProjectSaveV2Schema>;
 
@@ -97,9 +102,14 @@ const ProjectSaveVersioning = defineVersionedContract({
   currentVersion: 2,
   schemas: { 1: ProjectSaveV1Schema, 2: ProjectSaveV2Schema },
   transforms: {
-    // A file from before spellcheck dictionaries: an empty one. The project service writes it out
-    // as version 2 the next time it saves the file.
-    1: (data) => ({ ...(data as object), version: 2, spellcheck: {} }),
+    // A file from before spellcheck dictionaries and tempo: an empty one and the defaults. The
+    // project service writes it out as version 2 the next time it saves the file.
+    1: (data) => ({
+      ...(data as object),
+      version: 2,
+      spellcheck: {},
+      tempo: PROJECT_TEMPO_DEFAULTS,
+    }),
   },
   current: ProjectSaveV2Schema,
 });

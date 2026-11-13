@@ -1,3 +1,4 @@
+import { PROJECT_TEMPO_DEFAULTS } from '@bridge/definitions/projectEntry';
 import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
 import { modal } from '@src/services/modal';
 import { toast } from '@src/services/toast';
@@ -52,6 +53,7 @@ import {
   selectProjectId,
   selectProjectSourceLanguage,
   selectProjectTargetLanguage,
+  selectProjectTempo,
   setCurrentProjectFilePath,
   setProjectEmoji,
   setProjectEntry,
@@ -60,6 +62,7 @@ import {
   setProjectName,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
+  setProjectTempo,
   setArchiveOpen,
   fileLoaded,
   type TProjectEntry,
@@ -99,6 +102,7 @@ function buildProjectBody(): TProjectFileBody {
       lines: Service.select(selectLines),
       characterPool: Service.select(selectCharacterPool),
     }),
+    tempo: ProjectSaveSchema.shape.tempo.parse(Service.select(selectProjectTempo)),
   };
 }
 
@@ -261,13 +265,16 @@ function resetOpenProjectMemory(): void {
   media.resetPlayback();
 }
 
-function applyProjectData(data: Pick<TProjectFileData, 'project' | 'editor' | 'spellcheck'>): void {
+function applyProjectData(
+  data: Pick<TProjectFileData, 'project' | 'editor' | 'spellcheck' | 'tempo'>
+): void {
   Service.dispatch(setProjectId(data.project.projectId));
   Service.dispatch(setProjectName(data.project.projectName));
   Service.dispatch(setProjectEmoji(data.project.emoji));
 
   Service.dispatch(setProjectSourceLanguage(data.project.sourceLanguage));
   Service.dispatch(setProjectTargetLanguage(data.project.targetLanguage));
+  Service.dispatch(setProjectTempo(data.tempo));
   glossaries.reconcileSelectionWithDirection();
   Service.dispatch(setFrozenLineNumbers([]));
 
@@ -481,7 +488,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
   try {
     entry = await createProjectOnDisk(
       { projectName, emoji, sourceLanguage, targetLanguage },
-      { editor: editorData }
+      { editor: editorData, tempo: PROJECT_TEMPO_DEFAULTS }
     );
   } catch {
     throw new Error(t('createNewProject.fileSaveFailed'));
@@ -498,6 +505,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
     },
     editor: editorData,
     spellcheck: {},
+    tempo: PROJECT_TEMPO_DEFAULTS,
   });
 
   Service.dispatch(setEditorMode(editorMode));

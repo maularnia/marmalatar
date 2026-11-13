@@ -197,6 +197,12 @@ export type TThemeTableChapter = TThemeVarsChapter<{
   mainTableLineBackdropBorderColorFocus: string;
   mainTableLineBackdropBorderColorActive: string;
   mainTableLineBackdropBorderColorMergeCandidate: string;
+  // The error state: a line that fails a check (today the tempo limits). Named for the state, not
+  // the check, so later checks reuse it
+  mainTableLineBackdropOpacityError: string;
+  mainTableLineBackdropBgError: string;
+  mainTableLineBackdropBorderColorError: string;
+  mainTableLineBackdropBorderWidthError: string;
   mainTableLineColor: string;
   mainTableLineColorFrozen: string;
   mainTableLineColorCompleted: string;

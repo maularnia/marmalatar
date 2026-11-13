@@ -1,9 +1,28 @@
 import { z } from 'zod';
 import { ProjectSpellcheckSchema } from './spellcheckDictionary';
 
-// The .mrml format the project service writes. Version 2 added the `spellcheck` property; version 1
-// files are still read (the renderer's contract upgrades them) and written as version 2 next time.
+// The .mrml format the project service writes. Version 2 added the `spellcheck` property and the
+// `tempo` block; version 1 files are still read (the renderer's contract upgrades them) and written
+// as version 2 next time.
 export const PROJECT_FILE_VERSION = 2;
+
+// The project's subtitle limits, checked line by line in the editor while `enabled`
+export const ProjectTempoSchema = z.object({
+  enabled: z.boolean(),
+  maxLinesPerEntry: z.number().int().min(1),
+  maxCharsPerLine: z.number().int().min(1),
+  minDurationMs: z.number().int().min(1),
+});
+export type TProjectTempo = z.infer<typeof ProjectTempoSchema>;
+
+// Netflix's general limits: 2 lines of 42 characters, 5/6 of a second on screen. Off until the
+// user switches the check on for a project, so existing projects don't light up on upgrade.
+export const PROJECT_TEMPO_DEFAULTS: TProjectTempo = {
+  enabled: false,
+  maxLinesPerEntry: 2,
+  maxCharsPerLine: 42,
+  minDurationMs: 833,
+};
 
 // One subtitle line as stored in a .mrml file
 export const ProjectLineSchema = z.object({
@@ -33,12 +52,14 @@ export const ProjectFileHeaderSchema = z.object({
 export type TProjectFileHeader = z.infer<typeof ProjectFileHeaderSchema>;
 
 // The part of a .mrml file the renderer writes. Character colors are left loose: the renderer
-// narrows them to its theme colors.
+// narrows them to its theme colors. `tempo` defaults here because the project service re-parses
+// the body of files written before it existed (dictionary and header rewrites).
 export const ProjectFileBodySchema = z.object({
   editor: z.object({
     lines: z.array(ProjectLineSchema),
     characterPool: z.array(z.object({ name: z.string(), color: z.string() })),
   }),
+  tempo: ProjectTempoSchema.default(PROJECT_TEMPO_DEFAULTS),
 });
 export type TProjectFileBody = z.infer<typeof ProjectFileBodySchema>;
 

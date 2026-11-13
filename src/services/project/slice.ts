@@ -1,4 +1,8 @@
-import type { TProjectListEntry } from '@bridge/definitions/projectEntry';
+import {
+  PROJECT_TEMPO_DEFAULTS,
+  type TProjectListEntry,
+  type TProjectTempo,
+} from '@bridge/definitions/projectEntry';
 import type { TProjectSpellcheck } from '@bridge/definitions/spellcheckDictionary';
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TLanguage } from '@src/types';
@@ -15,6 +19,9 @@ type ProjectState = {
   emoji: string | null;
   sourceLanguage: TLanguage | null;
   targetLanguage: TLanguage | null;
+  // The open project's subtitle limits: file content (saved by autosave.ts, with its own debounce)
+  // but not editor history, which is why they live here and not in the editor slice
+  tempo: TProjectTempo;
   // The Archive overlay, listing the hidden projects
   isArchiveOpen: boolean;
 };
@@ -27,6 +34,7 @@ const initialState: ProjectState = {
   emoji: null,
   sourceLanguage: null,
   targetLanguage: null,
+  tempo: PROJECT_TEMPO_DEFAULTS,
   isArchiveOpen: false,
 };
 
@@ -63,6 +71,10 @@ const projectSlice = createSlice({
     },
     setProjectTargetLanguage(state, action: PayloadAction<TLanguage | null>) {
       state.targetLanguage = action.payload;
+    },
+    // Any subset of the limits; the rest keep their values
+    setProjectTempo(state, action: PayloadAction<Partial<TProjectTempo>>) {
+      state.tempo = { ...state.tempo, ...action.payload };
     },
     // A project's file was loaded (opened or just created). Changes nothing here: it's for services
     // that keep part of the file themselves (the spellcheck service, the project's dictionary),
@@ -104,6 +116,8 @@ const projectSlice = createSlice({
     selectProjectName: (state) => state.projectName,
     selectProjectSourceLanguage: (state) => state.sourceLanguage,
     selectProjectTargetLanguage: (state) => state.targetLanguage,
+    selectProjectTempo: (state) => state.tempo,
+    selectIsProjectTempoEnabled: (state) => state.tempo.enabled,
     selectIsProjectOpen: (state) => state.projectId !== null,
   },
 });
@@ -117,6 +131,7 @@ export const {
   setProjectList,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
+  setProjectTempo,
   setArchiveOpen,
   fileLoaded,
   resetProject,
@@ -133,6 +148,8 @@ export const {
   selectProjectName,
   selectProjectSourceLanguage,
   selectProjectTargetLanguage,
+  selectProjectTempo,
+  selectIsProjectTempoEnabled,
   selectIsProjectOpen,
 } = projectSlice.selectors;
 

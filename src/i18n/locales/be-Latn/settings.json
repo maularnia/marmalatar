@@ -4,6 +4,12 @@
     "autoMergeThresholdLabel": "Adlehłaśc aŭta-abjadnańnia (ms)",
     "timeAdjustmentStepLabel": "Krok karekcyi času (ms)"
   },
+  "tempo": {
+    "title": "Temp",
+    "maxLinesPerEntryLabel": "Maks. radkoŭ u nadpisie",
+    "maxCharsPerLineLabel": "Maks. simvałaŭ u radku",
+    "minDurationMsLabel": "Min. praciahłaść (ms)"
+  },
   "uxUi": {
     "title": "UI/UX",
     "scrollVideoIntoViewPrefix": "Padkručvać da videa pa naciskańni",
