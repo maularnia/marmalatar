@@ -57,7 +57,7 @@ const sizeValues = {
 
 // Every weight fonts.css declares, by its CSS name. The weights and text chapters below and the
 // families' weight lists all read from here, so a number is written once
-const fontWeightValues = {
+const fontWeights = {
   thin: 100,
   extralight: 200,
   light: 300,
@@ -68,7 +68,7 @@ const fontWeightValues = {
   extrabold: 800,
   black: 900,
 } as const;
-const allFontWeights: readonly number[] = Object.values(fontWeightValues);
+const allFontWeights: readonly number[] = Object.values(fontWeights);
 
 type TFontStyle = 'normal' | 'italic';
 export type TFontFamily = {
@@ -84,18 +84,18 @@ export type TFontFamily = {
 const fontFamilies = {
   belarusFlagOverride: {
     name: 'Belarus Flag Override',
-    weights: [fontWeightValues.regular],
+    weights: [fontWeights.regular],
     styles: ['normal'],
   },
   twemojiMozilla: {
     name: 'Twemoji Mozilla',
-    weights: [fontWeightValues.regular],
+    weights: [fontWeights.regular],
     styles: ['normal'],
   },
   sofiaSans: { name: 'Sofia Sans', weights: allFontWeights, styles: ['normal', 'italic'] },
   sourceSerif4: {
     name: 'Source Serif 4',
-    weights: allFontWeights.filter((weight) => weight >= fontWeightValues.extralight),
+    weights: allFontWeights.filter((weight) => weight >= fontWeights.extralight),
     styles: ['normal', 'italic'],
   },
   notoSans: { name: 'Noto Sans', weights: allFontWeights, styles: ['normal', 'italic'] },
@@ -154,37 +154,37 @@ const sizes: TThemeStaticSizesChapter = {
 };
 
 const weights: TThemeStaticWeightsChapter = {
-  ...new ThemeVariable('black', fontWeightValues.black).register(),
-  ...new ThemeVariable('bold', fontWeightValues.bold).register(),
-  ...new ThemeVariable('light', fontWeightValues.light).register(),
+  ...new ThemeVariable('black', fontWeights.black).register(),
+  ...new ThemeVariable('bold', fontWeights.bold).register(),
+  ...new ThemeVariable('light', fontWeights.light).register(),
   // Kept at 100 (CSS 'thin'), which is what this variable has always been: switching it to the
   // CSS extralight (200) would make every text using it heavier
-  ...new ThemeVariable('extralight', fontWeightValues.thin).register(),
-  ...new ThemeVariable('regular', fontWeightValues.regular).register(),
-  ...new ThemeVariable('semibold', fontWeightValues.semibold).register(),
+  ...new ThemeVariable('extralight', fontWeights.thin).register(),
+  ...new ThemeVariable('regular', fontWeights.regular).register(),
+  ...new ThemeVariable('semibold', fontWeights.semibold).register(),
 };
 
 const text: TThemeStaticTextChapter = {
   ...new ThemeVariable('sizeH1', sizeValues.size92).register(),
-  ...new ThemeVariable('weightH1', fontWeightValues.black).register(),
+  ...new ThemeVariable('weightH1', fontWeights.black).register(),
   ...new ThemeVariable('sizeH2', sizeValues.size56).register(),
-  ...new ThemeVariable('weightH2', fontWeightValues.black).register(),
+  ...new ThemeVariable('weightH2', fontWeights.black).register(),
   ...new ThemeVariable('sizeH3', sizeValues.size34).register(),
-  ...new ThemeVariable('weightH3', fontWeightValues.black).register(),
+  ...new ThemeVariable('weightH3', fontWeights.black).register(),
   ...new ThemeVariable('sizeH4', sizeValues.size24).register(),
-  ...new ThemeVariable('weightH4', fontWeightValues.bold).register(),
+  ...new ThemeVariable('weightH4', fontWeights.bold).register(),
   ...new ThemeVariable('sizeH5', sizeValues.size18).register(),
-  ...new ThemeVariable('weightH5', fontWeightValues.black).register(),
+  ...new ThemeVariable('weightH5', fontWeights.black).register(),
   ...new ThemeVariable('sizeH6', sizeValues.size16).register(),
-  ...new ThemeVariable('weightH6', fontWeightValues.black).register(),
+  ...new ThemeVariable('weightH6', fontWeights.black).register(),
   ...new ThemeVariable('sizeTextLarge', sizeValues.size18).register(),
-  ...new ThemeVariable('weightTextLarge', fontWeightValues.regular).register(),
+  ...new ThemeVariable('weightTextLarge', fontWeights.regular).register(),
   ...new ThemeVariable('sizeTextNano', sizeValues.size10).register(),
-  ...new ThemeVariable('weightTextNano', fontWeightValues.light).register(),
+  ...new ThemeVariable('weightTextNano', fontWeights.light).register(),
   ...new ThemeVariable('sizeTextRegular', sizeValues.size14).register(),
-  ...new ThemeVariable('weightTextRegular', fontWeightValues.light).register(),
+  ...new ThemeVariable('weightTextRegular', fontWeights.light).register(),
   ...new ThemeVariable('sizeTextSmall', sizeValues.size12).register(),
-  ...new ThemeVariable('weightTextSmall', fontWeightValues.semibold).register(),
+  ...new ThemeVariable('weightTextSmall', fontWeights.semibold).register(),
 };
 
 const blur: TThemeStaticBlurChapter = {

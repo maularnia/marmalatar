@@ -130,7 +130,7 @@ Dialogs and messages:
 Side effects only, no context:
 - `LocaleProvider` - syncs i18n with the store's UI locale
 - `ThemeProvider` - syncs screen size and resolved theme into the store, sets the `theme-*` class on `body`
-- `FontGuard` - shows the animated logo (no text) until `preloadThemeFonts` (`src/theme/fontPreload.ts`) has loaded every face of the UI's font families, then mounts its children. The families, their weights and styles, the font stacks and the weights chapter are all described once in `fontFamilies` / `fontWeightValues` in `src/theme/static.ts`
+- `FontGuard` - shows the animated logo (no text) until `preloadThemeFonts` (`src/theme/fontPreload.ts`) has loaded every face of the UI's font families, then mounts its children. The families, their weights and styles, the font stacks and the weights chapter are all described once in `fontFamilies` / `fontWeights` in `src/theme/static.ts`
 
 ### Coding patterns
 
