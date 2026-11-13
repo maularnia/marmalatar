@@ -4,6 +4,12 @@
     "autoMergeThresholdLabel": "Адлегласць аўта-аб’яднання (мс)",
     "timeAdjustmentStepLabel": "Крок карэкцыі часу (мс)"
   },
+  "tempo": {
+    "title": "Тэмп",
+    "maxLinesPerEntryLabel": "Макс. радкоў у надпісе",
+    "maxCharsPerLineLabel": "Макс. сімвалаў у радку",
+    "minDurationMsLabel": "Мін. працягласць (мс)"
+  },
   "uxUi": {
     "title": "UI/UX",
     "scrollVideoIntoViewPrefix": "Падкручваць да відэа па націсканні",

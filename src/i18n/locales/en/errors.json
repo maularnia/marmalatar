@@ -11,7 +11,9 @@
     "autoMergeThresholdRequired": "This field is required",
     "autoMergeThresholdMin": "Value must be > 1",
     "timeAdjustmentStepRequired": "This field is required",
-    "timeAdjustmentStepMin": "Value must be > 1"
+    "timeAdjustmentStepMin": "Value must be > 1",
+    "tempoRequired": "This field is required",
+    "tempoMin": "Value must be ≥ 1"
   },
   "glossaryPairForm": {
     "originalRequired": "This field is required",

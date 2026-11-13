@@ -4,6 +4,12 @@
     "autoMergeThresholdLabel": "Auto-merge threshold (ms)",
     "timeAdjustmentStepLabel": "Time adjustment step (ms)"
   },
+  "tempo": {
+    "title": "Tempo",
+    "maxLinesPerEntryLabel": "Max lines per entry",
+    "maxCharsPerLineLabel": "Max characters per line",
+    "minDurationMsLabel": "Min duration (ms)"
+  },
   "uxUi": {
     "title": "UI/UX",
     "scrollVideoIntoViewPrefix": "Scroll the video to view on",

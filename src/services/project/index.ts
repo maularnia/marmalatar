@@ -91,16 +91,19 @@ import {
   selectHasArchivedProjects,
   selectIsArchiveOpen,
   selectIsProjectOpen,
+  selectIsProjectTempoEnabled,
   selectProjectId,
   selectProjectList,
   selectProjectName,
   selectProjectSourceLanguage,
   selectProjectTargetLanguage,
+  selectProjectTempo,
   selectVisibleProjectList,
   fileLoaded,
   setProjectList,
   setProjectSourceLanguage,
   setProjectTargetLanguage,
+  setProjectTempo,
 } from './slice';
 
 // The project service: the tracked folder's projects and the open one -- its file, device
@@ -117,6 +120,7 @@ export const projects = new Service('project', {
     setProjectList,
     setProjectSourceLanguage,
     setProjectTargetLanguage,
+    setProjectTempo,
   },
   selectors: {
     selectArchivedProjectList,
@@ -124,11 +128,13 @@ export const projects = new Service('project', {
     selectHasArchivedProjects,
     selectIsArchiveOpen,
     selectIsProjectOpen,
+    selectIsProjectTempoEnabled,
     selectProjectId,
     selectProjectList,
     selectProjectName,
     selectProjectSourceLanguage,
     selectProjectTargetLanguage,
+    selectProjectTempo,
     selectVisibleProjectList,
   },
   functions: {

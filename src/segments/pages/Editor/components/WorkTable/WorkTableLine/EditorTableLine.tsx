@@ -17,6 +17,7 @@ import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
+import { passesTempo } from '@utils/tempo';
 import classNames from 'classnames';
 import { type ClipboardEvent, type ReactNode, use, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -266,6 +267,20 @@ const Line = styled.div`
     }
   }
 
+  /* The line breaks one of the project's subtitle limits. Declared after the hover/active/
+     completed/merge-candidate states so its colors win over theirs, and before .isFrozen (which
+     also guards it out) so a frozen line never shows it. A completed line keeps completed's
+     opacities -- the row's own, never set here, and the backdrop's, excluded below -- and takes
+     everything else from the error state: dimmed, but still red. */
+  &.isTempoFailed:not(.isFrozen) ${Backdrop} {
+    background: ${CSSVar('mainTableLineBackdropBgError')};
+    border-color: ${CSSVar('mainTableLineBackdropBorderColorError')};
+    border-width: ${CSSVar('mainTableLineBackdropBorderWidthError')};
+  }
+  &.isTempoFailed:not(.isFrozen):not(.isCompleted) ${Backdrop} {
+    opacity: ${CSSVar('mainTableLineBackdropOpacityError')};
+  }
+
   &.isFrozen {
     opacity: ${CSSVar('mainTableLineOpacityFrozen')};
     border-bottom-color: ${CSSVar('mainTableLineCellBorderColorFrozen')};
@@ -381,18 +396,26 @@ export default function EditorTableLine({
     isTranslationBusy,
     isEditMode,
     checkGrammar,
+    tempo,
   ] = useAppSelectors(
     media.selectVideoDurationMs,
     projects.selectSourceLanguage,
     projects.selectTargetLanguage,
     ai.selectIsBusy,
     editor.selectIsEditMode,
-    settings.selectCheckGrammar
+    settings.selectCheckGrammar,
+    projects.selectTempo
   );
 
   const isNegativeStart = startTime < 0;
   const isBeyondVideo =
     videoDurationMs != null && (startTime > videoDurationMs || endTime > videoDurationMs);
+  // Each row checks itself against the project's limits on every render, so it follows both the
+  // text (once the editor commits it) and a settings change at once. The column measured is the
+  // one being edited in the current mode.
+  const isTempoFailed =
+    tempo.enabled &&
+    !passesTempo(isEditMode ? sourceText : translatedText, startTime, endTime, tempo);
 
   const updateSourceSelection = () => {
     const input = sourceInputRef.current;
@@ -491,6 +514,7 @@ export default function EditorTableLine({
         isNegativeStart,
         isBeyondVideo,
         isCompleted,
+        isTempoFailed,
       })}
     >
       <Backdrop />

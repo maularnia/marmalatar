@@ -67,6 +67,22 @@ projectAutosaveMiddleware.startListening({
   },
 });
 
+// ── Tempo ────────────────────────────────────────────────────────────────────
+
+// The subtitle limits are file content but not editor history: they live in the project slice, so
+// the body listener above doesn't see them. Their own, shorter debounce: a settings input is
+// typed into, not edited line by line. The write is the whole body, limits included.
+projectAutosaveMiddleware.startListening({
+  predicate: (_action, currentState, previousState) =>
+    (previousState as RootState).project.tempo !== (currentState as RootState).project.tempo,
+
+  effect: async (_action, api) => {
+    api.cancelActiveListeners();
+    await api.delay(1000);
+    await saveProjectToDisk();
+  },
+});
+
 // ── Device preferences ───────────────────────────────────────────────────────
 
 // Device-specific editor/UI preferences (editorMode, isVideoCollapsed, video path and track) -- these aren't

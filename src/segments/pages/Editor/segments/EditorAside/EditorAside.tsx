@@ -2,6 +2,7 @@ import { projects } from '@src/services/project';
 import { media } from '@src/services/media';
 import GeneralSettings from '@src/partials/Settings';
 import { SpellcheckSettings } from '@src/partials/SpellcheckSettings';
+import TempoSettings from '@src/partials/TempoSettings';
 import { editor } from '@src/services/project';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
@@ -124,6 +125,8 @@ export default function EditorAside() {
       <Hr variant={THrVariant.DIMMED} />
       {!isEditMode && <AiTranslationStatusPanel />}
       <GeneralSettings />
+      {/* The same tempo (subtitle limits) section as the Settings overlay's General tab */}
+      <TempoSettings />
       {/* The same spellcheck switch and dictionaries as the Settings overlay's Spellchecker tab */}
       <SpellcheckSettings />
     </Aside>

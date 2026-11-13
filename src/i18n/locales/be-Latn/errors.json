@@ -11,7 +11,9 @@
     "autoMergeThresholdRequired": "Nielha pakinuć pustym",
     "autoMergeThresholdMin": "Značeńnie maje być > 1",
     "timeAdjustmentStepRequired": "Nielha pakinuć pustym",
-    "timeAdjustmentStepMin": "Značeńnie maje być > 1"
+    "timeAdjustmentStepMin": "Značeńnie maje być > 1",
+    "tempoRequired": "Nielha pakinuć pustym",
+    "tempoMin": "Značeńnie maje być ≥ 1"
   },
   "glossaryPairForm": {
     "originalRequired": "Nielha pakinuć pustym",
