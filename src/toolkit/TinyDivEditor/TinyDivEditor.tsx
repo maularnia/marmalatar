@@ -66,16 +66,16 @@ const EditableSurface = styled.div`
   }
 `;
 
-// Where the suggestions panel sits for a mark: its top-left corner in viewport coordinates, from
-// the mark as it is in the DOM right now, or null when it isn't there
+// Where the suggestions panel is anchored for a mark: the mark's top, bottom and left edges in
+// viewport coordinates, from the mark as it is in the DOM right now, or null when it isn't there
 function getMarkPosition(
   editable: HTMLElement | null,
   markId: string
-): { top: number; left: number } | null {
+): { top: number; bottom: number; left: number } | null {
   const target = editable?.querySelector(`mark[data-mark-id="${markId}"]`);
   if (!target) return null;
-  const { top, left } = target.getBoundingClientRect();
-  return { top, left };
+  const { top, bottom, left } = target.getBoundingClientRect();
+  return { top, bottom, left };
 }
 
 // The suggestions panel while it's open: for which mark, what it shows and where it sits (in
@@ -85,6 +85,7 @@ type TActivePanel = {
   status: TSuggestionsStatus;
   suggestions: string[];
   top: number;
+  bottom: number;
   left: number;
 };
 
@@ -272,7 +273,7 @@ export function TinyDivEditor({
               setActivePanel(null);
               return;
             }
-            // Hunspell lists its best guess first; the panel opens above the word, so the list is
+            // Hunspell lists its best guess first; the panel usually opens above the word, so the list is
             // reversed to put that guess last, right next to the word
             setActivePanel({
               mark,
@@ -368,6 +369,7 @@ export function TinyDivEditor({
             status={activePanel.status}
             suggestions={activePanel.suggestions}
             top={activePanel.top}
+            bottom={activePanel.bottom}
             left={activePanel.left}
             onAddToDictionary={(target) => {
               // The mark goes once the dictionary is updated (see useSpellchecker)

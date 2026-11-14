@@ -5,7 +5,7 @@ import Hr from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
 import { LogoLoader } from '@ui-toolkit/LogoLoader';
-import { useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import type { TDictionaryTarget } from './useSpellchecker';
@@ -20,11 +20,12 @@ export enum TSuggestionsStatus {
 
 type TSpellcheckOptionsProps = {
   status: TSuggestionsStatus;
-  /** In display order: the panel opens above the word, so the caller puts the best guess last,
+  /** In display order: the panel usually opens above the word, so the caller puts the best guess last,
    * next to the word */
   suggestions: readonly string[];
   /** Viewport coordinates of the word: the panel is fixed (the editor portals it) */
   top: number;
+  bottom: number;
   left: number;
   /** A dictionary item was clicked or confirmed with Enter; the caller knows the word */
   onAddToDictionary: (target: TDictionaryTarget) => void;
@@ -36,7 +37,6 @@ type TSpellcheckOptionsProps = {
 const Panel = styled.div`
   position: fixed;
   z-index: 1000;
-  transform: translateY(-100%);
   min-width: 120px;
   font-family: ${CSSVar('fontTextSansSerif')};
   font-size: ${CSSVar('tooltipFontSize')};
@@ -46,6 +46,30 @@ const Panel = styled.div`
   color: ${CSSVar('tooltipColor')};
   padding: ${CSSVar('tooltipSpacingY')} ${CSSVar('tooltipSpacingX')};
 `;
+
+// Gap between the word and the panel when it opens to the side
+const SIDE_GAP = 4;
+
+// Above the word by default; to its left (tops level) when it doesn't fit above the viewport's top;
+// below the word when it fits on neither side. Null until the panel has been measured.
+type TPlacement = 'above' | 'left' | 'below';
+
+const getPlacementStyle = (
+  placement: TPlacement | null,
+  { top, bottom, left }: { top: number; bottom: number; left: number }
+): CSSProperties => {
+  switch (placement) {
+    case 'above':
+      return { top, left, transform: 'translateY(-100%)' };
+    case 'left':
+      return { top, left: left - SIDE_GAP, transform: 'translateX(-100%)' };
+    case 'below':
+      return { top: bottom, left };
+    default:
+      // Laid out for measuring, but not shown yet
+      return { top, left, visibility: 'hidden' };
+  }
+};
 
 const List = styled.div`
   display: flex;
@@ -59,6 +83,7 @@ export function SpellcheckOptions({
   status,
   suggestions,
   top,
+  bottom,
   left,
   onAddToDictionary,
   onApplySuggestion,
@@ -78,6 +103,19 @@ export function SpellcheckOptions({
   const [chosenIndex, setChosenIndex] = useState<number | null>(null);
   const count = dictionaryTargets.length + suggestions.length;
   const activeIndex = chosenIndex ?? (status === TSuggestionsStatus.READY ? count - 1 : -1);
+
+  // The panel's size changes with its content (loading, then the suggestions), so the placement is
+  // picked again whenever that or the word's position changes. Measured before paint, so the panel
+  // never flashes in the wrong place; transforms don't affect offsetWidth/offsetHeight.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<TPlacement | null>(null);
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const fitsAbove = top - panel.offsetHeight >= 0;
+    const fitsLeft = left - SIDE_GAP - panel.offsetWidth >= 0;
+    setPlacement(fitsAbove ? 'above' : fitsLeft ? 'left' : 'below');
+  }, [top, left, status, suggestions, dictionaryTargets]);
 
   // The editor keeps the focus (and the caret in the word), so the keys are read on `document`:
   // arrows cycle the list and Enter activates the highlighted item, overriding the
@@ -119,7 +157,7 @@ export function SpellcheckOptions({
   const keepEditorFocus = (event: React.MouseEvent) => event.preventDefault();
 
   return (
-    <Panel style={{ top, left }}>
+    <Panel ref={panelRef} style={getPlacementStyle(placement, { top, bottom, left })}>
       <List>
         {dictionaryTargets.map((target, index) => (
           <li key={target}>
