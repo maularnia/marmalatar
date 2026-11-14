@@ -241,7 +241,7 @@ export default function FileList({ compact }: TFileListProps) {
                 : null}
             </List>
           </Section>
-          <Hr variant={THrVariant.DIMMED} />
+          <Hr variant={THrVariant.TRANSPARENT} />
         </>
       )}
 
@@ -311,7 +311,7 @@ export default function FileList({ compact }: TFileListProps) {
             </List>
           </Section>
 
-          <Hr variant={THrVariant.DIMMED} />
+          <Hr variant={THrVariant.TRANSPARENT} />
 
           <Section>
             <ListHeader

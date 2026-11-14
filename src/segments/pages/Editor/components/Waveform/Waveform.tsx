@@ -3,7 +3,8 @@ import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
 import { CSSVar } from '@src/theme/utils';
 import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';
-import { TSubtitleLine } from '@src/types';
+import { TCharacter, TSubtitleLine } from '@src/types';
+import { parseCharacterList } from '@utils/characters';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelectors } from '@store/hooks';
 import { settings } from '@src/services/settings';
@@ -26,6 +27,8 @@ type WaveformProps = {
 };
 
 const PX_PER_SECOND = 30;
+// Lines shorter than this mark their roles with dots instead of letter tags
+const SHORT_LINE_MS = 1500;
 const CURSOR_OFFSET_RATIO = 0.3;
 const MIN_GAP_MS = 50;
 const WHEEL_SEEK_STEP_RATIO = 0.0005;
@@ -85,16 +88,6 @@ const Container = styled.div`
   padding: ${CSSVar('waveformSpacingY')} 0;
   &.${TScreenSize.SMALL} {
     backdrop-filter: blur(${CSSVar('blurHeavy')});
-    mask-image: linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) 5%,
-      rgba(0, 0, 0, 1) 20%,
-      rgba(0, 0, 0, 1) 80%,
-      rgba(0, 0, 0, 0) 95%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    mask-size: 100% 100%;
   }
 `;
 
@@ -113,7 +106,11 @@ export default function Waveform({
   onLineTimingChange,
 }: WaveformProps) {
   const { t } = useTranslation('tooltips');
-  const [size, theme] = useAppSelectors(settings.selectScreenSize, settings.selectCurrentThemeData);
+  const [size, theme, characterPool] = useAppSelectors(
+    settings.selectScreenSize,
+    settings.selectCurrentThemeData,
+    editor.selectCharacterPool
+  );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const waveformViewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -320,6 +317,12 @@ export default function Waveform({
     const isActive = activeLineIndex === lineIndex;
     const isFocused = focusedLineIndex === lineIndex;
     const isDragging = dragLineIndex === lineIndex;
+    // Too short a block for letter tags: its roles show as dots only
+    const isShort = line.end_time - line.start_time < SHORT_LINE_MS;
+    // Roles without a pool entry (no color to show) are left out
+    const characters = parseCharacterList(line.character)
+      .map((name) => characterPool.find((character) => character.name === name))
+      .filter((character): character is TCharacter => Boolean(character));
 
     const fingerprint = getWaveformEntryFingerprint({
       lineNo: line.line_no,
@@ -328,6 +331,8 @@ export default function Waveform({
       isActive,
       isFocused,
       isDragging,
+      characterKey: characters.map(({ name, color }) => `${name}:${color}`).join(','),
+      isShort,
     });
 
     const cached = getCached(line.line_no, fingerprint);
@@ -345,6 +350,8 @@ export default function Waveform({
         isActive={isActive}
         isFocused={isFocused}
         isDragging={isDragging}
+        characters={characters}
+        isShort={isShort}
         onEntryPointerDown={handleEntryPointerDown}
       />
     );

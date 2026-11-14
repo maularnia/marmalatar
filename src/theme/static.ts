@@ -375,7 +375,7 @@ const player: TThemeStaticVideoPlayerTypeChapter = {
   ...new ThemeVariable('videoPlayerSpacingY', CSSVar('size10')).register(),
   ...new ThemeVariable('videoPlayerSpacingInnerX', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSpacingInnerY', CSSVar('size4')).register(),
-  ...new ThemeVariable('videoPlayerBorderRadius', '0').register(),
+  ...new ThemeVariable('videoPlayerBorderRadius', '8px').register(),
   ...new ThemeVariable('videoPlayerSubtitlesSpacingX', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSubtitlesSpacingY', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSubtitlesBorderRadius', CSSVar('size4')).register(),
@@ -459,7 +459,7 @@ const mark: TThemeStaticMarkChapter = {
 
 const listItem: TThemeStaticListItemChapter = {
   ...new ThemeVariable('listItemHeight', 'auto').register(),
-  ...new ThemeVariable('listItemBorderRadius', CSSVar('size2')).register(),
+  ...new ThemeVariable('listItemBorderRadius', CSSVar('size4')).register(),
   ...new ThemeVariable('listItemSpacingX', CSSVar('size2')).register(),
   ...new ThemeVariable('listItemSpacingY', CSSVar('size2')).register(),
   ...new ThemeVariable('listItemSpacingInnerX', CSSVar('size4')).register(),

@@ -4,13 +4,12 @@ import { editor } from '@src/services/project';
 import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { TCharacter } from '@src/types';
-import { msToHunanTime } from '@src/utils/time';
 import { useAppSelectors } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
-import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
+import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
+import { TTagSize } from '@ui-toolkit/Tag';
+import { TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
 import { Fragment, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,21 +31,21 @@ const TopBar = styled.div`
   align-content: stretch;
   align-items: stretch;
   color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 100)};
-
-  &.isCollapsed {
-    position: relative;
+  /* Barely there over the video until the player is pointed at (or the bar tabbed into) */
+  opacity: 0.1;
+  transition:
+    opacity 150ms ease-in-out,
+    background-color 150ms ease-in-out;
+  &:hover,
+  &:focus-within {
+    opacity: 1;
+    background-color: ${CSSColor(ThemeColors.BLACK, TShade.DEFAULT, 30)};
   }
-`;
 
-const TopBarCharacterBar = styled.div`
-  position: absolute;
-  height: 0;
-  left: 50%;
-  top: 0;
-  transform: translate3d(-50%, 0, 0);
-  z-index: 3;
+  /* Collapsed, the bar is all that's left of the player, so it stays fully visible */
   &.isCollapsed {
     position: relative;
+    opacity: 1;
   }
 `;
 
@@ -58,13 +57,36 @@ const TopBarPanel = styled.div`
   color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 80)};
 `;
 
-const TopBarTag = styled(Tag)``;
 const TopBarBlurWrapper = styled.div``;
+
+// How to start playback, in the bar's left corner; the buttons stay on the right
+const PlayHint = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${CSSVar('size4')};
+  padding: ${CSSVar('size4')};
+  font-family: ${CSSVar('fontTextSansSerif')};
+  font-size: ${CSSVar('sizeTextSmall')};
+  white-space: nowrap;
+  pointer-events: none;
+`;
+
+const playHintKeystroke = <TooltipKeystrokeHint keys={['Ctrl', 'Enter']} size={TTagSize.SMALL} />;
 
 const DEFAULT_ASPECT_RATIO = 16 / 9;
 
 const VideoStage = styled.div`
   position: relative;
+
+  /* The faded top bar comes back whenever the player itself is pointed at */
+  &:hover ${TopBar} {
+    opacity: 1;
+    background-color: ${CSSColor(ThemeColors.BLACK, TShade.DEFAULT, 30)};
+  }
+
+  &.isLargeScreen {
+    padding-top: ${CSSVar('size4')};
+  }
 
   &.isCollapsed {
     background: ${CSSColor(ThemeColors.BLACK, TShade.DEFAULT, 100)};
@@ -86,7 +108,11 @@ const VideoPlayerShell = styled.div<{ $hidden?: boolean }>`
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 100)};
   transition: transform 0.1s ease-in-out;
   transform-origin: left top;
-  border-radius: ${CSSVar('videoPlayerBorderRadius')} ${CSSVar('videoPlayerBorderRadius')} 0 0;
+  border-radius: ${CSSVar('videoPlayerBorderRadius')};
+  /* Small screens run the player edge to edge, so its corners stay square */
+  &.isSmallScreen {
+    border-radius: 0;
+  }
 `;
 
 const Video = styled.video`
@@ -156,8 +182,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     activeLineIndex,
     videoFilePath,
     videoAspectRatio,
-    characterPool,
     isSmallScreen,
+    isLargeScreen,
     isVideoCollapsed,
     audioTrackCount,
     audioTrack,
@@ -166,8 +192,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     media.selectActiveLineIndex,
     media.selectVideoFilePath,
     media.selectAspectRatio,
-    editor.selectCharacterPool,
     settings.selectIsSmallScreen,
+    settings.selectIsLargeScreen,
     editor.selectIsVideoCollapsed,
     media.selectAudioTrackCount,
     media.selectAudioTrack
@@ -181,13 +207,6 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     (activeLine?.output?.trim() || activeLine?.input?.trim()) ??
     ''
   ).split('\n');
-  const activeLineCharacters =
-    activeLineIndex !== null && lines[activeLineIndex] && lines[activeLineIndex].character
-      ? (lines[activeLineIndex].character
-          .split(',')
-          .map((character) => characterPool.find(({ name }) => name === character))
-          .filter(Boolean) as TCharacter[])
-      : [];
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
     const video = media.getVideoElement();
@@ -272,67 +291,26 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
   }, [onPlaybackPause, onPlaybackResume, reportVideoUnplayable]);
 
   return (
-    <VideoStage className={classNames({ isCollapsed: effectiveCollapsed })} tabIndex={1}>
-      {!effectiveCollapsed && (
-        <TopBarCharacterBar className={classNames({ isCollapsed: effectiveCollapsed })}>
-          <TopBarPanel>
-            {activeLineCharacters && activeLineCharacters.length ? (
-              activeLineCharacters.map(({ name, color }) => (
-                <TopBarTag
-                  key={name}
-                  variant={TTagVariant.PRIMARY}
-                  color={color}
-                  size={TTagSize.SMALL}
-                >
-                  {name}
-                </TopBarTag>
-              ))
-            ) : activeLine ? (
-              <TopBarTag
-                variant={TTagVariant.PRIMARY}
-                color={ThemeColors.TEXT}
-                size={TTagSize.SMALL}
-              >
-                {t('videoPlayer.noCharacter')}
-              </TopBarTag>
-            ) : null}
-          </TopBarPanel>
-        </TopBarCharacterBar>
-      )}
+    <VideoStage
+      className={classNames({ isCollapsed: effectiveCollapsed, isLargeScreen })}
+      tabIndex={1}
+    >
       <TopBar className={classNames({ isCollapsed: effectiveCollapsed })}>
-        <TopBarPanel>
-          {activeLine ? (
+        <PlayHint>
+          {videoFilePath && (
             <>
-              <TopBarTag
-                variant={TTagVariant.PRIMARY}
-                color={ThemeColors.TEXT}
-                size={TTagSize.SMALL}
-              >
-                {msToHunanTime(activeLine.start_time)}
-              </TopBarTag>
-              <TopBarTag
-                variant={TTagVariant.PRIMARY}
-                color={ThemeColors.TEXT}
-                size={TTagSize.SMALL}
-                icon={TIcon.ARROW_RIGHT}
-              />
-              <TopBarTag
-                variant={TTagVariant.PRIMARY}
-                color={ThemeColors.TEXT}
-                size={TTagSize.SMALL}
-              >
-                {msToHunanTime(activeLine.end_time)}
-              </TopBarTag>
+              {t('videoPlayer.playHintPrefix')}
+              {playHintKeystroke}
+              {t('videoPlayer.playHintPostfix')}
             </>
-          ) : null}
-        </TopBarPanel>
+          )}
+        </PlayHint>
         <TopBarPanel>
           {videoFilePath && audioTrackCount > 1 && (
             <TopBarBlurWrapper>
               <Button
-                variant={TButtonVariant.PRIMARY}
+                variant={TButtonVariant.SECONDARY}
                 color={ThemeColors.TEXT}
-                size={TButtonSize.SMALL}
                 icon={TIcon.AUDIO_TRACK}
                 onClick={() => void projects.changeAudioTrack()}
               >
@@ -343,19 +321,19 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
           )}
           <TopBarBlurWrapper>
             <Button
-              variant={TButtonVariant.PRIMARY}
+              variant={TButtonVariant.SECONDARY}
               color={ThemeColors.TEXT}
-              size={TButtonSize.SMALL}
               icon={TIcon.VIDEO}
               onClick={() => void projects.changeVideo()}
-            />
+            >
+              {t('videoPlayer.selectVideo')}
+            </Button>
           </TopBarBlurWrapper>
           {isSmallScreen && (
             <TopBarBlurWrapper>
               <Button
-                color={ThemeColors.BG}
-                variant={TButtonVariant.PRIMARY}
-                size={TButtonSize.SMALL}
+                color={ThemeColors.TEXT}
+                variant={TButtonVariant.SECONDARY}
                 icon={isVideoCollapsed ? TIcon.ARROW_TOGGLE_DOWN : TIcon.ARROW_TOGGLE_UP}
                 onClick={() => editor.setVideoCollapsed(!isVideoCollapsed)}
               />
@@ -364,7 +342,11 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
         </TopBarPanel>
       </TopBar>
       {videoFilePath ? (
-        <VideoPlayerShell $hidden={effectiveCollapsed} style={{ aspectRatio }}>
+        <VideoPlayerShell
+          $hidden={effectiveCollapsed}
+          className={classNames({ isSmallScreen })}
+          style={{ aspectRatio }}
+        >
           <Video ref={media.registerVideoElement} style={{ aspectRatio }} playsInline muted />
           <Audio ref={media.registerAudioElement} />
           <BottomPanel>

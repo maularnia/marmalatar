@@ -166,7 +166,7 @@ export function EditorControls() {
         </Tooltip>
         {showAiControls && (
           <>
-            <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+            <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
             <AiSection
               ref={aiSectionRef}
               onMouseEnter={() => setShowAiOptions(true)}
@@ -219,7 +219,7 @@ export function EditorControls() {
             </Tooltip>
           </>
         )}
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+        <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
         <Tooltip
           label={
             <TooltipComplex
@@ -252,7 +252,7 @@ export function EditorControls() {
             onClick={() => editor.shiftAllLinesLater(timeAdjustmentStep)}
           />
         </Tooltip>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+        <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
         <Tooltip
           label={
             <TooltipComplex title={t('editorControls.autoMergeAdjacentLines')}>
@@ -361,7 +361,7 @@ export function EditorControls() {
             }}
           />
         </Tooltip>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+        <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
         <Tooltip
           side="right"
           label={
@@ -405,7 +405,7 @@ export function EditorControls() {
             />
           </Tooltip>
         )}
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+        <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
         <Tooltip
           label={
             <TooltipComplex
@@ -441,7 +441,7 @@ export function EditorControls() {
             />
           </Tooltip>
         )}
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+        <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
         <Tooltip
           side="right"
           label={

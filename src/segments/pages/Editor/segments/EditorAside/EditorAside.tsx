@@ -122,7 +122,7 @@ export default function EditorAside() {
           </FormsRow>
         </FormRoot>
       )}
-      <Hr variant={THrVariant.DIMMED} />
+      <Hr variant={THrVariant.TRANSPARENT} />
       {!isEditMode && <AiTranslationStatusPanel />}
       <GeneralSettings />
       {/* The same tempo (subtitle limits) section as the Settings overlay's General tab */}

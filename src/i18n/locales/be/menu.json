@@ -6,7 +6,13 @@
     "createButton": "Стварыць"
   },
   "buttons": {
-    "settings": "Налады"
+    "settings": "Налады",
+    "switchTheme": "Змяніць тэму",
+    "theme": {
+      "system": "Сістэмная тэма",
+      "light": "Светлая тэма",
+      "dark": "Цёмная тэма"
+    }
   },
   "archive": {
     "overlayTitle": "Архіў",

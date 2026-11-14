@@ -47,7 +47,7 @@ export default function EditorLayout() {
 
         {isLargeScreen && (
           <>
-            <Hr variant={THrVariant.DIMMED} orientation={THrOrient.VERTICAL} />
+            <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.VERTICAL} />
             <EditorAside />
           </>
         )}

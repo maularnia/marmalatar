@@ -6,7 +6,13 @@
     "createButton": "Stvaryć"
   },
   "buttons": {
-    "settings": "Nałady"
+    "settings": "Nałady",
+    "switchTheme": "Zmianić temu",
+    "theme": {
+      "system": "Sistemnaja tema",
+      "light": "Svietłaja tema",
+      "dark": "Ciomnaja tema"
+    }
   },
   "archive": {
     "overlayTitle": "Archiŭ",

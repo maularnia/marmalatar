@@ -36,7 +36,7 @@ const tErrors = i18n.getFixedT(null, 'errors');
 export const CREATE_PROJECT_KEY = '##create-project##';
 export const CREATE_PROMPT_TEMPLATE_KEY = '##create-prompt-template##';
 export const CREATE_GLOSSARY_KEY = '##create-glossary##';
-// Same idea, for the Settings button in MenuLogo.tsx -- sits outside FileList's rows but still
+// Same idea, for the Settings item in MenuFooter.tsx -- sits outside FileList's rows but still
 // participates in the same combined focus/navigation tracking.
 export const SETTINGS_KEY = '##settings##';
 
@@ -66,9 +66,9 @@ export function registerMenuItem(key: string, el: HTMLElement | null): void {
 
 // The navigable items in display order. Cheap to recompute from the store on every call, so it
 // isn't kept as state. Each section's Create button sits in its header, so it comes before the
-// section's items.
+// section's items; Settings, in the footer, comes last.
 function getCombinedItems(): TMenuItemRef[] {
-  const items: TMenuItemRef[] = [{ key: SETTINGS_KEY, kind: 'settings' }];
+  const items: TMenuItemRef[] = [];
   // Archived projects aren't listed, but the section (and its Create button) stays while any
   // project exists, so the archive remains reachable
   if (projects.get.list().length > 0) {
@@ -94,6 +94,8 @@ function getCombinedItems(): TMenuItemRef[] {
       ...glossaries.get.items().map((g) => ({ key: g.fileName, kind: 'glossary' as const }))
     );
   }
+  // Settings is pinned to the menu's footer, below every section
+  items.push({ key: SETTINGS_KEY, kind: 'settings' });
   return items;
 }
 

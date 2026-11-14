@@ -1,6 +1,5 @@
 import { TShade } from '@src/theme/definitions';
 import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
-import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
 import styled from 'styled-components';
 import { Outlet } from 'react-router-dom';
 import MainMenu from '../segments/menu';
@@ -15,10 +14,10 @@ const Root = styled.div`
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: ${MENU_EXPANDED_WIDTH}px 1px auto;
+  grid-template-columns: ${MENU_EXPANDED_WIDTH}px auto;
   position: relative;
   &.dynamic {
-    grid-template-columns: 34px 1px auto;
+    grid-template-columns: 34px auto;
   }
 `;
 
@@ -59,7 +58,6 @@ export default function GeneralLayout() {
       >
         <MainMenu />
       </RootMenu>
-      <Hr variant={THrVariant.DIMMED} orientation={THrOrient.VERTICAL} />
       <RootContent>
         <Outlet />
         <Overlays />

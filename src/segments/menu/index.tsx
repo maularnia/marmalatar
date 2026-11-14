@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { menu } from '@src/services/menu';
 import FileList from './FileList';
+import MenuFooter from './MenuFooter';
 import MenuLogo from './MenuLogo';
 
 // Backdrop starts growing only after menuExpandDelay (a quick mouse pass-by over the collapsed
@@ -53,11 +54,6 @@ const Scroll = styled.div`
     border-radius: ${CSSVar('appScrollbarBorderRadius')};
   }
 `;
-const SidebarBottom = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
 
 // Purely decorative -- carries the background/blur and is the only thing that's actually animated.
 // Positioned independently of Root's own (unanimated) width, so it can grow/shrink smoothly behind
@@ -80,8 +76,6 @@ const Root = styled.div`
   height: 100%;
   position: relative;
   &.dynamic {
-    display: grid;
-    grid-template-columns: auto 1px;
     position: absolute;
     z-index: 21;
     width: ${CSSVar('size34')};
@@ -93,6 +87,8 @@ const Root = styled.div`
 const Content = styled.div`
   height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 export default function MainMenu() {
   const [dynamic, compact] = useAppSelectors(menu.selectIsDynamic, menu.selectIsCompact);
@@ -124,15 +120,14 @@ export default function MainMenu() {
         <MenuKeystrokeProvider>
           <Header>
             <MenuLogo />
-            <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+            <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
           </Header>
           <Scroll>
             <FileList compact={!expanded} />
           </Scroll>
+          <MenuFooter compact={!expanded} />
         </MenuKeystrokeProvider>
-        <SidebarBottom></SidebarBottom>
       </Content>
-      {dynamic && !compact && <Hr orientation={THrOrient.VERTICAL} variant={THrVariant.DIMMED} />}
     </Root>
   );
 }

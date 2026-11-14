@@ -534,7 +534,7 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('tagTextWeightLarge', CSSVar('weightTextLarge')).register(),
     ...new ThemeVariable('tagTextWeightRegular', CSSVar('weightTextRegular')).register(),
     ...new ThemeVariable('tagTextWeightSmall', CSSVar('weightTextSmall')).register(),
-    ...new ThemeVariable('tagTextWeightNano', CSSVar('weightTextNano')).register(),
+    ...new ThemeVariable('tagTextWeightNano', CSSVar('bold')).register(),
   };
 
   const videoPlayer: TThemeVideoPlayerChapter = {

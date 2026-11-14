@@ -6,7 +6,13 @@
     "createButton": "Create"
   },
   "buttons": {
-    "settings": "Settings"
+    "settings": "Settings",
+    "switchTheme": "Switch theme",
+    "theme": {
+      "system": "System theme",
+      "light": "Light theme",
+      "dark": "Dark theme"
+    }
   },
   "archive": {
     "overlayTitle": "Archive",
