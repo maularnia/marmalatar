@@ -305,6 +305,16 @@ const myShortcuts = {
     group: 'Workspace',
     type: ShortcutType.REGULAR,
   },
+  autoFixTempo: {
+    keyCombo: 'alt+shift+f',
+    name: 'Auto fix tempo',
+    description: 'Fix overlapping and too-close line timings to the tempo limits',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Workspace',
+    type: ShortcutType.REGULAR,
+  },
   copyAllSourceToOutput: {
     keyCombo: 'alt+shift+c',
     name: 'Copy all source to output',
@@ -665,6 +675,11 @@ function EditorShortcuts() {
   useGuardedKeystroke('cleanup', (event) => {
     event.preventDefault();
     void editor.cleanup();
+  });
+
+  useGuardedKeystroke('autoFixTempo', (event) => {
+    event.preventDefault();
+    void editor.autoFixTempo();
   });
 
   useGuardedKeystroke('copyAllSourceToOutput', (event) => {

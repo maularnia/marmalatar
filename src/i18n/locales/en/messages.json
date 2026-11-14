@@ -98,5 +98,17 @@
   },
   "audioTracksLoader": {
     "extracting": "Extracting audio tracks information"
+  },
+  "tempoAutoFixed": {
+    "title": "Tempo fixed",
+    "message": "Lines retimed: {{count}}"
+  },
+  "tempoAutoFixNothing": {
+    "title": "Nothing to fix",
+    "message": "No line timings could be improved"
+  },
+  "tempoAutoFixCancelled": {
+    "title": "Tempo fix declined",
+    "message": "No lines were changed"
   }
 }

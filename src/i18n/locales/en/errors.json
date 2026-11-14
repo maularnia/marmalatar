@@ -183,5 +183,8 @@
   },
   "spellcheckDictionaryUpdateFailed": {
     "title": "Could not add the word to the dictionary"
+  },
+  "tempoAutoFixFailed": {
+    "title": "Tempo fix failed"
   }
 }

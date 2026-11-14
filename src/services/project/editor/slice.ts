@@ -3,7 +3,8 @@ import { TColor, TColorCustom } from '@src/theme/definitions';
 import { TCharacter, TInputColumn, TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { cleanupEntries, TEntryCleanupOptions } from '@utils/data/entryCleanup';
-import { findTimingIssues } from '@utils/tempo';
+import { autoFixTiming, findTimingIssues } from '@utils/tempo';
+import type { TProjectTempo } from '@bridge/definitions/projectEntry';
 import { folder } from '@src/services/folder';
 import { selectProjectTempo } from '../slice';
 
@@ -561,6 +562,18 @@ const editorSlice = createSlice({
       state.totalLinesToTranslate = state.lines.length;
       if (countChanged) state.renderEpoch += 1;
     },
+    // Tempo lives in the project slice, so the operation passes it in. Timings change in place:
+    // the line count and identities stay, so no renderEpoch bump.
+    tempoAutoFixed(
+      state,
+      action: PayloadAction<{ targetColumn: 'source' | 'output'; tempo: TProjectTempo }>
+    ) {
+      const { targetColumn, tempo } = action.payload;
+      addToHistory(state);
+      const getText = (line: TSubtitleLine): string =>
+        (targetColumn === 'source' ? line.input : line.output) ?? '';
+      state.lines = autoFixTiming(current(state.lines), tempo, getText).lines;
+    },
     allSourceCopiedToOutput(state, action: PayloadAction<{ overrideExisting: boolean }>) {
       const { overrideExisting } = action.payload;
       addToHistory(state);
@@ -658,6 +671,7 @@ export const {
   updateLineTiming,
   autoMergeAdjacentLines,
   cleanupLines,
+  tempoAutoFixed,
   allSourceCopiedToOutput,
   allTranslatedLinesCompleted,
   // Character pool

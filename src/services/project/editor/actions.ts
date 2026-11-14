@@ -18,7 +18,14 @@ import {
   makeMergeLinesFailedMessage,
   makeMergeOperationCancelledMessage,
   makeTextCopiedMessage,
+  makeTempoAutoFixCancelledMessage,
+  makeTempoAutoFixFailedMessage,
+  makeTempoAutoFixNothingMessage,
+  makeTempoAutoFixedMessage,
 } from '@src/services/project/editor/toasts';
+import { confirmAutoFixTempo } from './dialogs/autoFixTempo/autoFixTempoConfirmation';
+import { autoFixTiming } from '@utils/tempo';
+import { selectProjectTempo } from '../slice';
 import { confirmAutoMerge } from './dialogs/autoMergeLines/autoMergeLinesConfirmation';
 import { TCleanupFormValues } from './dialogs/cleanup/CleanupDialog';
 import { confirmCleanup } from './dialogs/cleanup/cleanupConfirmation';
@@ -37,6 +44,7 @@ import {
   allTranslatedLinesCompleted,
   autoMergeAdjacentLines,
   cleanupLines,
+  tempoAutoFixed,
   lineInserted,
   lineRemoved,
   lineSplit,
@@ -522,6 +530,39 @@ export async function cleanup(): Promise<void> {
   requestAnimationFrame(() => {
     focusEditor();
   });
+}
+
+// Retimes overlapping and too-close lines to the project's tempo limits (see autoFixTiming), on
+// the lines whose column for the current mode has text. Asks first; one undo step.
+export async function autoFixTempo(): Promise<void> {
+  const tempo = Service.select(selectProjectTempo);
+  if (isBulkTranslationRunning() || !tempo.enabled) return;
+  const isEditMode = Service.select(selectIsEditMode);
+  let confirmed: boolean;
+  try {
+    confirmed = await confirmAutoFixTempo(tempo);
+  } catch (e) {
+    toast.push(
+      makeTempoAutoFixFailedMessage(
+        e instanceof Error ? e.message : 'Unexpected critical error while fixing tempo'
+      )
+    );
+    return;
+  }
+  if (!confirmed) {
+    toast.push(makeTempoAutoFixCancelledMessage());
+    return;
+  }
+  const targetColumn = isEditMode ? 'source' : 'output';
+  // A dry run on the current lines: an empty fix shouldn't leave an undo step behind
+  const getText = (line: TSubtitleLine): string => (isEditMode ? line.input : line.output) ?? '';
+  const { changedCount } = autoFixTiming(lines(), tempo, getText);
+  if (!changedCount) {
+    toast.push(makeTempoAutoFixNothingMessage());
+    return;
+  }
+  Service.dispatch(tempoAutoFixed({ targetColumn, tempo }));
+  toast.push(makeTempoAutoFixedMessage(changedCount));
 }
 
 export async function copyAllSourceToOutput(): Promise<void> {

@@ -75,7 +75,12 @@ export function passesTempo(
 // `minIntervalFrames`, or overlapping while overlaps are highlighted
 function isGapTooSmall(gapMs: number, tempo: TProjectTempo): boolean {
   if (gapMs < 0) return tempo.highlightOverlaps;
-  return gapMs < tempo.minIntervalFrames * FRAME_MS;
+  return gapMs < getMinGapMs(tempo);
+}
+
+// The gap the interval rule requires between consecutive entries
+export function getMinGapMs(tempo: TProjectTempo): number {
+  return tempo.minIntervalFrames * FRAME_MS;
 }
 
 /** Which list neighbours of `lines[index]` it sits too close to (or overlaps) */
@@ -104,7 +109,7 @@ export function getTempoNeighbourStats(
 export function findTimingIssues(lines: readonly TSubtitleLine[], tempo: TProjectTempo): boolean[] {
   const flags = lines.map(() => false);
 
-  const minGapMs = tempo.minIntervalFrames * FRAME_MS;
+  const minGapMs = getMinGapMs(tempo);
   for (let i = 1; i < lines.length; i++) {
     const gap = lines[i].start_time - lines[i - 1].end_time;
     if (gap >= 0 && gap < minGapMs) {
@@ -131,4 +136,70 @@ export function findTimingIssues(lines: readonly TSubtitleLine[], tempo: TProjec
   }
 
   return flags;
+}
+
+/** Moves line timings to satisfy the rules between consecutive entries (list order), as far as
+ * that's possible without reshaping a line. Each pair is taken with the timings already adjusted
+ * for the pair before it, so a fix carries over:
+ * - Skipped when either line has no text (`getText`: the column the current mode works on) -- an
+ *   untranslated line isn't worth retiming yet
+ * - Skipped when one line lies entirely within the other: there's no single cut that separates them
+ * - A partial overlap (the next line starts inside the previous one) is cut at the middle of the
+ *   intersection: the previous line ends and the next starts there
+ * - A gap below `minIntervalFrames` (a cut overlap leaves a gap of zero) is widened symmetrically
+ *   from its middle to the minimum, rounded outward to whole milliseconds -- unless that would
+ *   leave either line with no duration, in which case the gap is left as it is
+ * Returns new line objects only for the lines that changed, and how many did. */
+export function autoFixTiming(
+  lines: readonly TSubtitleLine[],
+  tempo: TProjectTempo,
+  getText: (line: TSubtitleLine) => string
+): { lines: TSubtitleLine[]; changedCount: number } {
+  const minGapMs = getMinGapMs(tempo);
+  const result = [...lines];
+  const changed = new Set<number>();
+
+  const update = (
+    index: number,
+    timing: Partial<Pick<TSubtitleLine, 'start_time' | 'end_time'>>
+  ) => {
+    result[index] = { ...result[index], ...timing };
+    changed.add(index);
+  };
+
+  for (let i = 1; i < result.length; i++) {
+    const prev = result[i - 1];
+    const next = result[i];
+    if (!getText(prev).trim() || !getText(next).trim()) continue;
+
+    const nextInsidePrev = next.start_time >= prev.start_time && next.end_time <= prev.end_time;
+    const prevInsideNext = prev.start_time >= next.start_time && prev.end_time <= next.end_time;
+    if (nextInsidePrev || prevInsideNext) continue;
+
+    let prevEnd = prev.end_time;
+    let nextStart = next.start_time;
+    if (nextStart < prevEnd) {
+      const middle = (nextStart + prevEnd) / 2;
+      prevEnd = middle;
+      nextStart = middle;
+    }
+
+    if (nextStart - prevEnd < minGapMs) {
+      const middle = (nextStart + prevEnd) / 2;
+      const widenedEnd = Math.floor(middle - minGapMs / 2);
+      const widenedStart = Math.ceil(middle + minGapMs / 2);
+      if (widenedEnd > prev.start_time && widenedStart < next.end_time) {
+        prevEnd = widenedEnd;
+        nextStart = widenedStart;
+      }
+    }
+
+    // A cut overlap whose widening was skipped still has to land on whole milliseconds
+    prevEnd = Math.round(prevEnd);
+    nextStart = Math.max(Math.round(nextStart), prevEnd);
+    if (prevEnd !== prev.end_time) update(i - 1, { end_time: prevEnd });
+    if (nextStart !== next.start_time) update(i, { start_time: nextStart });
+  }
+
+  return { lines: result, changedCount: changed.size };
 }

@@ -183,5 +183,8 @@
   },
   "spellcheckDictionaryUpdateFailed": {
     "title": "Nie atrymałasia dadać słova ŭ słoŭnik"
+  },
+  "tempoAutoFixFailed": {
+    "title": "Nie atrymałasia vypravić temp"
   }
 }

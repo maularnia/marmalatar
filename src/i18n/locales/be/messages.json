@@ -98,5 +98,17 @@
   },
   "audioTracksLoader": {
     "extracting": "Чытаем звесткі пра аўдыядарожкі"
+  },
+  "tempoAutoFixed": {
+    "title": "Тэмп выпраўлены",
+    "message": "Зменена радкоў: {{count}}"
+  },
+  "tempoAutoFixNothing": {
+    "title": "Няма чаго выпраўляць",
+    "message": "Час радкоў палепшыць не атрымалася"
+  },
+  "tempoAutoFixCancelled": {
+    "title": "Выпраўленне тэмпу скасаванае",
+    "message": "Ніводнага радку не зменена"
   }
 }

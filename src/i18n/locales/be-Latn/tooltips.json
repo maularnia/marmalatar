@@ -18,7 +18,8 @@
     "translateFocusedLine": "Pierakłaści\nabrany radok",
     "cleanup": "Ačystka",
     "copyAllSourceToOutput": "Skapijavać\n usie radki krynicy\nŭ pierakład",
-    "completeAllTranslated": "Paznačyć usie\n radki z pierakładam\njak hatovyja"
+    "completeAllTranslated": "Paznačyć usie\n radki z pierakładam\njak hatovyja",
+    "autoFixTempo": "Aŭtavypraŭlennie tempu"
   },
   "workTableLine": {
     "markLineComplete": "Adznačyć radok jak \"Hatovy\"",

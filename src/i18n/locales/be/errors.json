@@ -183,5 +183,8 @@
   },
   "spellcheckDictionaryUpdateFailed": {
     "title": "Не атрымалася дадаць слова ў слоўнік"
+  },
+  "tempoAutoFixFailed": {
+    "title": "Не атрымалася выправіць тэмп"
   }
 }
