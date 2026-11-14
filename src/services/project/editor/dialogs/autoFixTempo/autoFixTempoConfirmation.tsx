@@ -6,16 +6,27 @@ import { AutoFixTempoDialog } from './AutoFixTempoDialog';
 
 const t = i18n.getFixedT(null, 'dialogs');
 
-/** Resolves `true` on confirm, `false` on dismiss. */
-export const confirmAutoFixTempo = (tempo: TProjectTempo): Promise<boolean> =>
-  modal.confirm(
-    AutoFixTempoDialog,
-    {
-      minIntervalFrames: tempo.minIntervalFrames,
-      minIntervalMs: Math.round(getMinGapMs(tempo)),
-    },
-    {
-      confirmButton: { children: t('autoFixTempo.confirmButton') },
-      dismissButton: { children: t('shared.cancel') },
-    }
-  );
+export type TAutoFixTempoOptions = {
+  /** Also lengthen lines read faster than the CPS limit, where there's room */
+  extendForCps: boolean;
+};
+
+/** Resolves the chosen options on confirm, `null` on dismiss. */
+export const confirmAutoFixTempo = (tempo: TProjectTempo): Promise<TAutoFixTempoOptions | null> => {
+  let extendForCps = false;
+  return modal
+    .confirm(
+      AutoFixTempoDialog,
+      {
+        minIntervalFrames: tempo.minIntervalFrames,
+        minIntervalMs: Math.round(getMinGapMs(tempo)),
+        maxCharsPerSecond: tempo.maxCharsPerSecond,
+        onExtendForCpsChange: (value) => (extendForCps = value),
+      },
+      {
+        confirmButton: { children: t('autoFixTempo.confirmButton') },
+        dismissButton: { children: t('shared.cancel') },
+      }
+    )
+    .then((confirmed) => (confirmed ? { extendForCps } : null));
+};

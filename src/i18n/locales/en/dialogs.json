@@ -100,9 +100,10 @@
   },
   "autoFixTempo": {
     "title": "Auto fix tempo?",
-    "overlapping": "Lines overlapping in time will be separated using the minimal interline interval of {{interval}}",
+    "overlapping": "Lines overlapping in time will be separated using the minimal interline interval of <value>{{interval}}</value>",
     "covering": "Lines that completely cover other lines will be omitted",
     "interval": "{{frames}} frames ({{ms}} ms)",
+    "extendForCps": "Attempt to extend lines with CPS higher than the limit of <value>{{limit}}</value>",
     "confirmButton": "Fix"
   }
 }

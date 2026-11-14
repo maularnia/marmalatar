@@ -566,13 +566,21 @@ const editorSlice = createSlice({
     // the line count and identities stay, so no renderEpoch bump.
     tempoAutoFixed(
       state,
-      action: PayloadAction<{ targetColumn: 'source' | 'output'; tempo: TProjectTempo }>
+      action: PayloadAction<{
+        targetColumn: 'source' | 'output';
+        tempo: TProjectTempo;
+        extendForCps: boolean;
+        maxEndMs: number | null;
+      }>
     ) {
-      const { targetColumn, tempo } = action.payload;
+      const { targetColumn, tempo, extendForCps, maxEndMs } = action.payload;
       addToHistory(state);
       const getText = (line: TSubtitleLine): string =>
         (targetColumn === 'source' ? line.input : line.output) ?? '';
-      state.lines = autoFixTiming(current(state.lines), tempo, getText).lines;
+      state.lines = autoFixTiming(current(state.lines), tempo, getText, {
+        extendForCps,
+        maxEndMs,
+      }).lines;
     },
     allSourceCopiedToOutput(state, action: PayloadAction<{ overrideExisting: boolean }>) {
       const { overrideExisting } = action.payload;

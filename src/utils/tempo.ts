@@ -149,11 +149,16 @@ export function findTimingIssues(lines: readonly TSubtitleLine[], tempo: TProjec
  * - A gap below `minIntervalFrames` (a cut overlap leaves a gap of zero) is widened symmetrically
  *   from its middle to the minimum, rounded outward to whole milliseconds -- unless that would
  *   leave either line with no duration, in which case the gap is left as it is
+ * With `extendForCps`, a last pass then lengthens lines read faster than `maxCharsPerSecond`: the
+ * start stays, the end moves later until the reading speed fits -- or, when that would come closer
+ * to the next line than `minIntervalFrames` (or past `maxEndMs`, the video's end), as far as there
+ * is room. A line already touching that limit stays as it is.
  * Returns new line objects only for the lines that changed, and how many did. */
 export function autoFixTiming(
   lines: readonly TSubtitleLine[],
   tempo: TProjectTempo,
-  getText: (line: TSubtitleLine) => string
+  getText: (line: TSubtitleLine) => string,
+  options: { extendForCps?: boolean; maxEndMs?: number | null } = {}
 ): { lines: TSubtitleLine[]; changedCount: number } {
   const minGapMs = getMinGapMs(tempo);
   const result = [...lines];
@@ -199,6 +204,24 @@ export function autoFixTiming(
     nextStart = Math.max(Math.round(nextStart), prevEnd);
     if (prevEnd !== prev.end_time) update(i - 1, { end_time: prevEnd });
     if (nextStart !== next.start_time) update(i, { start_time: nextStart });
+  }
+
+  // Last, so the room each line has is measured against neighbours already retimed above
+  if (options.extendForCps) {
+    for (let i = 0; i < result.length; i++) {
+      const line = result[i];
+      const chars = countVisibleChars(getText(line));
+      if (!chars) continue;
+      const requiredMs = Math.ceil((chars * 1000) / tempo.maxCharsPerSecond);
+      if (line.end_time - line.start_time >= requiredMs) continue;
+
+      const next = result[i + 1];
+      const roomEnd = next
+        ? Math.floor(next.start_time - minGapMs)
+        : (options.maxEndMs ?? Number.POSITIVE_INFINITY);
+      const end = Math.min(line.start_time + requiredMs, roomEnd);
+      if (end > line.end_time) update(i, { end_time: end });
+    }
   }
 
   return { lines: result, changedCount: changed.size };
