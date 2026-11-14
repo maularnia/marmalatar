@@ -19,7 +19,7 @@ import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { passesTempo } from '@utils/tempo';
 import classNames from 'classnames';
-import { type ClipboardEvent, type ReactNode, use, useEffect, useMemo, useRef } from 'react';
+import { type ClipboardEvent, use, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { CharacterSelector, CharacterSelectorHandle } from './CharacterSelector/CharacterSelector';
@@ -46,7 +46,6 @@ type EditorTableLineProps = {
   onSourceTextChange: (text: string) => void;
   onMergeUpClick: () => void;
   onMergeDownClick: () => void;
-  panelNode?: ReactNode;
 };
 
 const LineNumber = styled.div`
@@ -333,15 +332,6 @@ const Line = styled.div`
   }
 `;
 
-const LinePanelSlot = styled.div`
-  position: absolute;
-  right: 0;
-  top: 0;
-  transform: translate3d(0, -50%, 0);
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 5)};
-  border-radius: ${CSSVar('size4')};
-  backdrop-filter: blur(${CSSVar('blurHeavy')});
-`;
 const MegeSlot = styled.div`
   position: absolute;
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 5)};
@@ -388,7 +378,6 @@ export default function EditorTableLine({
   onSourceTextChange,
   onMergeUpClick,
   onMergeDownClick,
-  panelNode,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
   const { zoneRef } = use(KeystrokeZoneContext);
@@ -645,7 +634,6 @@ export default function EditorTableLine({
           </LineCell>
         )}
       </LineContent>
-      {!isFrozen && !isTranslationBusy && <LinePanelSlot>{panelNode}</LinePanelSlot>}
       {isFocused && (
         <>
           <MergeSlotUp>

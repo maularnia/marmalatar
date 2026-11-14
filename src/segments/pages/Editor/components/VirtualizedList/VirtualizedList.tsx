@@ -1,5 +1,6 @@
 import {
   ReactElement,
+  ReactNode,
   Ref,
   RefObject,
   useCallback,
@@ -46,6 +47,12 @@ type VirtualizedListProps<T extends VirtualizedItem> = {
   renderEpoch?: number;
   onRenderEpochEnded?: () => void;
   renderItem: (params: { item: T; onMeasure: (height: number) => void }) => ReactElement;
+  /** Called whenever rendered item positions change (measurement, resize, items change), so
+   * consumers positioning things against items (via `getElementPositionByIndex`) can re-sync. */
+  onLayoutChange?: () => void;
+  /** Static content rendered inside the list's content container, before the virtualized items.
+   * It scrolls together with the items and shares their coordinate space. */
+  children?: ReactNode;
 };
 
 const Container = styled.div`
@@ -73,6 +80,8 @@ export default function VirtualizedList<T extends VirtualizedItem>({
   renderEpoch = 0,
   onRenderEpochEnded,
   renderItem,
+  onLayoutChange,
+  children,
 }: VirtualizedListProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pinnedIndexSet = useMemo(() => new Set(pinnedIndices ?? []), [pinnedIndices]);
@@ -83,6 +92,9 @@ export default function VirtualizedList<T extends VirtualizedItem>({
   const [visiblePortion, setVisiblePortion] = useState<Array<VisiblePortion<T>>>([]);
   const visiblePortionRef = useRef<Array<VisiblePortion<T>>>([]);
   visiblePortionRef.current = visiblePortion;
+
+  const onLayoutChangeRef = useRef(onLayoutChange);
+  onLayoutChangeRef.current = onLayoutChange;
 
   const getItemKey = useCallback((item: T) => item.line_no, []);
   const getListOffsetTop = () => containerRef.current?.offsetTop ?? 0;
@@ -136,6 +148,7 @@ export default function VirtualizedList<T extends VirtualizedItem>({
 
     visibleKeyRef.current = nextVisibleKey;
     setVisiblePortion(nextVisible);
+    onLayoutChangeRef.current?.();
     return true;
   }, [getItemFingerprint, getItemKey, items, overscanPx, pinnedIndexSet, scrollContainerRef]);
 
@@ -287,5 +300,10 @@ export default function VirtualizedList<T extends VirtualizedItem>({
     );
   });
 
-  return <Container ref={containerRef}>{renderedVisibleItems}</Container>;
+  return (
+    <Container ref={containerRef}>
+      {children}
+      {renderedVisibleItems}
+    </Container>
+  );
 }
