@@ -18,7 +18,8 @@
     "translateFocusedLine": "Translate focused line",
     "cleanup": "Cleanup",
     "copyAllSourceToOutput": "Copy all\nsource to output",
-    "completeAllTranslated": "Mark all\ntranslated lines\nas complete"
+    "completeAllTranslated": "Mark all\ntranslated lines\nas complete",
+    "autoFixTempo": "Auto fix tempo"
   },
   "workTableLine": {
     "markLineComplete": "Toggle line complete",

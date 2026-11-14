@@ -150,3 +150,35 @@ export function makeCopyAllFailedMessage(message: string): TToastParams {
     message,
   };
 }
+
+export function makeTempoAutoFixedMessage(count: number): TToastParams {
+  return {
+    type: TMessageType.MESSAGE,
+    title: t('tempoAutoFixed.title'),
+    message: t('tempoAutoFixed.message', { count }),
+  };
+}
+
+export function makeTempoAutoFixNothingMessage(): TToastParams {
+  return {
+    type: TMessageType.MESSAGE,
+    title: t('tempoAutoFixNothing.title'),
+    message: t('tempoAutoFixNothing.message'),
+  };
+}
+
+export function makeTempoAutoFixCancelledMessage(): TToastParams {
+  return {
+    type: TMessageType.MESSAGE,
+    title: t('tempoAutoFixCancelled.title'),
+    message: t('tempoAutoFixCancelled.message'),
+  };
+}
+
+export function makeTempoAutoFixFailedMessage(message: string): TToastParams {
+  return {
+    type: TMessageType.ERROR,
+    title: tErrors('tempoAutoFixFailed.title'),
+    message,
+  };
+}

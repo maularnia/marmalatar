@@ -97,5 +97,13 @@
     "title": "Extracting waveforms failed",
     "message": "It is impossible to extract data from audio track {{track}}. The file is corrupted or encoded with a codec unknown to science",
     "selectOtherTrackButton": "Select other audio track"
+  },
+  "autoFixTempo": {
+    "title": "Auto fix tempo?",
+    "overlapping": "Lines overlapping in time will be separated using the minimal interline interval of <value>{{interval}}</value>",
+    "covering": "Lines that completely cover other lines will be omitted",
+    "interval": "{{frames}} frames ({{ms}} ms)",
+    "extendForCps": "Attempt to extend lines with CPS higher than the limit of <value>{{limit}}</value>",
+    "confirmButton": "Fix"
   }
 }

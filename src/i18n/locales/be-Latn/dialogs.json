@@ -97,5 +97,13 @@
     "title": "Nie atrymałasia vyličyć chvalevyja formy",
     "message": "Niemahčyma pračytać danyja aŭdyjadarožki {{track}}. Fajł paškodžany abo zakadavany nieviadomym navucy kodekam",
     "selectOtherTrackButton": "Abrać inšuju aŭdyjadarožku"
+  },
+  "autoFixTempo": {
+    "title": "Zapuscić aŭtavyraŭliennie tempu?",
+    "overlapping": "Radki, jakija nakładajucca adzin na adzin, buduć razdzielenyja minimalnym intervałam u <value>{{interval}}</value>",
+    "covering": "Radki, jakija całkam pierakryvajuć inšyja, buduć prapuščanyja",
+    "interval": "{{frames}} kadr. ({{ms}} ms)",
+    "extendForCps": "Pasprabavać padoŭžyć radki z chutkasciu vyšej za limit u <value>{{limit}} simb/sek</value>",
+    "confirmButton": "Vypravić"
   }
 }

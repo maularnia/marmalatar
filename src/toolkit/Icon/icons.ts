@@ -107,4 +107,5 @@ export enum TIcon {
   TIME_OK = 'time-ok',
   TIME_ERROR = 'time-error',
   TIME_SPAN = 'time-span',
+  TIME_FIX = 'time-fix',
 }

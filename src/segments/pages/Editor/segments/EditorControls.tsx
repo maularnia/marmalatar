@@ -100,6 +100,7 @@ export function EditorControls() {
     videoDurationMs,
     videoPath,
     focusedColumn,
+    tempo,
   ] = useAppSelectors(
     ai.selectCurrentBulkJob,
     ai.selectIsBusy,
@@ -111,7 +112,8 @@ export function EditorControls() {
     editor.selectCanRedo,
     media.selectVideoDurationMs,
     media.selectVideoFilePath,
-    editor.selectFocusedColumn
+    editor.selectFocusedColumn,
+    projects.selectTempo
   );
   // Controls that can't be used in the current mode or without an AI integration aren't rendered
   // at all, rather than shown disabled. A running bulk translation keeps its progress and stop
@@ -279,6 +281,22 @@ export function EditorControls() {
             onClick={() => void editor.cleanup()}
           />
         </Tooltip>
+        {tempo.enabled && (
+          <Tooltip
+            side="right"
+            label={
+              <TooltipComplex title={t('editorControls.autoFixTempo')}>
+                <TooltipKeystrokeHint keys={['Alt', 'Shift', 'F']} />
+              </TooltipComplex>
+            }
+          >
+            <PanelButton
+              disabled={!isAutoMergeAvailable}
+              icon={TIcon.TIME_FIX}
+              onClick={() => void editor.autoFixTempo()}
+            />
+          </Tooltip>
+        )}
         {!isEditMode && (
           <>
             <Tooltip

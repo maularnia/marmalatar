@@ -98,5 +98,17 @@
   },
   "audioTracksLoader": {
     "extracting": "Čytajem zviestki pra aŭdyjadarožki"
+  },
+  "tempoAutoFixed": {
+    "title": "Temp vypraŭleny",
+    "message": "Zmieniena radkoŭ: {{count}}"
+  },
+  "tempoAutoFixNothing": {
+    "title": "Niama čaho vypraŭliać",
+    "message": "Čas radkoŭ palepšyć nie atrymałasia"
+  },
+  "tempoAutoFixCancelled": {
+    "title": "Vypraŭlennie tempu skasavanaje",
+    "message": "Nivodnaha radku nie zmieniena"
   }
 }
