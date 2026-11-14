@@ -81,10 +81,11 @@ const ProjectSaveV1Schema = ProjectFileHeaderSchema.extend({
 // Version 2 adds the project's own spellcheck dictionary, per language code (the project service
 // writes it, projects.addToDictionary; the renderer only reads it) and the project's subtitle
 // limits, `tempo`, which the renderer writes with the body. Version 2 files from before `tempo`
-// read with its defaults.
+// or `spellcheck` read with their defaults: both were added without a version bump, so version 2
+// files without them exist, and the project service (which lists them) already reads them that way.
 const ProjectSaveV2Schema = ProjectSaveV1Schema.extend({
   version: z.literal(2),
-  spellcheck: ProjectSpellcheckSchema,
+  spellcheck: ProjectSpellcheckSchema.catch({}).default({}),
   tempo: ProjectTempoSchema.default(PROJECT_TEMPO_DEFAULTS),
 });
 
