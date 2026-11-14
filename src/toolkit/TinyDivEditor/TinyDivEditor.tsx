@@ -1,3 +1,4 @@
+import { usePopperPortal } from '@providers/PopperPortalProvider';
 import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { getMarkCss, type SpellCheckMark } from '@ui-toolkit/Mark';
@@ -13,6 +14,7 @@ import {
   type InputEvent as ReactInputEvent,
   type Ref,
 } from 'react';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { getCaretOffset, renderText, setCaretOffset } from './caret';
 import { SpellcheckOptions, TSuggestionsStatus } from './SpellcheckOptions';
@@ -64,12 +66,26 @@ const EditableSurface = styled.div`
   }
 `;
 
-// The suggestions panel while it's open: for which mark, what it shows and where it sits
+// Where the suggestions panel is anchored for a mark: the mark's top, bottom and left edges in
+// viewport coordinates, from the mark as it is in the DOM right now, or null when it isn't there
+function getMarkPosition(
+  editable: HTMLElement | null,
+  markId: string
+): { top: number; bottom: number; left: number } | null {
+  const target = editable?.querySelector(`mark[data-mark-id="${markId}"]`);
+  if (!target) return null;
+  const { top, bottom, left } = target.getBoundingClientRect();
+  return { top, bottom, left };
+}
+
+// The suggestions panel while it's open: for which mark, what it shows and where it sits (in
+// viewport coordinates: the panel is fixed and portaled, see the render)
 type TActivePanel = {
   mark: SpellCheckMark;
   status: TSuggestionsStatus;
   suggestions: string[];
   top: number;
+  bottom: number;
   left: number;
 };
 
@@ -81,9 +97,9 @@ export function TinyDivEditor({
   onInput,
   ...rest
 }: TTinyDivEditorProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
   const editableRef = useRef<HTMLDivElement>(null);
   const [activePanel, setActivePanel] = useState<TActivePanel | null>(null);
+  const popperPortal = usePopperPortal();
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeMarkIdRef = useRef<string | null>(null);
@@ -232,18 +248,10 @@ export function TinyDivEditor({
       if (!mark) return;
 
       showTimeoutRef.current = setTimeout(() => {
-        // The panel's position relative to Root, from the mark as it is in the DOM right now (it's
-        // replaced on every re-check), or null once the caret has left it or it's gone
-        const getPosition = (): Pick<TActivePanel, 'top' | 'left'> | null => {
-          const root = rootRef.current;
-          const editable = editableRef.current;
-          if (!root || !editable || activeMarkIdRef.current !== id) return null;
-          const liveTarget = editable.querySelector(`mark[data-mark-id="${id}"]`);
-          if (!liveTarget) return null;
-          const markRect = liveTarget.getBoundingClientRect();
-          const rootRect = root.getBoundingClientRect();
-          return { top: markRect.top - rootRect.top, left: markRect.left - rootRect.left };
-        };
+        // The panel's position, from the mark as it is in the DOM right now (it's replaced on
+        // every re-check), or null once the caret has left it or it's gone
+        const getPosition = () =>
+          activeMarkIdRef.current === id ? getMarkPosition(editableRef.current, mark.id) : null;
 
         const loadingPosition = getPosition();
         if (!loadingPosition) return;
@@ -265,7 +273,7 @@ export function TinyDivEditor({
               setActivePanel(null);
               return;
             }
-            // Hunspell lists its best guess first; the panel opens above the word, so the list is
+            // Hunspell lists its best guess first; the panel usually opens above the word, so the list is
             // reversed to put that guess last, right next to the word
             setActivePanel({
               mark,
@@ -284,6 +292,22 @@ export function TinyDivEditor({
     document.addEventListener('selectionchange', checkCaretPosition);
     return () => document.removeEventListener('selectionchange', checkCaretPosition);
   }, [marks, suggest]);
+
+  // The panel is fixed to the viewport, so it follows its word when anything around it scrolls
+  // (the editor's list, the page). Capture phase: scroll events don't bubble.
+  const activeMarkId = activePanel?.mark.id;
+  useEffect(() => {
+    if (!activeMarkId) return;
+    const follow = () => {
+      const position = getMarkPosition(editableRef.current, activeMarkId);
+      if (!position) return;
+      setActivePanel((panel) =>
+        panel && panel.mark.id === activeMarkId ? { ...panel, ...position } : panel
+      );
+    };
+    document.addEventListener('scroll', follow, true);
+    return () => document.removeEventListener('scroll', follow, true);
+  }, [activeMarkId]);
 
   const applySuggestion = useCallback(
     (mark: SpellCheckMark, suggestion: string) => {
@@ -310,7 +334,7 @@ export function TinyDivEditor({
   );
 
   return (
-    <Root ref={rootRef}>
+    <Root>
       <EditableSurface
         ref={editableRefCallback}
         onInput={handleInput}
@@ -334,23 +358,29 @@ export function TinyDivEditor({
           rest.onKeyDown?.(event);
         }}
       />
-      {activePanel && (
-        // Keyed by the mark so the panel's highlight starts fresh for every word
-        <SpellcheckOptions
-          key={activePanel.mark.id}
-          status={activePanel.status}
-          suggestions={activePanel.suggestions}
-          top={activePanel.top}
-          left={activePanel.left}
-          onAddToDictionary={(target) => {
-            // The mark goes once the dictionary is updated (see useSpellchecker)
-            closeSuggestions();
-            spellchecker.addToDictionary(target, activePanel.mark.word);
-          }}
-          onApplySuggestion={(suggestion) => applySuggestion(activePanel.mark, suggestion)}
-          onDismiss={() => closeSuggestions({ keepSuppressed: true })}
-        />
-      )}
+      {activePanel &&
+        popperPortal &&
+        // Portaled into the app's overlay layer: inside the editor it would be trapped in its row's
+        // stacking context (the focused row's z-index), under anything layered above that row --
+        // like the focused line's panel. Keyed by the mark so the highlight starts fresh per word.
+        createPortal(
+          <SpellcheckOptions
+            key={activePanel.mark.id}
+            status={activePanel.status}
+            suggestions={activePanel.suggestions}
+            top={activePanel.top}
+            bottom={activePanel.bottom}
+            left={activePanel.left}
+            onAddToDictionary={(target) => {
+              // The mark goes once the dictionary is updated (see useSpellchecker)
+              closeSuggestions();
+              spellchecker.addToDictionary(target, activePanel.mark.word);
+            }}
+            onApplySuggestion={(suggestion) => applySuggestion(activePanel.mark, suggestion)}
+            onDismiss={() => closeSuggestions({ keepSuppressed: true })}
+          />,
+          popperPortal
+        )}
     </Root>
   );
 }
