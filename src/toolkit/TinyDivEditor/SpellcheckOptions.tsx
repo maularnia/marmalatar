@@ -23,7 +23,7 @@ type TSpellcheckOptionsProps = {
   /** In display order: the panel opens above the word, so the caller puts the best guess last,
    * next to the word */
   suggestions: readonly string[];
-  /** Relative to the editor's root (the panel is positioned inside it) */
+  /** Viewport coordinates of the word: the panel is fixed (the editor portals it) */
   top: number;
   left: number;
   /** A dictionary item was clicked or confirmed with Enter; the caller knows the word */
@@ -34,7 +34,7 @@ type TSpellcheckOptionsProps = {
 };
 
 const Panel = styled.div`
-  position: absolute;
+  position: fixed;
   z-index: 1000;
   transform: translateY(-100%);
   min-width: 120px;
