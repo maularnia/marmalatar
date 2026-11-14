@@ -1,4 +1,4 @@
-import { useAppSelectors } from '@store/hooks';
+import { useAppSelector, useAppSelectors } from '@store/hooks';
 import { media } from '@src/services/media';
 import { KeystrokeZoneContext } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/project';
@@ -19,7 +19,7 @@ import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { passesTempo } from '@utils/tempo';
 import classNames from 'classnames';
-import { type ClipboardEvent, type ReactNode, use, useEffect, useMemo, useRef } from 'react';
+import { type ClipboardEvent, use, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { CharacterSelector, CharacterSelectorHandle } from './CharacterSelector/CharacterSelector';
@@ -46,7 +46,6 @@ type EditorTableLineProps = {
   onSourceTextChange: (text: string) => void;
   onMergeUpClick: () => void;
   onMergeDownClick: () => void;
-  panelNode?: ReactNode;
 };
 
 const LineNumber = styled.div`
@@ -333,15 +332,6 @@ const Line = styled.div`
   }
 `;
 
-const LinePanelSlot = styled.div`
-  position: absolute;
-  right: 0;
-  top: 0;
-  transform: translate3d(0, -50%, 0);
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 5)};
-  border-radius: ${CSSVar('size4')};
-  backdrop-filter: blur(${CSSVar('blurHeavy')});
-`;
 const MegeSlot = styled.div`
   position: absolute;
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 5)};
@@ -388,7 +378,6 @@ export default function EditorTableLine({
   onSourceTextChange,
   onMergeUpClick,
   onMergeDownClick,
-  panelNode,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
   const { zoneRef } = use(KeystrokeZoneContext);
@@ -413,12 +402,20 @@ export default function EditorTableLine({
   const isNegativeStart = startTime < 0;
   const isBeyondVideo =
     videoDurationMs != null && (startTime > videoDurationMs || endTime > videoDurationMs);
+  // The rules between lines (too close to a neighbour, overlapping another line) depend on the
+  // other lines, so they come from one memoized list the row indexes into. Its own subscription,
+  // on purpose: the row then re-renders only when its flag flips, which is also what lets a row the
+  // parent reuses from its render cache pick the change up.
+  const hasTimingIssue = useAppSelector(
+    (state) => editor.selectTempoTimingIssues(state)[lineIndex] ?? false
+  );
   // Each row checks itself against the project's limits on every render, so it follows both the
   // text (once the editor commits it) and a settings change at once. The column measured is the
   // one being edited in the current mode.
   const isTempoFailed =
     tempo.enabled &&
-    !passesTempo(isEditMode ? sourceText : translatedText, startTime, endTime, tempo);
+    (hasTimingIssue ||
+      !passesTempo(isEditMode ? sourceText : translatedText, startTime, endTime, tempo));
 
   const updateSourceSelection = () => {
     const input = sourceInputRef.current;
@@ -637,7 +634,6 @@ export default function EditorTableLine({
           </LineCell>
         )}
       </LineContent>
-      {!isFrozen && !isTranslationBusy && <LinePanelSlot>{panelNode}</LinePanelSlot>}
       {isFocused && (
         <>
           <MergeSlotUp>

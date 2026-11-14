@@ -100,4 +100,11 @@ export enum TIcon {
   RESTORE = 'restore',
   SPELLCHECK = 'spellcheck',
   DICTIONARY = 'dictionary',
+  TEMPO = 'tempo',
+  COLLIDE_TOP = 'collide-top',
+  COLLIDE_BOTTOM = 'collide-bottom',
+  COLLIDE_BOTH = 'collide-both',
+  TIME_OK = 'time-ok',
+  TIME_ERROR = 'time-error',
+  TIME_SPAN = 'time-span',
 }

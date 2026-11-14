@@ -83,6 +83,13 @@ import iconArchive from '@src/assets/icons/icon-archive.svg?react';
 import iconRestore from '@src/assets/icons/icon-restore.svg?react';
 import iconSpellcheck from '@src/assets/icons/icon-spellcheck.svg?react';
 import iconDictionary from '@src/assets/icons/icon-dictionary.svg?react';
+import iconTempo from '@src/assets/icons/icon-tempo.svg?react';
+import iconCollideTop from '@src/assets/icons/icon-collide-top.svg?react';
+import iconCollideBottom from '@src/assets/icons/icon-collide-bottom.svg?react';
+import iconCollideBoth from '@src/assets/icons/icon-collide-both.svg?react';
+import iconTimeOk from '@src/assets/icons/icon-time-ok.svg?react';
+import iconTimeError from '@src/assets/icons/icon-time-error.svg?react';
+import iconTimeSpan from '@src/assets/icons/icon-time-span.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -193,6 +200,13 @@ const ICON_COMPONENTS: {
   [TIcon.RESTORE]: iconRestore,
   [TIcon.SPELLCHECK]: iconSpellcheck,
   [TIcon.DICTIONARY]: iconDictionary,
+  [TIcon.TEMPO]: iconTempo,
+  [TIcon.COLLIDE_TOP]: iconCollideTop,
+  [TIcon.COLLIDE_BOTTOM]: iconCollideBottom,
+  [TIcon.COLLIDE_BOTH]: iconCollideBoth,
+  [TIcon.TIME_OK]: iconTimeOk,
+  [TIcon.TIME_ERROR]: iconTimeError,
+  [TIcon.TIME_SPAN]: iconTimeSpan,
 };
 
 const Wrapper = styled.div`

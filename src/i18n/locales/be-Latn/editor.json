@@ -15,5 +15,15 @@
     "noSuggestions": "Niama varyjantaŭ",
     "addToProject": "Prajekt",
     "addToGlobal": "Ahulny"
+  },
+  "tempoPanel": {
+    "lines": "Radki",
+    "cps": "Simb/sek",
+    "seconds": "s",
+    "tooCloseToPrevious": "Papiaredni radok zanadta blizka",
+    "tooCloseToNext": "Nastupny radok zanadta blizka",
+    "tooCloseToNeighbours": "Susiednija radki zanadta blizka",
+    "durationTooShort": "Radok zanadta karotki pa časie",
+    "cpsTooHigh": "Zašmat tekstu dla praciahłasci radka"
   }
 }

@@ -17,6 +17,8 @@ export enum TTagSize {
 export enum TTagVariant {
   PRIMARY = 'primary',
   SECONDARY = 'secondary',
+  // Secondary without the border: coloured text and icon only
+  TRANSPARENT = 'transparent',
 }
 
 export type TagProps = {
@@ -39,6 +41,10 @@ const getVariantCSS = (theme: TTheme, variant: TTagVariant, color: TColor): CSSP
     case 'secondary':
       return {
         border: `${CSSVar('inputBorderWidth')} solid var(--tag-border-color, transparent)`,
+        color: 'var(--tag-color)',
+      };
+    case 'transparent':
+      return {
         color: 'var(--tag-color)',
       };
   }

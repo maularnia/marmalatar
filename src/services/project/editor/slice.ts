@@ -1,9 +1,11 @@
-import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 import { TColor, TColorCustom } from '@src/theme/definitions';
 import { TCharacter, TInputColumn, TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { cleanupEntries, TEntryCleanupOptions } from '@utils/data/entryCleanup';
+import { findTimingIssues } from '@utils/tempo';
 import { folder } from '@src/services/folder';
+import { selectProjectTempo } from '../slice';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -683,5 +685,15 @@ export const {
   selectIsEditMode,
   selectFrozenLineNumbers,
 } = editorSlice.selectors;
+
+const NO_TIMING_ISSUES: boolean[] = [];
+
+// The tempo rules between lines (interval, overlap), one flag per line index. Computed once per
+// change of the lines or the limits; each rendered row indexes into it, so a row re-renders only
+// when its own flag flips. Reads the project slice's tempo directly: same service, no cycle.
+export const selectTempoTimingIssues = createSelector(
+  [selectLines, selectProjectTempo],
+  (lines, tempo) => (tempo.enabled ? findTimingIssues(lines, tempo) : NO_TIMING_ISSUES)
+);
 
 export default editorSlice.reducer;

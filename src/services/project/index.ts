@@ -68,6 +68,7 @@ import {
   selectIsVideoCollapsed,
   selectLines,
   selectRenderEpoch,
+  selectTempoTimingIssues,
   selectTextSelection,
   setCharacterPool,
   setEditorMode,
@@ -210,6 +211,7 @@ export const editor = new Service('editor', {
     selectIsVideoCollapsed,
     selectLines,
     selectRenderEpoch,
+    selectTempoTimingIssues,
     selectTextSelection,
   },
   functions: {

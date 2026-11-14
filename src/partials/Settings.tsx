@@ -44,7 +44,7 @@ export default function Settings() {
       <FormsRow>
         <FormsSection>
           <FormsSectionTitle icon={TIcon.SYNC}>{t('sync.title')}</FormsSectionTitle>
-          <FormsSectionContent $columns={2}>
+          <FormsSectionContent $columns={3}>
             <TextInput
               icon={TIcon.SPACING}
               errors={errors.autoMergeThreshold ? [errors.autoMergeThreshold.message] : []}

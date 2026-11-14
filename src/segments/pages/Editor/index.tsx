@@ -11,15 +11,23 @@ import { TSubtitleLine } from '@src/types';
 import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
 import { useAppSelectors } from '@store/hooks';
 import classNames from 'classnames';
-import { CSSProperties, type ReactElement, useMemo, useRef } from 'react';
+import {
+  CSSProperties,
+  type ReactElement,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import FloatingVideoBlock from './components/FloatingVideoBlock/FloatingVideoBlock';
 import VirtualizedList, {
   VirtualizedListHandle,
 } from './components/VirtualizedList/VirtualizedList';
-import { useLinePanel } from './components/WorkTable/useLinePanel';
 import EditorTableLine from './components/WorkTable/WorkTableLine/EditorTableLine';
+import { FocusedLinePanel } from './components/WorkTable/WorkTableLine/FocusedLinePanel';
 import { useLineFingerprint } from './hooks/useLineFingerprint';
 import { useRenderCache } from './hooks/useRenderCache';
 
@@ -135,7 +143,18 @@ export default function Editor() {
 
   /** Hooks **/
   const { getLineFingerprint, mergeCandidateLineIndices } = useLineFingerprint();
-  const { injectPanel } = useLinePanel();
+
+  // The focused line's panel lives outside the rows, as static content of the list: it scrolls
+  // with them natively and is only re-anchored when the focused row's top moves (focus change, or
+  // the list reporting a layout change). setState bails out when the top is unchanged.
+  const [panelTop, setPanelTop] = useState<number | null>(null);
+  const syncPanelTop = useCallback(() => {
+    const list = virtualizedListRef.current;
+    setPanelTop(
+      list && focusedItemIndex >= 0 ? list.getElementPositionByIndex(focusedItemIndex) : null
+    );
+  }, [focusedItemIndex]);
+  useLayoutEffect(syncPanelTop, [syncPanelTop, translationLines, renderEpoch]);
 
   const renderVirtualizedLine = (line: TSubtitleLine, onMeasure: (height: number) => void) => {
     const lineIndex = translationLines.indexOf(line);
@@ -148,7 +167,7 @@ export default function Editor() {
 
     const cached = getCached(line.line_no, fingerprint);
     if (cached) {
-      return isFocused ? injectPanel(cached) : cached;
+      return cached;
     }
 
     const node = (
@@ -188,7 +207,7 @@ export default function Editor() {
     );
 
     setCached(line.line_no, fingerprint, node);
-    return isFocused ? injectPanel(node) : node;
+    return node;
   };
 
   return (
@@ -216,7 +235,10 @@ export default function Editor() {
             renderEpoch={renderEpoch}
             onRenderEpochEnded={() => editor.incrementRenderEpoch()}
             renderItem={({ item, onMeasure }) => renderVirtualizedLine(item, onMeasure)}
-          />
+            onLayoutChange={syncPanelTop}
+          >
+            <FocusedLinePanel top={panelTop} />
+          </VirtualizedList>
         </Root>
       </EditorArea>
       <NavigationHint>

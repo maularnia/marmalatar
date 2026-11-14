@@ -7,8 +7,10 @@
   "tempo": {
     "title": "Тэмп",
     "maxLinesPerEntryLabel": "Макс. радкоў у надпісе",
-    "maxCharsPerLineLabel": "Макс. сімвалаў у радку",
-    "minDurationMsLabel": "Мін. працягласць (мс)"
+    "maxCharsPerSecondLabel": "Макс. сімб/сек",
+    "minDurationMsLabel": "Мін. працягласць (мс)",
+    "minIntervalFramesLabel": "Мін. інтэрвал (кадраў)",
+    "highlightOverlaps": "Падсвечваць радкі, якія перакрываюцца"
   },
   "uxUi": {
     "title": "UI/UX",
