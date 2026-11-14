@@ -15,5 +15,15 @@
     "noSuggestions": "Няма варыянтаў",
     "addToProject": "Праект",
     "addToGlobal": "Агульны"
+  },
+  "tempoPanel": {
+    "lines": "Радкі",
+    "cps": "Сімб/сек",
+    "seconds": "с",
+    "tooCloseToPrevious": "Папярэдні радок занадта блізка",
+    "tooCloseToNext": "Наступны радок занадта блізка",
+    "tooCloseToNeighbours": "Суседнія радкі занадта блізка",
+    "durationTooShort": "Радок занадта кароткі па часе",
+    "cpsTooHigh": "Зашмат тэксту для працягласці радка"
   }
 }

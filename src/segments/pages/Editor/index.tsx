@@ -144,9 +144,9 @@ export default function Editor() {
   /** Hooks **/
   const { getLineFingerprint, mergeCandidateLineIndices } = useLineFingerprint();
 
-  // The panel lives outside the rows, as static content of the list: it scrolls with them
-  // natively and is only re-anchored when the focused row's top moves (focus change, or the list
-  // reporting a layout change). setState bails out when the top is unchanged.
+  // The focused line's panel lives outside the rows, as static content of the list: it scrolls
+  // with them natively and is only re-anchored when the focused row's top moves (focus change, or
+  // the list reporting a layout change). setState bails out when the top is unchanged.
   const [panelTop, setPanelTop] = useState<number | null>(null);
   const syncPanelTop = useCallback(() => {
     const list = virtualizedListRef.current;

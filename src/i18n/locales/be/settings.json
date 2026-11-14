@@ -7,7 +7,7 @@
   "tempo": {
     "title": "Тэмп",
     "maxLinesPerEntryLabel": "Макс. радкоў у надпісе",
-    "maxCharsPerLineLabel": "Макс. сімвалаў у радку",
+    "maxCharsPerSecondLabel": "Макс. сімб/сек",
     "minDurationMsLabel": "Мін. працягласць (мс)",
     "minIntervalFramesLabel": "Мін. інтэрвал (кадраў)",
     "highlightOverlaps": "Падсвечваць радкі, якія перакрываюцца"

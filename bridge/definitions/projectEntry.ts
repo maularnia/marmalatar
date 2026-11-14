@@ -6,13 +6,15 @@ import { ProjectSpellcheckSchema } from './spellcheckDictionary';
 // as version 2 next time.
 export const PROJECT_FILE_VERSION = 2;
 
-// The project's subtitle limits, checked line by line in the editor while `enabled`. The two
-// neighbour rules came later, so they default per field: files saved before them hold a `tempo`
-// without those keys, which the object-level default elsewhere doesn't cover.
+// The project's subtitle limits, checked line by line in the editor while `enabled`. The neighbour
+// rules and the reading speed came later, so they default per field: files saved before them hold a
+// `tempo` without those keys, which the object-level default elsewhere doesn't cover (a stale
+// `maxCharsPerLine` from before reading speed replaced it is simply stripped).
 export const ProjectTempoSchema = z.object({
   enabled: z.boolean(),
   maxLinesPerEntry: z.number().int().min(1),
-  maxCharsPerLine: z.number().int().min(1),
+  // Reading speed: visible characters per second on screen (Netflix's CPS)
+  maxCharsPerSecond: z.number().int().min(1).default(17),
   minDurationMs: z.number().int().min(1),
   // The gap required between consecutive entries, in frames (at the assumed 23.976 fps)
   minIntervalFrames: z.number().int().min(1).default(2),
@@ -21,13 +23,13 @@ export const ProjectTempoSchema = z.object({
 });
 export type TProjectTempo = z.infer<typeof ProjectTempoSchema>;
 
-// Netflix's general limits: 2 lines of 42 characters, 5/6 of a second on screen, 2 frames between
-// entries, no overlaps. Off until the user switches the check on for a project, so existing
-// projects don't light up on upgrade.
+// Netflix's general limits: 2 lines, 17 characters per second (most languages, Belarusian included;
+// English is 20), 5/6 of a second on screen, 2 frames between entries, no overlaps. On by default:
+// new projects and projects upgraded from version 1 (or saved without `tempo`) start checked.
 export const PROJECT_TEMPO_DEFAULTS: TProjectTempo = {
-  enabled: false,
+  enabled: true,
   maxLinesPerEntry: 2,
-  maxCharsPerLine: 42,
+  maxCharsPerSecond: 17,
   minDurationMs: 833,
   minIntervalFrames: 2,
   highlightOverlaps: true,

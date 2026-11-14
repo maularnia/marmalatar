@@ -7,18 +7,18 @@ import Toggle from '@ui-toolkit/Toggle';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-type TTempoField = 'maxLinesPerEntry' | 'maxCharsPerLine' | 'minDurationMs' | 'minIntervalFrames';
+type TTempoField = 'maxLinesPerEntry' | 'maxCharsPerSecond' | 'minDurationMs' | 'minIntervalFrames';
 
 const LIMIT_FIELDS: readonly TTempoField[] = [
   'maxLinesPerEntry',
-  'maxCharsPerLine',
+  'maxCharsPerSecond',
   'minDurationMs',
   'minIntervalFrames',
 ];
 
 const FIELD_ICONS: Record<TTempoField, TIcon> = {
   maxLinesPerEntry: TIcon.LINE_OUT,
-  maxCharsPerLine: TIcon.SPACING,
+  maxCharsPerSecond: TIcon.TEMPO,
   minDurationMs: TIcon.TIME_CONFIG,
   minIntervalFrames: TIcon.STEP,
 };
@@ -32,7 +32,7 @@ export default function TempoSettings() {
   const {
     enabled,
     maxLinesPerEntry,
-    maxCharsPerLine,
+    maxCharsPerSecond,
     minDurationMs,
     minIntervalFrames,
     highlightOverlaps,
@@ -42,7 +42,7 @@ export default function TempoSettings() {
     register,
     formState: { errors },
   } = useForm({
-    values: { maxLinesPerEntry, maxCharsPerLine, minDurationMs, minIntervalFrames },
+    values: { maxLinesPerEntry, maxCharsPerSecond, minDurationMs, minIntervalFrames },
     mode: 'onChange',
   });
 
@@ -65,7 +65,7 @@ export default function TempoSettings() {
     <FormsRow>
       <FormsSection>
         <FormsSectionTitle
-          icon={TIcon.GAUGE}
+          icon={TIcon.TEMPO}
           after={
             <Toggle
               checked={enabled}

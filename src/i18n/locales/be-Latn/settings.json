@@ -7,7 +7,7 @@
   "tempo": {
     "title": "Temp",
     "maxLinesPerEntryLabel": "Maks. radkoŭ u nadpisie",
-    "maxCharsPerLineLabel": "Maks. simvałaŭ u radku",
+    "maxCharsPerSecondLabel": "Maks. simb/sek",
     "minDurationMsLabel": "Min. praciahłaść (ms)",
     "minIntervalFramesLabel": "Min. interval (kadraŭ)",
     "highlightOverlaps": "Padsviečvać radki, jakija pierakryvajucca"

@@ -15,5 +15,15 @@
     "noSuggestions": "No suggestions",
     "addToProject": "Project",
     "addToGlobal": "Global"
+  },
+  "tempoPanel": {
+    "lines": "Lines",
+    "cps": "CPS",
+    "seconds": "s",
+    "tooCloseToPrevious": "Previous line is too close",
+    "tooCloseToNext": "Next line is too close",
+    "tooCloseToNeighbours": "Neighbouring lines are too close",
+    "durationTooShort": "Line duration is too short",
+    "cpsTooHigh": "Too much text for line duration"
   }
 }

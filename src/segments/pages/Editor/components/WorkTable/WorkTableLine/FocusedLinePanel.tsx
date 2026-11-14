@@ -7,6 +7,7 @@ import { useAppSelectors } from '@store/hooks';
 import { memo } from 'react';
 import styled from 'styled-components';
 import { EditorTableLinePanel } from './EditorTableLinePanel';
+import { LineTempoStats } from './LineTempoStats';
 
 // Rendered as static content of the VirtualizedList (inside the scroll container), so it scrolls
 // with the rows natively and only needs repositioning when the focused row's top moves.
@@ -18,6 +19,8 @@ const LinePanelSlot = styled.div`
   z-index: 4;
   right: 0;
   transform: translate3d(0, -50%, 0);
+  display: flex;
+  align-items: center;
   background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 5)};
   border-radius: ${CSSVar('size4')};
   backdrop-filter: blur(${CSSVar('blurHeavy')});
@@ -53,6 +56,7 @@ export const FocusedLinePanel = memo(function FocusedLinePanel({ top }: TFocused
     // initial={false}: the first placement (and re-mount after frozen/busy) lands in place;
     // only subsequent top changes animate.
     <LinePanelSlot style={{ top: top }}>
+      <LineTempoStats lineIndex={focusedLineIndex} />
       <EditorTableLinePanel
         isCompleted={Boolean(focusedLine.completed)}
         isCompletedToggleHidden={autoMarkLinesCompleted}
