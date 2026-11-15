@@ -18,7 +18,7 @@
     "cleanup": "Ачыстка",
     "copyAllSourceToOutput": "Скапіяваць\n усе радкі крыніцы\nў пераклад",
     "completeAllTranslated": "Пазначыць усе\nрадкі з перакладам\nяк гатовыя",
-    "autoFixTempo": "Аўтавыпраўленне тэмпу"
+    "autoFixTempo": "Аўта-тэмп"
   },
   "workTableLine": {
     "markLineComplete": "Адзначыць\nрадок як \"Гатовы\"",

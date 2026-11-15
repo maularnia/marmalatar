@@ -93,9 +93,11 @@
   "autoFixTempo": {
     "title": "Auto fix tempo?",
     "overlapping": "Lines overlapping in time will be separated using the minimal interline interval of <value>{{interval}}</value>",
+    "partialOverlap": "Lines that partially overlap will be split in the middle of their intersection",
     "covering": "Lines that completely cover other lines will be omitted",
-    "interval": "{{frames}} frames ({{ms}} ms)",
+    "interval": "{{frames}}\u00a0frames\u00a0({{ms}}\u00a0ms)",
     "extendForCps": "Attempt to extend lines with CPS higher than the limit of <value>{{limit}}</value>",
+    "breakLongLines": "Break lines longer than <value>{{limit}}</value>\u00a0characters (entries over <value>{{total}}</value>\u00a0characters are omitted)",
     "confirmButton": "Fix"
   }
 }

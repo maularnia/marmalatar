@@ -519,7 +519,8 @@ export async function cleanup(): Promise<void> {
 }
 
 // Retimes overlapping and too-close lines to the project's tempo limits (see autoFixTiming), on
-// the lines whose column for the current mode has text. Asks first; one undo step.
+// the lines whose column for the current mode has text -- and, when chosen, breaks too-long lines
+// in that column. Asks first; one undo step.
 export async function autoFixTempo(): Promise<void> {
   const tempo = Service.select(selectProjectTempo);
   if (isBulkTranslationRunning() || !tempo.enabled) return;
@@ -547,13 +548,22 @@ export async function autoFixTempo(): Promise<void> {
   const { changedCount } = autoFixTiming(lines(), tempo, getText, {
     extendForCps: options.extendForCps,
     maxEndMs,
+    breakLongLines: options.breakLongLines
+      ? (line, text) => (isEditMode ? { ...line, input: text } : { ...line, output: text })
+      : undefined,
   });
   if (!changedCount) {
     toast.push(makeTempoAutoFixNothingMessage());
     return;
   }
   Service.dispatch(
-    tempoAutoFixed({ targetColumn, tempo, extendForCps: options.extendForCps, maxEndMs })
+    tempoAutoFixed({
+      targetColumn,
+      tempo,
+      extendForCps: options.extendForCps,
+      breakLongLines: options.breakLongLines,
+      maxEndMs,
+    })
   );
   toast.push(makeTempoAutoFixedMessage(changedCount));
 }
