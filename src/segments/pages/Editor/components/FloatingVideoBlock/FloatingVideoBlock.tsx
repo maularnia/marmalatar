@@ -151,12 +151,14 @@ export default function FloatingVideoBlock({
       if (focusedLineScreenTop < videoVisibleBottom) {
         scrollContainerRef.current.scrollTo({
           top: focusedLineTop - videoContainerRef.current.offsetHeight,
-          behavior: 'smooth',
+          // Instant: smooth scrolling lags behind fast line switching (a held Ctrl+Down), leaving
+          // the next lines outside the rendered window
+          behavior: 'instant',
         });
       } else if (focusedLineScreenTop > viewportHeight - bottomMargin) {
         scrollContainerRef.current.scrollTo({
           top: focusedLineTop - (viewportHeight - bottomMargin),
-          behavior: 'smooth',
+          behavior: 'instant',
         });
       }
     });
