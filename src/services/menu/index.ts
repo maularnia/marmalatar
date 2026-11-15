@@ -24,6 +24,7 @@ import {
 import {
   selectIsMenuCompact,
   selectIsMenuDynamic,
+  selectIsMenuOverlayOpen,
   setMenuFocusWithin,
   setMenuPointerOutside,
   selectIsCreatingGlossary,
@@ -58,6 +59,7 @@ export const menu = new Service('menu', {
     selectIsCreatingPromptTemplate,
     selectIsMenuCompact,
     selectIsMenuDynamic,
+    selectIsMenuOverlayOpen,
     selectMenuRenamingKey,
   },
   functions: {

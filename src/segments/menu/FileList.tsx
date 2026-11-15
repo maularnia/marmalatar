@@ -1,31 +1,31 @@
+import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
+import { ai } from '@src/services/ai';
+import { folder } from '@src/services/folder';
+import { glossaries } from '@src/services/glossary';
 import {
   CREATE_GLOSSARY_KEY,
   CREATE_PROJECT_KEY,
   CREATE_PROMPT_TEMPLATE_KEY,
   menu,
 } from '@src/services/menu';
-import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
-import { settings } from '@src/services/settings';
 import { projects } from '@src/services/project';
-import type { TColor } from '@src/theme/definitions';
+import { promptTemplates } from '@src/services/prompt';
+import { settings } from '@src/services/settings';
+import { type TColor } from '@src/theme/definitions';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
-import { promptTemplates } from '@src/services/prompt';
-import { glossaries } from '@src/services/glossary';
-import { ai } from '@src/services/ai';
-import { folder } from '@src/services/folder';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
-import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
+import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { ListHeader } from './ListHeader';
 import { MainMenuListItem } from './MainMenuListItem';
+import { MenuSection } from './MenuSection';
 import { makeNameValidator, useMenuRename } from './useMenuRename';
 
 // Keys of the rows where a new prompt template's / glossary's name is typed
@@ -33,14 +33,6 @@ const NEW_PROMPT_TEMPLATE_KEY = '##new-prompt-template##';
 const NEW_GLOSSARY_KEY = '##new-glossary##';
 
 type TMenuFileKind = 'project' | 'promptTemplate' | 'glossary';
-
-const Section = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${CSSVar('projectListSpacingY')};
-  width: 100%;
-  padding: ${CSSVar('projectListSpacingY')} ${CSSVar('projectListSpacingX')};
-`;
 
 const List = styled.div`
   display: flex;
@@ -179,7 +171,7 @@ export default function FileList({ compact }: TFileListProps) {
     <>
       {projectList.length > 0 && (
         <>
-          <Section>
+          <MenuSection>
             <ListHeader
               compact={compact}
               actionBar={
@@ -240,14 +232,13 @@ export default function FileList({ compact }: TFileListProps) {
                   })
                 : null}
             </List>
-          </Section>
-          <Hr variant={THrVariant.TRANSPARENT} />
+          </MenuSection>
         </>
       )}
 
       {integrationIsConfigured && (
         <>
-          <Section>
+          <MenuSection>
             <ListHeader
               className={classNames({ compact })}
               compact={compact}
@@ -309,11 +300,9 @@ export default function FileList({ compact }: TFileListProps) {
                 />
               )}
             </List>
-          </Section>
+          </MenuSection>
 
-          <Hr variant={THrVariant.TRANSPARENT} />
-
-          <Section>
+          <MenuSection>
             <ListHeader
               className={classNames({ compact })}
               compact={compact}
@@ -377,7 +366,7 @@ export default function FileList({ compact }: TFileListProps) {
                 />
               )}
             </List>
-          </Section>
+          </MenuSection>
         </>
       )}
     </>

@@ -333,6 +333,7 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemColorOpacityActiveFocus: [TOpacity, false];
   listItemColorShadeDisabled: [TShade, false];
   listItemColorOpacityDisabled: [TOpacity, false];
+  projectListSectionBg: string;
 }>;
 
 export type TThemeVarsTheme = TThemeAppChapter &

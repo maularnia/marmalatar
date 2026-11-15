@@ -13,6 +13,7 @@ import { use, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import ThemeSelector from './ThemeSelector';
+import { MenuSection } from './MenuSection';
 
 // Padded like FileList's sections, so the footer's rows line up with the file rows above
 const Root = styled.div`
@@ -55,25 +56,27 @@ export default function MenuFooter({ compact }: TMenuFooterProps) {
   );
   return (
     <Root>
-      <Tooltip
-        side="right"
-        label={
-          <TooltipComplex title={t('buttons.settings')}>
-            <TooltipKeystrokeHint keys={['Ctrl', 'S']} />
-          </TooltipComplex>
-        }
-      >
-        <ListItem
-          ref={setSettingsRef}
-          compact={compact}
-          icon={TIcon.SETTINGS}
-          isActive={isSettingsOpen}
-          onClick={openSettings}
+      <MenuSection>
+        <Tooltip
+          side="right"
+          label={
+            <TooltipComplex title={t('buttons.settings')}>
+              <TooltipKeystrokeHint keys={['Ctrl', 'S']} />
+            </TooltipComplex>
+          }
         >
-          {t('buttons.settings')}
-        </ListItem>
-      </Tooltip>
-      <ThemeSelector compact={compact} />
+          <ListItem
+            ref={setSettingsRef}
+            compact={compact}
+            icon={TIcon.SETTINGS}
+            isActive={isSettingsOpen}
+            onClick={openSettings}
+          >
+            {t('buttons.settings')}
+          </ListItem>
+        </Tooltip>
+        <ThemeSelector compact={compact} />
+      </MenuSection>
     </Root>
   );
 }

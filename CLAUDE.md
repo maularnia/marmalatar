@@ -184,4 +184,12 @@ Dialogs:
 - Types not used anywhere else should not be exported. After introducing changes, check if all the exported types are used somewhere outside the file and remove export if they are not.
 - Comments explain why, especially timing, focus and event-order constraints. Keep them when moving code
 
+## Commit messages
 
+When asked for a change list or commit message, summarise the **staged** changes (`git diff --cached`), not the working tree. If unstaged changes exist, say so in the reply, outside the list.
+
+- One item per line. No bullets, numbering or blank lines between items
+- Each item starts with exactly one prefix: `feature:` (new user-facing behaviour), `fix:` (something that was broken), or `chore:` (refactors, styling tweaks, theme values, translations, cleanup)
+- 20 words max per item. Name what changed and where, not how it was implemented
+- Group related small changes into one item rather than listing every file
+- Output only the list, ready to paste, in a plain code block with no extra text inside it

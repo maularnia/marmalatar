@@ -25,7 +25,8 @@ interface ListItemProps extends Omit<ComponentPropsWithoutRef<'div'>, 'onChange'
   /** Shows `panel` all the time instead of only while the item is hovered */
   staticPanel?: boolean;
   emoji?: ReactNode;
-  children?: string | null;
+  /** The label. Only a string can be edited (`onChange`): the editable field is seeded with it */
+  children?: ReactNode;
   onChange?: (value: string) => void;
   onCommit?: () => void;
   onDiscard?: () => void;
@@ -255,7 +256,7 @@ export const ListItem = ({
   useEffect(() => {
     if (!isEditable || !editableRef.current) return;
     const el = editableRef.current;
-    el.textContent = children ?? '';
+    el.textContent = typeof children === 'string' ? children : '';
     el.focus();
     const range = document.createRange();
     range.selectNodeContents(el);

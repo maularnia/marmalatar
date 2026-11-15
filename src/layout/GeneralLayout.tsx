@@ -7,17 +7,19 @@ import Overlays from '../segments/overlays/Overlays';
 import { menu } from '@src/services/menu';
 import { useAppSelector } from '@store/hooks';
 import classNames from 'classnames';
-import { MENU_EXPANDED_WIDTH } from '@src/toolkit/motion/menu';
 
 const Root = styled.div`
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: ${MENU_EXPANDED_WIDTH}px auto;
+  grid-template-columns: ${CSSVar('appMenuExpandedWidth')} auto;
   position: relative;
   &.dynamic {
-    grid-template-columns: 34px auto;
+    grid-template-columns: ${CSSVar('appMenuCollapsedWidth')} auto;
+    /* The collapsed sidebar's column is narrower than the expanded sidebar an overlay keeps open
+       over the content, so overlays (positioned in the content column) move right by the rest */
+    --menu-overlap: calc(${CSSVar('appMenuExpandedWidth')} - ${CSSVar('appMenuCollapsedWidth')});
   }
 `;
 

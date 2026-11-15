@@ -30,6 +30,7 @@ import EditorTableLine from './components/WorkTable/WorkTableLine/EditorTableLin
 import { FocusedLinePanel } from './components/WorkTable/WorkTableLine/FocusedLinePanel';
 import { useLineFingerprint } from './hooks/useLineFingerprint';
 import { useRenderCache } from './hooks/useRenderCache';
+import { ExportButton } from './segments/ExportButton';
 
 const PageRoot = styled.div`
   position: relative;
@@ -69,7 +70,8 @@ const Root = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: ${CSSVar('size34')};
+  /* Room for the last line to scroll clear of the export button pinned over the table's bottom */
+  padding-bottom: calc(${CSSVar('buttonHeightLarge')} + ${CSSVar('size34')});
 `;
 
 const NavigationHint = styled(P)`
@@ -241,6 +243,7 @@ export default function Editor() {
           </VirtualizedList>
         </Root>
       </EditorArea>
+      <ExportButton />
       <NavigationHint>
         {t('editorTable.navigationHintPrefix')}
         {navigationHintKeystroke}

@@ -1,12 +1,7 @@
 import { useAppSelectors } from '@store/hooks';
 import { MenuKeystrokeProvider } from '@providers/MenuKeystrokeProvider';
 import { TShade } from '@src/theme/definitions';
-import {
-  MENU_EXPANDED_WIDTH,
-  menuExpandDelay,
-  menuHoverExpand,
-  menuWidthDuration,
-} from '@src/toolkit/motion/menu';
+import { menuExpandDelay, menuHoverExpand, menuWidthDuration } from '@src/toolkit/motion/menu';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
 import classNames from 'classnames';
@@ -19,11 +14,10 @@ import MenuFooter from './MenuFooter';
 import MenuLogo from './MenuLogo';
 
 // Backdrop starts growing only after menuExpandDelay (a quick mouse pass-by over the collapsed
-// menu shouldn't trigger a full expand). Root's own (unanimated) width switch waits that same
-// delay plus half of the grow animation on top, so it snaps to full width once Backdrop has
-// already covered roughly half the reveal -- landing mid-animation instead of at the very start,
-// which is what made the width jump visible/glitchy. Collapsing is immediate.
-const MENU_EXPAND_DELAY_MS = (menuExpandDelay + menuWidthDuration / 2) * 1000;
+// menu shouldn't trigger a full expand). Everything else -- Root's own (unanimated) width, the
+// header, the file list and the footer leaving their compact state, the backdrop's color -- waits
+// exactly that same delay, so the whole menu expands at one moment. Collapsing is immediate.
+const MENU_EXPAND_DELAY_MS = menuExpandDelay * 1000;
 
 const Header = styled.div`
   display: flex;
@@ -37,6 +31,8 @@ const Scroll = styled.div`
   align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
+  gap: ${CSSVar('size4')};
+  padding: ${CSSVar('size4')};
   overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: ${CSSVar('size34')};
@@ -72,15 +68,27 @@ const Backdrop = styled(motion.div)`
   }
 `;
 
+// Blurs the whole app behind a dynamic sidebar while it's expanded over the content. Fixed to the
+// screen, but rendered inside Root so it shares Root's z-index: under the menu (and its Backdrop),
+// over everything else. It's only a visual, so it never takes pointer events -- the sidebar's
+// own hover tracking decides when it collapses.
+const ScreenBackdrop = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  backdrop-filter: blur(${CSSVar('blurExtreme')});
+  pointer-events: none;
+`;
+
 const Root = styled.div`
   height: 100%;
   position: relative;
   &.dynamic {
     position: absolute;
     z-index: 21;
-    width: ${CSSVar('size34')};
+    width: ${CSSVar('appMenuCollapsedWidth')};
     &.expanded {
-      width: ${MENU_EXPANDED_WIDTH}px;
+      width: ${CSSVar('appMenuExpandedWidth')};
     }
   }
 `;
@@ -91,7 +99,11 @@ const Content = styled.div`
   flex-direction: column;
 `;
 export default function MainMenu() {
-  const [dynamic, compact] = useAppSelectors(menu.selectIsDynamic, menu.selectIsCompact);
+  const [dynamic, compact, isOverlayOpen] = useAppSelectors(
+    menu.selectIsDynamic,
+    menu.selectIsCompact,
+    menu.selectIsOverlayOpen
+  );
 
   // Root's own width switches instantly (no transition) -- only Backdrop animates. Expanding waits
   // out the same delay Backdrop's "in" variant does (see MENU_EXPAND_DELAY_MS); collapsing is
@@ -102,30 +114,43 @@ export default function MainMenu() {
       setExpanded(false);
       return;
     }
+    // An open overlay expands the sidebar on its own (see isExpanded): no hover to wait for
+    if (isOverlayOpen) return;
     const timeout = setTimeout(() => setExpanded(true), MENU_EXPAND_DELAY_MS);
     return () => clearTimeout(timeout);
-  }, [compact]);
+  }, [compact, isOverlayOpen]);
+  // An open overlay holds the sidebar expanded: there's no hover to confirm, so it expands at once,
+  // without the delay (and, on Backdrop, without the animation)
+  const isExpanded = expanded || (isOverlayOpen && !compact);
 
   return (
-    <Root className={classNames({ dynamic, expanded: dynamic && expanded })}>
+    <Root className={classNames({ dynamic, expanded: dynamic && isExpanded })}>
+      {dynamic && (
+        <ScreenBackdrop
+          initial={false}
+          // An open overlay holds the sidebar expanded, but brings its own backdrop
+          animate={{ opacity: isExpanded && !isOverlayOpen ? 1 : 0 }}
+          transition={{ ease: 'circOut', duration: menuWidthDuration }}
+        />
+      )}
       {dynamic && (
         <Backdrop
-          className={classNames({ compact })}
+          className={classNames({ compact: !isExpanded })}
           variants={menuHoverExpand.variants}
           initial={false}
-          animate={compact ? 'out' : 'in'}
+          animate={compact ? 'out' : isOverlayOpen ? 'instant' : 'in'}
         />
       )}
       <Content>
         <MenuKeystrokeProvider>
           <Header>
-            <MenuLogo />
+            <MenuLogo compact={!isExpanded} />
             <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
           </Header>
           <Scroll>
-            <FileList compact={!expanded} />
+            <FileList compact={!isExpanded} />
           </Scroll>
-          <MenuFooter compact={!expanded} />
+          <MenuFooter compact={!isExpanded} />
         </MenuKeystrokeProvider>
       </Content>
     </Root>

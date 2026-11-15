@@ -11,10 +11,13 @@ import { motion } from 'motion/react';
 import { PropsWithChildren } from 'react';
 import styled from 'styled-components';
 
+// Always starts right of the expanded sidebar: next to the static one, and past the part of a
+// collapsed (dynamic) one that expands over the content (--menu-overlap, set by GeneralLayout)
 const OverlayRoot = styled.div`
   position: absolute;
   display: flex;
   inset: 0;
+  left: var(--menu-overlap, 0px);
   z-index: 20;
 `;
 

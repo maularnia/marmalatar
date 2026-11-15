@@ -1,50 +1,52 @@
-import { menu } from '@src/services/menu';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppSelectors } from '@store/hooks';
-import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
+import { Logo } from '@ui-toolkit/Logo/Logo';
 import Span from '@ui-toolkit/Span';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import styled from 'styled-components';
+import { MenuSection } from './MenuSection';
 
+// Same box as FileList's rows. It's a label, not a control: the item underneath stays out of
+// reach of the pointer (no hover, no pointer cursor) and of Tab.
 const Root = styled.div`
   padding: ${CSSVar('projectListSpacingY')} ${CSSVar('projectListSpacingX')};
+  pointer-events: none;
+`;
+
+// Logo draws at a fixed px size (width/height attributes); the theme's size wins over them here
+const LogoBox = styled.span`
   display: flex;
-  align-items: center;
-  gap: ${CSSVar('size6')};
-  white-space: nowrap;
+  svg {
+    width: ${CSSVar('menuLogoSize')};
+    height: ${CSSVar('menuLogoSize')};
+  }
 `;
 
-// ListItem fills its row by default, which would push the name to the far side of the logo. It's
-// wrapped rather than styled: ListItem's own className (its state classes) would be replaced.
-const Logo = styled.div`
-  flex: 0 0 auto;
-`;
+// The menu's header: one menu item with the app's logo as its icon, then its name and version.
+// Only the logo stays while the sidebar is collapsed to its icon column.
+type TMenuLogoProps = {
+  /** Whether the sidebar is collapsed: the same value FileList gets */
+  compact: boolean;
+};
 
-const Title = styled(Span)`
-  font-family: ${CSSVar('fontHeadingSansSerif')};
-  font-weight: ${CSSVar('black')};
-  text-align: left;
-`;
-
-// The menu's header: the app's logo, name and version. The name and version are hidden while the
-// sidebar is collapsed to its icon column.
-export default function MenuLogo() {
-  const [dynamic, compact] = useAppSelectors(menu.selectIsDynamic, menu.selectIsCompact);
-  const isCollapsed = dynamic && compact;
+export default function MenuLogo({ compact }: TMenuLogoProps) {
   return (
     <Root>
-      <Logo>
-        <ListItem tabIndex={-1} isDisabled color={ThemeColors.ACCENT2} icon={TIcon.LOGO} />
-      </Logo>
-      {!isCollapsed && (
-        <>
-          <Title color={ThemeColors.TEXT}>Marmalatar</Title>
-          <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.ACCENT2}>
-            {`v${__APP_VERSION__}`}
-          </Tag>
-        </>
-      )}
+      <MenuSection>
+        <ListItem
+          tabIndex={-1}
+          compact={compact}
+          color={ThemeColors.TEXT}
+          emoji={
+            <LogoBox>
+              <Logo />
+            </LogoBox>
+          }
+        >
+          <>
+            Marmalatar <Span color={ThemeColors.ACCENT1}>{`v${__APP_VERSION__}`}</Span>
+          </>
+        </ListItem>
+      </MenuSection>
     </Root>
   );
 }

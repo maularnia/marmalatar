@@ -367,7 +367,7 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('mainTableLineBackdropOpacityError', CSSVar('opacity-100')).register(),
     ...new ThemeVariable('mainTableLineBackdropBgError', CSSColor(TColorCustom.RED, TShade.DEFAULT, 5)).register(),
     ...new ThemeVariable('mainTableLineBackdropBorderColorError', CSSColor(TColorCustom.RED, TShade.DEFAULT, 10)).register(),
-    ...new ThemeVariable('mainTableLineBackdropBorderWidthError', '1px').register(),
+    ...new ThemeVariable('mainTableLineBackdropBorderWidthError', CSSVar('size1')).register(),
     ...new ThemeVariable('mainTableLineCellBg', CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 0)).register(),
     ...new ThemeVariable('mainTableLineCellBgHover', CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 10)).register(),
     ...new ThemeVariable('mainTableLineCellBgFocus', CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 0)).register(),
@@ -618,8 +618,8 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('listItemBgOpacityHover', asOpacity(5), false).register(),
     ...new ThemeVariable('listItemBgShadeFocus', asShade(TShade.DEFAULT), false).register(),
     ...new ThemeVariable('listItemBgOpacityFocus', asOpacity(10), false).register(),
-    ...new ThemeVariable('listItemBgShadeActive', asShade(TShade.DEFAULT), false).register(),
-    ...new ThemeVariable('listItemBgOpacityActive', asOpacity(95), false).register(),
+    ...new ThemeVariable('listItemBgShadeActive', asShade(TShade.BRIGHT), false).register(),
+    ...new ThemeVariable('listItemBgOpacityActive', asOpacity(80), false).register(),
     ...new ThemeVariable('listItemBgShadeActiveHover', asShade(TShade.BRIGHT), false).register(),
     ...new ThemeVariable('listItemBgOpacityActiveHover', asOpacity(100), false).register(),
     ...new ThemeVariable('listItemBgShadeActiveFocus', asShade(TShade.BRIGHT), false).register(),
@@ -640,6 +640,7 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('listItemColorOpacityActiveFocus', asOpacity(90), false).register(),
     ...new ThemeVariable('listItemColorShadeDisabled', asShade(TShade.DARK), false).register(),
     ...new ThemeVariable('listItemColorOpacityDisabled', asOpacity(50), false).register(),
+    ...new ThemeVariable('projectListSectionBg', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 5)).register(),
   };
 
   return {
