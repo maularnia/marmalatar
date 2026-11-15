@@ -16,6 +16,7 @@ import {
   ProjectTempoSchema,
 } from '@bridge/definitions/projectEntry';
 import { ProjectSpellcheckSchema } from '@bridge/definitions/spellcheckDictionary';
+import { buildTempoForLanguage } from '@utils/tempoTemplates';
 import {
   PromptTemplateFileBodySchema,
   PromptTemplateFileHeaderSchema,
@@ -103,13 +104,16 @@ const ProjectSaveVersioning = defineVersionedContract({
   currentVersion: 2,
   schemas: { 1: ProjectSaveV1Schema, 2: ProjectSaveV2Schema },
   transforms: {
-    // A file from before spellcheck dictionaries and tempo: an empty one and the defaults. The
-    // project service writes it out as version 2 the next time it saves the file.
+    // A file from before spellcheck dictionaries and tempo: an empty dictionary and the standard of
+    // the project's target language (the general defaults for a code that isn't one). The project
+    // service writes it out as version 2 the next time it saves the file.
     1: (data) => ({
       ...(data as object),
       version: 2,
       spellcheck: {},
-      tempo: PROJECT_TEMPO_DEFAULTS,
+      tempo: buildTempoForLanguage(
+        (data as { project?: { targetLanguage?: unknown } }).project?.targetLanguage as string
+      ),
     }),
   },
   current: ProjectSaveV2Schema,

@@ -20,6 +20,8 @@
   },
   "tempoPanel": {
     "lines": "Радкі",
+    "charsPerLine": "Сімвалаў у радку",
+    "charsPerLineTooLong": "Зашмат сімвалаў у радку {{line}}",
     "cps": "Сімб/сек",
     "seconds": "с",
     "tooCloseToPrevious": "Папярэдні радок занадта блізка",

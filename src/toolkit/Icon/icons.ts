@@ -109,4 +109,5 @@ export enum TIcon {
   TIME_SPAN = 'time-span',
   TIME_FIX = 'time-fix',
   WIDTH = 'width',
+  LINE_SIZE = 'line-size',
 }

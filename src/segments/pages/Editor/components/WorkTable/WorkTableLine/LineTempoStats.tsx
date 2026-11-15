@@ -96,6 +96,25 @@ export function LineTempoStats({ lineIndex }: TLineTempoStatsProps) {
             {t('tempoPanel.lines')}: {stats.lines.value}/{stats.lines.limit}
           </Stat>
         )}
+        {/* The entry's longest line against the limit, with its number in the entry */}
+        {tempo.enabled && !stats.charsPerLine.ok && (
+          <Tooltip
+            label={
+              <TooltipComplex title={t('tempoPanel.charsPerLine')}>
+                {t('tempoPanel.charsPerLineTooLong', { line: stats.charsPerLine.lineIndex + 1 })}
+              </TooltipComplex>
+            }
+          >
+            <PanelTag
+              variant={TTagVariant.TRANSPARENT}
+              size={TTagSize.SMALL}
+              icon={TIcon.LINE_SIZE}
+              color={ThemeColors.RED}
+            >
+              {`${stats.charsPerLine.value}/${stats.charsPerLine.limit} (${stats.charsPerLine.lineIndex + 1})`}
+            </PanelTag>
+          </Tooltip>
+        )}
         {tempo.enabled && !stats.durationMs.ok && (
           <Tooltip
             label={

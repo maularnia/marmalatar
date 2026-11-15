@@ -10,6 +10,8 @@ type TTempoRule = { value: number; limit: number; ok: boolean };
 
 type TTempoStats = {
   lines: TTempoRule;
+  // The entry's longest line; `lineIndex` is its index among the entry's lines (0 when empty)
+  charsPerLine: TTempoRule & { lineIndex: number };
   durationMs: TTempoRule;
   charsPerSecond: TTempoRule;
 };
@@ -25,8 +27,8 @@ function countVisibleChars(text: string): number {
   return text.trim().replace(/\r?\n/g, '').length;
 }
 
-/** One subtitle entry against the project's own limits: at most `maxLinesPerEntry` lines, on screen
- * for at least `minDurationMs`, read at no more than `maxCharsPerSecond` (Netflix's reading speed:
+/** One subtitle entry against the project's own limits: at most `maxLinesPerEntry` lines of at most
+ * `maxCharsPerLine` visible characters each, on screen for at least `minDurationMs`, read at no more than `maxCharsPerSecond` (Netflix's reading speed:
  * visible characters / seconds on screen). Empty text passes the text rules -- an untranslated line
  * isn't "too fast" -- but the duration rule still applies. */
 export function getTempoStats(
@@ -36,7 +38,14 @@ export function getTempoStats(
   tempo: TProjectTempo
 ): TTempoStats {
   const trimmed = text.trim();
-  const lineCount = trimmed ? trimmed.split('\n').length : 0;
+  const entryLines = trimmed ? trimmed.split('\n') : [];
+  const lineCount = entryLines.length;
+  // The first of the longest lines, should several tie
+  let longest = { chars: 0, index: 0 };
+  entryLines.forEach((entryLine, index) => {
+    const lineChars = countVisibleChars(entryLine);
+    if (lineChars > longest.chars) longest = { chars: lineChars, index };
+  });
   const durationMs = endMs - startMs;
   const chars = countVisibleChars(trimmed);
   // A non-positive duration can't be read at any speed; Infinity keeps it failing (and shows as ∞)
@@ -46,6 +55,12 @@ export function getTempoStats(
       value: lineCount,
       limit: tempo.maxLinesPerEntry,
       ok: lineCount <= tempo.maxLinesPerEntry,
+    },
+    charsPerLine: {
+      value: longest.chars,
+      limit: tempo.maxCharsPerLine,
+      ok: longest.chars <= tempo.maxCharsPerLine,
+      lineIndex: longest.index,
     },
     durationMs: {
       value: durationMs,
@@ -67,8 +82,13 @@ export function passesTempo(
   endMs: number,
   tempo: TProjectTempo
 ): boolean {
-  const { lines, durationMs, charsPerSecond } = getTempoStats(text, startMs, endMs, tempo);
-  return lines.ok && durationMs.ok && charsPerSecond.ok;
+  const { lines, charsPerLine, durationMs, charsPerSecond } = getTempoStats(
+    text,
+    startMs,
+    endMs,
+    tempo
+  );
+  return lines.ok && charsPerLine.ok && durationMs.ok && charsPerSecond.ok;
 }
 
 // The same gap test `findTimingIssues` applies between consecutive entries: closer than

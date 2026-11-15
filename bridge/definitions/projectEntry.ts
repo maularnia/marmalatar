@@ -7,12 +7,14 @@ import { ProjectSpellcheckSchema } from './spellcheckDictionary';
 export const PROJECT_FILE_VERSION = 2;
 
 // The project's subtitle limits, checked line by line in the editor while `enabled`. The neighbour
-// rules and the reading speed came later, so they default per field: files saved before them hold a
-// `tempo` without those keys, which the object-level default elsewhere doesn't cover (a stale
-// `maxCharsPerLine` from before reading speed replaced it is simply stripped).
+// rules, the reading speed and the line length came later, so they default per field: files saved
+// before them hold a `tempo` without those keys, which the object-level default elsewhere doesn't
+// cover. The renderer keeps per-language standards for these limits (src/consts/tempoTemplates.ts).
 export const ProjectTempoSchema = z.object({
   enabled: z.boolean(),
   maxLinesPerEntry: z.number().int().min(1),
+  // Visible characters on each line of an entry (Netflix's characters per line)
+  maxCharsPerLine: z.number().int().min(1).default(42),
   // Reading speed: visible characters per second on screen (Netflix's CPS)
   maxCharsPerSecond: z.number().int().min(1).default(17),
   minDurationMs: z.number().int().min(1),
@@ -23,12 +25,14 @@ export const ProjectTempoSchema = z.object({
 });
 export type TProjectTempo = z.infer<typeof ProjectTempoSchema>;
 
-// Netflix's general limits: 2 lines, 17 characters per second (most languages, Belarusian included;
-// English is 20), 5/6 of a second on screen, 2 frames between entries, no overlaps. On by default:
-// new projects and projects upgraded from version 1 (or saved without `tempo`) start checked.
+// Netflix's general limits: 2 lines of up to 42 characters, 17 characters per second (most
+// languages; English is 20), 5/6 of a second on screen, 2 frames between entries, no overlaps. On by
+// default. The renderer starts new and upgraded projects from their language's standard instead;
+// these are what a body saved without `tempo` reads as.
 export const PROJECT_TEMPO_DEFAULTS: TProjectTempo = {
   enabled: true,
   maxLinesPerEntry: 2,
+  maxCharsPerLine: 42,
   maxCharsPerSecond: 17,
   minDurationMs: 833,
   minIntervalFrames: 2,

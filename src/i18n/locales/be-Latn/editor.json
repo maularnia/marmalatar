@@ -20,6 +20,8 @@
   },
   "tempoPanel": {
     "lines": "Radki",
+    "charsPerLine": "Simvałaŭ u radku",
+    "charsPerLineTooLong": "Zašmat simvałaŭ u radku {{line}}",
     "cps": "Simb/sek",
     "seconds": "s",
     "tooCloseToPrevious": "Papiaredni radok zanadta blizka",

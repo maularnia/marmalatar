@@ -20,6 +20,8 @@
   },
   "tempoPanel": {
     "lines": "Lines",
+    "charsPerLine": "Chars per line",
+    "charsPerLineTooLong": "Too many chars in line {{line}}",
     "cps": "CPS",
     "seconds": "s",
     "tooCloseToPrevious": "Previous line is too close",

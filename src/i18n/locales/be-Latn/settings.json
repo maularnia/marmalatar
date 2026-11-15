@@ -5,7 +5,10 @@
   },
   "tempo": {
     "title": "Temp",
+    "standard": "Standart",
+    "custom": "Svoj",
     "maxLinesPerEntryLabel": "Maks. radkoŭ u nadpisie",
+    "maxCharsPerLineLabel": "Maks. simv. u radku",
     "maxCharsPerSecondLabel": "Maks. simb/sek",
     "minDurationMsLabel": "Min. praciahłaść (ms)",
     "minIntervalFramesLabel": "Min. interval (kadraŭ)",

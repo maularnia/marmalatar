@@ -5,7 +5,10 @@
   },
   "tempo": {
     "title": "Tempo",
+    "standard": "Standard",
+    "custom": "Custom",
     "maxLinesPerEntryLabel": "Max lines per entry",
+    "maxCharsPerLineLabel": "Max chars per line",
     "maxCharsPerSecondLabel": "Max CPS",
     "minDurationMsLabel": "Min duration (ms)",
     "minIntervalFramesLabel": "Min interval (frames)",

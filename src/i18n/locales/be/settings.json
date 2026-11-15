@@ -5,7 +5,10 @@
   },
   "tempo": {
     "title": "Тэмп",
+    "standard": "Стандарт",
+    "custom": "Свой",
     "maxLinesPerEntryLabel": "Макс. радкоў у надпісе",
+    "maxCharsPerLineLabel": "Макс. сімв. у радку",
     "maxCharsPerSecondLabel": "Макс. сімб/сек",
     "minDurationMsLabel": "Мін. працягласць (мс)",
     "minIntervalFramesLabel": "Мін. інтэрвал (кадраў)",
