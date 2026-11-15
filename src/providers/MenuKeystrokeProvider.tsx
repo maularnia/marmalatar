@@ -112,7 +112,7 @@ function MenuKeystrokeBody({ children }: PropsWithChildren) {
         ignoreModifierOnlyEvents: true,
       }}
       onFocusWithinChange={menu.setFocusWithin}
-      hint={{ corner: 'bottom-left' }}
+      hint
     >
       <MenuShortcuts />
       {children}

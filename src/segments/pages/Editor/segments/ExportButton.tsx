@@ -12,14 +12,15 @@ import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Toolt
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-// Pinned to the bottom middle of the editor's page, over the table, so it stays reachable
-// wherever the table is scrolled
+// Right after the editor table's list, centred on the table. Sticky, so while the list runs past
+// the bottom of the screen it stays pinned there, over the table, reachable wherever it's scrolled;
+// once the list's end is in view it sits just below the last line.
 const Slot = styled.div`
-  position: absolute;
+  position: sticky;
   z-index: 2;
-  left: 50%;
   bottom: ${CSSVar('size10')};
-  transform: translate3d(-50%, 0, 0);
+  align-self: center;
+  margin: ${CSSVar('size34')} 0 0;
 `;
 
 // Overlays are exclusive: each owner keeps its own open state, and the caller closes the others

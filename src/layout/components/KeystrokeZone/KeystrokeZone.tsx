@@ -14,10 +14,12 @@ import {
   useRef,
   useState,
 } from 'react';
+import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { useShortcutPause } from 'react-keyhub';
 import styled, { css } from 'styled-components';
-import { KeystrokeZoneContextType, KeystrokeZoneHintCorner, KeystrokeZoneProps } from './types';
+import { KeystrokeZoneContextType, KeystrokeZoneProps } from './types';
+import { useIsCtrlHeld } from './useIsCtrlHeld';
 
 const ZoneRoot = styled.div<{ $fit: 'fill' | 'content' }>`
   position: relative;
@@ -37,45 +39,27 @@ const ZoneRoot = styled.div<{ $fit: 'fill' | 'content' }>`
         `}
 `;
 
-const CORNER_STYLES: Record<KeystrokeZoneHintCorner, ReturnType<typeof css>> = {
-  'top-left': css`
-    top: ${CSSVar('size4')};
-    left: ${CSSVar('size4')};
-  `,
-  'top-right': css`
-    top: ${CSSVar('size4')};
-    right: ${CSSVar('size4')};
-  `,
-  'bottom-left': css`
-    bottom: ${CSSVar('size4')};
-    left: ${CSSVar('size4')};
-  `,
-  'bottom-right': css`
-    bottom: ${CSSVar('size4')};
-    right: ${CSSVar('size4')};
-  `,
-};
-
-// Only the badge itself is interactive (needed to trigger its explanatory tooltip on hover) --
-// everything around it stays click-through, since it's an absolutely-positioned overlay sitting on
-// top of the zone's real content.
-const HintBadge = styled.div<{ $corner: KeystrokeZoneHintCorner }>`
+// Shown only while Ctrl is held (the moment its Ctrl+number shortcut is in reach). Otherwise it's
+// fully transparent and click-through, so it never covers the zone's real content. While shown,
+// only the badge itself is interactive (for its explanatory tooltip on hover); everything around
+// it stays click-through, since it's an absolutely-positioned overlay on top of the zone.
+const HintBadge = styled.div`
   position: absolute;
-  ${({ $corner }) => CORNER_STYLES[$corner]}
+  top: ${CSSVar('size4')};
+  left: ${CSSVar('size4')};
   display: flex;
   align-items: center;
   gap: ${CSSVar('size1')};
-  pointer-events: auto;
   cursor: help;
   z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 100ms ease-in-out;
+  &.isVisible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 `;
-
-const HINT_TOOLTIP_SIDE: Record<KeystrokeZoneHintCorner, 'top' | 'bottom'> = {
-  'top-left': 'bottom',
-  'top-right': 'bottom',
-  'bottom-left': 'top',
-  'bottom-right': 'top',
-};
 
 export const KeystrokeZoneContext = createContext<KeystrokeZoneContextType>({
   zoneRef: { current: null },
@@ -105,6 +89,7 @@ export default function KeystrokeZone({
   const { registerZone, unregisterZone } = useGlobalKeystrokeRegistry();
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [slot, setSlot] = useState<TKeystrokeSlot | null>(null);
+  const isCtrlHeld = useIsCtrlHeld();
 
   const setFocusOverride = useCallback((fn: (() => void) | undefined) => {
     focusOverrideRef.current = fn;
@@ -121,7 +106,7 @@ export default function KeystrokeZone({
     (zoneRef.current ?? containerRef.current)?.focus();
   });
 
-  const hasHint = hint != null;
+  const hasHint = Boolean(hint);
   useEffect(() => {
     if (!hasHint) return;
     const assigned = registerZone(focusZoneActionRef.current);
@@ -183,9 +168,9 @@ export default function KeystrokeZone({
               {t('keystrokeZone.hintSuffix')}
             </TooltipComplex>
           }
-          side={HINT_TOOLTIP_SIDE[hint.corner ?? 'top-right']}
+          side="bottom"
         >
-          <HintBadge $corner={hint.corner ?? 'top-right'}>
+          <HintBadge className={classNames({ isVisible: isCtrlHeld })}>
             <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
               {String(slot)}
             </Tag>
