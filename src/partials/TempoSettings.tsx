@@ -7,7 +7,8 @@ import Toggle from '@ui-toolkit/Toggle';
 import Select from '@ui-toolkit/Select/Select';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@utils/languageLabels';
-import { findMatchingTempoLanguages, getTempoTemplate } from '@utils/tempoTemplates';
+import { applyTempoStandard } from '@utils/tempoTemplates';
+import { TEMPO_STANDARD_CUSTOM } from '@bridge/definitions/projectEntry';
 import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { type PropsWithChildren, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -19,9 +20,6 @@ type TTempoField =
   | 'maxCharsPerSecond'
   | 'minDurationMs'
   | 'minIntervalFrames';
-
-// The standard picker's entry for limits that match no language's standard
-const CUSTOM_STANDARD = 'custom';
 
 // A limit's name, shown above its input while the input is hovered or focused: the inputs sit five
 // to a row, too narrow for labels of their own
@@ -63,14 +61,11 @@ const FIELD_ICONS: Record<TTempoField, TIcon> = {
 // overlay and by the editor aside's fly-out -- it must stay self-contained (no props).
 export default function TempoSettings() {
   const { t } = useTranslation(['settings', 'errors']);
-  const [tempo, isProjectOpen, targetLanguage] = useAppSelectors(
-    projects.selectTempo,
-    projects.selectIsOpen,
-    projects.selectTargetLanguage
-  );
+  const [tempo, isProjectOpen] = useAppSelectors(projects.selectTempo, projects.selectIsOpen);
   const languageOptions = useLanguageOptions();
   const {
     enabled,
+    standard,
     maxLinesPerEntry,
     maxCharsPerLine,
     maxCharsPerSecond,
@@ -93,23 +88,16 @@ export default function TempoSettings() {
     mode: 'onChange',
   });
 
-  // The language whose standard the limits match: the project's output language when it's one of
-  // them (several languages share a standard), else the first in the picker's order. Custom, an
-  // option only while nothing matches, when none does.
-  const { standard, standardOptions } = useMemo(() => {
-    const matching = findMatchingTempoLanguages(tempo);
-    const firstMatching = languageOptions.find((option) => matching.includes(option.value));
-    const value =
-      targetLanguage && matching.includes(targetLanguage)
-        ? targetLanguage
-        : (firstMatching?.value ?? CUSTOM_STANDARD);
-    return {
-      standard: value,
-      standardOptions: matching.length
-        ? languageOptions
-        : [...languageOptions, { value: CUSTOM_STANDARD, label: t('tempo.custom') }],
-    };
-  }, [tempo, targetLanguage, languageOptions, t]);
+  // The picker shows the standard stored with the project; Custom is an option only while it's the
+  // one stored (limits edited by hand)
+  const isCustom = standard === TEMPO_STANDARD_CUSTOM;
+  const standardOptions = useMemo(
+    () =>
+      isCustom
+        ? [...languageOptions, { value: TEMPO_STANDARD_CUSTOM, label: t('tempo.custom') }]
+        : languageOptions,
+    [isCustom, languageOptions, t]
+  );
 
   if (!isProjectOpen) return null;
 
@@ -122,7 +110,10 @@ export default function TempoSettings() {
       valueAsNumber: true,
       onChange: (e) => {
         const v = parseInt(e.currentTarget.value, 10);
-        if (Number.isInteger(v) && v >= 1) projects.setTempo({ [field]: v });
+        // A limit edited by hand no longer follows any language's standard
+        if (Number.isInteger(v) && v >= 1) {
+          projects.setTempo({ [field]: v, standard: TEMPO_STANDARD_CUSTOM });
+        }
       },
     });
 
@@ -148,9 +139,9 @@ export default function TempoSettings() {
                 options={standardOptions}
                 value={standard}
                 onChange={([value]) => {
-                  // Custom only names limits that match no standard: there's nothing to apply
-                  if (!value || value === CUSTOM_STANDARD) return;
-                  projects.setTempo(getTempoTemplate(value as TLanguage));
+                  // Custom only names limits edited by hand: there's no standard to apply
+                  if (!value || value === TEMPO_STANDARD_CUSTOM) return;
+                  projects.setTempo(applyTempoStandard(value as TLanguage));
                 }}
               />
             </FormsSectionContent>

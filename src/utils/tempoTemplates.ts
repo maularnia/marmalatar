@@ -1,4 +1,8 @@
-import { PROJECT_TEMPO_DEFAULTS, type TProjectTempo } from '@bridge/definitions/projectEntry';
+import {
+  PROJECT_TEMPO_DEFAULTS,
+  TEMPO_STANDARD_CUSTOM,
+  type TProjectTempo,
+} from '@bridge/definitions/projectEntry';
 import { TLanguage } from '@src/types';
 
 // The limits a subtitle standard sets. `enabled` and `highlightOverlaps` are the user's own choices,
@@ -42,7 +46,7 @@ const TEMPO_TEMPLATES: Record<TLanguage, TTempoStandard> = {
 };
 
 /** The language's standard; the general defaults' limits for a code that isn't a known language */
-export function getTempoTemplate(lang: string): TTempoStandard {
+function getTempoTemplate(lang: string): TTempoStandard {
   const template = TEMPO_TEMPLATES[lang as TLanguage];
   if (template) return template;
   return Object.fromEntries(
@@ -50,15 +54,24 @@ export function getTempoTemplate(lang: string): TTempoStandard {
   ) as TTempoStandard;
 }
 
-/** A whole tempo block for a new (or upgraded) project in this language: its standard over the
- * defaults, so the check starts on and overlaps highlighted */
-export function buildTempoForLanguage(lang: string): TProjectTempo {
-  return { ...PROJECT_TEMPO_DEFAULTS, ...getTempoTemplate(lang) };
+/** Whether a code names a language with a standard of its own */
+function isStandardLanguage(lang: string): lang is TLanguage {
+  return lang in TEMPO_TEMPLATES;
 }
 
-/** The languages whose standard the tempo's limits match exactly, in TLanguage order */
-export function findMatchingTempoLanguages(tempo: TProjectTempo): TLanguage[] {
-  return Object.values(TLanguage).filter((lang) =>
-    STANDARD_FIELDS.every((field) => TEMPO_TEMPLATES[lang][field] === tempo[field])
-  );
+/** A whole tempo block for a new (or upgraded) project in this language: its standard over the
+ * defaults, so the check starts on and overlaps highlighted, with the standard recorded (CUSTOM for
+ * a code that isn't a known language) */
+export function buildTempoForLanguage(lang: string): TProjectTempo {
+  return {
+    ...PROJECT_TEMPO_DEFAULTS,
+    ...getTempoTemplate(lang),
+    standard: isStandardLanguage(lang) ? lang : TEMPO_STANDARD_CUSTOM,
+  };
+}
+
+/** The update the standard picker applies: the language's limits, and the language as the
+ * project's standard */
+export function applyTempoStandard(lang: TLanguage): Partial<TProjectTempo> {
+  return { ...getTempoTemplate(lang), standard: lang };
 }

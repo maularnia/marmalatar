@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { TLanguage } from '@src/types';
 import { ThemeColors } from '@src/theme/utils';
 import { defineVersionedContract, createVersionedReader } from '@bridge/versioning';
 import { ProjectStateV2Schema } from '@bridge/definitions/projectState';
@@ -15,14 +14,13 @@ import {
   ProjectLineSchema,
   ProjectTempoSchema,
 } from '@bridge/definitions/projectEntry';
+import { LanguageCodeSchema } from '@bridge/definitions/language';
 import { ProjectSpellcheckSchema } from '@bridge/definitions/spellcheckDictionary';
 import { buildTempoForLanguage } from '@utils/tempoTemplates';
 import {
   PromptTemplateFileBodySchema,
   PromptTemplateFileHeaderSchema,
 } from '@bridge/definitions/promptTemplateEntry';
-
-const LanguageCodeSchema = z.enum(Object.values(TLanguage) as [TLanguage, ...TLanguage[]]);
 
 // File schemas are composed from the bridge's header and body schemas, with values only this app
 // knows (languages, theme colors) narrowed

@@ -1,3 +1,4 @@
+import { TLanguage } from '@bridge/definitions/language';
 import { TColor } from './theme/definitions';
 
 export enum TThemeSelection {
@@ -6,15 +7,8 @@ export enum TThemeSelection {
   SYSTEM = 'system',
 }
 
-export enum TLanguage {
-  English = 'EN_en',
-  German = 'DE_de',
-  Spanish = 'ES_es',
-  Italian = 'IT_it',
-  Belarusian = 'BE_be',
-  Ukrainian = 'UK_uk',
-  Polish = 'PL_pl',
-}
+// Defined in the bridge, shared with the main process
+export { TLanguage };
 
 /**
  * Canonical English language names -- deliberately NOT localized. Used only where a language name
