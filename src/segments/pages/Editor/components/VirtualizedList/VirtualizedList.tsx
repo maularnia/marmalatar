@@ -95,6 +95,12 @@ export default function VirtualizedList<T extends VirtualizedItem>({
 
   const onLayoutChangeRef = useRef(onLayoutChange);
   onLayoutChangeRef.current = onLayoutChange;
+  // Read through a ref: callers pass it inline (a new function every render), and as a dependency
+  // it made the measuring effect below re-run -- and re-set the visible portion -- on every render.
+  // With rows whose positions don't settle (scrolling near the end of the list on small screens),
+  // that fed itself until React gave up (maximum update depth).
+  const getItemFingerprintRef = useRef(getItemFingerprint);
+  getItemFingerprintRef.current = getItemFingerprint;
 
   const getItemKey = useCallback((item: T) => item.line_no, []);
   const getListOffsetTop = () => containerRef.current?.offsetTop ?? 0;
@@ -126,7 +132,7 @@ export default function VirtualizedList<T extends VirtualizedItem>({
     for (let index = 0; index < items.length; index += 1) {
       const item = items[index];
       const key = getItemKey(item);
-      const fingerprint = getItemFingerprint ? getItemFingerprint(item) : '';
+      const fingerprint = getItemFingerprintRef.current?.(item) ?? '';
       const height = itemHeightsRef.current.get(key) ?? rowHeightEstimateRef.current;
       const itemTop = acc;
       const itemBottom = itemTop + height;
@@ -150,7 +156,7 @@ export default function VirtualizedList<T extends VirtualizedItem>({
     setVisiblePortion(nextVisible);
     onLayoutChangeRef.current?.();
     return true;
-  }, [getItemFingerprint, getItemKey, items, overscanPx, pinnedIndexSet, scrollContainerRef]);
+  }, [getItemKey, items, overscanPx, pinnedIndexSet, scrollContainerRef]);
 
   recalculateRef.current = recalculateVisiblePortion;
 
