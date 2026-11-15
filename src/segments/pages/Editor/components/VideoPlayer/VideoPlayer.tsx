@@ -6,12 +6,11 @@ import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelectors } from '@store/hooks';
 import Button from '@ui-toolkit/Button/Button';
-import { TButtonVariant } from '@ui-toolkit/Button/types';
+import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import { TTagSize } from '@ui-toolkit/Tag';
-import { TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
-import { Fragment, useCallback, useEffect } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -30,7 +29,7 @@ const TopBar = styled.div`
   width: 100%;
   height: 33%;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-start;
   /* Barely there over the video until the player is pointed at (or the bar tabbed into) */
   opacity: 0.1;
@@ -72,19 +71,21 @@ const TopBarPanel = styled.div`
 
 const TopBarBlurWrapper = styled.div``;
 
-// How to start playback, in the bar's left corner; the buttons stay on the right
-const PlayHint = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${CSSVar('size4')};
-  padding: ${CSSVar('size4')};
-  font-family: ${CSSVar('fontTextSansSerif')};
-  font-size: ${CSSVar('sizeTextSmall')};
-  white-space: nowrap;
-  pointer-events: none;
-`;
-
 const DEFAULT_ASPECT_RATIO = 16 / 9;
+
+// The play/stop button in the middle of the video: shown only while the player is pointed at (see
+// VideoStage), and does what Ctrl+Enter does -- plays from the focused line, or stops and goes
+// back to its beginning
+const CenterPlay = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease-in-out;
+`;
 
 const VideoStage = styled.div`
   position: relative;
@@ -95,6 +96,11 @@ const VideoStage = styled.div`
     &::before {
       opacity: 1;
     }
+  }
+
+  &:hover ${CenterPlay} {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   &.isLargeScreen {
@@ -219,6 +225,9 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
   // 16:9 until the video's own ratio is known (or when it couldn't be read)
   const aspectRatio = videoAspectRatio ?? DEFAULT_ASPECT_RATIO;
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
+  // Follows the video element's own play/pause events (see the effect below), starting from its
+  // state when the player mounts
+  const [isPlaying, setIsPlaying] = useState(() => !(media.getVideoElement()?.paused ?? true));
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;
   const activeLineWordArray = (
@@ -252,11 +261,13 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       intervalId = setInterval(emitCurrentTime, TIME_UPDATE_INTERVAL_MS);
     };
     const handlePlay = () => {
+      setIsPlaying(true);
       startUpdates();
       onPlaybackResume?.();
     };
 
     const handlePause = () => {
+      setIsPlaying(false);
       stopUpdates();
       emitCurrentTime();
       onPlaybackPause?.();
@@ -317,19 +328,6 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       className={classNames({ isCollapsed: effectiveCollapsed })}
       style={{ color: CSSColor(panelColor, TShade.DEFAULT, 100) }}
     >
-      <PlayHint>
-        {videoFilePath && (
-          <>
-            {t('videoPlayer.playHintPrefix')}
-            <TooltipKeystrokeHint
-              keys={['Ctrl', 'Enter']}
-              size={TTagSize.SMALL}
-              color={panelColor}
-            />
-            {t('videoPlayer.playHintPostfix')}
-          </>
-        )}
-      </PlayHint>
       <TopBarPanel>
         {videoFilePath && audioTrackCount > 1 && (
           <TopBarBlurWrapper>
@@ -383,6 +381,27 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
           <Video ref={media.registerVideoElement} style={{ aspectRatio }} playsInline muted />
           <Audio ref={media.registerAudioElement} />
           {isTopBarInShell && topBar}
+          <CenterPlay>
+            <Tooltip
+              label={
+                <TooltipComplex
+                  title={t(isPlaying ? 'videoPlayer.stopToLine' : 'videoPlayer.playFromLine')}
+                >
+                  <TooltipKeystrokeHint keys={['Ctrl', 'Enter']} />
+                </TooltipComplex>
+              }
+            >
+              <Button
+                variant={TButtonVariant.SECONDARY}
+                size={TButtonSize.LARGE}
+                color={ThemeColors.ACCENT1}
+                icon={isPlaying ? TIcon.PLAYBACK_STOP : TIcon.PLAY}
+                // Keeps focus on the line being edited: playing starts from the focused line
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => editor.playFocusedLine()}
+              />
+            </Tooltip>
+          </CenterPlay>
           <BottomPanel>
             <VideoProgressBar />
           </BottomPanel>

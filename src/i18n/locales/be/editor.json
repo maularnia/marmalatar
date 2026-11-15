@@ -9,8 +9,8 @@
   },
   "videoPlayer": {
     "selectVideo": "Абраць відэа",
-    "playHintPrefix": "Націсніце",
-    "playHintPostfix": "каб прайграць"
+    "playFromLine": "Прайграць з бягучага радка",
+    "stopToLine": "Спыніць і вярнуцца да пачатку абранага радка"
   },
   "spellcheck": {
     "loadingSuggestions": "Шукаем варыянты...",

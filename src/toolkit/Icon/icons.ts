@@ -111,4 +111,6 @@ export enum TIcon {
   WIDTH = 'width',
   LINE_SIZE = 'line-size',
   INTERVAL = 'interval',
+  PLAY = 'play',
+  PLAYBACK_STOP = 'playback-stop',
 }

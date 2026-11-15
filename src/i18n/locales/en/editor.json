@@ -9,8 +9,8 @@
   },
   "videoPlayer": {
     "selectVideo": "Select video",
-    "playHintPrefix": "Hit",
-    "playHintPostfix": "to play"
+    "playFromLine": "Play from the current line",
+    "stopToLine": "Stop and return to the focused line’s beginning"
   },
   "spellcheck": {
     "loadingSuggestions": "Loading suggestions...",

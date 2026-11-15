@@ -9,8 +9,8 @@
   },
   "videoPlayer": {
     "selectVideo": "Abrać videa",
-    "playHintPrefix": "Naciśnicie",
-    "playHintPostfix": "kab prajhrać"
+    "playFromLine": "Prajhrać z biahučaha radka",
+    "stopToLine": "Spynić i viarnucca da pačatku abranaha radka"
   },
   "spellcheck": {
     "loadingSuggestions": "Šukajem varyjanty...",
