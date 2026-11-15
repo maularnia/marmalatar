@@ -70,8 +70,6 @@ const Root = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Room for the last line to scroll clear of the export button pinned over the table's bottom */
-  padding-bottom: calc(${CSSVar('buttonHeightLarge')} + ${CSSVar('size34')});
 `;
 
 const NavigationHint = styled(P)`
@@ -241,9 +239,9 @@ export default function Editor() {
           >
             <FocusedLinePanel top={panelTop} />
           </VirtualizedList>
+          <ExportButton />
         </Root>
       </EditorArea>
-      <ExportButton />
       <NavigationHint>
         {t('editorTable.navigationHintPrefix')}
         {navigationHintKeystroke}

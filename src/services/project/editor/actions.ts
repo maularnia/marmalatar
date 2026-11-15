@@ -171,24 +171,55 @@ export function focusLine(
   if (!lines()[lineIndex]) return false;
   const el = getLineInput(lineIndex, column);
   if (!el) {
-    // A line scrolled out of the virtualized list has no input, but still becomes focused.
+    // A line scrolled out of the virtualized list has no input, but still becomes focused -- which
+    // pins it, so the list mounts it on the next render. DOM focus follows once it's there:
+    // otherwise it stays on the previous row, which unmounts as it scrolls away, and focus drops
+    // out of the editor (a held Ctrl+Down used to stop that way).
     setFocusedLine(lineIndex);
+    focusInputOnceMounted(lineIndex, column, selectAll);
     return false;
   }
   // Inputs call this from their own onFocus to sync the store: moving the caret or scrolling then
   // would undo where the user just clicked. An explicit selectAll still applies.
-  if (selectAll || !el.contains(document.activeElement)) {
-    if (column === 'output' || column === 'source') {
-      if (selectAll) selectAllContentEditable(el);
-      else focusContentEditableToEnd(el);
-    } else {
-      el.focus();
-    }
-    el.scrollIntoView({ block: 'nearest' });
-  }
+  if (selectAll || !el.contains(document.activeElement)) focusInput(el, column, selectAll);
   setFocusedLine(lineIndex);
   Service.dispatch(setFocusedColumn(column));
   return true;
+}
+
+// Moves DOM focus into a line's input: the caret at the end of a text column (or all of it
+// selected), and the input scrolled into view
+function focusInput(el: HTMLElement, column: TInputColumn, selectAll: boolean): void {
+  if (column === 'output' || column === 'source') {
+    if (selectAll) selectAllContentEditable(el);
+    else focusContentEditableToEnd(el);
+  } else {
+    el.focus();
+  }
+  el.scrollIntoView({ block: 'nearest' });
+}
+
+// How many frames focusInputOnceMounted waits for a pinned row to mount
+const MOUNT_RETRY_FRAMES = 3;
+
+// Focuses a line's input as soon as its row is mounted, checking once per frame. Gives up when the
+// focused line has moved on (a newer navigation has its own retry) or after MOUNT_RETRY_FRAMES.
+function focusInputOnceMounted(
+  lineIndex: number,
+  column: TInputColumn,
+  selectAll: boolean,
+  framesLeft = MOUNT_RETRY_FRAMES
+): void {
+  requestAnimationFrame(() => {
+    if (Service.select(selectFocusedLineIndex) !== lineIndex) return;
+    const el = getLineInput(lineIndex, column);
+    if (!el) {
+      if (framesLeft > 1) focusInputOnceMounted(lineIndex, column, selectAll, framesLeft - 1);
+      return;
+    }
+    focusInput(el, column, selectAll);
+    Service.dispatch(setFocusedColumn(column));
+  });
 }
 
 /** Refocuses whatever was last focused, falling back to the first line's input for the current

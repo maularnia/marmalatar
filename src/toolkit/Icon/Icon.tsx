@@ -94,6 +94,8 @@ import iconTimeFix from '@src/assets/icons/icon-time-fix.svg?react';
 import iconWidth from '@src/assets/icons/icon-width.svg?react';
 import iconLineSize from '@src/assets/icons/icon-line-size.svg?react';
 import iconInterval from '@src/assets/icons/icon-interval.svg?react';
+import iconPlay from '@src/assets/icons/icon-play.svg?react';
+import iconPlaybackStop from '@src/assets/icons/icon-playback-stop.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -215,6 +217,8 @@ const ICON_COMPONENTS: {
   [TIcon.WIDTH]: iconWidth,
   [TIcon.LINE_SIZE]: iconLineSize,
   [TIcon.INTERVAL]: iconInterval,
+  [TIcon.PLAY]: iconPlay,
+  [TIcon.PLAYBACK_STOP]: iconPlaybackStop,
 };
 
 const Wrapper = styled.div`

@@ -22,13 +22,13 @@ const MessageTypeToColor: { [key in TMessageType]: TColor } = {
 
 const Overlay = styled.div`
   position: fixed;
-  left: 0;
+  right: 0;
   bottom: 0;
-  width: 100%;
+  width: 320px;
   z-index: 999;
   display: flex;
   flex-direction: column-reverse;
-  align-items: flex-start;
+  align-items: center;
   pointer-events: none;
   gap: ${CSSVar('size10')};
 `;
@@ -38,7 +38,7 @@ const Toast = styled(motion.div)<{ $type: TMessageType }>`
   pointer-events: auto;
 `;
 const ToastBody = styled.div`
-  width: 220px;
+  width: 320px;
   border-radius: ${CSSVar('size4')};
   backdrop-filter: blur(${CSSVar('blurHeavy')});
   padding: ${CSSVar('size10')} ${CSSVar('size14')} ${CSSVar('size12')};
@@ -65,8 +65,9 @@ const CloseButton = styled.div`
   top: 0;
 `;
 
-// The host of every toast: renders the toasts the toast slice lists, stacked at the bottom of the
-// window. Mounted once in main.tsx. Toasts are pushed only through the facade (toast.push).
+// The host of every toast: renders the toasts the toast slice lists, stacked at the bottom centre
+// of the window, the first one nearest the edge. Mounted once in main.tsx. Toasts are pushed only
+// through the facade (toast.push).
 export function Toasts() {
   const toasts = useAppSelector(selectToastList);
   return (

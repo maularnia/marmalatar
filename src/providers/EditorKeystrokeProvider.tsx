@@ -435,7 +435,7 @@ function EditorKeystrokeOuter({ children }: PropsWithChildren) {
         ignoreInputFields: false,
         ignoreModifierOnlyEvents: true,
       }}
-      hint={{ corner: 'bottom-left' }}
+      hint
     >
       <EditorKeystrokeContext value={modifierState}>
         <EditorShortcuts />
