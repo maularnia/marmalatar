@@ -10,6 +10,8 @@ type TTempoRule = { value: number; limit: number; ok: boolean };
 
 type TTempoStats = {
   lines: TTempoRule;
+  // The entry's longest line; `lineIndex` is its index among the entry's lines (0 when empty)
+  charsPerLine: TTempoRule & { lineIndex: number };
   durationMs: TTempoRule;
   charsPerSecond: TTempoRule;
 };
@@ -25,8 +27,8 @@ function countVisibleChars(text: string): number {
   return text.trim().replace(/\r?\n/g, '').length;
 }
 
-/** One subtitle entry against the project's own limits: at most `maxLinesPerEntry` lines, on screen
- * for at least `minDurationMs`, read at no more than `maxCharsPerSecond` (Netflix's reading speed:
+/** One subtitle entry against the project's own limits: at most `maxLinesPerEntry` lines of at most
+ * `maxCharsPerLine` visible characters each, on screen for at least `minDurationMs`, read at no more than `maxCharsPerSecond` (Netflix's reading speed:
  * visible characters / seconds on screen). Empty text passes the text rules -- an untranslated line
  * isn't "too fast" -- but the duration rule still applies. */
 export function getTempoStats(
@@ -36,7 +38,14 @@ export function getTempoStats(
   tempo: TProjectTempo
 ): TTempoStats {
   const trimmed = text.trim();
-  const lineCount = trimmed ? trimmed.split('\n').length : 0;
+  const entryLines = trimmed ? trimmed.split('\n') : [];
+  const lineCount = entryLines.length;
+  // The first of the longest lines, should several tie
+  let longest = { chars: 0, index: 0 };
+  entryLines.forEach((entryLine, index) => {
+    const lineChars = countVisibleChars(entryLine);
+    if (lineChars > longest.chars) longest = { chars: lineChars, index };
+  });
   const durationMs = endMs - startMs;
   const chars = countVisibleChars(trimmed);
   // A non-positive duration can't be read at any speed; Infinity keeps it failing (and shows as ∞)
@@ -46,6 +55,12 @@ export function getTempoStats(
       value: lineCount,
       limit: tempo.maxLinesPerEntry,
       ok: lineCount <= tempo.maxLinesPerEntry,
+    },
+    charsPerLine: {
+      value: longest.chars,
+      limit: tempo.maxCharsPerLine,
+      ok: longest.chars <= tempo.maxCharsPerLine,
+      lineIndex: longest.index,
     },
     durationMs: {
       value: durationMs,
@@ -67,8 +82,13 @@ export function passesTempo(
   endMs: number,
   tempo: TProjectTempo
 ): boolean {
-  const { lines, durationMs, charsPerSecond } = getTempoStats(text, startMs, endMs, tempo);
-  return lines.ok && durationMs.ok && charsPerSecond.ok;
+  const { lines, charsPerLine, durationMs, charsPerSecond } = getTempoStats(
+    text,
+    startMs,
+    endMs,
+    tempo
+  );
+  return lines.ok && charsPerLine.ok && durationMs.ok && charsPerSecond.ok;
 }
 
 // The same gap test `findTimingIssues` applies between consecutive entries: closer than
@@ -83,7 +103,8 @@ export function getMinGapMs(tempo: TProjectTempo): number {
   return tempo.minIntervalFrames * FRAME_MS;
 }
 
-/** Which list neighbours of `lines[index]` it sits too close to (or overlaps) */
+/** Which list neighbours of `lines[index]` it sits too close to (or overlaps). Timing only, so
+ * empty lines are evaluated too. */
 export function getTempoNeighbourStats(
   lines: readonly TSubtitleLine[],
   index: number,
@@ -105,7 +126,8 @@ export function getTempoNeighbourStats(
  *   below, so switching overlap highlighting off really stops overlapping lines from being marked
  * - Overlap (while `highlightOverlaps`): any two entries whose spans intersect, neighbours in the
  *   list or not -- both are flagged. Sorted by start and swept with the running latest end, so a
- *   long entry covering several later ones catches each of them */
+ *   long entry covering several later ones catches each of them
+ * Timing only: empty lines are evaluated like any other. */
 export function findTimingIssues(lines: readonly TSubtitleLine[], tempo: TProjectTempo): boolean[] {
   const flags = lines.map(() => false);
 
@@ -138,6 +160,103 @@ export function findTimingIssues(lines: readonly TSubtitleLine[], tempo: TProjec
   return flags;
 }
 
+// Any whitespace but a line break: the characters a line may be broken at
+const SPACE_LIKE = /[^\S\n]/;
+
+// Splits `text` at the given space indexes (ascending), trimming each line
+function splitAt(text: string, indexes: readonly number[]): string[] {
+  const lines: string[] = [];
+  let from = 0;
+  for (const index of indexes) {
+    lines.push(text.slice(from, index).trim());
+    from = index + 1;
+  }
+  lines.push(text.slice(from).trim());
+  return lines;
+}
+
+// Balanced: the entry is cut into `lineCount` equal parts, and each cut moves to the space-like
+// character closest to it (a tie goes to the earlier one, so the top line is the shorter). Each
+// break comes after the previous one; with fewer spaces than cuts, fewer lines.
+function findBalancedBreaks(text: string, lineCount: number): number[] {
+  // One candidate per run of spaces (its first), so two breaks never share a gap between words
+  // and no line ends up empty. Indexes are UTF-16 ones, as `slice` takes them.
+  const spaces: number[] = [];
+  for (let index = 1; index < text.length; index++) {
+    if (SPACE_LIKE.test(text[index]) && !SPACE_LIKE.test(text[index - 1])) spaces.push(index);
+  }
+  const breaks: number[] = [];
+  for (let k = 1; k < lineCount; k++) {
+    const target = (text.length * k) / lineCount;
+    const previous = breaks.length ? breaks[breaks.length - 1] : -1;
+    const candidates = spaces.filter((index) => index > previous);
+    if (!candidates.length) break;
+    breaks.push(
+      candidates.reduce((best, index) =>
+        Math.abs(index - target) < Math.abs(best - target) ? index : best
+      )
+    );
+  }
+  return breaks;
+}
+
+// Greedy: each line filled up to the limit, broken at the last space that keeps it within it.
+// The fallback when the balanced breaks leave a line too long (a long word near a cut).
+function findGreedyBreaks(text: string, limit: number, maxLines: number): number[] {
+  const breaks: number[] = [];
+  let from = 0;
+  while (breaks.length < maxLines - 1 && text.length - from > limit) {
+    // The character at `index` is replaced by the break, so the line before it ends there
+    let index = Math.min(from + limit, text.length - 1);
+    while (index > from && !SPACE_LIKE.test(text[index])) index--;
+    // The start of that run of spaces: the line before it never ends on (or is only) spaces
+    while (index > from && SPACE_LIKE.test(text[index - 1])) index--;
+    if (index === from) break;
+    breaks.push(index);
+    // The next line starts at the next word, past the rest of the run
+    from = index + 1;
+    while (from < text.length && SPACE_LIKE.test(text[from])) from++;
+  }
+  return breaks;
+}
+
+/** Breaks an entry whose lines are longer than `maxCharsPerLine`. Its existing line breaks are
+ * dropped (each line trimmed, joined with a space), then it's split into as few lines as fit,
+ * never more than `maxLinesPerEntry`. For each line count, from the fewest the text could take,
+ * balanced lines are tried first: the cuts fall where the lines would be equal, each moved to the
+ * closest space-like character. When that leaves a line too long, lines are filled greedily
+ * instead; when neither fits, the next line count is tried.
+ * Returns the new text, or null when the entry is left as it is:
+ * - it's empty, or no line is too long
+ * - it has more visible characters than the entry can hold (`maxCharsPerLine * maxLinesPerEntry`)
+ * - no breaking fits it (a word longer than the limit, or too little room after the last break) */
+function breakLongLine(text: string, tempo: TProjectTempo): string | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const { maxCharsPerLine: limit, maxLinesPerEntry: maxLines } = tempo;
+  if (trimmed.split('\n').every((line) => countVisibleChars(line) <= limit)) return null;
+
+  const flattened = trimmed
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(' ');
+  if (countVisibleChars(flattened) > limit * maxLines) return null;
+
+  const fits = (lines: string[]) => lines.every((line) => line && line.length <= limit);
+  // As few lines as possible: from the fewest the text could fit in, up to the entry's maximum
+  for (let lineCount = Math.ceil(flattened.length / limit); lineCount <= maxLines; lineCount++) {
+    for (const breaks of [
+      findBalancedBreaks(flattened, lineCount),
+      findGreedyBreaks(flattened, limit, lineCount),
+    ]) {
+      const lines = splitAt(flattened, breaks);
+      if (fits(lines)) return lines.join('\n');
+    }
+  }
+  return null;
+}
+
 /** Moves line timings to satisfy the rules between consecutive entries (list order), as far as
  * that's possible without reshaping a line. Each pair is taken with the timings already adjusted
  * for the pair before it, so a fix carries over:
@@ -153,12 +272,19 @@ export function findTimingIssues(lines: readonly TSubtitleLine[], tempo: TProjec
  * start stays, the end moves later until the reading speed fits -- or, when that would come closer
  * to the next line than `minIntervalFrames` (or past `maxEndMs`, the video's end), as far as there
  * is room. A line already touching that limit stays as it is.
+ * With `breakLongLines` (which writes a new text into the column `getText` reads), a final pass
+ * breaks entries whose lines are longer than `maxCharsPerLine` (see `breakLongLine`). It runs last:
+ * a break replaces a space, which changes the reading speed the pass before it measured.
  * Returns new line objects only for the lines that changed, and how many did. */
 export function autoFixTiming(
   lines: readonly TSubtitleLine[],
   tempo: TProjectTempo,
   getText: (line: TSubtitleLine) => string,
-  options: { extendForCps?: boolean; maxEndMs?: number | null } = {}
+  options: {
+    extendForCps?: boolean;
+    maxEndMs?: number | null;
+    breakLongLines?: (line: TSubtitleLine, text: string) => TSubtitleLine;
+  } = {}
 ): { lines: TSubtitleLine[]; changedCount: number } {
   const minGapMs = getMinGapMs(tempo);
   const result = [...lines];
@@ -221,6 +347,15 @@ export function autoFixTiming(
         : (options.maxEndMs ?? Number.POSITIVE_INFINITY);
       const end = Math.min(line.start_time + requiredMs, roomEnd);
       if (end > line.end_time) update(i, { end_time: end });
+    }
+  }
+
+  if (options.breakLongLines) {
+    for (let i = 0; i < result.length; i++) {
+      const text = breakLongLine(getText(result[i]), tempo);
+      if (text === null || text === getText(result[i])) continue;
+      result[i] = options.breakLongLines(result[i], text);
+      changed.add(i);
     }
   }
 

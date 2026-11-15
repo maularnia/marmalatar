@@ -1,4 +1,4 @@
-import { PROJECT_TEMPO_DEFAULTS } from '@bridge/definitions/projectEntry';
+import { buildTempoForLanguage } from '@utils/tempoTemplates';
 import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
 import { modal } from '@src/services/modal';
 import { toast } from '@src/services/toast';
@@ -484,11 +484,14 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
   // The main process names the file and assigns the projectId, so the project exists on disk
   // before anything is applied to the editor
   const editorData = { characterPool: [], lines: params.lines };
+  // The standard of the language the starting mode checks: the source while editing, the
+  // translation otherwise
+  const tempo = buildTempoForLanguage(editorMode === 'edit' ? sourceLanguage : targetLanguage);
   let entry: TProjectEntry | null;
   try {
     entry = await createProjectOnDisk(
       { projectName, emoji, sourceLanguage, targetLanguage },
-      { editor: editorData, tempo: PROJECT_TEMPO_DEFAULTS }
+      { editor: editorData, tempo }
     );
   } catch {
     throw new Error(t('createNewProject.fileSaveFailed'));
@@ -505,7 +508,7 @@ async function createProjectFromLines(params: TCreateProjectParams): Promise<voi
     },
     editor: editorData,
     spellcheck: {},
-    tempo: PROJECT_TEMPO_DEFAULTS,
+    tempo,
   });
 
   Service.dispatch(setEditorMode(editorMode));

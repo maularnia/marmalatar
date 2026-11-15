@@ -26,7 +26,14 @@ import {
   type TAutoFixTempoOptions,
 } from './dialogs/autoFixTempo/autoFixTempoConfirmation';
 import { autoFixTiming } from '@utils/tempo';
-import { selectProjectTempo } from '../slice';
+import { TEMPO_STANDARD_CUSTOM } from '@bridge/definitions/projectEntry';
+import { applyTempoStandard } from '@utils/tempoTemplates';
+import {
+  selectProjectSourceLanguage,
+  selectProjectTargetLanguage,
+  selectProjectTempo,
+  setProjectTempo,
+} from '../slice';
 import { TCleanupFormValues } from './dialogs/cleanup/CleanupDialog';
 import { confirmCleanup } from './dialogs/cleanup/cleanupConfirmation';
 import { confirmCopyAllSourceToOutput } from './dialogs/copyAllSourceToOutput/copyAllSourceToOutputConfirmation';
@@ -512,7 +519,8 @@ export async function cleanup(): Promise<void> {
 }
 
 // Retimes overlapping and too-close lines to the project's tempo limits (see autoFixTiming), on
-// the lines whose column for the current mode has text. Asks first; one undo step.
+// the lines whose column for the current mode has text -- and, when chosen, breaks too-long lines
+// in that column. Asks first; one undo step.
 export async function autoFixTempo(): Promise<void> {
   const tempo = Service.select(selectProjectTempo);
   if (isBulkTranslationRunning() || !tempo.enabled) return;
@@ -540,13 +548,22 @@ export async function autoFixTempo(): Promise<void> {
   const { changedCount } = autoFixTiming(lines(), tempo, getText, {
     extendForCps: options.extendForCps,
     maxEndMs,
+    breakLongLines: options.breakLongLines
+      ? (line, text) => (isEditMode ? { ...line, input: text } : { ...line, output: text })
+      : undefined,
   });
   if (!changedCount) {
     toast.push(makeTempoAutoFixNothingMessage());
     return;
   }
   Service.dispatch(
-    tempoAutoFixed({ targetColumn, tempo, extendForCps: options.extendForCps, maxEndMs })
+    tempoAutoFixed({
+      targetColumn,
+      tempo,
+      extendForCps: options.extendForCps,
+      breakLongLines: options.breakLongLines,
+      maxEndMs,
+    })
   );
   toast.push(makeTempoAutoFixedMessage(changedCount));
 }
@@ -583,11 +600,19 @@ export function completeAllTranslatedLines(): void {
 // ── Mode ─────────────────────────────────────────────────────────────────────
 
 /** Switches between translating and editing, keeping focus on the focused line in the column the
- * new mode works in. */
+ * new mode works in. A project following a language's tempo standard switches to the standard of
+ * the language the new mode checks (the source while editing, the translation otherwise); limits
+ * edited by hand (CUSTOM) stay as they are. */
 export function toggleEditMode(): void {
   const nextMode = Service.select(selectIsEditMode) ? 'translate' : 'edit';
   const focusedLineIndex = Service.select(selectFocusedLineIndex);
   Service.dispatch(setEditorMode(nextMode));
+  if (Service.select(selectProjectTempo).standard !== TEMPO_STANDARD_CUSTOM) {
+    const language = Service.select(
+      nextMode === 'edit' ? selectProjectSourceLanguage : selectProjectTargetLanguage
+    );
+    if (language) Service.dispatch(setProjectTempo(applyTempoStandard(language)));
+  }
   if (focusedLineIndex !== null) {
     refocusLineAfterRender(focusedLineIndex, nextMode === 'edit' ? 'source' : 'output');
   }

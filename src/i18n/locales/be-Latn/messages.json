@@ -100,8 +100,8 @@
     "message": "Zmieniena radkoŭ: {{count}}"
   },
   "tempoAutoFixNothing": {
-    "title": "Niama čaho vypraŭliać",
-    "message": "Čas radkoŭ palepšyć nie atrymałasia"
+    "title": "Usio ŭ paradku",
+    "message": "Nie znajšłosia radkoŭ dla vypraŭliennia"
   },
   "tempoAutoFixCancelled": {
     "title": "Vypraŭlennie tempu skasavanaje",

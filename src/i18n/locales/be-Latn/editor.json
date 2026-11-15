@@ -20,12 +20,14 @@
   },
   "tempoPanel": {
     "lines": "Radki",
+    "charsPerLine": "Simvałaŭ u radku",
+    "charsPerLineTooLong": "Zašmat simvałaŭ u radku {{line}}",
     "cps": "Simb/sek",
     "seconds": "s",
     "tooCloseToPrevious": "Papiaredni radok zanadta blizka",
     "tooCloseToNext": "Nastupny radok zanadta blizka",
     "tooCloseToNeighbours": "Susiednija radki zanadta blizka",
-    "durationTooShort": "Radok zanadta karotki pa časie",
+    "durationTooShort": "Radok zakarotki pa časie",
     "cpsTooHigh": "Zašmat tekstu dla praciahłasci radka",
     "duration": "Praciahłasć"
   }

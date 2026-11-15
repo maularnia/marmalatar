@@ -222,18 +222,19 @@ const Line = styled.div`
   }
 
   /* The line breaks one of the project's subtitle limits. Declared after the hover/active/
-     completed/merge-candidate states so its colors win over theirs, and before .isFrozen (which
-     also guards it out) so a frozen line never shows it. A completed line keeps completed's
-     opacities -- the row's own, never set here, and the backdrop's, excluded below -- and takes
-     everything else from the error state: dimmed, but still red. */
-  &.isTempoFailed:not(.isFrozen) ${Backdrop} {
+     completed states so its colors win over theirs, and before .isFrozen (which also guards it
+     out) so a frozen line never shows it. A merge candidate is guarded out too: while a merge is
+     being picked, the candidate's own look matters more than the error. A completed line keeps
+     completed's opacities -- the row's own, never set here, and the backdrop's, excluded below --
+     and takes everything else from the error state: dimmed, but still red. */
+  &.isTempoFailed:not(.isFrozen):not(.isMergeCandidate) ${Backdrop} {
     background: ${CSSVar('mainTableLineBackdropBgError')};
     border-width: ${CSSVar('mainTableLineBackdropBorderWidthError')};
   }
-  &.isTempoFailed.isFocused:not(.isFrozen) ${Backdrop} {
+  &.isTempoFailed.isFocused:not(.isFrozen):not(.isMergeCandidate) ${Backdrop} {
     border-color: ${CSSVar('mainTableLineBackdropBorderColorError')};
   }
-  &.isTempoFailed:not(.isFrozen):not(.isCompleted) ${Backdrop} {
+  &.isTempoFailed:not(.isFrozen):not(.isCompleted):not(.isMergeCandidate) ${Backdrop} {
     opacity: ${CSSVar('mainTableLineBackdropOpacityError')};
   }
 

@@ -502,16 +502,21 @@ const editorSlice = createSlice({
         targetColumn: 'source' | 'output';
         tempo: TProjectTempo;
         extendForCps: boolean;
+        breakLongLines: boolean;
         maxEndMs: number | null;
       }>
     ) {
-      const { targetColumn, tempo, extendForCps, maxEndMs } = action.payload;
+      const { targetColumn, tempo, extendForCps, breakLongLines, maxEndMs } = action.payload;
       addToHistory(state);
       const getText = (line: TSubtitleLine): string =>
         (targetColumn === 'source' ? line.input : line.output) ?? '';
       state.lines = autoFixTiming(current(state.lines), tempo, getText, {
         extendForCps,
         maxEndMs,
+        breakLongLines: breakLongLines
+          ? (line, text) =>
+              targetColumn === 'source' ? { ...line, input: text } : { ...line, output: text }
+          : undefined,
       }).lines;
     },
     allSourceCopiedToOutput(state, action: PayloadAction<{ overrideExisting: boolean }>) {

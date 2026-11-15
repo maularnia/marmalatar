@@ -4,13 +4,45 @@ import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import TextInput from '@ui-toolkit/TextInput';
 import Toggle from '@ui-toolkit/Toggle';
+import Select from '@ui-toolkit/Select/Select';
+import { TLanguage } from '@src/types';
+import { useLanguageOptions } from '@utils/languageLabels';
+import { applyTempoStandard } from '@utils/tempoTemplates';
+import { TEMPO_STANDARD_CUSTOM } from '@bridge/definitions/projectEntry';
+import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
+import { type PropsWithChildren, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-type TTempoField = 'maxLinesPerEntry' | 'maxCharsPerSecond' | 'minDurationMs' | 'minIntervalFrames';
+type TTempoField =
+  | 'maxLinesPerEntry'
+  | 'maxCharsPerLine'
+  | 'maxCharsPerSecond'
+  | 'minDurationMs'
+  | 'minIntervalFrames';
+
+// A limit's name, shown above its input while the input is hovered or focused: the inputs sit five
+// to a row, too narrow for labels of their own
+function LimitTooltip({ label, children }: PropsWithChildren<{ label: string }>) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  return (
+    <Tooltip label={<TooltipSimple>{label}</TooltipSimple>} forceOpen={isHovered || isFocused}>
+      <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+      >
+        {children}
+      </div>
+    </Tooltip>
+  );
+}
 
 const LIMIT_FIELDS: readonly TTempoField[] = [
   'maxLinesPerEntry',
+  'maxCharsPerLine',
   'maxCharsPerSecond',
   'minDurationMs',
   'minIntervalFrames',
@@ -18,9 +50,10 @@ const LIMIT_FIELDS: readonly TTempoField[] = [
 
 const FIELD_ICONS: Record<TTempoField, TIcon> = {
   maxLinesPerEntry: TIcon.LINE_OUT,
+  maxCharsPerLine: TIcon.LINE_SIZE,
   maxCharsPerSecond: TIcon.TEMPO,
   minDurationMs: TIcon.TIME_CONFIG,
-  minIntervalFrames: TIcon.STEP,
+  minIntervalFrames: TIcon.INTERVAL,
 };
 
 // The open project's subtitle limits (stored in its file): the toggle that switches the editor's
@@ -29,9 +62,12 @@ const FIELD_ICONS: Record<TTempoField, TIcon> = {
 export default function TempoSettings() {
   const { t } = useTranslation(['settings', 'errors']);
   const [tempo, isProjectOpen] = useAppSelectors(projects.selectTempo, projects.selectIsOpen);
+  const languageOptions = useLanguageOptions();
   const {
     enabled,
+    standard,
     maxLinesPerEntry,
+    maxCharsPerLine,
     maxCharsPerSecond,
     minDurationMs,
     minIntervalFrames,
@@ -42,9 +78,26 @@ export default function TempoSettings() {
     register,
     formState: { errors },
   } = useForm({
-    values: { maxLinesPerEntry, maxCharsPerSecond, minDurationMs, minIntervalFrames },
+    values: {
+      maxLinesPerEntry,
+      maxCharsPerLine,
+      maxCharsPerSecond,
+      minDurationMs,
+      minIntervalFrames,
+    },
     mode: 'onChange',
   });
+
+  // The picker shows the standard stored with the project; Custom is an option only while it's the
+  // one stored (limits edited by hand)
+  const isCustom = standard === TEMPO_STANDARD_CUSTOM;
+  const standardOptions = useMemo(
+    () =>
+      isCustom
+        ? [...languageOptions, { value: TEMPO_STANDARD_CUSTOM, label: t('tempo.custom') }]
+        : languageOptions,
+    [isCustom, languageOptions, t]
+  );
 
   if (!isProjectOpen) return null;
 
@@ -57,7 +110,10 @@ export default function TempoSettings() {
       valueAsNumber: true,
       onChange: (e) => {
         const v = parseInt(e.currentTarget.value, 10);
-        if (Number.isInteger(v) && v >= 1) projects.setTempo({ [field]: v });
+        // A limit edited by hand no longer follows any language's standard
+        if (Number.isInteger(v) && v >= 1) {
+          projects.setTempo({ [field]: v, standard: TEMPO_STANDARD_CUSTOM });
+        }
       },
     });
 
@@ -77,17 +133,29 @@ export default function TempoSettings() {
         </FormsSectionTitle>
         {enabled && (
           <>
-            {/* Two per row: the section also sits in the narrow editor aside */}
-            <FormsSectionContent $columns={4}>
+            <FormsSectionContent>
+              <Select
+                placeholder={t('tempo.standard')}
+                options={standardOptions}
+                value={standard}
+                onChange={([value]) => {
+                  // Custom only names limits edited by hand: there's no standard to apply
+                  if (!value || value === TEMPO_STANDARD_CUSTOM) return;
+                  projects.setTempo(applyTempoStandard(value as TLanguage));
+                }}
+              />
+            </FormsSectionContent>
+            {/* All five in one row, unlabelled: each names itself in a tooltip (LimitTooltip) */}
+            <FormsSectionContent $columns={LIMIT_FIELDS.length}>
               {LIMIT_FIELDS.map((field) => (
-                <TextInput
-                  key={field}
-                  icon={FIELD_ICONS[field]}
-                  errors={errors[field] ? [errors[field].message] : []}
-                  {...registerLimit(field)}
-                >
-                  {t(`tempo.${field}Label`)}
-                </TextInput>
+                <LimitTooltip key={field} label={t(`tempo.${field}Label`)}>
+                  <TextInput
+                    icon={FIELD_ICONS[field]}
+                    aria-label={t(`tempo.${field}Label`)}
+                    errors={errors[field] ? [errors[field].message] : []}
+                    {...registerLimit(field)}
+                  />
+                </LimitTooltip>
               ))}
             </FormsSectionContent>
             <FormsSectionContent>

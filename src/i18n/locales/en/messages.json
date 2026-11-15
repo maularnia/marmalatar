@@ -100,8 +100,8 @@
     "message": "Lines retimed: {{count}}"
   },
   "tempoAutoFixNothing": {
-    "title": "Nothing to fix",
-    "message": "No line timings could be improved"
+    "title": "All good",
+    "message": "No lines to fix were found"
   },
   "tempoAutoFixCancelled": {
     "title": "Tempo fix declined",

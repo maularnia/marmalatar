@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-// The part of a .mrmlg file only the glossary service writes. Languages are plain strings here:
-// the renderer narrows them to its TLanguage enum, which must not be imported into the bridge.
+// The part of a .mrmlg file only the glossary service writes. Languages are plain strings here on
+// purpose: the service lists files whatever language they name, and only the renderer's contract
+// narrows them to TLanguage.
 export const GlossaryFileHeaderSchema = z.object({
   version: z.literal(1).default(1),
   title: z.string(),
