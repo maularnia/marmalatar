@@ -99,9 +99,9 @@
     "interval": "{{frames}}\u00a0кадр.\u00a0({{ms}}\u00a0мс)",
     "extendForCps": "Паспрабаваць падоўжыць радкі з тэмпам вышэй за ліміт у <value>{{limit}}\u00a0сімб/сек</value>",
     "breakLongLines": "Разбіваць радкі, даўжэйшыя за <value>{{limit}}</value>\u00a0сімвалаў (надпісы даўжэйшыя за <value>{{total}}</value>\u00a0сімвалаў прапускаюцца)",
-    "skippedEmpty": "Будзе праігнаравана {{count}} з {{total}} радкоў без тэксту!",
-    "skippedCovering": "Будзе праігнаравана {{count}} з {{total}} радкоў, якія цалкам перакрываюцца",
-    "skippedUnbreakable": "Будзе праігнаравана {{count}} з {{total}} радкоў, задоўгіх для разбівання",
+    "skippedEmpty": "Будзе праігнаравана {{count}} без тэксту з {{total}}",
+    "skippedCovering": "Будзе праігнаравана {{count}} радкоў, якія цалкам перакрываюцца з {{total}}",
+    "skippedUnbreakable": "Будзе праігнаравана {{count}} радкоў, задоўгіх для разбівання з {{total}}",
     "confirmButton": "Выправіць"
   }
 }
