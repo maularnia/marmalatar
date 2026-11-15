@@ -26,7 +26,14 @@ import {
   type TAutoFixTempoOptions,
 } from './dialogs/autoFixTempo/autoFixTempoConfirmation';
 import { autoFixTiming } from '@utils/tempo';
-import { selectProjectTempo } from '../slice';
+import { TEMPO_STANDARD_CUSTOM } from '@bridge/definitions/projectEntry';
+import { applyTempoStandard } from '@utils/tempoTemplates';
+import {
+  selectProjectSourceLanguage,
+  selectProjectTargetLanguage,
+  selectProjectTempo,
+  setProjectTempo,
+} from '../slice';
 import { TCleanupFormValues } from './dialogs/cleanup/CleanupDialog';
 import { confirmCleanup } from './dialogs/cleanup/cleanupConfirmation';
 import { confirmCopyAllSourceToOutput } from './dialogs/copyAllSourceToOutput/copyAllSourceToOutputConfirmation';
@@ -583,11 +590,19 @@ export function completeAllTranslatedLines(): void {
 // ── Mode ─────────────────────────────────────────────────────────────────────
 
 /** Switches between translating and editing, keeping focus on the focused line in the column the
- * new mode works in. */
+ * new mode works in. A project following a language's tempo standard switches to the standard of
+ * the language the new mode checks (the source while editing, the translation otherwise); limits
+ * edited by hand (CUSTOM) stay as they are. */
 export function toggleEditMode(): void {
   const nextMode = Service.select(selectIsEditMode) ? 'translate' : 'edit';
   const focusedLineIndex = Service.select(selectFocusedLineIndex);
   Service.dispatch(setEditorMode(nextMode));
+  if (Service.select(selectProjectTempo).standard !== TEMPO_STANDARD_CUSTOM) {
+    const language = Service.select(
+      nextMode === 'edit' ? selectProjectSourceLanguage : selectProjectTargetLanguage
+    );
+    if (language) Service.dispatch(setProjectTempo(applyTempoStandard(language)));
+  }
   if (focusedLineIndex !== null) {
     refocusLineAfterRender(focusedLineIndex, nextMode === 'edit' ? 'source' : 'output');
   }
