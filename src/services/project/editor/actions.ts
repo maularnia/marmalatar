@@ -550,15 +550,33 @@ export async function cleanup(): Promise<void> {
 }
 
 // Retimes overlapping and too-close lines to the project's tempo limits (see autoFixTiming), on
-// the lines whose column for the current mode has text -- and, when chosen, breaks too-long lines
-// in that column. Asks first; one undo step.
+// the lines whose chosen column has text (picked in the dialog in translation mode, output by
+// default; always the source in edit mode) -- and, when chosen, breaks too-long lines in that
+// column. Asks first; one undo step.
 export async function autoFixTempo(): Promise<void> {
   const tempo = Service.select(selectProjectTempo);
   if (isBulkTranslationRunning() || !tempo.enabled) return;
   const isEditMode = Service.select(selectIsEditMode);
+  // Lines aren't stretched past the video's end, when there is one
+  const maxEndMs = media.get.videoDurationMs();
+  // A dry run on the current lines, as the reducer will run it: the dialog previews what it would
+  // skip, and an empty fix shouldn't leave an undo step behind
+  const dryRun = (
+    choice: Pick<TAutoFixTempoOptions, 'targetColumn' | 'extendForCps' | 'breakLongLines'>
+  ) => {
+    const isSource = choice.targetColumn === 'source';
+    const getText = (line: TSubtitleLine): string => (isSource ? line.input : line.output) ?? '';
+    return autoFixTiming(lines(), tempo, getText, {
+      extendForCps: choice.extendForCps,
+      maxEndMs,
+      breakLongLines: choice.breakLongLines
+        ? (line, text) => (isSource ? { ...line, input: text } : { ...line, output: text })
+        : undefined,
+    });
+  };
   let options: TAutoFixTempoOptions | null;
   try {
-    options = await confirmAutoFixTempo(tempo);
+    options = await confirmAutoFixTempo(tempo, isEditMode, (choice) => dryRun(choice).skipped);
   } catch (e) {
     toast.push(
       makeTempoAutoFixFailedMessage(
@@ -571,18 +589,8 @@ export async function autoFixTempo(): Promise<void> {
     toast.push(makeTempoAutoFixCancelledMessage());
     return;
   }
-  const targetColumn = isEditMode ? 'source' : 'output';
-  // Lines aren't stretched past the video's end, when there is one
-  const maxEndMs = media.get.videoDurationMs();
-  // A dry run on the current lines: an empty fix shouldn't leave an undo step behind
-  const getText = (line: TSubtitleLine): string => (isEditMode ? line.input : line.output) ?? '';
-  const { changedCount } = autoFixTiming(lines(), tempo, getText, {
-    extendForCps: options.extendForCps,
-    maxEndMs,
-    breakLongLines: options.breakLongLines
-      ? (line, text) => (isEditMode ? { ...line, input: text } : { ...line, output: text })
-      : undefined,
-  });
+  const { targetColumn } = options;
+  const { changedCount } = dryRun(options);
   if (!changedCount) {
     toast.push(makeTempoAutoFixNothingMessage());
     return;

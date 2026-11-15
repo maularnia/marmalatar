@@ -257,6 +257,18 @@ function breakLongLine(text: string, tempo: TProjectTempo): string | null {
   return null;
 }
 
+/** The lines `autoFixTiming` leaves as they are, by reason */
+export type TAutoFixSkipped = {
+  /** No text in the column fixed: not retimed */
+  empty: number;
+  /** One of a consecutive pair where one lies entirely within the other: no cut separates them */
+  covering: number;
+  /** With `breakLongLines`: too long, but no breaking fits them */
+  unbreakable: number;
+  /** All the lines the fix ran on, for "n of total" */
+  total: number;
+};
+
 /** Moves line timings to satisfy the rules between consecutive entries (list order), as far as
  * that's possible without reshaping a line. Each pair is taken with the timings already adjusted
  * for the pair before it, so a fix carries over:
@@ -275,7 +287,8 @@ function breakLongLine(text: string, tempo: TProjectTempo): string | null {
  * With `breakLongLines` (which writes a new text into the column `getText` reads), a final pass
  * breaks entries whose lines are longer than `maxCharsPerLine` (see `breakLongLine`). It runs last:
  * a break replaces a space, which changes the reading speed the pass before it measured.
- * Returns new line objects only for the lines that changed, and how many did. */
+ * Returns new line objects only for the lines that changed, how many did, and how many were left
+ * as they are and why (`skipped`). */
 export function autoFixTiming(
   lines: readonly TSubtitleLine[],
   tempo: TProjectTempo,
@@ -285,10 +298,12 @@ export function autoFixTiming(
     maxEndMs?: number | null;
     breakLongLines?: (line: TSubtitleLine, text: string) => TSubtitleLine;
   } = {}
-): { lines: TSubtitleLine[]; changedCount: number } {
+): { lines: TSubtitleLine[]; changedCount: number; skipped: TAutoFixSkipped } {
   const minGapMs = getMinGapMs(tempo);
   const result = [...lines];
   const changed = new Set<number>();
+  const covering = new Set<number>();
+  let unbreakable = 0;
 
   const update = (
     index: number,
@@ -305,7 +320,11 @@ export function autoFixTiming(
 
     const nextInsidePrev = next.start_time >= prev.start_time && next.end_time <= prev.end_time;
     const prevInsideNext = prev.start_time >= next.start_time && prev.end_time <= next.end_time;
-    if (nextInsidePrev || prevInsideNext) continue;
+    if (nextInsidePrev || prevInsideNext) {
+      covering.add(i - 1);
+      covering.add(i);
+      continue;
+    }
 
     let prevEnd = prev.end_time;
     let nextStart = next.start_time;
@@ -352,12 +371,29 @@ export function autoFixTiming(
 
   if (options.breakLongLines) {
     for (let i = 0; i < result.length; i++) {
-      const text = breakLongLine(getText(result[i]), tempo);
-      if (text === null || text === getText(result[i])) continue;
+      const current = getText(result[i]);
+      const text = breakLongLine(current, tempo);
+      if (text === null) {
+        // Too long, yet no break fits it (or the entry can't hold that much text at all)
+        if (current.split('\n').some((line) => countVisibleChars(line) > tempo.maxCharsPerLine)) {
+          unbreakable++;
+        }
+        continue;
+      }
+      if (text === current) continue;
       result[i] = options.breakLongLines(result[i], text);
       changed.add(i);
     }
   }
 
-  return { lines: result, changedCount: changed.size };
+  return {
+    lines: result,
+    changedCount: changed.size,
+    skipped: {
+      empty: lines.filter((line) => !getText(line).trim()).length,
+      covering: covering.size,
+      unbreakable,
+      total: lines.length,
+    },
+  };
 }
