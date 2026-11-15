@@ -9,23 +9,31 @@ import { glossaries } from '@src/services/glossary';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
+// The background and blur fade out from top (full) to bottom (none). backdrop-filter can't be
+// graded itself, so both live on a pseudo-element under the cells and a mask fades it -- masking
+// the row itself would fade its text too. `isolation` keeps the pseudo-element's negative z-index
+// inside the row.
 const Row = styled.div`
-  border: ${CSSVar('mainTableLineCellBorderWidth')} solid ${CSSVar('mainTableLineCellBorderColor')};
-  border-top: none;
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: var(--current-grid-template);
   gap: 0;
   align-items: stretch;
-  background-color: ${CSSVar('mainTableHeaderBg')};
-  backdrop-filter: ${CSSVar('mainTableHeaderBackdrop')};
   width: 100%;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: ${CSSVar('mainTableHeaderBg')};
+    backdrop-filter: ${CSSVar('mainTableHeaderBackdrop')};
+    mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    pointer-events: none;
+  }
 `;
 const Cell = styled.div`
-  border-left: ${CSSVar('mainTableLineCellBorderWidth')} solid
-    ${CSSVar('mainTableLineCellBorderColor')};
-  &:first-child {
-    border-left: none;
-  }
   padding: ${CSSVar('size4')} ${CSSVar('size6')};
   font-family: ${CSSVar('fontTextSansSerif')};
   font-size: ${CSSVar('sizeTextRegular')};

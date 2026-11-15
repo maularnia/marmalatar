@@ -367,7 +367,7 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('mainTableLineBackdropOpacityError', CSSVar('opacity-100')).register(),
     ...new ThemeVariable('mainTableLineBackdropBgError', CSSColor(TColorCustom.RED, TShade.DEFAULT, 5)).register(),
     ...new ThemeVariable('mainTableLineBackdropBorderColorError', CSSColor(TColorCustom.RED, TShade.DEFAULT, 10)).register(),
-    ...new ThemeVariable('mainTableLineBackdropBorderWidthError', '1px').register(),
+    ...new ThemeVariable('mainTableLineBackdropBorderWidthError', CSSVar('size1')).register(),
     ...new ThemeVariable('mainTableLineCellBg', CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 0)).register(),
     ...new ThemeVariable('mainTableLineCellBgHover', CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 10)).register(),
     ...new ThemeVariable('mainTableLineCellBgFocus', CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 0)).register(),
@@ -534,7 +534,7 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('tagTextWeightLarge', CSSVar('weightTextLarge')).register(),
     ...new ThemeVariable('tagTextWeightRegular', CSSVar('weightTextRegular')).register(),
     ...new ThemeVariable('tagTextWeightSmall', CSSVar('weightTextSmall')).register(),
-    ...new ThemeVariable('tagTextWeightNano', CSSVar('weightTextNano')).register(),
+    ...new ThemeVariable('tagTextWeightNano', CSSVar('bold')).register(),
   };
 
   const videoPlayer: TThemeVideoPlayerChapter = {
@@ -544,6 +544,16 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('videoPlayerOverlayBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 80)).register(),
     ...new ThemeVariable('videoPlayerOverlayTextBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 85)).register(),
     ...new ThemeVariable('videoPlayerOverlayTextColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 80)).register(),
+    ...new ThemeVariable('videoPlayerBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 100)).register(),
+    // The top panel sits over the video itself, so it's black-to-clear with white controls in
+    // every theme -- never the theme's own background/text colors
+    ...new ThemeVariable(
+      'videoPlayerPanelBg',
+      `linear-gradient(to bottom, ${CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 100)} 0%, ${CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 0)} 100%)`
+    ).register(),
+    // A raw color, not a CSS value: the player picks shade and opacity per element (text, tooltips,
+    // buttons)
+    ...new ThemeVariable('videoPlayerPanelColor', asColor(TColorSystem.WHITE), false).register(),
   };
 
   const waveforms: TThemeWaveformsChapter = {
@@ -618,8 +628,8 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('listItemBgOpacityHover', asOpacity(5), false).register(),
     ...new ThemeVariable('listItemBgShadeFocus', asShade(TShade.DEFAULT), false).register(),
     ...new ThemeVariable('listItemBgOpacityFocus', asOpacity(10), false).register(),
-    ...new ThemeVariable('listItemBgShadeActive', asShade(TShade.DEFAULT), false).register(),
-    ...new ThemeVariable('listItemBgOpacityActive', asOpacity(95), false).register(),
+    ...new ThemeVariable('listItemBgShadeActive', asShade(TShade.BRIGHT), false).register(),
+    ...new ThemeVariable('listItemBgOpacityActive', asOpacity(80), false).register(),
     ...new ThemeVariable('listItemBgShadeActiveHover', asShade(TShade.BRIGHT), false).register(),
     ...new ThemeVariable('listItemBgOpacityActiveHover', asOpacity(100), false).register(),
     ...new ThemeVariable('listItemBgShadeActiveFocus', asShade(TShade.BRIGHT), false).register(),
@@ -640,6 +650,9 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('listItemColorOpacityActiveFocus', asOpacity(90), false).register(),
     ...new ThemeVariable('listItemColorShadeDisabled', asShade(TShade.DARK), false).register(),
     ...new ThemeVariable('listItemColorOpacityDisabled', asOpacity(50), false).register(),
+    ...new ThemeVariable('projectListSectionBg', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 5)).register(),
+    // The sidebar's background while expanded (always, as a column; on hover or under an overlay, floating)
+    ...new ThemeVariable('menuExpandedBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 90)).register(),
   };
 
   return {

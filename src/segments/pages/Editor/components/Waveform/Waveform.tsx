@@ -1,9 +1,14 @@
 import { media } from '@src/services/media';
 import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
-import { CSSVar } from '@src/theme/utils';
-import Tooltip, { TooltipSimple } from '@src/toolkit/Tooltip';
-import { TSubtitleLine } from '@src/types';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@src/toolkit/Tooltip';
+import { ai } from '@src/services/ai';
+import { CSSVar, ThemeColors } from '@src/theme/utils';
+import Button from '@ui-toolkit/Button/Button';
+import { TButtonVariant } from '@ui-toolkit/Button/types';
+import { TIcon } from '@ui-toolkit/Icon/icons';
+import { TCharacter, TSubtitleLine } from '@src/types';
+import { parseCharacterList } from '@utils/characters';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelectors } from '@store/hooks';
 import { settings } from '@src/services/settings';
@@ -26,6 +31,8 @@ type WaveformProps = {
 };
 
 const PX_PER_SECOND = 30;
+// Lines shorter than this mark their roles with dots instead of letter tags
+const SHORT_LINE_MS = 1500;
 const CURSOR_OFFSET_RATIO = 0.3;
 const MIN_GAP_MS = 50;
 const WHEEL_SEEK_STEP_RATIO = 0.0005;
@@ -42,10 +49,31 @@ type DragState = {
   hasMoved: boolean;
 };
 
+// The waveform and its entries fade in and out at the sides. Masked layer by layer rather than on
+// Container, so the shift buttons sitting on the edges stay fully visible.
+const edgeFadeMask = `linear-gradient(
+  90deg,
+  transparent 0%,
+  black 10%,
+  black 90%,
+  transparent 100%
+)`;
+
+// Entries scroll with the timeline (translated), so the fade sits on this still layer over the
+// whole Container instead. It lets pointer events through to the waveform except on the entries.
+const EntriesMask = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: ${CSSVar('waveformSpacingY')} 0;
+  mask-image: ${edgeFadeMask};
+  pointer-events: none;
+`;
+
 const Entries = styled.div`
   position: relative;
   inset: 0;
-  z-index: 3;
+  pointer-events: auto;
   transition: transform 100ms linear;
   will-change: transform;
 `;
@@ -61,6 +89,7 @@ const Cursor = styled.div`
 `;
 const WaveFormViewport = styled.div`
   position: relative;
+  mask-image: ${edgeFadeMask};
   width: 100%;
   height: 100%;
   scrollbar-width: none;
@@ -85,16 +114,22 @@ const Container = styled.div`
   padding: ${CSSVar('waveformSpacingY')} 0;
   &.${TScreenSize.SMALL} {
     backdrop-filter: blur(${CSSVar('blurHeavy')});
-    mask-image: linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) 5%,
-      rgba(0, 0, 0, 1) 20%,
-      rgba(0, 0, 0, 1) 80%,
-      rgba(0, 0, 0, 0) 95%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    mask-size: 100% 100%;
+  }
+`;
+
+// Shift-all-lines buttons, fixed to the middle of the waveform's left and right edges, above the
+// entries and the cursor
+const ShiftButtonSlot = styled.div`
+  position: absolute;
+  top: 50%;
+  transform: translate3d(0, -50%, 0);
+  backdrop-filter: blur(${CSSVar('blurExtreme')});
+  z-index: 4;
+  &.earlier {
+    left: ${CSSVar('size4')};
+  }
+  &.later {
+    right: ${CSSVar('size4')};
   }
 `;
 
@@ -113,7 +148,22 @@ export default function Waveform({
   onLineTimingChange,
 }: WaveformProps) {
   const { t } = useTranslation('tooltips');
-  const [size, theme] = useAppSelectors(settings.selectScreenSize, settings.selectCurrentThemeData);
+  const [size, theme, characterPool, timeAdjustmentStep, isBusy] = useAppSelectors(
+    settings.selectScreenSize,
+    settings.selectCurrentThemeData,
+    editor.selectCharacterPool,
+    settings.selectTimeAdjustmentStep,
+    ai.selectIsBusy
+  );
+  // All lines move by the step only while there's room: none may start before 0 or, once the
+  // video's length is known, end after it
+  const hasLines = translationLines.length > 0;
+  const canShiftEarlier =
+    hasLines && Math.min(...translationLines.map((line) => line.start_time)) > 0;
+  const canShiftLater =
+    hasLines &&
+    (videoDurationMs == null ||
+      Math.max(...translationLines.map((line) => line.end_time)) < videoDurationMs);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const waveformViewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -320,6 +370,12 @@ export default function Waveform({
     const isActive = activeLineIndex === lineIndex;
     const isFocused = focusedLineIndex === lineIndex;
     const isDragging = dragLineIndex === lineIndex;
+    // Too short a block for letter tags: its roles show as dots only
+    const isShort = line.end_time - line.start_time < SHORT_LINE_MS;
+    // Roles without a pool entry (no color to show) are left out
+    const characters = parseCharacterList(line.character)
+      .map((name) => characterPool.find((character) => character.name === name))
+      .filter((character): character is TCharacter => Boolean(character));
 
     const fingerprint = getWaveformEntryFingerprint({
       lineNo: line.line_no,
@@ -328,6 +384,8 @@ export default function Waveform({
       isActive,
       isFocused,
       isDragging,
+      characterKey: characters.map(({ name, color }) => `${name}:${color}`).join(','),
+      isShort,
     });
 
     const cached = getCached(line.line_no, fingerprint);
@@ -345,6 +403,8 @@ export default function Waveform({
         isActive={isActive}
         isFocused={isFocused}
         isDragging={isDragging}
+        characters={characters}
+        isShort={isShort}
         onEntryPointerDown={handleEntryPointerDown}
       />
     );
@@ -388,9 +448,11 @@ export default function Waveform({
 
   return (
     <Container ref={containerRef} tabIndex={1} className={size}>
-      <Entries ref={entriesContainerRef}>
-        {translationLines.map((line, lineIndex) => renderWaveformEntry(line, lineIndex))}
-      </Entries>
+      <EntriesMask>
+        <Entries ref={entriesContainerRef}>
+          {translationLines.map((line, lineIndex) => renderWaveformEntry(line, lineIndex))}
+        </Entries>
+      </EntriesMask>
       <Tooltip delay={400} label={<TooltipSimple>{t('waveform.freeSpaceHint')}</TooltipSimple>}>
         <WaveFormViewport
           ref={waveformViewportRef}
@@ -412,6 +474,44 @@ export default function Waveform({
           </WaveFormCanvasWrapper>
         </WaveFormViewport>
       </Tooltip>
+      <ShiftButtonSlot className="earlier">
+        <Tooltip
+          label={
+            <TooltipComplex
+              title={t('editorControls.shiftLinesEarlier', { step: timeAdjustmentStep })}
+            >
+              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'A']} />
+            </TooltipComplex>
+          }
+        >
+          <Button
+            variant={TButtonVariant.SECONDARY}
+            color={ThemeColors.TEXT}
+            icon={TIcon.BACKWARD}
+            disabled={!canShiftEarlier || isBusy}
+            onClick={() => editor.shiftAllLinesEarlier(timeAdjustmentStep)}
+          />
+        </Tooltip>
+      </ShiftButtonSlot>
+      <ShiftButtonSlot className="later">
+        <Tooltip
+          label={
+            <TooltipComplex
+              title={t('editorControls.shiftLinesLater', { step: timeAdjustmentStep })}
+            >
+              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'D']} />
+            </TooltipComplex>
+          }
+        >
+          <Button
+            variant={TButtonVariant.SECONDARY}
+            color={ThemeColors.TEXT}
+            icon={TIcon.FORWARD}
+            disabled={!canShiftLater || isBusy}
+            onClick={() => editor.shiftAllLinesLater(timeAdjustmentStep)}
+          />
+        </Tooltip>
+      </ShiftButtonSlot>
     </Container>
   );
 }

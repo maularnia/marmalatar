@@ -86,18 +86,18 @@ const LineCell = styled.div`
   display: flex;
   align-items: stretch;
   justify-content: stretch;
-  border-left: ${CSSVar('mainTableLineCellBorderWidth')} solid
-    ${CSSVar('mainTableLineCellBorderColor')};
-  &:last-child {
-    border-right: ${CSSVar('mainTableLineCellBorderWidth')} solid
-      ${CSSVar('mainTableLineCellBorderColor')};
-  }
 `;
 
 const NumberLineCell = styled(LineCell)`
   padding-right: 0;
   padding-left: ${CSSVar('mainTableLineCellSpacingX')};
 `;
+
+// Experiment: lines sit apart with a small gap instead of a bottom border between them, each on a
+// rounded backdrop, borderless except on the focused line. The gap is the line's own bottom padding (so it's part of the
+// height VirtualizedList measures) and the backdrop stops short of it.
+const LINE_SPACING = CSSVar('size1');
+const LINE_RADIUS = '12px';
 
 const LineContent = styled.div`
   position: relative;
@@ -111,10 +111,10 @@ const Backdrop = styled.div`
   left: 0;
   top: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% - ${LINE_SPACING});
   opacity: ${CSSVar('mainTableLineBackdropOpacity')};
-  border: ${CSSVar('mainTableLineBackdropBorderWidth')} solid
-    ${CSSVar('mainTableLineBackdropBorderColor')};
+  border: none;
+  border-radius: ${LINE_RADIUS};
   will-change: background-color, opacity;
   overflow: hidden;
 `;
@@ -135,10 +135,8 @@ const Line = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${CSSVar('mainTableLineCellSpacingY')};
-  padding: 0;
+  padding: 0 0 ${LINE_SPACING};
   opacity: ${CSSVar('mainTableLineOpacity')};
-  border-bottom: ${CSSVar('mainTableLineCellBorderWidth')} solid
-    ${CSSVar('mainTableLineCellBorderColor')};
 
   @keyframes frozenAnimation {
     from {
@@ -151,8 +149,6 @@ const Line = styled.div`
 
   &.isCompleted {
     opacity: ${CSSVar('mainTableLineOpacityCompleted')};
-    border-bottom: ${CSSVar('mainTableLineCellBorderWidth')} solid
-      ${CSSVar('mainTableLineCellBorderColorCompleted')};
     ${Backdrop} {
       opacity: ${CSSVar('mainTableLineBackdropOpacityCompleted')};
       background: ${CSSVar('mainTableLineBackdropBgCompleted')};
@@ -163,22 +159,10 @@ const Line = styled.div`
     ${LineCellContent} {
       color: ${CSSVar('mainTableLineColorCompleted')};
     }
-
-    ${LineCell} {
-      border-left-color: ${CSSVar('mainTableLineCellBorderColorCompleted')};
-      border-right-color: ${CSSVar('mainTableLineCellBorderColorCompleted')};
-
-      &:last-child {
-        border-left-color: ${CSSVar('mainTableLineCellBorderColorCompleted')};
-        border-right-color: ${CSSVar('mainTableLineCellBorderColorCompleted')};
-      }
-    }
   }
 
   &.isActive {
     opacity: ${CSSVar('mainTableLineOpacityActive')};
-    border-bottom: ${CSSVar('mainTableLineCellBorderWidth')} solid
-      ${CSSVar('mainTableLineCellBorderColorActive')};
     ${Backdrop} {
       opacity: ${CSSVar('mainTableLineBackdropOpacityActive')};
       border-color: ${CSSVar('mainTableLineBackdropBorderColorActive')};
@@ -189,22 +173,11 @@ const Line = styled.div`
     ${LineCellContent} {
       color: ${CSSVar('mainTableLineColorActive')};
     }
-
-    ${LineCell} {
-      border-left-color: ${CSSVar('mainTableLineCellBorderColorActive')};
-      border-right-color: ${CSSVar('mainTableLineCellBorderColorActive')};
-      &:last-child {
-        border-left-color: ${CSSVar('mainTableLineCellBorderColorActive')};
-        border-right-color: ${CSSVar('mainTableLineCellBorderColorActive')};
-      }
-    }
   }
 
   &.isFocused {
     z-index: 3;
     opacity: ${CSSVar('mainTableLineOpacityFocus')};
-    border-bottom: ${CSSVar('mainTableLineCellBorderWidth')} solid
-      ${CSSVar('mainTableLineCellBorderColorFocus')};
     ${Backdrop} {
       opacity: ${CSSVar('mainTableLineBackdropOpacityFocus')};
       background: radial-gradient(
@@ -213,28 +186,19 @@ const Line = styled.div`
         transparent 150%
       );
       backdrop-filter: ${CSSVar('mainTableLineBackdropFilterFocus')};
-      height: calc(100% + (${CSSVar('mainTableLineBackdropSpacingY')} * 2));
+      height: calc(100% - ${LINE_SPACING} + (${CSSVar('mainTableLineBackdropSpacingY')} * 2));
       width: calc(100% + (${CSSVar('mainTableLineBackdropSpacingX')} * 2));
       top: calc(${CSSVar('mainTableLineBackdropSpacingY')} * -1);
       left: calc(${CSSVar('mainTableLineBackdropSpacingX')} * -1);
       transition:
         top 0.1s cubic-bezier(0.34, 1.56, 0.64, 1),
         height 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border-radius: ${CSSVar('mainTableLineBackdropRadius')};
-      border-color: ${CSSVar('mainTableLineBackdropBorderColorFocus')};
+      border: ${CSSVar('mainTableLineBackdropBorderWidth')} solid
+        ${CSSVar('mainTableLineBackdropBorderColorFocus')};
     }
 
     ${LineCellContent} {
       color: ${CSSVar('mainTableLineColorFocus')};
-    }
-
-    ${LineCell} {
-      border-left-color: ${CSSVar('mainTableLineCellBorderColorFocus')};
-      border-right-color: ${CSSVar('mainTableLineCellBorderColorFocus')};
-      &:last-child {
-        border-left-color: ${CSSVar('mainTableLineCellBorderColorFocus')};
-        border-right-color: ${CSSVar('mainTableLineCellBorderColorFocus')};
-      }
     }
   }
 
@@ -254,16 +218,6 @@ const Line = styled.div`
 
     ${LineCellContent} {
       color: ${CSSVar('mainTableLineColorMergeCandidate')};
-    }
-
-    ${LineCell} {
-      border-left-color: ${CSSVar('mainTableLineCellBorderColorMergeCandidate')};
-      border-right-color: ${CSSVar('mainTableLineCellBorderColorMergeCandidate')};
-
-      &:last-child {
-        border-left-color: ${CSSVar('mainTableLineCellBorderColorMergeCandidate')};
-        border-right-color: ${CSSVar('mainTableLineCellBorderColorMergeCandidate')};
-      }
     }
   }
 
@@ -285,7 +239,6 @@ const Line = styled.div`
 
   &.isFrozen {
     opacity: ${CSSVar('mainTableLineOpacityFrozen')};
-    border-bottom-color: ${CSSVar('mainTableLineCellBorderColorFrozen')};
 
     ${Backdrop} {
       opacity: ${CSSVar('mainTableLineBackdropOpacityFrozen')};
@@ -297,7 +250,7 @@ const Line = styled.div`
       backdrop-filter: ${CSSVar('mainTableLineBackdropFilterFrozen')};
       border-color: ${CSSVar('mainTableLineBackdropBorderColorFrozen')};
       width: 100%;
-      height: 100%;
+      height: calc(100% - ${LINE_SPACING});
       top: 0;
       left: 0;
       border: none;
@@ -318,16 +271,6 @@ const Line = styled.div`
     }
     ${LineCellContent} {
       color: ${CSSVar('mainTableLineColorFrozen')};
-    }
-
-    ${LineCell} {
-      border-left-color: ${CSSVar('mainTableLineCellBorderColorFrozen')};
-      border-right-color: ${CSSVar('mainTableLineCellBorderColorFrozen')};
-
-      &:last-child {
-        border-left-color: ${CSSVar('mainTableLineCellBorderColorFrozen')};
-        border-right-color: ${CSSVar('mainTableLineCellBorderColorFrozen')};
-      }
     }
   }
 `;

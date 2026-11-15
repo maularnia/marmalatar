@@ -13,12 +13,12 @@ export function GeneralTab() {
     <FormsContent>
       <Settings />
       <TempoSettings />
-      <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+      <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
       <FormsRow $columns={2}>
         <SelectFolder />
         <CleanCache />
       </FormsRow>
-      <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
+      <Hr variant={THrVariant.TRANSPARENT} orientation={THrOrient.HORIZONTAL} />
       <FormsRow $columns={2}>
         <SelectLanguage />
       </FormsRow>

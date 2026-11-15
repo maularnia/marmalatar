@@ -8,7 +8,9 @@
     "mergeDown": "Abjadnać z nižnim"
   },
   "videoPlayer": {
-    "noCharacter": "Biez piersanažu"
+    "selectVideo": "Abrać videa",
+    "playHintPrefix": "Naciśnicie",
+    "playHintPostfix": "kab prajhrać"
   },
   "spellcheck": {
     "loadingSuggestions": "Šukajem varyjanty...",
@@ -24,6 +26,7 @@
     "tooCloseToNext": "Nastupny radok zanadta blizka",
     "tooCloseToNeighbours": "Susiednija radki zanadta blizka",
     "durationTooShort": "Radok zanadta karotki pa časie",
-    "cpsTooHigh": "Zašmat tekstu dla praciahłasci radka"
+    "cpsTooHigh": "Zašmat tekstu dla praciahłasci radka",
+    "duration": "Praciahłasć"
   }
 }

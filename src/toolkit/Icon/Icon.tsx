@@ -91,6 +91,7 @@ import iconTimeOk from '@src/assets/icons/icon-time-ok.svg?react';
 import iconTimeError from '@src/assets/icons/icon-time-error.svg?react';
 import iconTimeSpan from '@src/assets/icons/icon-time-span.svg?react';
 import iconTimeFix from '@src/assets/icons/icon-time-fix.svg?react';
+import iconWidth from '@src/assets/icons/icon-width.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -209,6 +210,7 @@ const ICON_COMPONENTS: {
   [TIcon.TIME_ERROR]: iconTimeError,
   [TIcon.TIME_SPAN]: iconTimeSpan,
   [TIcon.TIME_FIX]: iconTimeFix,
+  [TIcon.WIDTH]: iconWidth,
 };
 
 const Wrapper = styled.div`

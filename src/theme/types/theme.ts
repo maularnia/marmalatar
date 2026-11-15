@@ -275,6 +275,9 @@ export type TThemeVideoPlayerChapter = TThemeVarsChapter<{
   videoPlayerOverlayBg: string;
   videoPlayerOverlayTextBg: string;
   videoPlayerOverlayTextColor: string;
+  videoPlayerBg: string;
+  videoPlayerPanelBg: string;
+  videoPlayerPanelColor: [TColor, false];
 }>;
 
 export type TThemeFormsChapter = TThemeVarsChapter<{
@@ -333,6 +336,8 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemColorOpacityActiveFocus: [TOpacity, false];
   listItemColorShadeDisabled: [TShade, false];
   listItemColorOpacityDisabled: [TOpacity, false];
+  projectListSectionBg: string;
+  menuExpandedBg: string;
 }>;
 
 export type TThemeVarsTheme = TThemeAppChapter &

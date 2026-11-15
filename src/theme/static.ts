@@ -206,6 +206,12 @@ const screen: TThemeStaticScreenChapter = {
   ...new ThemeVariable('appAsideWidthLarge', '1fr').register(),
   ...new ThemeVariable('appScrollbarWidth', CSSVar('size2')).register(),
   ...new ThemeVariable('appScrollbarBorderRadius', CSSVar('inputBorderRadius')).register(),
+  // The sidebar's width while collapsed to its icon column (the grid track, the menu itself and
+  // its collapse animation all use it)
+  ...new ThemeVariable('appMenuCollapsedWidth', '44px').register(),
+  // The expanded sidebar's width: the static column on large screens, and the overlay a collapsed
+  // sidebar expands into on smaller ones
+  ...new ThemeVariable('appMenuExpandedWidth', '264px').register(),
 };
 
 const message: TThemeStaticMessageChapter = {
@@ -278,11 +284,11 @@ const inputs: TThemeStaticInputsChapter = {
   ...new ThemeVariable('inputSpacingYNano', '0').register(),
   ...new ThemeVariable('inputSpacingYInnerNano', CSSVar('size2')).register(),
 
-  ...new ThemeVariable('inputBorderWidth', CSSVar('size1')).register(),
+  ...new ThemeVariable('inputBorderWidth', '0').register(),
   ...new ThemeVariable('inputBorderWidthFocus', CSSVar('size1')).register(),
   ...new ThemeVariable('inputBorderWidthHover', CSSVar('size1')).register(),
   ...new ThemeVariable('inputBorderWidthDisabled', CSSVar('size1')).register(),
-  ...new ThemeVariable('inputBorderRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('inputBorderRadius', CSSVar('size12')).register(),
   ...new ThemeVariable('inputOptionBorderRadius', CSSVar('inputBorderRadius')).register(),
   ...new ThemeVariable('inputOptionSpacingX', CSSVar('inputSpacingXRegular')).register(),
   ...new ThemeVariable('inputOptionSpacingY', CSSVar('inputSpacingYRegular')).register(),
@@ -292,7 +298,6 @@ const inputs: TThemeStaticInputsChapter = {
   ...new ThemeVariable('inputDropdownSpacingInner', CSSVar('size4')).register(),
   ...new ThemeVariable('inputOpacity', CSSVar('opacity-100')).register(),
   ...new ThemeVariable('inputOpacityDisabled', CSSVar('opacity-20')).register(),
-  ...new ThemeVariable('inputBorderWidthFocus', CSSVar('size1')),
 
   ...new ThemeVariable('buttonHeightLarge', CSSVar('size56')).register(),
   ...new ThemeVariable('buttonHeightRegular', CSSVar('size34')).register(),
@@ -375,7 +380,7 @@ const player: TThemeStaticVideoPlayerTypeChapter = {
   ...new ThemeVariable('videoPlayerSpacingY', CSSVar('size10')).register(),
   ...new ThemeVariable('videoPlayerSpacingInnerX', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSpacingInnerY', CSSVar('size4')).register(),
-  ...new ThemeVariable('videoPlayerBorderRadius', '0').register(),
+  ...new ThemeVariable('videoPlayerBorderRadius', '8px').register(),
   ...new ThemeVariable('videoPlayerSubtitlesSpacingX', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSubtitlesSpacingY', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSubtitlesBorderRadius', CSSVar('size4')).register(),
@@ -459,14 +464,17 @@ const mark: TThemeStaticMarkChapter = {
 
 const listItem: TThemeStaticListItemChapter = {
   ...new ThemeVariable('listItemHeight', 'auto').register(),
-  ...new ThemeVariable('listItemBorderRadius', CSSVar('size2')).register(),
-  ...new ThemeVariable('listItemSpacingX', CSSVar('size2')).register(),
-  ...new ThemeVariable('listItemSpacingY', CSSVar('size2')).register(),
+  ...new ThemeVariable('listItemBorderRadius', CSSVar('size10')).register(),
+  ...new ThemeVariable('listItemSpacingX', CSSVar('size4')).register(),
+  ...new ThemeVariable('listItemSpacingY', CSSVar('size4')).register(),
   ...new ThemeVariable('listItemSpacingInnerX', CSSVar('size4')).register(),
   ...new ThemeVariable('listItemTextSize', CSSVar('sizeTextRegular')).register(),
   ...new ThemeVariable('projectListSpacingX', CSSVar('size4')).register(),
   ...new ThemeVariable('projectListSpacingY', CSSVar('size4')).register(),
-  ...new ThemeVariable('projectListSpacingInnerY', sizeValues.size2).register(),
+  ...new ThemeVariable('projectListSpacingInnerY', sizeValues.size4).register(),
+  ...new ThemeVariable('projectListSectionBorderRadius', CSSVar('size12')).register(),
+  // The logo in the menu's header: a menu item icon's size, so it lines up with the icons below
+  ...new ThemeVariable('menuLogoSize', sizeValues.size16).register(),
 };
 
 export const staticVars: TThemeStaticVars = {

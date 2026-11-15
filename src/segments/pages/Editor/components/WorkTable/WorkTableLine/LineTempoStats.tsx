@@ -46,8 +46,8 @@ type TLineTempoStatsProps = {
   lineIndex: number;
 };
 
-/** The line's tempo rules, shown at the start of the focused line's panel and followed by a
- * separator before its buttons. Renders nothing while the project's tempo check is off. */
+/** The start of the focused line's panel, followed by a separator before its buttons: the line's
+ * duration, always, then its tempo rules while the project's tempo check is on. */
 export function LineTempoStats({ lineIndex }: TLineTempoStatsProps) {
   const { t } = useTranslation('editor');
   const [lines, tempo, isEditMode] = useAppSelectors(
@@ -57,7 +57,7 @@ export function LineTempoStats({ lineIndex }: TLineTempoStatsProps) {
   );
 
   const line = lines[lineIndex];
-  if (!tempo.enabled || !line) return null;
+  if (!line) return null;
 
   // The column measured is the one being edited in the current mode, same as the row's own check
   const text = isEditMode ? line.input : line.output;
@@ -78,13 +78,25 @@ export function LineTempoStats({ lineIndex }: TLineTempoStatsProps) {
   return (
     <>
       <TempoStats>
+        {/* The line's total time on screen, whether or not the tempo check is on */}
+        <Tooltip label={<TooltipSimple>{t('tempoPanel.duration')}</TooltipSimple>}>
+          <PanelTag
+            variant={TTagVariant.TRANSPARENT}
+            size={TTagSize.SMALL}
+            icon={TIcon.WIDTH}
+            color={ThemeColors.TEXT}
+          >
+            {formatSeconds(line.end_time - line.start_time)}
+            {seconds}
+          </PanelTag>
+        </Tooltip>
         {/* Line count and duration only matter once broken; reading speed is always shown */}
-        {!stats.lines.ok && (
+        {tempo.enabled && !stats.lines.ok && (
           <Stat className="isBroken">
             {t('tempoPanel.lines')}: {stats.lines.value}/{stats.lines.limit}
           </Stat>
         )}
-        {!stats.durationMs.ok && (
+        {tempo.enabled && !stats.durationMs.ok && (
           <Tooltip
             label={
               <TooltipComplex title={t('tempoPanel.durationTooShort')}>
@@ -102,27 +114,29 @@ export function LineTempoStats({ lineIndex }: TLineTempoStatsProps) {
             />
           </Tooltip>
         )}
-        <Tooltip
-          label={
-            stats.charsPerSecond.ok ? (
-              <TooltipSimple>{t('tempoPanel.cps')}</TooltipSimple>
-            ) : (
-              <TooltipComplex title={t('tempoPanel.cps')}>
-                {t('tempoPanel.cpsTooHigh')}
-              </TooltipComplex>
-            )
-          }
-        >
-          <PanelTag
-            variant={TTagVariant.TRANSPARENT}
-            size={TTagSize.SMALL}
-            icon={stats.charsPerSecond.ok ? TIcon.TIME_OK : TIcon.TIME_ERROR}
-            color={stats.charsPerSecond.ok ? ThemeColors.GREEN : ThemeColors.RED}
+        {tempo.enabled && (
+          <Tooltip
+            label={
+              stats.charsPerSecond.ok ? (
+                <TooltipSimple>{t('tempoPanel.cps')}</TooltipSimple>
+              ) : (
+                <TooltipComplex title={t('tempoPanel.cps')}>
+                  {t('tempoPanel.cpsTooHigh')}
+                </TooltipComplex>
+              )
+            }
           >
-            {formatCps(stats.charsPerSecond.value)}/{stats.charsPerSecond.limit}
-          </PanelTag>
-        </Tooltip>
-        {collision && (
+            <PanelTag
+              variant={TTagVariant.TRANSPARENT}
+              size={TTagSize.SMALL}
+              icon={stats.charsPerSecond.ok ? TIcon.TIME_OK : TIcon.TIME_ERROR}
+              color={stats.charsPerSecond.ok ? ThemeColors.GREEN : ThemeColors.RED}
+            >
+              {formatCps(stats.charsPerSecond.value)}/{stats.charsPerSecond.limit}
+            </PanelTag>
+          </Tooltip>
+        )}
+        {tempo.enabled && collision && (
           <Tooltip label={<TooltipSimple>{collision.label}</TooltipSimple>}>
             <PanelTag
               variant={TTagVariant.TRANSPARENT}

@@ -8,6 +8,8 @@ export enum THrVariant {
   DEFAULT = 'default',
   PROMINENT = 'prominent',
   DIMMED = 'dimmed',
+  // Takes the line's place, but draws nothing
+  TRANSPARENT = 'transparent',
 }
 
 export enum THrOrient {
@@ -25,6 +27,7 @@ const VariantToOpacity: Record<THrVariant, TOpacity> = {
   [THrVariant.DEFAULT]: 20,
   [THrVariant.PROMINENT]: 30,
   [THrVariant.DIMMED]: 5,
+  [THrVariant.TRANSPARENT]: 0,
 };
 
 const HrElement = styled.div.attrs<{

@@ -74,6 +74,8 @@ export type TThemeStaticScreenChapter = TThemeVarsChapter<{
   appAsideWidthLarge: string;
   appScrollbarWidth: string;
   appScrollbarBorderRadius: string;
+  appMenuCollapsedWidth: string;
+  appMenuExpandedWidth: string;
 }>;
 
 export type TThemeStaticWindowsChapter = TThemeVarsChapter<{
@@ -310,6 +312,8 @@ export type TThemeStaticListItemChapter = TThemeVarsChapter<{
   projectListSpacingX: string;
   projectListSpacingY: string;
   projectListSpacingInnerY: string;
+  projectListSectionBorderRadius: string;
+  menuLogoSize: string;
 }>;
 
 export type TThemeStaticVars = TThemeStaticFontsChapter &

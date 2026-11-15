@@ -8,7 +8,9 @@
     "mergeDown": "Аб'яднаць з ніжнім"
   },
   "videoPlayer": {
-    "noCharacter": "Без персанажу"
+    "selectVideo": "Абраць відэа",
+    "playHintPrefix": "Націсніце",
+    "playHintPostfix": "каб прайграць"
   },
   "spellcheck": {
     "loadingSuggestions": "Шукаем варыянты...",
@@ -24,6 +26,7 @@
     "tooCloseToNext": "Наступны радок занадта блізка",
     "tooCloseToNeighbours": "Суседнія радкі занадта блізка",
     "durationTooShort": "Радок занадта кароткі па часе",
-    "cpsTooHigh": "Зашмат тэксту для працягласці радка"
+    "cpsTooHigh": "Зашмат тэксту для працягласці радка",
+    "duration": "Працягласць"
   }
 }

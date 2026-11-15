@@ -8,7 +8,9 @@
     "mergeDown": "Merge Down"
   },
   "videoPlayer": {
-    "noCharacter": "No character"
+    "selectVideo": "Select video",
+    "playHintPrefix": "Hit",
+    "playHintPostfix": "to play"
   },
   "spellcheck": {
     "loadingSuggestions": "Loading suggestions...",
@@ -24,6 +26,7 @@
     "tooCloseToNext": "Next line is too close",
     "tooCloseToNeighbours": "Neighbouring lines are too close",
     "durationTooShort": "Line duration is too short",
-    "cpsTooHigh": "Too much text for line duration"
+    "cpsTooHigh": "Too much text for line duration",
+    "duration": "Duration"
   }
 }
