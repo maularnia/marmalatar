@@ -1,5 +1,4 @@
-import { TShade } from '@src/theme/definitions';
-import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
+import { CSSVar } from '@src/theme/utils';
 import styled from 'styled-components';
 import { Outlet } from 'react-router-dom';
 import MainMenu from '../segments/menu';
