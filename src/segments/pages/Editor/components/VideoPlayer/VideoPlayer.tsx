@@ -22,29 +22,43 @@ import { truncateText } from '@src/utils/truncateText';
 // would push it over the video
 const AUDIO_TRACK_LABEL_MAX_LENGTH = 15;
 
+// Covers the top third of the player, controls along its top edge. Its black-to-clear gradient is
+// a layer of its own: a gradient can't transition, but the layer's opacity can.
 const TopBar = styled.div`
   position: absolute;
   z-index: 2;
   width: 100%;
+  height: 33%;
   display: flex;
   justify-content: space-between;
-  align-content: stretch;
-  align-items: stretch;
-  color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 100)};
+  align-items: flex-start;
   /* Barely there over the video until the player is pointed at (or the bar tabbed into) */
   opacity: 0.1;
-  transition:
-    opacity 150ms ease-in-out,
-    background-color 150ms ease-in-out;
+  transition: opacity 150ms ease-in-out;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: ${CSSVar('videoPlayerPanelBg')};
+    opacity: 0;
+    transition: opacity 150ms ease-in-out;
+    pointer-events: none;
+  }
+
   &:hover,
   &:focus-within {
     opacity: 1;
-    background-color: ${CSSColor(ThemeColors.BLACK, TShade.DEFAULT, 30)};
+    &::before {
+      opacity: 1;
+    }
   }
 
   /* Collapsed, the bar is all that's left of the player, so it stays fully visible */
   &.isCollapsed {
     position: relative;
+    height: auto;
     opacity: 1;
   }
 `;
@@ -54,7 +68,6 @@ const TopBarPanel = styled.div`
   gap: ${CSSVar('videoPlayerSpacingInnerX')};
   align-items: center;
   padding: ${CSSVar('size4')};
-  color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 80)};
 `;
 
 const TopBarBlurWrapper = styled.div``;
@@ -71,8 +84,6 @@ const PlayHint = styled.div`
   pointer-events: none;
 `;
 
-const playHintKeystroke = <TooltipKeystrokeHint keys={['Ctrl', 'Enter']} size={TTagSize.SMALL} />;
-
 const DEFAULT_ASPECT_RATIO = 16 / 9;
 
 const VideoStage = styled.div`
@@ -81,7 +92,9 @@ const VideoStage = styled.div`
   /* The faded top bar comes back whenever the player itself is pointed at */
   &:hover ${TopBar} {
     opacity: 1;
-    background-color: ${CSSColor(ThemeColors.BLACK, TShade.DEFAULT, 30)};
+    &::before {
+      opacity: 1;
+    }
   }
 
   &.isLargeScreen {
@@ -105,7 +118,7 @@ const VideoPlayerShell = styled.div<{ $hidden?: boolean }>`
   flex-direction: column;
   margin: 0 auto;
   overflow: hidden;
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 100)};
+  background: ${CSSVar('videoPlayerBg')};
   transition: transform 0.1s ease-in-out;
   transform-origin: left top;
   border-radius: ${CSSVar('videoPlayerBorderRadius')};
@@ -121,7 +134,7 @@ const Video = styled.video`
   display: block;
   flex: 1 1 auto;
   object-fit: contain;
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 100)};
+  background: ${CSSVar('videoPlayerBg')};
 `;
 
 const Audio = styled.audio`
@@ -187,6 +200,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     isVideoCollapsed,
     audioTrackCount,
     audioTrack,
+    theme,
   ] = useAppSelectors(
     editor.selectLines,
     media.selectActiveLineIndex,
@@ -196,8 +210,12 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     settings.selectIsLargeScreen,
     editor.selectIsVideoCollapsed,
     media.selectAudioTrackCount,
-    media.selectAudioTrack
+    media.selectAudioTrack,
+    settings.selectCurrentThemeData
   );
+  // The top panel sits over the video, so its text, key hints and buttons take the theme's panel
+  // color (white in every theme) rather than its text color
+  const panelColor = theme.variables.videoPlayerPanelColor.value;
   // 16:9 until the video's own ratio is known (or when it couldn't be read)
   const aspectRatio = videoAspectRatio ?? DEFAULT_ASPECT_RATIO;
   const effectiveCollapsed = isVideoCollapsed && isSmallScreen;
@@ -290,57 +308,72 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     };
   }, [onPlaybackPause, onPlaybackResume, reportVideoUnplayable]);
 
+  // Over a showing video, the panel lives inside the player box, so the box's rounded corners
+  // and overflow clip it. Collapsed or without a video there's no box to sit in: it takes its
+  // own place in the stage instead.
+  const isTopBarInShell = Boolean(videoFilePath) && !effectiveCollapsed;
+  const topBar = (
+    <TopBar
+      className={classNames({ isCollapsed: effectiveCollapsed })}
+      style={{ color: CSSColor(panelColor, TShade.DEFAULT, 100) }}
+    >
+      <PlayHint>
+        {videoFilePath && (
+          <>
+            {t('videoPlayer.playHintPrefix')}
+            <TooltipKeystrokeHint
+              keys={['Ctrl', 'Enter']}
+              size={TTagSize.SMALL}
+              color={panelColor}
+            />
+            {t('videoPlayer.playHintPostfix')}
+          </>
+        )}
+      </PlayHint>
+      <TopBarPanel>
+        {videoFilePath && audioTrackCount > 1 && (
+          <TopBarBlurWrapper>
+            <Button
+              variant={TButtonVariant.SECONDARY}
+              color={panelColor}
+              icon={TIcon.AUDIO_TRACK}
+              onClick={() => void projects.changeAudioTrack()}
+            >
+              {audioTrack &&
+                truncateText(media.getAudioTrackLabel(audioTrack), AUDIO_TRACK_LABEL_MAX_LENGTH)}
+            </Button>
+          </TopBarBlurWrapper>
+        )}
+        <TopBarBlurWrapper>
+          <Button
+            variant={TButtonVariant.SECONDARY}
+            color={panelColor}
+            icon={TIcon.VIDEO}
+            onClick={() => void projects.changeVideo()}
+          >
+            {t('videoPlayer.selectVideo')}
+          </Button>
+        </TopBarBlurWrapper>
+        {isSmallScreen && (
+          <TopBarBlurWrapper>
+            <Button
+              color={panelColor}
+              variant={TButtonVariant.SECONDARY}
+              icon={isVideoCollapsed ? TIcon.ARROW_TOGGLE_DOWN : TIcon.ARROW_TOGGLE_UP}
+              onClick={() => editor.setVideoCollapsed(!isVideoCollapsed)}
+            />
+          </TopBarBlurWrapper>
+        )}
+      </TopBarPanel>
+    </TopBar>
+  );
+
   return (
     <VideoStage
       className={classNames({ isCollapsed: effectiveCollapsed, isLargeScreen })}
       tabIndex={1}
     >
-      <TopBar className={classNames({ isCollapsed: effectiveCollapsed })}>
-        <PlayHint>
-          {videoFilePath && (
-            <>
-              {t('videoPlayer.playHintPrefix')}
-              {playHintKeystroke}
-              {t('videoPlayer.playHintPostfix')}
-            </>
-          )}
-        </PlayHint>
-        <TopBarPanel>
-          {videoFilePath && audioTrackCount > 1 && (
-            <TopBarBlurWrapper>
-              <Button
-                variant={TButtonVariant.SECONDARY}
-                color={ThemeColors.TEXT}
-                icon={TIcon.AUDIO_TRACK}
-                onClick={() => void projects.changeAudioTrack()}
-              >
-                {audioTrack &&
-                  truncateText(media.getAudioTrackLabel(audioTrack), AUDIO_TRACK_LABEL_MAX_LENGTH)}
-              </Button>
-            </TopBarBlurWrapper>
-          )}
-          <TopBarBlurWrapper>
-            <Button
-              variant={TButtonVariant.SECONDARY}
-              color={ThemeColors.TEXT}
-              icon={TIcon.VIDEO}
-              onClick={() => void projects.changeVideo()}
-            >
-              {t('videoPlayer.selectVideo')}
-            </Button>
-          </TopBarBlurWrapper>
-          {isSmallScreen && (
-            <TopBarBlurWrapper>
-              <Button
-                color={ThemeColors.TEXT}
-                variant={TButtonVariant.SECONDARY}
-                icon={isVideoCollapsed ? TIcon.ARROW_TOGGLE_DOWN : TIcon.ARROW_TOGGLE_UP}
-                onClick={() => editor.setVideoCollapsed(!isVideoCollapsed)}
-              />
-            </TopBarBlurWrapper>
-          )}
-        </TopBarPanel>
-      </TopBar>
+      {!isTopBarInShell && topBar}
       {videoFilePath ? (
         <VideoPlayerShell
           $hidden={effectiveCollapsed}
@@ -349,6 +382,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
         >
           <Video ref={media.registerVideoElement} style={{ aspectRatio }} playsInline muted />
           <Audio ref={media.registerAudioElement} />
+          {isTopBarInShell && topBar}
           <BottomPanel>
             <VideoProgressBar />
           </BottomPanel>

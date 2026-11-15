@@ -275,6 +275,9 @@ export type TThemeVideoPlayerChapter = TThemeVarsChapter<{
   videoPlayerOverlayBg: string;
   videoPlayerOverlayTextBg: string;
   videoPlayerOverlayTextColor: string;
+  videoPlayerBg: string;
+  videoPlayerPanelBg: string;
+  videoPlayerPanelColor: [TColor, false];
 }>;
 
 export type TThemeFormsChapter = TThemeVarsChapter<{

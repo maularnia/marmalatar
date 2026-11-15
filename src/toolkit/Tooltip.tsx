@@ -1,5 +1,6 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
+import type { TColor } from '@src/theme/definitions';
 import { Fragment, HTMLAttributes, PropsWithChildren, ReactNode } from 'react';
 import styled from 'styled-components';
 import Tag, { TTagSize, TTagVariant } from './Tag';
@@ -83,15 +84,21 @@ const KeystrokeHint = styled.div`
 type TooltipKeystrokeHintProps = {
   keys: ReactNode[];
   size?: TTagSize;
+  /** The key tags' color; the theme's text color unless shown over something else (e.g. video) */
+  color?: TColor;
 };
 
-export const TooltipKeystrokeHint = ({ keys, size = TTagSize.NANO }: TooltipKeystrokeHintProps) => {
+export const TooltipKeystrokeHint = ({
+  keys,
+  size = TTagSize.NANO,
+  color = ThemeColors.TEXT,
+}: TooltipKeystrokeHintProps) => {
   return (
     <KeystrokeHint>
       {keys.map((key, index) => (
         <Fragment key={index}>
           {index > 0 && ' + '}
-          <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={size}>
+          <Tag variant={TTagVariant.SECONDARY} color={color} size={size}>
             {key}
           </Tag>
         </Fragment>

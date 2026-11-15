@@ -544,6 +544,16 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('videoPlayerOverlayBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 80)).register(),
     ...new ThemeVariable('videoPlayerOverlayTextBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 85)).register(),
     ...new ThemeVariable('videoPlayerOverlayTextColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 80)).register(),
+    ...new ThemeVariable('videoPlayerBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 100)).register(),
+    // The top panel sits over the video itself, so it's black-to-clear with white controls in
+    // every theme -- never the theme's own background/text colors
+    ...new ThemeVariable(
+      'videoPlayerPanelBg',
+      `linear-gradient(to bottom, ${CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 100)} 0%, ${CSSColor(TColorSystem.BLACK, TShade.DEFAULT, 0)} 100%)`
+    ).register(),
+    // A raw color, not a CSS value: the player picks shade and opacity per element (text, tooltips,
+    // buttons)
+    ...new ThemeVariable('videoPlayerPanelColor', asColor(TColorSystem.WHITE), false).register(),
   };
 
   const waveforms: TThemeWaveformsChapter = {
