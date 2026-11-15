@@ -8,8 +8,6 @@
     "invalidUrl": "Нядзейсная спасылка"
   },
   "settings": {
-    "autoMergeThresholdRequired": "Нельга пакінуць пустым",
-    "autoMergeThresholdMin": "Значэнне мае быць > 1",
     "timeAdjustmentStepRequired": "Нельга пакінуць пустым",
     "timeAdjustmentStepMin": "Значэнне мае быць > 1",
     "tempoRequired": "Нельга пакінуць пустым",
@@ -108,9 +106,6 @@
   },
   "audioExtractionFailed": {
     "title": "Немагчыма апрацаваць аўдыё. Файл пашкоджаны, або карыстае невядомы навуцы кодэк аўдыё"
-  },
-  "autoMergeFailed": {
-    "title": "Памылка аўта-аб’яднання"
   },
   "spellcheckUnavailable": {
     "title": "Праверка правапісу недаступная"

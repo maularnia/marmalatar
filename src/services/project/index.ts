@@ -25,7 +25,6 @@ import {
   adjustEntryTime,
   adjustStartTime,
   autoFixTempo,
-  autoMerge,
   cleanup,
   clearSplitCursor,
   completeAllTranslatedLines,
@@ -51,7 +50,6 @@ import {
 import {
   addFrozenLine,
   addTranslatedLine,
-  autoMergeAdjacentLines,
   cleanupLines,
   clearFileData,
   incrementRenderEpoch,
@@ -178,7 +176,6 @@ export const editor = new Service('editor', {
   actions: {
     addFrozenLine,
     addTranslatedLine,
-    autoMergeAdjacentLines,
     cleanupLines,
     clearFileData,
     incrementRenderEpoch,
@@ -220,7 +217,6 @@ export const editor = new Service('editor', {
     adjustEntryTime,
     adjustStartTime,
     autoFixTempo,
-    autoMerge,
     cleanup,
     clearSplitCursor,
     completeAllTranslatedLines,

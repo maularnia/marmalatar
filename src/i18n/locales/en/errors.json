@@ -8,8 +8,6 @@
     "invalidUrl": "Invalid URL"
   },
   "settings": {
-    "autoMergeThresholdRequired": "This field is required",
-    "autoMergeThresholdMin": "Value must be > 1",
     "timeAdjustmentStepRequired": "This field is required",
     "timeAdjustmentStepMin": "Value must be > 1",
     "tempoRequired": "This field is required",
@@ -108,9 +106,6 @@
   },
   "audioExtractionFailed": {
     "title": "Can not process audio. File may be corrupted, or uses an audio codec unknown to science"
-  },
-  "autoMergeFailed": {
-    "title": "Auto-merge failed"
   },
   "spellcheckUnavailable": {
     "title": "Spellcheck unavailable"

@@ -285,16 +285,6 @@ const myShortcuts = {
     group: 'Workspace',
     type: ShortcutType.REGULAR,
   },
-  autoMergeLines: {
-    keyCombo: 'alt+shift+m',
-    name: 'Auto-merge adjacent lines',
-    description: 'Merge adjacent lines whose timing gap is within the configured threshold',
-    scope: ShortcutScope.GLOBAL,
-    priority: 100,
-    status: ShortcutStatus.ENABLED,
-    group: 'Workspace',
-    type: ShortcutType.REGULAR,
-  },
   cleanup: {
     keyCombo: 'alt+h',
     name: 'Cleanup lines',
@@ -665,11 +655,6 @@ function EditorShortcuts() {
   useGuardedKeystroke('aiTranslationBulk', (event) => {
     event.preventDefault();
     ai.translateUntranslatedLines();
-  });
-
-  useGuardedKeystroke('autoMergeLines', (event) => {
-    event.preventDefault();
-    void editor.autoMerge();
   });
 
   useGuardedKeystroke('cleanup', (event) => {

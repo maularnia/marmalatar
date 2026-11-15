@@ -1,7 +1,6 @@
 {
   "sync": {
     "title": "Sinchranizacyja",
-    "autoMergeThresholdLabel": "Adlehłaśc aŭta-abjadnańnia (ms)",
     "timeAdjustmentStepLabel": "Krok karekcyi času (ms)"
   },
   "tempo": {

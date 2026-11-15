@@ -14,14 +14,6 @@
     "confirmButton": "Dadać",
     "dismissButton": "Skasavać"
   },
-  "autoMergeLines": {
-    "title": "Zapuścić aŭta-abjadnańnie?",
-    "bodyPrefix": "Skrypt znojdzie radki nie dalej ",
-    "bodyApart": "adzin ad adnaho",
-    "bodyAssigned": "pryznačanyja adnamu piersanažu",
-    "bodySuffix": "i abjadnaje ich",
-    "confirmButton": "Abjadnać"
-  },
   "copyOverride": {
     "title": "Skapijavać krynicu ŭ pierakład?"
   },

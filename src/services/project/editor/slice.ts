@@ -472,74 +472,6 @@ const editorSlice = createSlice({
       state.totalLinesToTranslate = state.lines.length;
       state.renderEpoch += 1;
     },
-    autoMergeAdjacentLines(state, action: PayloadAction<{ threshold: number }>) {
-      const { threshold } = action.payload;
-      const sorted = [...state.lines].sort((a, b) => a.line_no - b.line_no);
-
-      const getCharKey = (line: TSubtitleLine): string | null => {
-        const chars = parseCharacterList(line.character);
-        return chars.length ? [...chars].sort().join(',') : null;
-      };
-
-      const newLines: TSubtitleLine[] = [];
-      let i = 0;
-      let hasMerge = false;
-
-      while (i < sorted.length) {
-        const line = sorted[i];
-        const charKey = getCharKey(line);
-
-        if (!charKey) {
-          newLines.push(line);
-          i++;
-          continue;
-        }
-
-        const group: TSubtitleLine[] = [line];
-        while (i + group.length < sorted.length) {
-          const next = sorted[i + group.length];
-          const prev = group[group.length - 1];
-          const nextCharKey = getCharKey(next);
-          const gap = next.start_time - prev.end_time;
-          if (nextCharKey === charKey && gap <= threshold) {
-            group.push(next);
-          } else {
-            break;
-          }
-        }
-
-        if (group.length > 1) {
-          hasMerge = true;
-          newLines.push({
-            ...group[0],
-            start_time: Math.min(...group.map((l) => l.start_time)),
-            end_time: Math.max(...group.map((l) => l.end_time)),
-            input: group
-              .map((l) => l.input ?? '')
-              .join(' ')
-              .trim()
-              .replace(/\s+/g, ' '),
-            output: group
-              .map((l) => l.output ?? '')
-              .join(' ')
-              .trim()
-              .replace(/\s+/g, ' '),
-            completed: group.some((l) => Boolean(l.completed)),
-          });
-        } else {
-          newLines.push(group[0]);
-        }
-
-        i += group.length;
-      }
-
-      if (!hasMerge) return;
-
-      addToHistory(state);
-      state.lines = newLines.map((line, index) => ({ ...line, line_no: index + 1 }));
-      state.totalLinesToTranslate = state.lines.length;
-      state.renderEpoch += 1;
-    },
     cleanupLines(
       state,
       action: PayloadAction<{ targetColumn: 'source' | 'output'; options: TEntryCleanupOptions }>
@@ -677,7 +609,6 @@ export const {
   setTotalLinesToTranslate,
   clearFileData,
   updateLineTiming,
-  autoMergeAdjacentLines,
   cleanupLines,
   tempoAutoFixed,
   allSourceCopiedToOutput,

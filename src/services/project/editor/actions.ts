@@ -1,7 +1,5 @@
 import { toast } from '@src/services/toast';
 import {
-  makeAutoMergeCancelledMessage,
-  makeAutoMergeFailedMessage,
   makeCleanupCancelledMessage,
   makeCleanupFailedMessage,
   makeCopyAllCancelledMessage,
@@ -29,7 +27,6 @@ import {
 } from './dialogs/autoFixTempo/autoFixTempoConfirmation';
 import { autoFixTiming } from '@utils/tempo';
 import { selectProjectTempo } from '../slice';
-import { confirmAutoMerge } from './dialogs/autoMergeLines/autoMergeLinesConfirmation';
 import { TCleanupFormValues } from './dialogs/cleanup/CleanupDialog';
 import { confirmCleanup } from './dialogs/cleanup/cleanupConfirmation';
 import { confirmCopyAllSourceToOutput } from './dialogs/copyAllSourceToOutput/copyAllSourceToOutputConfirmation';
@@ -45,7 +42,6 @@ import { settings } from '@src/services/settings';
 import {
   allSourceCopiedToOutput,
   allTranslatedLinesCompleted,
-  autoMergeAdjacentLines,
   cleanupLines,
   tempoAutoFixed,
   lineInserted,
@@ -488,26 +484,6 @@ export function undoRedo(direction: 'backward' | 'forward'): void {
 }
 
 // ── Bulk operations ──────────────────────────────────────────────────────────
-
-export async function autoMerge(): Promise<void> {
-  if (isBulkTranslationRunning()) return;
-  let threshold: number | null;
-  try {
-    threshold = await confirmAutoMerge();
-  } catch (e) {
-    toast.push(
-      makeAutoMergeFailedMessage(
-        e instanceof Error ? e.message : 'How did you get there [UNREACHABLE 03]'
-      )
-    );
-    return;
-  }
-  if (threshold === null) {
-    toast.push(makeAutoMergeCancelledMessage());
-    return;
-  }
-  Service.dispatch(autoMergeAdjacentLines({ threshold }));
-}
 
 export async function cleanup(): Promise<void> {
   if (isBulkTranslationRunning()) return;

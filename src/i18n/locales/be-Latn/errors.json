@@ -8,8 +8,6 @@
     "invalidUrl": "Niadziejsnaja spasyłka"
   },
   "settings": {
-    "autoMergeThresholdRequired": "Nielha pakinuć pustym",
-    "autoMergeThresholdMin": "Značeńnie maje być > 1",
     "timeAdjustmentStepRequired": "Nielha pakinuć pustym",
     "timeAdjustmentStepMin": "Značeńnie maje być > 1",
     "tempoRequired": "Nielha pakinuć pustym",
@@ -108,9 +106,6 @@
   },
   "audioExtractionFailed": {
     "title": "Niemahčyma apracavać aŭdyjo. Fajł paškodžany, abo karystaje nieviadomy navucy kodek aŭdyjo"
-  },
-  "autoMergeFailed": {
-    "title": "Pamyłka aŭta-abjadnańnia"
   },
   "spellcheckUnavailable": {
     "title": "Pravierka pravapisu niedastupnaja"

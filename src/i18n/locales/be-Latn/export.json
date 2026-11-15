@@ -3,13 +3,18 @@
   "characterFilter": {
     "title": "Filtr aktora",
     "subtext": "Pakinuć radki tolki peŭnaha aktora. Pakińcie pustym, kab ekspartavać usio",
-    "checkboxLabel": "Abrać aktora",
     "selectPlaceholder": "Ekspartavać tolki radki:"
   },
   "fpsCorrection": {
     "title": "Karekcyja FPS",
-    "subtext": "Karyhavać FPS",
-    "checkboxLabel": "Skaryhavać FPS"
+    "subtext": "Karyhavać FPS"
+  },
+  "mergeLines": {
+    "title": "Abjadnać radki adnaho piersanaža",
+    "subtext": "Susiednija radki adnaho piersanaža, blizkija pa časie, abjadnoŭvajucca ŭ adzin",
+    "thresholdLabel": "Maks. adlehłasć (ms)",
+    "thresholdRequired": "Nielha pakinuć pustym",
+    "thresholdMin": "Značennie maje być cełym likam ≥ 1"
   },
   "outputFormat": {
     "title": "Farmat"

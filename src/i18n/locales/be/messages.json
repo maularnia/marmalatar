@@ -10,10 +10,6 @@
   "videoUpdated": {
     "title": "Дапасавана новае відэа праекту"
   },
-  "autoMergeCancelled": {
-    "title": "Аўта-аб’яднанне скасаванае",
-    "message": "Ніводнага радку не зменена"
-  },
   "videoPathSaveFailed": {
     "title": "Не атрымалася захаваць шлях да відэа"
   },
