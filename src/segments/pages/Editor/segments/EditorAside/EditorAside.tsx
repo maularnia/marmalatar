@@ -124,7 +124,7 @@ export default function EditorAside() {
       )}
       <Hr variant={THrVariant.TRANSPARENT} />
       {!isEditMode && <AiTranslationStatusPanel />}
-      <GeneralSettings />
+      <GeneralSettings showSync={false} />
       {/* The same tempo (subtitle limits) section as the Settings overlay's General tab */}
       <TempoSettings />
       {/* The same spellcheck switch and dictionaries as the Settings overlay's Spellchecker tab */}

@@ -200,20 +200,6 @@ export function EditorControls() {
         )}
         <PanelSection>
           <Tooltip
-            label={
-              <TooltipComplex title={t('editorControls.autoMergeAdjacentLines')}>
-                <TooltipKeystrokeHint keys={['Alt', 'Shift', 'M']} />
-              </TooltipComplex>
-            }
-            side="right"
-          >
-            <PanelButton
-              disabled={!isAutoMergeAvailable}
-              onClick={() => void editor.autoMerge()}
-              icon={TIcon.MERGE}
-            />
-          </Tooltip>
-          <Tooltip
             side="right"
             label={
               <TooltipComplex title={t('editorControls.cleanup')}>

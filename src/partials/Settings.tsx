@@ -9,14 +9,19 @@ import Toggle from '@ui-toolkit/Toggle';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-export default function Settings() {
+type TSettingsProps = {
+  /** The Sync section (time adjustment step). Off where the timing controls it tunes aren't at
+   * hand, e.g. the editor aside */
+  showSync?: boolean;
+};
+
+export default function Settings({ showSync = true }: TSettingsProps) {
   const { t } = useTranslation(['settings', 'errors']);
   const [
     askBeforeMerge,
     askBeforeDelete,
     askBeforeAITranslate,
     askBeforeSplit,
-    autoMergeThreshold,
     timeAdjustmentStep,
     scrollVideoIntoViewOnPlay,
     autoMarkLinesCompleted,
@@ -25,7 +30,6 @@ export default function Settings() {
     settings.selectAskBeforeDelete,
     settings.selectAskBeforeAITranslate,
     settings.selectAskBeforeSplit,
-    settings.selectAutoMergeThreshold,
     settings.selectTimeAdjustmentStep,
     settings.selectScrollVideoIntoViewOnPlay,
     settings.selectAutoMarkLinesCompleted
@@ -35,49 +39,36 @@ export default function Settings() {
     register,
     formState: { errors },
   } = useForm({
-    values: { autoMergeThreshold, timeAdjustmentStep },
+    values: { timeAdjustmentStep },
     mode: 'onChange',
   });
 
   return (
     <>
-      <FormsRow>
-        <FormsSection>
-          <FormsSectionTitle icon={TIcon.SYNC}>{t('sync.title')}</FormsSectionTitle>
-          <FormsSectionContent $columns={3}>
-            <TextInput
-              icon={TIcon.SPACING}
-              errors={errors.autoMergeThreshold ? [errors.autoMergeThreshold.message] : []}
-              {...register('autoMergeThreshold', {
-                required: t('errors:settings.autoMergeThresholdRequired'),
-                min: { value: 1, message: t('errors:settings.autoMergeThresholdMin') },
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const v = parseInt(e.currentTarget.value, 10);
-                  if (!isNaN(v) && v >= 1) settings.setAutoMergeThreshold(v);
-                },
-              })}
-            >
-              {t('sync.autoMergeThresholdLabel')}
-            </TextInput>
-            <TextInput
-              icon={TIcon.STEP}
-              errors={errors.timeAdjustmentStep ? [errors.timeAdjustmentStep.message] : []}
-              {...register('timeAdjustmentStep', {
-                required: t('errors:settings.timeAdjustmentStepRequired'),
-                min: { value: 1, message: t('errors:settings.timeAdjustmentStepMin') },
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const v = parseInt(e.currentTarget.value, 10);
-                  if (!isNaN(v) && v >= 1) settings.setTimeAdjustmentStep(v);
-                },
-              })}
-            >
-              {t('sync.timeAdjustmentStepLabel')}
-            </TextInput>
-          </FormsSectionContent>
-        </FormsSection>
-      </FormsRow>
+      {showSync && (
+        <FormsRow>
+          <FormsSection>
+            <FormsSectionTitle icon={TIcon.SYNC}>{t('sync.title')}</FormsSectionTitle>
+            <FormsSectionContent $columns={3}>
+              <TextInput
+                icon={TIcon.STEP}
+                errors={errors.timeAdjustmentStep ? [errors.timeAdjustmentStep.message] : []}
+                {...register('timeAdjustmentStep', {
+                  required: t('errors:settings.timeAdjustmentStepRequired'),
+                  min: { value: 1, message: t('errors:settings.timeAdjustmentStepMin') },
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    const v = parseInt(e.currentTarget.value, 10);
+                    if (!isNaN(v) && v >= 1) settings.setTimeAdjustmentStep(v);
+                  },
+                })}
+              >
+                {t('sync.timeAdjustmentStepLabel')}
+              </TextInput>
+            </FormsSectionContent>
+          </FormsSection>
+        </FormsRow>
+      )}
       <FormsRow>
         <FormsSection>
           <FormsSectionTitle icon={TIcon.UX}>{t('uxUi.title')}</FormsSectionTitle>

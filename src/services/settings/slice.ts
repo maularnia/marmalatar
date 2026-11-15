@@ -12,7 +12,6 @@ import {
   ASK_BEFORE_MERGE_DEFAULT,
   ASK_BEFORE_SPLIT_DEFAULT,
   AUTO_MARK_LINES_COMPLETED_DEFAULT,
-  AUTO_MERGE_THRESHOLD_DEFAULT,
   CHECK_GRAMMAR_DEFAULT,
   SCROLL_VIDEO_INTO_VIEW_ON_PLAY_DEFAULT,
   THEME_SELECTION_DEFAULT,
@@ -30,7 +29,6 @@ type AppState = {
   askBeforeDelete: boolean;
   askBeforeAITranslate: boolean;
   askBeforeSplit: boolean;
-  autoMergeThreshold: number;
   scrollVideoIntoViewOnPlay: boolean;
   autoMarkLinesCompleted: boolean;
   timeAdjustmentStep: number;
@@ -52,7 +50,6 @@ const initialState: AppState = {
   askBeforeDelete: ASK_BEFORE_DELETE_DEFAULT,
   askBeforeAITranslate: ASK_BEFORE_AI_TRANSLATE_DEFAULT,
   askBeforeSplit: ASK_BEFORE_SPLIT_DEFAULT,
-  autoMergeThreshold: AUTO_MERGE_THRESHOLD_DEFAULT,
   scrollVideoIntoViewOnPlay: SCROLL_VIDEO_INTO_VIEW_ON_PLAY_DEFAULT,
   autoMarkLinesCompleted: AUTO_MARK_LINES_COMPLETED_DEFAULT,
   timeAdjustmentStep: TIME_ADJUSTMENT_STEP_DEFAULT,
@@ -90,9 +87,6 @@ const settingsSlice = createSlice({
     },
     setAskBeforeSplit(state, action: PayloadAction<boolean>) {
       state.askBeforeSplit = action.payload;
-    },
-    setAutoMergeThreshold(state, action: PayloadAction<number>) {
-      state.autoMergeThreshold = action.payload;
     },
     setScrollVideoIntoViewOnPlay(state, action: PayloadAction<boolean>) {
       state.scrollVideoIntoViewOnPlay = action.payload;
@@ -149,7 +143,6 @@ const settingsSlice = createSlice({
     selectAskBeforeDelete: (state) => state.askBeforeDelete,
     selectAskBeforeAITranslate: (state) => state.askBeforeAITranslate,
     selectAskBeforeSplit: (state) => state.askBeforeSplit,
-    selectAutoMergeThreshold: (state) => state.autoMergeThreshold,
     selectScrollVideoIntoViewOnPlay: (state) => state.scrollVideoIntoViewOnPlay,
     selectAutoMarkLinesCompleted: (state) => state.autoMarkLinesCompleted,
     selectTimeAdjustmentStep: (state) => state.timeAdjustmentStep,
@@ -170,7 +163,6 @@ export const {
   setAskBeforeDelete,
   setAskBeforeAITranslate,
   setAskBeforeSplit,
-  setAutoMergeThreshold,
   setScrollVideoIntoViewOnPlay,
   setAutoMarkLinesCompleted,
   setTimeAdjustmentStep,
@@ -199,7 +191,6 @@ export const {
   selectAskBeforeDelete,
   selectAskBeforeAITranslate,
   selectAskBeforeSplit,
-  selectAutoMergeThreshold,
   selectScrollVideoIntoViewOnPlay,
   selectAutoMarkLinesCompleted,
   selectTimeAdjustmentStep,

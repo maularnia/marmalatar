@@ -14,14 +14,6 @@
     "confirmButton": "Add",
     "dismissButton": "Discard"
   },
-  "autoMergeLines": {
-    "title": "Run auto-merge?",
-    "bodyPrefix": "The script will find all the adjscent lines that are up to",
-    "bodyApart": "apart",
-    "bodyAssigned": "assigned to the same charater",
-    "bodySuffix": "and merge them together",
-    "confirmButton": "Start auto-merge"
-  },
   "copyOverride": {
     "title": "Copy source to output?"
   },

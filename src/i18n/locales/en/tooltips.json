@@ -4,7 +4,6 @@
     "redo": "Redo",
     "shiftLinesEarlier": "Shift all lines\nearlier by [{{step}}] ms",
     "shiftLinesLater": "Shift all lines\nlater by [{{step}}] ms",
-    "autoMergeAdjacentLines": "Auto-merge\nadjacent lines\nof same character",
     "insertLineBefore": "Insert\nempty line\nbefore",
     "insertLineAfter": "Insert\nemty line\nafter",
     "addSelectedToGlossary": "Add selection\nto glossary",

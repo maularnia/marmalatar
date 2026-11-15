@@ -27,15 +27,13 @@ const OverlayBackdrop = styled.div`
   top: 0;
   width: 100%;
   height: 100%;
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 70)};
+  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 90)};
   backdrop-filter: blur(${CSSVar('blurHeavy')});
 `;
 
 const OverlayInner = styled(motion.div).attrs(appearRightEase)`
   position: relative;
   width: 680px;
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 90)};
-
   overflow-y: auto;
   &::-webkit-scrollbar {
     width: ${CSSVar('appScrollbarWidth')};

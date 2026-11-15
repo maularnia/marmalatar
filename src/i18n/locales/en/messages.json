@@ -10,10 +10,6 @@
   "videoUpdated": {
     "title": "New video has been asssigned"
   },
-  "autoMergeCancelled": {
-    "title": "Auto-merged cancelled",
-    "message": "No lines has been changed"
-  },
   "videoPathSaveFailed": {
     "title": "Can not save video path"
   },

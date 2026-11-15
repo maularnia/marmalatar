@@ -8,22 +8,6 @@ import { TMessageType } from '@src/types';
 const t = i18n.getFixedT(null, 'messages');
 const tErrors = i18n.getFixedT(null, 'errors');
 
-export function makeAutoMergeCancelledMessage(): TToastParams {
-  return {
-    type: TMessageType.MESSAGE,
-    title: t('autoMergeCancelled.title'),
-    message: t('autoMergeCancelled.message'),
-  };
-}
-
-export function makeAutoMergeFailedMessage(message: string): TToastParams {
-  return {
-    type: TMessageType.ERROR,
-    title: tErrors('autoMergeFailed.title'),
-    message,
-  };
-}
-
 export function makeCopyOperationCancelledMessage(): TToastParams {
   return {
     type: TMessageType.MESSAGE,

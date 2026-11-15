@@ -15,7 +15,6 @@ export const AppSettingsContractV1Schema = VersionedSchema.extend({
   askBeforeDelete: z.boolean(),
   askBeforeAITranslate: z.boolean(),
   askBeforeSplit: z.boolean(),
-  autoMergeThreshold: z.number(),
   scrollVideoIntoViewOnPlay: z.boolean(),
   autoMarkLinesCompleted: z.boolean(),
   timeAdjustmentStep: z.number(),

@@ -14,14 +14,6 @@
     "confirmButton": "Дадаць",
     "dismissButton": "Скасаваць"
   },
-  "autoMergeLines": {
-    "title": "Запусціць аўта-аб’яднанне?",
-    "bodyPrefix": "Скрыпт знойдзе радкі не далей ",
-    "bodyApart": "адзін ад аднаго",
-    "bodyAssigned": "прызначаныя аднаму персанажу",
-    "bodySuffix": "і аб’яднае іх",
-    "confirmButton": "Аб’яднаць"
-  },
   "copyOverride": {
     "title": "Скапіяваць крыніцу ў пераклад?"
   },

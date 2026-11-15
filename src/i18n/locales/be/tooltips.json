@@ -4,7 +4,6 @@
     "redo": "Вярнуць",
     "shiftLinesEarlier": "Пасунуць усе\nнадпісы\nна [{{step}}] мс раней",
     "shiftLinesLater": "Пасунуць усе\nнадпісы\nна [{{step}}] мс пазней",
-    "autoMergeAdjacentLines": "Аб’яднаць\nблізкія радкі\nаднаго актора",
     "insertLineBefore": "Дадаць радок\nда абранага",
     "insertLineAfter": "Дадаць радок\nпасля абранага",
     "addSelectedToGlossary": "Дадаць\nвыдзеленае ў гласарый",

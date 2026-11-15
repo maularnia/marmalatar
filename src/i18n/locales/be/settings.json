@@ -1,7 +1,6 @@
 {
   "sync": {
     "title": "Сінхранізацыя",
-    "autoMergeThresholdLabel": "Адлегласць аўта-аб’яднання (мс)",
     "timeAdjustmentStepLabel": "Крок карэкцыі часу (мс)"
   },
   "tempo": {
