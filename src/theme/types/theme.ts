@@ -334,6 +334,7 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemColorShadeDisabled: [TShade, false];
   listItemColorOpacityDisabled: [TOpacity, false];
   projectListSectionBg: string;
+  menuExpandedBg: string;
 }>;
 
 export type TThemeVarsTheme = TThemeAppChapter &

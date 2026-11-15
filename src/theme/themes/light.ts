@@ -643,6 +643,8 @@ export const variables: TThemeExporter = () => {
     ...new ThemeVariable('listItemColorShadeDisabled', asShade(TShade.DEFAULT), false).register(),
     ...new ThemeVariable('listItemColorOpacityDisabled', asOpacity(50), false).register(),
     ...new ThemeVariable('projectListSectionBg', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 5)).register(),
+    // The sidebar's background while expanded (always, as a column; on hover or under an overlay, floating)
+    ...new ThemeVariable('menuExpandedBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 90)).register(),
   };
 
   return {

@@ -25,7 +25,6 @@ const Root = styled.div`
 
 const RootMenu = styled.div`
   overflow: hidden;
-  background-color: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 10)};
 `;
 
 const RootContent = styled.div`

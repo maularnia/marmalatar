@@ -62,7 +62,7 @@ const Backdrop = styled(motion.div)`
   height: 100%;
   z-index: -1;
   backdrop-filter: blur(${CSSVar('blurHeavy')});
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 90)};
+  background: ${CSSVar('menuExpandedBg')};
   &.compact {
     background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 40)};
   }
@@ -133,14 +133,13 @@ export default function MainMenu() {
           transition={{ ease: 'circOut', duration: menuWidthDuration }}
         />
       )}
-      {dynamic && (
-        <Backdrop
-          className={classNames({ compact: !isExpanded })}
-          variants={menuHoverExpand.variants}
-          initial={false}
-          animate={compact ? 'out' : isOverlayOpen ? 'instant' : 'in'}
-        />
-      )}
+      {/* Also behind the static column, so the expanded menu has the same background everywhere */}
+      <Backdrop
+        className={classNames({ compact: dynamic && !isExpanded })}
+        variants={menuHoverExpand.variants}
+        initial={false}
+        animate={!dynamic ? 'instant' : compact ? 'out' : isOverlayOpen ? 'instant' : 'in'}
+      />
       <Content>
         <MenuKeystrokeProvider>
           <Header>
