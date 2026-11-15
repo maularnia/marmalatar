@@ -193,3 +193,15 @@ When asked for a change list or commit message, summarise the **staged** changes
 - 20 words max per item. Name what changed and where, not how it was implemented
 - Group related small changes into one item rather than listing every file
 - Output only the list, ready to paste, in a plain code block with no extra text inside it
+
+## Merge request (PR) messages
+
+When asked for an MR or PR message, describe the current branch as if it were merged into its base (the branch it was cut from, `main` unless said otherwise): cover every commit since the merge base, net of changes later reverted on the same branch.
+
+- Markdown, with exactly these sections, in this order:
+  - `## Features` -- new user-facing behaviour, as a high-level, bird's-eye list
+  - `## Fixes` -- things that were broken and now work, also high-level
+  - `## Chore` -- architectural and structural changes (refactors, new shared components, theme variables, toolkit additions, moved code)
+- One short bullet per item; group related changes instead of listing files or commits
+- No notes, caveats, testing hints or other prose outside the three lists; omit a section's bullets only if it has none (keep the heading)
+- Output the message in a single fenced `markdown` code block, ready to paste
