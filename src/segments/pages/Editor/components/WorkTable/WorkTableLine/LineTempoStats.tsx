@@ -63,6 +63,9 @@ export function LineTempoStats({ lineIndex }: TLineTempoStatsProps) {
   const text = isEditMode ? line.input : line.output;
   const stats = getTempoStats(text, line.start_time, line.end_time, tempo);
   const neighbours = getTempoNeighbourStats(lines, lineIndex, tempo);
+  // Reading speed is the one rule an empty line (in the column being edited) skips: there's no
+  // text to read yet. Its timing -- duration, gaps to its neighbours -- is checked all the same.
+  const showCps = tempo.enabled && !!text.trim();
   const seconds = t('tempoPanel.seconds');
   // Both neighbours too close read as one marker rather than two side by side. The previous line
   // collides with this one's top edge, the next with its bottom.
@@ -133,7 +136,7 @@ export function LineTempoStats({ lineIndex }: TLineTempoStatsProps) {
             />
           </Tooltip>
         )}
-        {tempo.enabled && (
+        {showCps && (
           <Tooltip
             label={
               stats.charsPerSecond.ok ? (

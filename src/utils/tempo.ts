@@ -103,7 +103,8 @@ export function getMinGapMs(tempo: TProjectTempo): number {
   return tempo.minIntervalFrames * FRAME_MS;
 }
 
-/** Which list neighbours of `lines[index]` it sits too close to (or overlaps) */
+/** Which list neighbours of `lines[index]` it sits too close to (or overlaps). Timing only, so
+ * empty lines are evaluated too. */
 export function getTempoNeighbourStats(
   lines: readonly TSubtitleLine[],
   index: number,
@@ -125,7 +126,8 @@ export function getTempoNeighbourStats(
  *   below, so switching overlap highlighting off really stops overlapping lines from being marked
  * - Overlap (while `highlightOverlaps`): any two entries whose spans intersect, neighbours in the
  *   list or not -- both are flagged. Sorted by start and swept with the running latest end, so a
- *   long entry covering several later ones catches each of them */
+ *   long entry covering several later ones catches each of them
+ * Timing only: empty lines are evaluated like any other. */
 export function findTimingIssues(lines: readonly TSubtitleLine[], tempo: TProjectTempo): boolean[] {
   const flags = lines.map(() => false);
 
