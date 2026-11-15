@@ -92,12 +92,16 @@
   },
   "autoFixTempo": {
     "title": "Zapuscić aŭtavyraŭliennie tempu?",
+    "column": "Słupok tekstu dla acenki",
     "overlapping": "Radki, jakija nakładajucca adzin na adzin, buduć razdzielenyja minimalnym intervałam u <value>{{interval}}</value>",
     "partialOverlap": "Radki, jakija častkova nakładajucca, buduć padzielienyja pasiaredzinie pierasiačennia",
     "covering": "Radki, jakija całkam pierakryvajuć inšyja, buduć prapuščanyja",
     "interval": "{{frames}}\u00a0kadr.\u00a0({{ms}}\u00a0ms)",
     "extendForCps": "Pasprabavać padoŭžyć radki z chutkasciu vyšej za limit u <value>{{limit}}\u00a0simb/sek</value>",
     "breakLongLines": "Razbivać radki, daŭžejšyja za <value>{{limit}}</value>\u00a0simvałaŭ (nadpisy bolš za <value>{{total}}</value>\u00a0simvałaŭ prapuskajucca)",
+    "skippedEmpty": "Budzie prajhnaravana {{count}}/{{total}} radkoŭ biez tekstu!",
+    "skippedCovering": "Budzie prajhnaravana {{count}}/{{total}} radkoŭ, jakija całkam pierakryvajucca",
+    "skippedUnbreakable": "Budzie prajhnaravana {{count}}/{{total}} radkoŭ, zadoŭhich dla razbivannia",
     "confirmButton": "Vypravić"
   }
 }
