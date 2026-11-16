@@ -296,13 +296,10 @@ export type TThemeTooltipChapter = TThemeVarsChapter<{
 
 export type TThemeEmojiPickerChapter = TThemeVarsChapter<{
   emojiPickerBg: string;
-  emojiPickerBorderColor: string;
   emojiPickerCategoryFontColor: string;
-  emojiPickerIndicatorColor: string;
-  emojiPickerInputBorderColor: string;
+  emojiPickerAccentColor: string;
   emojiPickerInputFontColor: string;
   emojiPickerInputPlaceholderColor: string;
-  emojiPickerOutlineColor: string;
   emojiPickerButtonHoverBg: string;
   emojiPickerButtonActiveBg: string;
 }>;

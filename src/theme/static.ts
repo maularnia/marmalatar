@@ -427,34 +427,35 @@ const forms: TThemeStaticFormsChapter = {
 };
 
 const tooltip: TThemeStaticTooltipChapter = {
-  ...new ThemeVariable('tooltipSpacingX', CSSVar('size4')).register(),
-  ...new ThemeVariable('tooltipSpacingY', CSSVar('size4')).register(),
+  ...new ThemeVariable('tooltipSpacingX', CSSVar('size6')).register(),
+  ...new ThemeVariable('tooltipSpacingY', CSSVar('size6')).register(),
   ...new ThemeVariable('tooltipSpacingInnerX', CSSVar('size4')).register(),
   ...new ThemeVariable('tooltipSpacingInnerY', CSSVar('size4')).register(),
-  ...new ThemeVariable('tooltipBorderRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('tooltipBorderRadius', CSSVar('size12')).register(),
   ...new ThemeVariable('tooltipFontSize', CSSVar('inputTextSizeSmall')).register(),
   ...new ThemeVariable('tooltipTitleFontSize', CSSVar('inputTextSizeSmall')).register(),
 };
 
 const emojiPicker: TThemeStaticEmojiPickerChapter = {
-  ...new ThemeVariable('emojiPickerWidth', '320px').register(),
   ...new ThemeVariable('emojiPickerHeight', '400px').register(),
+  // Emoji glyphs too: the app's font stacks start with the Twemoji fallback
   ...new ThemeVariable('emojiPickerFontFamily', CSSVar('fontTextSansSerif')).register(),
   ...new ThemeVariable('emojiPickerBorderRadius', CSSVar('size4')).register(),
-  ...new ThemeVariable('emojiPickerBorderSize', CSSVar('size1')).register(),
+  // Space, not lines, separates the search row, the category tabs and the grid
+  ...new ThemeVariable('emojiPickerSpacingX', CSSVar('size6')).register(),
+  ...new ThemeVariable('emojiPickerSpacingY', CSSVar('size6')).register(),
   ...new ThemeVariable('emojiPickerCategoryFontSize', CSSVar('sizeTextSmall')).register(),
+  ...new ThemeVariable('emojiPickerCategoryFontWeight', CSSVar('weightTextSmall')).register(),
+  ...new ThemeVariable('emojiPickerCategoryLabelHeight', CSSVar('size24')).register(),
+  ...new ThemeVariable('emojiPickerNavButtonSize', CSSVar('size24')).register(),
+  ...new ThemeVariable('emojiPickerNavIconSize', CSSVar('size18')).register(),
   ...new ThemeVariable('emojiPickerEmojiSize', CSSVar('size18')).register(),
-  ...new ThemeVariable('emojiPickerTotalEmojiSize', CSSVar('size24')).register(),
   ...new ThemeVariable('emojiPickerEmojiPadding', CSSVar('size4')).register(),
-  ...new ThemeVariable('emojiPickerIndicatorHeight', CSSVar('size1')).register(),
-  ...new ThemeVariable('emojiPickerInputBorderRadius', '0px').register(),
-  ...new ThemeVariable('emojiPickerInputBorderSize', '0px').register(),
+  ...new ThemeVariable('emojiPickerInputHeight', CSSVar('size34')).register(),
+  ...new ThemeVariable('emojiPickerInputBorderRadius', CSSVar('size4')).register(),
   ...new ThemeVariable('emojiPickerInputFontSize', CSSVar('sizeTextSmall')).register(),
-  ...new ThemeVariable('emojiPickerInputLineHeight', '1.5').register(),
-  ...new ThemeVariable('emojiPickerInputPadding', CSSVar('size6')).register(),
+  // Read in JS too: the picker takes its column count as a prop, and its width follows the grid
   ...new ThemeVariable('emojiPickerNumColumns', 9).register(),
-  ...new ThemeVariable('emojiPickerOutlineSize', '0px').register(),
-  ...new ThemeVariable('emojiPickerSkintoneBorderRadius', CSSVar('size18')).register(),
 };
 
 const mark: TThemeStaticMarkChapter = {
