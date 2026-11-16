@@ -14,29 +14,15 @@ import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Toolt
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-// The background and blur fade out from top (full) to bottom (none). backdrop-filter can't be
-// graded itself, so both live on a pseudo-element under the cells and a mask fades it -- masking
-// the row itself would fade its text too. `isolation` keeps the pseudo-element's negative z-index
-// inside the row.
+// No background or blur of its own: the floating block it sits in (FloatingVideoBlock.tsx)
+// carries them for the whole stack
 const Row = styled.div`
   position: relative;
-  isolation: isolate;
   display: grid;
   grid-template-columns: var(--current-grid-template);
   gap: 0;
   align-items: stretch;
   width: 100%;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-color: ${CSSVar('mainTableHeaderBg')};
-    backdrop-filter: ${CSSVar('mainTableHeaderBackdrop')};
-    mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-    pointer-events: none;
-  }
 `;
 const Cell = styled.div`
   padding: ${CSSVar('size4')} ${CSSVar('size6')};

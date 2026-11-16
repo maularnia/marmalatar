@@ -11,14 +11,14 @@
     "copySourceToOutput": "Copy source text to output",
     "removeTranslationColumn": "Remove translation column and focus on editing the source",
     "addTranslationColumn": "Add translation column",
-    "pickVideoFile": "Pick a video file",
     "export": "Export",
     "translateAll": "Translate all",
     "translateFocusedLine": "Translate focused line",
     "cleanup": "Cleanup",
     "copyAllSourceToOutput": "Copy all\nsource to output",
     "completeAllTranslated": "Mark all\ntranslated lines\nas complete",
-    "autoFixTempo": "Auto fix tempo"
+    "autoFixTempo": "Auto fix tempo",
+    "autoMarkLinesCompleted": "Mark rows with translation as completed automatically"
   },
   "workTableLine": {
     "markLineComplete": "Toggle line complete",

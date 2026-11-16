@@ -1,6 +1,5 @@
 import { media } from '@src/services/media';
 import { editor } from '@src/services/project';
-import { TScreenSize } from '@src/theme/types';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@src/toolkit/Tooltip';
 import { ai } from '@src/services/ai';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
@@ -99,6 +98,14 @@ const WaveFormViewport = styled.div`
   user-select: none;
 `;
 
+const FlatLine = styled.div`
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 1px;
+  pointer-events: none;
+`;
+
 const WaveFormCanvasWrapper = styled.div`
   position: relative;
   height: 100%;
@@ -112,9 +119,6 @@ const Container = styled.div`
   z-index: 20;
   width: 100%;
   padding: ${CSSVar('waveformSpacingY')} 0;
-  &.${TScreenSize.SMALL} {
-    backdrop-filter: blur(${CSSVar('blurHeavy')});
-  }
 `;
 
 // Shift-all-lines buttons, fixed to the middle of the waveform's left and right edges, above the
@@ -415,7 +419,12 @@ export default function Waveform({
 
   // Only the tiles around the viewport are mounted, plus one either side for scrolling into
   function renderWaveformTiles() {
-    if (peaks.length === 0) return null;
+    // No peaks (no video, or none extracted): a flat line along the middle of the whole timeline
+    if (peaks.length === 0) {
+      return (
+        <FlatLine style={{ width: canvasWidth, background: theme.variables.waveformColor.value }} />
+      );
+    }
 
     const viewportWidth = waveformViewportRef.current?.offsetWidth ?? 0;
     const timelineOffset = getTimelineOffset(cursorX, viewportWidth, canvasWidth);

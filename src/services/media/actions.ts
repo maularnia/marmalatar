@@ -91,15 +91,27 @@ function loadVideoDuration(url: string): Promise<number> {
 
 // Switches to a video file (or none), with its audio when the path is known. The thumbnail,
 // waveform and track are set by applyVideo, which is the only caller.
+// Points a media element at a file, or empties it. Emptying must drop the attribute: `src = ''`
+// resolves to the page's own URL, which the element then fails to play -- reported as an
+// unplayable video now that the (empty) player stays on screen without one.
+function setMediaSource(el: HTMLMediaElement, url: string | null): void {
+  if (url) {
+    el.src = url;
+    return;
+  }
+  el.removeAttribute('src');
+  el.load();
+}
+
 function loadVideo(path: string | null, audioPath?: string): void {
   Service.dispatch(videoChanged(path));
   const url = path ? pathToFileUrl(path) : '';
   if (videoElement) {
-    videoElement.src = url;
+    setMediaSource(videoElement, url || null);
     videoElement.muted = true;
   }
   if (audioElement) {
-    audioElement.src = audioPath ? pathToFileUrl(audioPath) : '';
+    setMediaSource(audioElement, audioPath ? pathToFileUrl(audioPath) : null);
   }
   if (!path) return;
 

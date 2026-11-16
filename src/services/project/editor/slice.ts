@@ -654,4 +654,22 @@ export const selectTempoTimingIssues = createSelector(
   (lines, tempo) => (tempo.enabled ? findTimingIssues(lines, tempo) : NO_TIMING_ISSUES)
 );
 
+// How far past the last line's end the timeline reaches without a video
+const TIMELINE_TAIL_MS = 30_000;
+
+// The media slice's part this reads, typed here rather than imported: the media service's own
+// modules import the editor, so importing it back would be a cycle
+type TTimelineMediaState = { media: { videoDurationMs: number | null } };
+
+/** The length of the timeline the waveform shows: the video's, when one is loaded; otherwise the
+ * last line's end plus 30 seconds (null with no lines). */
+export const selectTimelineDurationMs = createSelector(
+  [(state: TTimelineMediaState) => state.media.videoDurationMs, selectLines],
+  (videoDurationMs, lines): number | null => {
+    if (videoDurationMs != null) return videoDurationMs;
+    if (lines.length === 0) return null;
+    return Math.max(...lines.map((line) => line.end_time)) + TIMELINE_TAIL_MS;
+  }
+);
+
 export default editorSlice.reducer;

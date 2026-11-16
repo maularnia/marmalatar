@@ -11,14 +11,14 @@
     "copySourceToOutput": "Скапіяваць\nкрыніцу ў пераклад",
     "removeTranslationColumn": "Прыбраць слупок перакладу і засяродзіцца на рэдагаванні крыніцы",
     "addTranslationColumn": "Дадаць слупок перакладу",
-    "pickVideoFile": "Абраць відэа-файл",
     "export": "Экспарт",
     "translateAll": "Перакласці ўсё",
     "translateFocusedLine": "Перакласці абраны радок",
     "cleanup": "Ачыстка",
     "copyAllSourceToOutput": "Скапіяваць\n усе радкі крыніцы\nў пераклад",
     "completeAllTranslated": "Пазначыць усе\nрадкі з перакладам\nяк гатовыя",
-    "autoFixTempo": "Аўта-тэмп"
+    "autoFixTempo": "Аўта-тэмп",
+    "autoMarkLinesCompleted": "Аўтаматычна адзначаць радкі з перакладам як \"Гатовыя\""
   },
   "workTableLine": {
     "markLineComplete": "Адзначыць\nрадок як \"Гатовы\"",

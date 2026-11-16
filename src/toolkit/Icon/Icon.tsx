@@ -96,6 +96,10 @@ import iconLineSize from '@src/assets/icons/icon-line-size.svg?react';
 import iconInterval from '@src/assets/icons/icon-interval.svg?react';
 import iconPlay from '@src/assets/icons/icon-play.svg?react';
 import iconPlaybackStop from '@src/assets/icons/icon-playback-stop.svg?react';
+import iconMoveX from '@src/assets/icons/icon-move-x.svg?react';
+import iconShow from '@src/assets/icons/icon-show.svg?react';
+import iconHide from '@src/assets/icons/icon-hide.svg?react';
+import iconCheckCircleDashed from '@src/assets/icons/icon-check-circle-dashed.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -219,6 +223,10 @@ const ICON_COMPONENTS: {
   [TIcon.INTERVAL]: iconInterval,
   [TIcon.PLAY]: iconPlay,
   [TIcon.PLAYBACK_STOP]: iconPlaybackStop,
+  [TIcon.MOVE_X]: iconMoveX,
+  [TIcon.SHOW]: iconShow,
+  [TIcon.HIDE]: iconHide,
+  [TIcon.CHECK_CIRCLE_DASHED]: iconCheckCircleDashed,
 };
 
 const Wrapper = styled.div`

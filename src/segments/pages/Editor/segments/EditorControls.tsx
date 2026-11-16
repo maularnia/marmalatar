@@ -1,5 +1,4 @@
 import { projects } from '@src/services/project';
-import { media } from '@src/services/media';
 import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { glossaries } from '@src/services/glossary';
@@ -69,23 +68,21 @@ export function EditorControls() {
   const [
     currentBulkJob,
     isBusy,
-    isSmallScreen,
     isEditMode,
     canUndo,
     canRedo,
-    videoPath,
     focusedColumn,
     tempo,
+    autoMarkLinesCompleted,
   ] = useAppSelectors(
     ai.selectCurrentBulkJob,
     ai.selectIsBusy,
-    settings.selectIsSmallScreen,
     editor.selectIsEditMode,
     editor.selectCanUndo,
     editor.selectCanRedo,
-    media.selectVideoFilePath,
     editor.selectFocusedColumn,
-    projects.selectTempo
+    projects.selectTempo,
+    settings.selectAutoMarkLinesCompleted
   );
   // Controls that can't be used in the current mode or without an AI integration aren't rendered
   // at all, rather than shown disabled. A running bulk translation keeps its progress and stop
@@ -259,6 +256,17 @@ export function EditorControls() {
                   onClick={() => editor.completeAllTranslatedLines()}
                 />
               </Tooltip>
+              {/* Translation mode only, like its effect: marking follows the translation column */}
+              <Tooltip
+                side="right"
+                label={<TooltipSimple>{t('editorControls.autoMarkLinesCompleted')}</TooltipSimple>}
+              >
+                <PanelButton
+                  color={autoMarkLinesCompleted ? ThemeColors.GREEN : ThemeColors.TEXT}
+                  icon={TIcon.CHECK_CIRCLE_DASHED}
+                  onClick={() => settings.setAutoMarkLinesCompleted(!autoMarkLinesCompleted)}
+                />
+              </Tooltip>
             </>
           )}
           <Tooltip
@@ -335,21 +343,6 @@ export function EditorControls() {
                     editor.copySourceToOutput(focusedLineIndex);
                   }
                 }}
-              />
-            </Tooltip>
-          )}
-        </PanelSection>
-        <PanelSection>
-          {isSmallScreen && !videoPath && (
-            <Tooltip
-              label={<TooltipSimple>{t('editorControls.pickVideoFile')}</TooltipSimple>}
-              side="right"
-            >
-              <PanelButton
-                color={ThemeColors.ACCENT2}
-                disabled={isBusy}
-                icon={TIcon.VIDEO_ABSENT}
-                onClick={() => void projects.changeVideo()}
               />
             </Tooltip>
           )}

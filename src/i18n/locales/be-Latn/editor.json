@@ -10,7 +10,10 @@
   "videoPlayer": {
     "selectVideo": "Abrać videa",
     "playFromLine": "Prajhrać z biahučaha radka",
-    "stopToLine": "Spynić i viarnucca da pačatku abranaha radka"
+    "stopToLine": "Spynić i viarnucca da pačatku abranaha radka",
+    "timeAdjustmentStep": "Krok karekcyi času (ms)",
+    "scrollIntoViewOnPlay": "Padkručvać da videa pry prajhravanni (małyja ekrany)",
+    "duration": "Praciahłasć: {{time}}"
   },
   "spellcheck": {
     "loadingSuggestions": "Šukajem varyjanty...",

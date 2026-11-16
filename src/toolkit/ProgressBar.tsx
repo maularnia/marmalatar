@@ -27,11 +27,8 @@ const Runner = styled.div`
   top: 0;
   left: 0;
   width: var(--runner-width);
-  background: linear-gradient(
-    to right,
-    var(--progress-bar-start-color) 0%,
-    var(--progress-bar-end-color) 100%
-  );
+  /* A flat fill in the bar's colour (its default shade) */
+  background: var(--progress-bar-color);
 `;
 
 const ProgressBarSizeToHeightMap: { [key in TProgressBarSize]: string } = {
@@ -96,12 +93,8 @@ export default function ProgressBar({
   useEffect(() => {
     if (!runnerRef.current) return;
     runnerRef.current.style.setProperty(
-      '--progress-bar-start-color',
+      '--progress-bar-color',
       CSSColor(color, TShade.DEFAULT, 100)
-    );
-    runnerRef.current.style.setProperty(
-      '--progress-bar-end-color',
-      CSSColor(color, TShade.BRIGHT, 100)
     );
   }, [color, runnerRef]);
 

@@ -4,12 +4,14 @@ import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
 import { useAppSelectors } from '@store/hooks';
 import { RefObject, useEffect, useRef } from 'react';
+import classNames from 'classnames';
 import styled from 'styled-components';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import type { VirtualizedListHandle } from '../VirtualizedList/VirtualizedList';
 import Waveform from '../Waveform/Waveform';
 import { EditorTableHeader } from '../WorkTable/EditorTableHeader';
-import { CSSVar } from '@src/theme/utils';
+import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import { TShade } from '@src/theme/definitions';
 
 const VideoBlock = styled.div`
   position: sticky;
@@ -20,6 +22,27 @@ const VideoBlock = styled.div`
   width: 100%;
   overflow: hidden;
   padding: 0 0 ${CSSVar('size18')};
+
+  /* One background and blur for the whole floating stack (player on small screens, waveform,
+     table header) instead of one per part. They live on a layer under the content, masked so that
+     both the theme background (half strength) and the blur hold down to 90% of the block, then
+     fade out over the last 10% -- a backdrop-filter can't be graded itself, and masking the block
+     would fade its content too. Isolation keeps the layer's negative z-index inside the block. */
+  isolation: isolate;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 50)};
+    backdrop-filter: blur(${CSSVar('blurExtreme')});
+    mask-image: linear-gradient(to bottom, black 0%, black 90%, transparent 100%);
+    pointer-events: none;
+  }
+  /* Larger screens hold only the table header here: a longer fade, from 75% down */
+  &.isLargeScreen::before {
+    mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+  }
 `;
 
 const OverflowContainer = styled.div`
@@ -45,24 +68,26 @@ export default function FloatingVideoBlock({
 }: FloatingVideoBlockProps) {
   const [
     isSmallScreen,
-    videoFilePath,
     activeLineIndex,
     translationLines,
     screenSize,
     isVideoCollapsed,
-    videoDurationMs,
+    videoFilePath,
+    timelineDurationMs,
     waveformPeaks,
   ] = useAppSelectors(
     settings.selectIsSmallScreen,
-    media.selectVideoFilePath,
     media.selectActiveLineIndex,
     editor.selectLines,
     settings.selectScreenSize,
     editor.selectIsVideoCollapsed,
-    media.selectVideoDurationMs,
+    media.selectVideoFilePath,
+    editor.selectTimelineDurationMs,
     media.selectWaveformPeaks
   );
   const isLargeScreen = screenSize !== TScreenSize.SMALL;
+  // Without a video the player shows only its control bar, as if collapsed
+  const isCollapsed = isVideoCollapsed || !videoFilePath;
 
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
   const videoContainerShiftRef = useRef<number>(0);
@@ -95,7 +120,7 @@ export default function FloatingVideoBlock({
 
     const handleScroll = (event: Event) => {
       const videoElement = media.getVideoElement();
-      if (isLargeScreen || isVideoCollapsed || !videoContainerRef.current || !videoElement) return;
+      if (isLargeScreen || isCollapsed || !videoContainerRef.current || !videoElement) return;
       const scrollTop = (event.currentTarget as HTMLElement).scrollTop;
       const videoHeight = videoElement.clientHeight;
       const maxShift = videoHeight * maxVideoShiftRef.current;
@@ -128,7 +153,7 @@ export default function FloatingVideoBlock({
 
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
-  }, [scrollContainerRef, virtualizedListRef, isLargeScreen, isVideoCollapsed]);
+  }, [scrollContainerRef, virtualizedListRef, isLargeScreen, isCollapsed]);
 
   useEffect(() => {
     if (focusedItemIndex < 0) return;
@@ -183,25 +208,27 @@ export default function FloatingVideoBlock({
     if (videoContainerRef.current) {
       videoContainerRef.current.style.transform = '';
     }
-    if (!isVideoCollapsed && scrollContainerRef.current && videoContainerRef.current) {
+    if (!isCollapsed && scrollContainerRef.current && videoContainerRef.current) {
       currentAnchorRef.current =
         scrollContainerRef.current.scrollTop - videoContainerRef.current.offsetHeight;
     } else {
       currentAnchorRef.current = 0;
     }
-  }, [isVideoCollapsed, scrollContainerRef]);
+  }, [isCollapsed, scrollContainerRef]);
 
   return (
-    <VideoBlock ref={videoContainerRef}>
-      {isSmallScreen && videoFilePath && (
+    <VideoBlock ref={videoContainerRef} className={classNames({ isLargeScreen })}>
+      {isSmallScreen && (
         <>
+          {/* Always there: an empty player (whose control bar picks a video) and a flat waveform until
+              a video is picked */}
           <VideoPlayer
             onPlaybackResume={handlePlaybackResume}
             onPlaybackPause={handlePlaybackPause}
           />
           <Waveform
             peaks={waveformPeaks}
-            videoDurationMs={videoDurationMs}
+            videoDurationMs={timelineDurationMs}
             activeLineIndex={activeLineIndex}
             focusedLineIndex={focusedItemIndex >= 0 ? focusedItemIndex : null}
             translationLines={translationLines}

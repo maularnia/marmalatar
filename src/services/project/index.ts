@@ -68,6 +68,7 @@ import {
   selectLines,
   selectRenderEpoch,
   selectTempoTimingIssues,
+  selectTimelineDurationMs,
   selectTextSelection,
   setCharacterPool,
   setEditorMode,
@@ -210,6 +211,7 @@ export const editor = new Service('editor', {
     selectLines,
     selectRenderEpoch,
     selectTempoTimingIssues,
+    selectTimelineDurationMs,
     selectTextSelection,
   },
   functions: {
