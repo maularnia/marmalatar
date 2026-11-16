@@ -2,7 +2,9 @@ import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import H from '@src/toolkit/H';
 import P from '@src/toolkit/P';
+import { flyInFromBelow } from '@src/toolkit/motion/transitions';
 import { Logo } from '@ui-toolkit/Logo/Logo';
+import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -14,7 +16,7 @@ const AppTitleContainer = styled.div`
   flex-direction: column;
   position: absolute;
   bottom: 100%;
-  margin-bottom: ${CSSVar('size92')};
+  margin-bottom: ${CSSVar('size34')};
 `;
 
 const Content = styled.div`
@@ -42,10 +44,17 @@ export const AppTitle = () => {
     <AppTitleContainer>
       <Content>
         <LogoWrapper>
-          <Logo size={92} />
+          {/* Logo, then title, then tagline: overlapping, each flying in over the same 1s */}
+          <motion.div {...flyInFromBelow(0)} style={{ display: 'flex' }}>
+            <Logo size={92} />
+          </motion.div>
           <div>
-            <LogoText level={2}>MARMALATAR</LogoText>
-            <P>{t('appTitle.tagline')}</P>
+            <motion.div {...flyInFromBelow(0.12)}>
+              <LogoText level={2}>MARMALATAR</LogoText>
+            </motion.div>
+            <motion.div {...flyInFromBelow(0.18)}>
+              <P>{t('appTitle.tagline')}</P>
+            </motion.div>
           </div>
         </LogoWrapper>
       </Content>

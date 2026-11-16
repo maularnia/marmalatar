@@ -200,3 +200,18 @@ export const popOnFocus = {
     },
   },
 } satisfies MotionProps;
+
+// How long each part of a staggered fly-in takes, whatever its delay
+const FLY_IN_DURATION = 1;
+
+/** Flies an element in from below (its own height down, transparent) over FLY_IN_DURATION. Give the
+ * parts of a group increasing delays to stagger them: they overlap, each taking the same time. */
+export const flyInFromBelow = (delay = 0) =>
+  ({
+    initial: { y: shiftYPos, opacity: 0 },
+    animate: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: FLY_IN_DURATION, delay, ease: [0.16, 1, 0.3, 1] },
+    },
+  }) satisfies MotionProps;
