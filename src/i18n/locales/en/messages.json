@@ -20,9 +20,6 @@
     "title": "Project loaded",
     "message": "Happy working!"
   },
-  "translationCancelled": {
-    "title": "Translation cancelled"
-  },
   "aiTranslationJobDone": {
     "title": "Job complete",
     "message": "AI succesfully complited your translation requeest"
@@ -43,16 +40,8 @@
     "title": "Line has been split",
     "message": "New line entry has been added"
   },
-  "mergeOperationCancelled": {
-    "title": "Merge has been canceled",
-    "message": "No line has been modified"
-  },
   "linesMerged": {
     "title": "Merged succesfully"
-  },
-  "deleteLineCancelled": {
-    "title": "Line deletion discarded",
-    "message": "No line has been modified"
   },
   "lineDeleted": {
     "title": "Line has been deleted",

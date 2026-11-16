@@ -113,4 +113,8 @@ export enum TIcon {
   INTERVAL = 'interval',
   PLAY = 'play',
   PLAYBACK_STOP = 'playback-stop',
+  MOVE_X = 'move-x',
+  SHOW = 'show',
+  HIDE = 'hide',
+  CHECK_CIRCLE_DASHED = 'check-circle-dashed',
 }

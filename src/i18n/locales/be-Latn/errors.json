@@ -126,9 +126,6 @@
     "title": "Brak šabłonu zapytu",
     "message": "Kab dasłać zapyt da ŠI, prahramie treba šabłon zapytu. Stvarycie šabłon u hałoŭnym mieniu i abiarycie jaho ŭ poli šabłonu"
   },
-  "unableToTranslateLine": {
-    "title": "Nie atrymałasia pierakłaści radok"
-  },
   "aiTranslationJobFailed": {
     "title": "Pamyłka masavaha pierakładu"
   },
@@ -148,12 +145,6 @@
   },
   "copyOperationFailed": {
     "title": "Pamyłka kapijavańnia tekstu"
-  },
-  "mergeLinesFailed": {
-    "title": "Nie atrymałasia abjadnać radki"
-  },
-  "deleteLineFailed": {
-    "title": "Nie atrymałasia vydalić radok"
   },
   "lineTooShortToSplit": {
     "title": "Nadta karotki radok",

@@ -204,7 +204,8 @@ export default function Editor() {
         }
         onOutputTextChange={(text) => {
           editor.updateTranslatedText({ lineIndex, text });
-          if (settings.get.autoMarkLinesCompleted())
+          // Auto-marking follows the translation column: never in edit mode
+          if (settings.get.autoMarkLinesCompleted() && !editor.get.isEditMode())
             editor.setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true });
         }}
         onSourceTextChange={(text) => editor.updateSourceText({ lineIndex, text })}

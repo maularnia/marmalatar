@@ -1,8 +1,4 @@
 {
-  "sync": {
-    "title": "Сінхранізацыя",
-    "timeAdjustmentStepLabel": "Крок карэкцыі часу (мс)"
-  },
   "tempo": {
     "title": "Тэмп",
     "standard": "Стандарт",
@@ -14,16 +10,8 @@
     "minIntervalFramesLabel": "Мін. інтэрвал (кадраў)",
     "highlightOverlaps": "Падсвечваць радкі, якія перакрываюцца"
   },
-  "uxUi": {
-    "title": "UI/UX",
-    "scrollVideoIntoViewPrefix": "Падкручваць да відэа па націсканні",
-    "scrollVideoIntoViewSuffix": "(толькі на малых экранах)",
-    "askBeforeMerge": "Пытаць перад аб’яднаннем",
-    "askBeforeDelete": "Пытаць перад выдаленнем",
-    "askBeforeAITranslate": "Пытаць перад аўта-перакладам",
-    "askBeforeSplit": "Пытаць перад разразаннем радка",
-    "autoMarkLinesCompleted": "Адзначаць радкі як \"Гатовыя\" аўтаматычна",
-    "appLanguage": "Мова праграмы"
+  "appLanguage": {
+    "title": "Мова праграмы"
   },
   "aiSettings": {
     "busyNotice": "Налады заблакаваныя, пакуль выконваецца ШІ-пераклад",

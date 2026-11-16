@@ -6,10 +6,6 @@ import { SUPPORTED_UI_LOCALES } from '@src/i18n/locales';
 import { AppSettingsContractV1Schema } from '@bridge/definitions/appSettings';
 import {
   AI_INTEGRATION_ENABLED_DEFAULT,
-  ASK_BEFORE_AI_TRANSLATE_DEFAULT,
-  ASK_BEFORE_DELETE_DEFAULT,
-  ASK_BEFORE_MERGE_DEFAULT,
-  ASK_BEFORE_SPLIT_DEFAULT,
   AUTO_MARK_LINES_COMPLETED_DEFAULT,
   CHECK_GRAMMAR_DEFAULT,
   SCROLL_VIDEO_INTO_VIEW_ON_PLAY_DEFAULT,
@@ -26,10 +22,6 @@ const UiLocaleSchema = z.enum(SUPPORTED_UI_LOCALES);
 export const AppSettingsSchema = AppSettingsContractV1Schema.extend({
   selectedIntegrationId: z.string().nullable().catch(DEFAULT_AI_CLIENT_ID),
   AIintegrationEnabled: z.boolean().catch(AI_INTEGRATION_ENABLED_DEFAULT),
-  askBeforeMerge: z.boolean().catch(ASK_BEFORE_MERGE_DEFAULT),
-  askBeforeDelete: z.boolean().catch(ASK_BEFORE_DELETE_DEFAULT),
-  askBeforeAITranslate: z.boolean().catch(ASK_BEFORE_AI_TRANSLATE_DEFAULT),
-  askBeforeSplit: z.boolean().catch(ASK_BEFORE_SPLIT_DEFAULT),
   scrollVideoIntoViewOnPlay: z.boolean().catch(SCROLL_VIDEO_INTO_VIEW_ON_PLAY_DEFAULT),
   autoMarkLinesCompleted: z.boolean().catch(AUTO_MARK_LINES_COMPLETED_DEFAULT),
   timeAdjustmentStep: z.number().catch(TIME_ADJUSTMENT_STEP_DEFAULT),
@@ -45,10 +37,6 @@ export function buildAppSettingsSaveData(state: RootState): PersistedAppSettings
   return AppSettingsSchema.parse({
     selectedIntegrationId: settings.selectedIntegrationId,
     AIintegrationEnabled: settings.AIintegrationEnabled,
-    askBeforeMerge: settings.askBeforeMerge,
-    askBeforeDelete: settings.askBeforeDelete,
-    askBeforeAITranslate: settings.askBeforeAITranslate,
-    askBeforeSplit: settings.askBeforeSplit,
     scrollVideoIntoViewOnPlay: settings.scrollVideoIntoViewOnPlay,
     autoMarkLinesCompleted: settings.autoMarkLinesCompleted,
     timeAdjustmentStep: settings.timeAdjustmentStep,

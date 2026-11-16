@@ -266,7 +266,7 @@ const inputs: TThemeStaticInputsChapter = {
   ...new ThemeVariable('inputSpacingYLarge', '0').register(),
   ...new ThemeVariable('inputSpacingYInnerLarge', CSSVar('size12')).register(),
 
-  ...new ThemeVariable('inputSpacingXRegular', CSSVar('size10')).register(),
+  ...new ThemeVariable('inputSpacingXRegular', CSSVar('size12')).register(),
   ...new ThemeVariable('inputSpacingXInnerRegular', CSSVar('size6')).register(),
   ...new ThemeVariable('inputSpacingXRegularIconic', CSSVar('size6')).register(),
   ...new ThemeVariable('inputSpacingYRegular', '0').register(),
@@ -378,7 +378,7 @@ const player: TThemeStaticVideoPlayerTypeChapter = {
   ...new ThemeVariable('videoPlayerSubtitleMaxHeight', `min(90%, 420px)`).register(),
   ...new ThemeVariable('videoPlayerSpacingX', CSSVar('size10')).register(),
   ...new ThemeVariable('videoPlayerSpacingY', CSSVar('size10')).register(),
-  ...new ThemeVariable('videoPlayerSpacingInnerX', CSSVar('size4')).register(),
+  ...new ThemeVariable('videoPlayerSpacingInnerX', CSSVar('size12')).register(),
   ...new ThemeVariable('videoPlayerSpacingInnerY', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerBorderRadius', '8px').register(),
   ...new ThemeVariable('videoPlayerSubtitlesSpacingX', CSSVar('size4')).register(),

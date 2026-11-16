@@ -1,8 +1,4 @@
 {
-  "sync": {
-    "title": "Sinchranizacyja",
-    "timeAdjustmentStepLabel": "Krok karekcyi času (ms)"
-  },
   "tempo": {
     "title": "Temp",
     "standard": "Standart",
@@ -14,16 +10,8 @@
     "minIntervalFramesLabel": "Min. interval (kadraŭ)",
     "highlightOverlaps": "Padsviečvać radki, jakija pierakryvajucca"
   },
-  "uxUi": {
-    "title": "UI/UX",
-    "scrollVideoIntoViewPrefix": "Padkručvać da videa pa naciskańni",
-    "scrollVideoIntoViewSuffix": "(tolki na małych ekranach)",
-    "askBeforeMerge": "Pytać pierad abjažnańniem",
-    "askBeforeDelete": "Pytać pierad vydaleńniem",
-    "askBeforeAITranslate": "Pytać pierad aŭta-pierakładam",
-    "askBeforeSplit": "Pytać pierad razrazańniem radka",
-    "autoMarkLinesCompleted": "Adzančać radki jak \"Hatovyja\" aŭtamatyčna",
-    "appLanguage": "Mova prahramy"
+  "appLanguage": {
+    "title": "Mova prahramy"
   },
   "aiSettings": {
     "busyNotice": "Nałady zabłakavanyja, pakul vykonvajecca ŠI-pierakład",

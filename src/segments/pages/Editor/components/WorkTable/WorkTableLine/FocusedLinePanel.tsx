@@ -32,14 +32,21 @@ type TFocusedLinePanelProps = {
 };
 
 export const FocusedLinePanel = memo(function FocusedLinePanel({ top }: TFocusedLinePanelProps) {
-  const [focusedLineIndex, lines, frozenLineNumbers, autoMarkLinesCompleted, isTranslationBusy] =
-    useAppSelectors(
-      editor.selectFocusedLineIndex,
-      editor.selectLines,
-      editor.selectFrozenLineNumbers,
-      settings.selectAutoMarkLinesCompleted,
-      ai.selectIsBusy
-    );
+  const [
+    focusedLineIndex,
+    lines,
+    frozenLineNumbers,
+    autoMarkLinesCompleted,
+    isTranslationBusy,
+    isEditMode,
+  ] = useAppSelectors(
+    editor.selectFocusedLineIndex,
+    editor.selectLines,
+    editor.selectFrozenLineNumbers,
+    settings.selectAutoMarkLinesCompleted,
+    ai.selectIsBusy,
+    editor.selectIsEditMode
+  );
 
   const focusedLine = focusedLineIndex != null ? lines[focusedLineIndex] : undefined;
   if (
@@ -59,7 +66,8 @@ export const FocusedLinePanel = memo(function FocusedLinePanel({ top }: TFocused
       <LineTempoStats lineIndex={focusedLineIndex} />
       <EditorTableLinePanel
         isCompleted={Boolean(focusedLine.completed)}
-        isCompletedToggleHidden={autoMarkLinesCompleted}
+        // Auto-marking only applies in translation mode, so edit mode keeps the manual toggle
+        isCompletedToggleHidden={autoMarkLinesCompleted && !isEditMode}
         onRemove={() => editor.removeLine(focusedLineIndex)}
         onToggleCompleted={() => editor.toggleCompleted(focusedLineIndex)}
       />

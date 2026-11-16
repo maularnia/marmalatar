@@ -28,7 +28,9 @@ export default function SelectLanguage() {
 
   return (
     <FormsSection animated>
-      <FormsSectionTitle icon={TIcon.LANGUAGE_INTERFACE}>{t('uxUi.appLanguage')}</FormsSectionTitle>
+      <FormsSectionTitle icon={TIcon.LANGUAGE_INTERFACE}>
+        {t('appLanguage.title')}
+      </FormsSectionTitle>
       <FormsSectionContent>
         <FormSectionEntry>
           <Select

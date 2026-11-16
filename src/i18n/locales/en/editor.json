@@ -10,7 +10,10 @@
   "videoPlayer": {
     "selectVideo": "Select video",
     "playFromLine": "Play from the current line",
-    "stopToLine": "Stop and return to the focused line’s beginning"
+    "stopToLine": "Stop and return to the focused line’s beginning",
+    "timeAdjustmentStep": "Time adjustment step (ms)",
+    "scrollIntoViewOnPlay": "Scroll the video into view on play (small screens)",
+    "duration": "Duration: {{time}}"
   },
   "spellcheck": {
     "loadingSuggestions": "Loading suggestions...",

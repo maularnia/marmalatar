@@ -10,7 +10,10 @@
   "videoPlayer": {
     "selectVideo": "Абраць відэа",
     "playFromLine": "Прайграць з бягучага радка",
-    "stopToLine": "Спыніць і вярнуцца да пачатку абранага радка"
+    "stopToLine": "Спыніць і вярнуцца да пачатку абранага радка",
+    "timeAdjustmentStep": "Крок карэкцыі часу (мс)",
+    "scrollIntoViewOnPlay": "Падкручваць да відэа пры прайграванні (малыя экраны)",
+    "duration": "Працягласць: {{time}}"
   },
   "spellcheck": {
     "loadingSuggestions": "Шукаем варыянты...",

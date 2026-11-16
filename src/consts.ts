@@ -2,10 +2,6 @@ import { TMessageType, TThemeSelection } from '@src/types';
 import { TUiLocale } from '@src/i18n/locales';
 
 export const AI_INTEGRATION_ENABLED_DEFAULT = false;
-export const ASK_BEFORE_MERGE_DEFAULT = true;
-export const ASK_BEFORE_DELETE_DEFAULT = true;
-export const ASK_BEFORE_AI_TRANSLATE_DEFAULT = false;
-export const ASK_BEFORE_SPLIT_DEFAULT = false;
 export const AUTO_MERGE_THRESHOLD_DEFAULT = 300;
 export const SCROLL_VIDEO_INTO_VIEW_ON_PLAY_DEFAULT = true;
 export const AUTO_MARK_LINES_COMPLETED_DEFAULT = false;
