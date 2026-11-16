@@ -235,6 +235,18 @@ const formAppearHidden = { opacity: 0, y: FORM_APPEAR_SHIFT_Y };
 const formAppearVisible = { opacity: 1, y: 0 };
 const formAppearTransition = { duration: FORM_APPEAR_DURATION, ease: 'easeOut' } as const;
 
+/** A static page's content: rises in bottom-up, timed like the form elements */
+// How long a static page waits before its content rises in
+const STATIC_PAGE_APPEAR_DELAY = 0.3;
+
+export const staticPageAppear = {
+  initial: formAppearHidden,
+  animate: {
+    ...formAppearVisible,
+    transition: { ...formAppearTransition, delay: STATIC_PAGE_APPEAR_DELAY },
+  },
+} satisfies MotionProps;
+
 export const formAnimation = {
   /** The form content: starts the cascade after `delay`, staggering its rows */
   content: (delay = 0) =>

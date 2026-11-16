@@ -33,8 +33,6 @@ const FormTitleElement = styled(H)`
       ${CSSVar('formSpacingX')} + ${CSSVar('formRowSpacingX')} + ${CSSVar('formSectionSpacingX')}
     );
   text-align: center;
-  border-bottom: 1px solid ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 5)};
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 50)};
 `;
 
 export const FormRoot = styled.form`
