@@ -118,8 +118,8 @@ export default function TempoSettings() {
     });
 
   return (
-    <FormsRow>
-      <FormsSection>
+    <FormsRow animated>
+      <FormsSection animated>
         <FormsSectionTitle
           icon={TIcon.TEMPO}
           after={

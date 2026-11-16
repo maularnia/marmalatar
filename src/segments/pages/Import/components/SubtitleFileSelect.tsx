@@ -14,7 +14,7 @@ import { cleanupEntries } from '@src/utils/data/entryCleanup';
 import i18n from '@src/i18n';
 import { ThemeColors } from '@src/theme/utils';
 import { TSubtitleLine } from '@src/types';
-import { useEffect, useMemo, useState } from 'react';
+import { type Ref, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const t = i18n.getFixedT(null, 'errors');
@@ -55,6 +55,8 @@ function applyCleanup(lines: TSubtitleLine[], options: TCleanupOptions): TSubtit
 }
 
 type SubtitleFileSelectProps = {
+  /** The file select button */
+  ref?: Ref<HTMLButtonElement>;
   name?: string;
   value: File | null;
   onChange: (file: File | null) => void;
@@ -64,6 +66,7 @@ type SubtitleFileSelectProps = {
 };
 
 export default function SubtitleFileSelect({
+  ref,
   name,
   value,
   onChange,
@@ -155,7 +158,7 @@ export default function SubtitleFileSelect({
   }, [value, subtitlesParseError, cleanedLines, onError]);
 
   return (
-    <FormsSection>
+    <FormsSection animated>
       <FormsSectionTitle
         icon={TIcon.CC}
         subtext={
@@ -169,6 +172,7 @@ export default function SubtitleFileSelect({
       <FormsSectionContent>
         <FormSectionEntry>
           <FileSelectButton
+            ref={ref}
             name={name}
             color={ThemeColors.ACCENT2}
             label={value?.name ?? tImport('shared.noFileSelected')}

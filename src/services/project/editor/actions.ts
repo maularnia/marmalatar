@@ -105,11 +105,21 @@ export function registerLineInput(
     if (!row) return;
     row[column] = null;
     if (!row.source && !row.output && !row.character) lineInputs.delete(lineIndex);
+    // The focused input is going away while it holds the editor's focus (its row remounts: a new
+    // render epoch, another project's lines): bring focus back once it registers again
+    if (
+      !pendingFocus &&
+      Service.select(selectFocusedLineIndex) === lineIndex &&
+      Service.select(selectFocusedColumn) === column
+    ) {
+      pendingFocus = { lineIndex, column, selectAll: false };
+    }
     return;
   }
   const row = lineInputs.get(lineIndex) ?? { source: null, output: null, character: null };
   row[column] = el;
   lineInputs.set(lineIndex, row);
+  resolvePendingFocus(lineIndex, column);
 }
 
 function getLineInput(lineIndex: number, column: TInputColumn): HTMLElement | null {
@@ -176,9 +186,11 @@ export function focusLine(
     // otherwise it stays on the previous row, which unmounts as it scrolls away, and focus drops
     // out of the editor (a held Ctrl+Down used to stop that way).
     setFocusedLine(lineIndex);
-    focusInputOnceMounted(lineIndex, column, selectAll);
+    pendingFocus = { lineIndex, column, selectAll };
     return false;
   }
+  // The newest request wins: an older one waiting for its row must not fire later
+  pendingFocus = null;
   // Inputs call this from their own onFocus to sync the store: moving the caret or scrolling then
   // would undo where the user just clicked. An explicit selectAll still applies.
   if (selectAll || !el.contains(document.activeElement)) focusInput(el, column, selectAll);
@@ -199,27 +211,33 @@ function focusInput(el: HTMLElement, column: TInputColumn, selectAll: boolean): 
   el.scrollIntoView({ block: 'nearest' });
 }
 
-// How many frames focusInputOnceMounted waits for a pinned row to mount
-const MOUNT_RETRY_FRAMES = 3;
+// A focus request for a line whose input isn't rendered yet (scrolled out of the virtualized list,
+// or the editor's rows not mounted yet after a project opened). The line is already the focused
+// one in the store -- which pins it, so the list mounts it -- and DOM focus follows the moment its
+// input registers (registerLineInput), not after a guessed number of frames. Any newer focus request
+// replaces it, and it's dropped if the focused line moves on before the input appears.
+let pendingFocus: { lineIndex: number; column: TInputColumn; selectAll: boolean } | null = null;
 
-// Focuses a line's input as soon as its row is mounted, checking once per frame. Gives up when the
-// focused line has moved on (a newer navigation has its own retry) or after MOUNT_RETRY_FRAMES.
-function focusInputOnceMounted(
-  lineIndex: number,
-  column: TInputColumn,
-  selectAll: boolean,
-  framesLeft = MOUNT_RETRY_FRAMES
-): void {
-  requestAnimationFrame(() => {
-    if (Service.select(selectFocusedLineIndex) !== lineIndex) return;
+function resolvePendingFocus(lineIndex: number, column: TInputColumn): void {
+  if (!pendingFocus || pendingFocus.lineIndex !== lineIndex || pendingFocus.column !== column) {
+    return;
+  }
+  const { selectAll } = pendingFocus;
+  pendingFocus = null;
+  if (Service.select(selectFocusedLineIndex) !== lineIndex) return;
+  // Registration happens while React commits the row: focus once that's done
+  queueMicrotask(() => {
     const el = getLineInput(lineIndex, column);
-    if (!el) {
-      if (framesLeft > 1) focusInputOnceMounted(lineIndex, column, selectAll, framesLeft - 1);
-      return;
-    }
+    if (!el || Service.select(selectFocusedLineIndex) !== lineIndex) return;
     focusInput(el, column, selectAll);
     Service.dispatch(setFocusedColumn(column));
   });
+}
+
+/** Drops a focus request still waiting for its input. The project service calls it whenever the
+ * open project changes, alongside clearSplitCursor: a request is only meaningful for its project. */
+export function clearPendingFocus(): void {
+  pendingFocus = null;
 }
 
 /** Refocuses whatever was last focused, falling back to the first line's input for the current

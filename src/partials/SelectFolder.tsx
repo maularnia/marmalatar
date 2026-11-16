@@ -11,7 +11,7 @@ export default function SelectFolder() {
   const { t } = useTranslation('settings');
   const folderPath = useAppSelector(folder.selectPath);
   return (
-    <FormsSection>
+    <FormsSection animated>
       <FormsSectionTitle icon={TIcon.FOLDER_FAVORITE} subtext={<>{t('workingFolder.subtext')}</>}>
         {t('workingFolder.title')}
       </FormsSectionTitle>

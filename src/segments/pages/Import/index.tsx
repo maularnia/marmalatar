@@ -2,7 +2,7 @@ import type { TProjectStatePrefs } from '@bridge/definitions/projectState';
 import { projects } from '@src/services/project';
 import SubtitleFileSelect from '@src/segments/pages/Import/components/SubtitleFileSelect';
 import { TLanguage, TSubtitleLine } from '@src/types';
-import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
+import { useStealFocus } from '@src/utils/getFocusableElements';
 import { useLanguageOptions } from '@src/utils/languageLabels';
 import { FALLBACK_EMOJI, pickRandomCreationEmoji } from '@src/utils/emoji';
 import { toHumanShowTitle } from '@src/utils/toHumanShowTitle';
@@ -83,8 +83,8 @@ export default function PageImport() {
   const [subtitleError, setSubtitleError] = useState<string | null>(null);
 
   const isProjectNameDirtyRef = useRef(false);
-  const rootRef = useRef<HTMLFormElement>(null);
-  useAutoFocusFirst(rootRef);
+  const fileButtonRef = useRef<HTMLButtonElement>(null);
+  useStealFocus(fileButtonRef);
 
   useEffect(() => {
     if (!subtitlesFile) {
@@ -127,15 +127,16 @@ export default function PageImport() {
   };
 
   return (
-    <FormRoot ref={rootRef} onSubmit={handleSubmit(onSubmit)} style={{ width: '580px' }}>
+    <FormRoot onSubmit={handleSubmit(onSubmit)} style={{ width: '580px' }}>
       <FormTitle>{t('import:title')}</FormTitle>
-      <FormsContent>
-        <FormsRow>
+      <FormsContent animated>
+        <FormsRow animated>
           <Controller
             control={control}
             name="subtitlesFile"
             render={({ field }) => (
               <SubtitleFileSelect
+                ref={fileButtonRef}
                 name={field.name}
                 value={field.value}
                 onChange={field.onChange}
@@ -149,8 +150,8 @@ export default function PageImport() {
         {subtitlesFile && (
           <>
             <Hr variant={THrVariant.DIMMED} />
-            <FormsRow>
-              <FormsSection>
+            <FormsRow animated>
+              <FormsSection animated>
                 <FormsSectionTitle icon={TIcon.LOGO}>
                   {t('import:project.sectionTitle')}
                 </FormsSectionTitle>
@@ -195,7 +196,7 @@ export default function PageImport() {
                 </FormsSectionContent>
               </FormsSection>
 
-              <FormsSection>
+              <FormsSection animated>
                 <FormsSectionTitle
                   icon={TIcon.LANGUAGE}
                   subtext={t('import:languageAndMode.subtext')}

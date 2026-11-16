@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import Overlay from '../Overlay';
 import { ArchiveItem } from './ArchiveItem';
+import { OVERLAY_APPEAR_DURATION } from '@src/toolkit/motion/transitions';
 
 const List = styled.div`
   display: flex;
@@ -22,8 +23,8 @@ export default function ArchiveOverlay() {
   return (
     <Overlay title={t('archive.overlayTitle')} onClose={() => projects.closeArchive()}>
       <FormRoot onSubmit={(e) => e.preventDefault()}>
-        <FormsContent>
-          <FormsRow>
+        <FormsContent animated delay={OVERLAY_APPEAR_DURATION}>
+          <FormsRow animated>
             {archivedProjects.length ? (
               <List>
                 {archivedProjects.map((project) => (

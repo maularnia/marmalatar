@@ -9,7 +9,6 @@ import { TTheme } from '@src/theme/types';
 import { ListItem } from '../ListItem';
 import Span from '@ui-toolkit/Span';
 import Icon from '@ui-toolkit/Icon/Icon';
-import { noop } from '@utils/noop';
 import type {
   DropdownIndicatorProps,
   MenuListProps,
@@ -331,7 +330,6 @@ export function buildReactSelectComponents<T extends TOptionSelect>() {
           e.stopPropagation();
           removeProps.onClick?.(e as never);
         }}
-        onRemove={noop}
       >
         {data.label}
       </Tag>

@@ -106,6 +106,27 @@ export function focusMenuItem(key: string): void {
   el.scrollIntoView({ block: 'nearest' });
 }
 
+/** Focuses the menu item that matches what's open -- the menu zone's Ctrl+1 target. In order: the
+ * open prompt template, the open glossary, Settings while open, the open project, the first listed
+ * project, the projects section's Create button. A candidate that isn't rendered is skipped
+ * (e.g. no projects at all hides the projects section with its Create button); Settings, always
+ * there, is the last resort. Returns whether anything was focused. */
+export function focusDefaultItem(): boolean {
+  const candidates = [
+    promptTemplates.get.current(),
+    glossaries.get.current(),
+    settings.get.isOpen() ? SETTINGS_KEY : null,
+    projects.get.currentFilePath(),
+    projects.get.visibleList()[0]?.filePath,
+    CREATE_PROJECT_KEY,
+    SETTINGS_KEY,
+  ];
+  const key = candidates.find((candidate) => candidate && itemElements.has(candidate));
+  if (!key) return false;
+  focusMenuItem(key);
+  return true;
+}
+
 // Resolved live from document.activeElement rather than tracked as state -- correct at the moment
 // it's called regardless of *how* focus got to a menu item.
 function getFocusedItem(): TMenuItemRef | null {

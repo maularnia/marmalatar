@@ -27,7 +27,7 @@ export default function SelectLanguage() {
   const uiLocale = useAppSelector(settings.selectUiLocale);
 
   return (
-    <FormsSection>
+    <FormsSection animated>
       <FormsSectionTitle icon={TIcon.LANGUAGE_INTERFACE}>{t('uxUi.appLanguage')}</FormsSectionTitle>
       <FormsSectionContent>
         <FormSectionEntry>

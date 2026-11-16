@@ -46,8 +46,8 @@ export default function Settings({ showSync = true }: TSettingsProps) {
   return (
     <>
       {showSync && (
-        <FormsRow>
-          <FormsSection>
+        <FormsRow animated>
+          <FormsSection animated>
             <FormsSectionTitle icon={TIcon.SYNC}>{t('sync.title')}</FormsSectionTitle>
             <FormsSectionContent $columns={3}>
               <TextInput
@@ -69,8 +69,8 @@ export default function Settings({ showSync = true }: TSettingsProps) {
           </FormsSection>
         </FormsRow>
       )}
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           <FormsSectionTitle icon={TIcon.UX}>{t('uxUi.title')}</FormsSectionTitle>
           <FormsSectionContent>
             <Toggle

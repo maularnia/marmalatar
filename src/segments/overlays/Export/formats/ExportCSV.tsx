@@ -57,8 +57,8 @@ export const ExportCSV = ({
   const showName = useAppSelector(projects.selectName) ?? '';
   return (
     <>
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           <FormsSectionTitle icon={TIcon.FORMAT_CSV}>{t('csv.sectionTitle')}</FormsSectionTitle>
           <FormsSectionContent>
             <P variant={TPVariant.SECONDARY}>{t('csv.rowTemplateLabel')}</P>

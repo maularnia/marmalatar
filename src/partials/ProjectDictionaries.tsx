@@ -24,8 +24,8 @@ export function ProjectDictionaries() {
   );
 
   return (
-    <FormsRow>
-      <FormsSection>
+    <FormsRow animated>
+      <FormsSection animated>
         <FormsSectionContent $columns={sections.length > 1 ? 2 : 1}>
           {sections.map(({ language, words, label }) => (
             <AlphaTagList

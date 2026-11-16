@@ -130,8 +130,8 @@ export default function PromptSetupRow() {
 
   return (
     <>
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           <FormsSectionTitle icon={TIcon.PROMPT} subtext={t('aiSettings.prompt.subtext')}>
             {t('aiSettings.prompt.title')}
           </FormsSectionTitle>
@@ -179,8 +179,8 @@ export default function PromptSetupRow() {
         </FormsSection>
       </FormsRow>
       {metricsSupported && (
-        <FormsRow>
-          <FormsSection>
+        <FormsRow animated>
+          <FormsSection animated>
             <FormsSectionTitle icon={TIcon.GAUGE} subtext={t('aiSettings.contextWindow.subtext')}>
               {t('aiSettings.contextWindow.title')}{' '}
               <Tag size={TTagSize.SMALL} variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT}>

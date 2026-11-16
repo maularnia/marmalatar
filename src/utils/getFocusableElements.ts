@@ -23,29 +23,39 @@ export function getFirstFocusable(container: HTMLElement): HTMLElement | null {
   return getFocusableElements(container)[0] ?? null;
 }
 
-// Steals focus once, on mount -- the same "grab focus the moment this appears" mount effect used
-// both by pages that don't need a full FocusTrap (no Tab-containment required for a full-page
-// view: Home, FolderSetup, Import -- pass a ref, and the first focusable descendant is focused)
-// and by the Editor (which knows its own richer target -- the last-focused line, or the first
-// line's first available input -- so it passes that logic directly instead). rAF gives the
-// caller's own content a chance to render before we go looking for something to focus. Read via a
-// ref rather than an effect dependency, so a fresh closure/ref object every render doesn't matter
-// and this never re-fires after the initial mount.
-export function useAutoFocusFirst(target: RefObject<HTMLElement | null> | (() => void)) {
+// How long useStealFocus keeps looking for its element: enough for a page's appear animation and
+// lazily rendered content, short enough never to grab focus the user has since put elsewhere
+const STEAL_FOCUS_TIMEOUT_MS = 1000;
+
+/** Steals focus once, when the page that calls it renders: the element `target` points at, as soon
+ * as it's on the page and visible -- checked once per frame, so an appear animation or content that
+ * renders a little later doesn't make it miss. Pages pass a ref to their own intended element
+ * (Home's main button, FolderSetup's folder button, Import's file button); the Editor passes a
+ * function (its own focus logic: the last focused line, or the first line, focused as soon as its
+ * row mounts). Read through a ref, so a fresh closure every render never re-fires it. */
+export function useStealFocus(target: RefObject<HTMLElement | null> | (() => void)) {
   const targetRef = useRef(target);
   targetRef.current = target;
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
+    const startedAt = performance.now();
+    let raf = 0;
+    const attempt = () => {
       const current = targetRef.current;
       if (typeof current === 'function') {
         current();
         return;
       }
-      const container = current.current;
-      if (!container) return;
-      getFirstFocusable(container)?.focus();
-    });
+      const el = current.current;
+      if (el?.isConnected && el.offsetParent !== null) {
+        el.focus();
+        return;
+      }
+      if (performance.now() - startedAt < STEAL_FOCUS_TIMEOUT_MS) {
+        raf = requestAnimationFrame(attempt);
+      }
+    };
+    raf = requestAnimationFrame(attempt);
     return () => cancelAnimationFrame(raf);
   }, []);
 }

@@ -166,8 +166,8 @@ export function Tabs({
 
   return (
     <Root>
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           {title ? (
             <FormsSectionTitle icon={icon} subtext={subtext}>
               <TitledTabs>
@@ -180,7 +180,10 @@ export function Tabs({
           )}
         </FormsSection>
       </FormsRow>
-      <Wrapper>{activeId != null && contents.get(activeId)}</Wrapper>
+
+      <Wrapper>
+        <FormsRow animated>{activeId != null && contents.get(activeId)}</FormsRow>
+      </Wrapper>
     </Root>
   );
 }
