@@ -28,7 +28,8 @@ import VirtualizedList, {
 } from './components/VirtualizedList/VirtualizedList';
 import EditorTableLine from './components/WorkTable/WorkTableLine/EditorTableLine';
 import { FocusedLinePanel } from './components/WorkTable/WorkTableLine/FocusedLinePanel';
-import { useLineFingerprint } from './hooks/useLineFingerprint';
+import { type TLineRowState, useLineFingerprint } from './hooks/useLineFingerprint';
+import { useMergeCandidateLines } from './hooks/useMergeCandidateLines';
 import { useRenderCache } from './hooks/useRenderCache';
 import { ExportButton } from './segments/ExportButton';
 
@@ -141,7 +142,8 @@ export default function Editor() {
   );
 
   /** Hooks **/
-  const { getLineFingerprint, mergeCandidateLineIndices } = useLineFingerprint();
+  const { getLineFingerprint } = useLineFingerprint();
+  const mergeCandidateLines = useMergeCandidateLines();
 
   // The focused line's panel lives outside the rows, as static content of the list: it scrolls
   // with them natively and is only re-anchored when the focused row's top moves (focus change, or
@@ -155,14 +157,32 @@ export default function Editor() {
   }, [focusedItemIndex]);
   useLayoutEffect(syncPanelTop, [syncPanelTop, translationLines, renderEpoch]);
 
-  const renderVirtualizedLine = (line: TSubtitleLine, onMeasure: (height: number) => void) => {
+  // A row's data: rendered as the row's props and fingerprinted for the render cache (and for the
+  // list, which re-measures a row when its fingerprint changes), from one place
+  const buildRowState = (line: TSubtitleLine): TLineRowState => {
     const lineIndex = translationLines.indexOf(line);
-    const translatedText = line.output ?? '';
     const isFocused = focusedLineIndex === lineIndex;
-    const isActive = activeLineIndex === lineIndex;
-    const isMergeCandidate = mergeCandidateLineIndices.has(lineIndex);
-    const isFrozen = frozenLineNumbers.includes(line.line_no);
-    const fingerprint = getLineFingerprint(line, lineIndex);
+    return {
+      lineIndex,
+      lineNo: line.line_no,
+      sourceText: line.input,
+      translatedText: line.output ?? '',
+      startTime: line.start_time,
+      endTime: line.end_time,
+      character: line.character ?? '',
+      isCompleted: Boolean(line.completed),
+      isFocused,
+      isActive: activeLineIndex === lineIndex,
+      isMergeCandidate: mergeCandidateLines.has(lineIndex),
+      isMergeMaster: isFocused && isAltShiftPressed,
+      isFrozen: frozenLineNumbers.includes(line.line_no),
+    };
+  };
+
+  const renderVirtualizedLine = (line: TSubtitleLine, onMeasure: (height: number) => void) => {
+    const row = buildRowState(line);
+    const { lineIndex } = row;
+    const fingerprint = getLineFingerprint(row);
 
     const cached = getCached(line.line_no, fingerprint);
     if (cached) {
@@ -172,21 +192,9 @@ export default function Editor() {
     const node = (
       <EditorTableLine
         key={lineIndex}
+        {...row}
         onMeasure={onMeasure}
-        lineIndex={lineIndex}
-        lineNo={line.line_no}
-        sourceText={line.input}
-        translatedText={translatedText}
-        startTime={line.start_time}
-        endTime={line.end_time}
-        character={line.character ?? ''}
         characterOptions={characterOptions}
-        isCompleted={Boolean(line.completed)}
-        isFocused={isFocused}
-        isActive={isActive}
-        isMergeCandidate={isMergeCandidate}
-        isMergeMaster={isFocused && isAltShiftPressed}
-        isFrozen={isFrozen}
         onFocus={() => {
           media.seekToLine(lineIndex);
           media.pause();
@@ -227,7 +235,7 @@ export default function Editor() {
             ref={virtualizedListRef}
             items={translationLines}
             scrollContainerRef={scrollContainerRef}
-            getItemFingerprint={(line) => getLineFingerprint(line, translationLines.indexOf(line))}
+            getItemFingerprint={(line) => getLineFingerprint(buildRowState(line))}
             pinnedIndices={pinnedIndices}
             overscanPx={overscrollAmount}
             estimatedRowHeight={estimatedRowHeight}
