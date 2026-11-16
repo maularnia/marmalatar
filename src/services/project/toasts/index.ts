@@ -70,6 +70,14 @@ export function makeProjectLoadFailedMessage(message: string): TToastParams {
   };
 }
 
+export function makeFolderChangeSaveFailedMessage(error: string): TToastParams {
+  return {
+    type: TMessageType.ERROR,
+    title: tErrors('folderChangeSaveFailed.title'),
+    message: tErrors('folderChangeSaveFailed.message', { error }),
+  };
+}
+
 export function makeProjectLoadedMessage(): TToastParams {
   return {
     type: TMessageType.MESSAGE,

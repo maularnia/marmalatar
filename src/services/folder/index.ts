@@ -3,6 +3,7 @@ import {
   checkForeignFileExists,
   cleanupMediaCache,
   loadTrackedFolder,
+  onBeforePathChange,
   onScanComplete,
   onScanStart,
   pickFolder,
@@ -19,7 +20,8 @@ import {
 
 // The folder service: the tracked folder (persisted by the main process) and its file listing,
 // whether it has been loaded, and whether a folder-wide operation is running. Picking and scanning
-// the folder live here; the services owning its files subscribe with onScanStart/onScanComplete.
+// the folder live here; the services owning its files subscribe with onScanStart/onScanComplete,
+// and the project service with onBeforePathChange to save the open project before a switch.
 // This file is its only entry point: the slice lives in slice.ts, the operations in actions.ts.
 
 export { default as folderReducer } from './slice';
@@ -39,6 +41,7 @@ export const folder = new Service('folder', {
     checkForeignFileExists,
     cleanupMediaCache,
     loadTrackedFolder,
+    onBeforePathChange,
     onScanComplete,
     onScanStart,
     pickFolder,

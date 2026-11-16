@@ -9,11 +9,21 @@ import { pathChanged, scanned, setInitialized, setIsBusy } from './slice';
 
 // ── Scan events ──────────────────────────────────────────────────────────────
 
+type TBeforePathChangeListener = () => void | Promise<void>;
 type TScanStartListener = () => void | Promise<void>;
 type TScanCompleteListener = (scan: TScanResult) => void | Promise<void>;
 
+const beforePathChangeListeners = new Set<TBeforePathChangeListener>();
 const scanStartListeners = new Set<TScanStartListener>();
 const scanCompleteListeners = new Set<TScanCompleteListener>();
+
+/** Runs once the user has picked another folder, before switching to it: pathChanged resets the
+ * open project, so this is the last chance to save it. The switch waits for it and is cancelled
+ * when it rejects (the listener reports why itself). Returns an unsubscribe. */
+export function onBeforePathChange(listener: TBeforePathChangeListener): () => void {
+  beforePathChangeListeners.add(listener);
+  return () => beforePathChangeListeners.delete(listener);
+}
 
 /** Runs before the main process scans the folder; the scan waits for it. Returns an unsubscribe. */
 export function onScanStart(listener: TScanStartListener): () => void {
@@ -26,6 +36,17 @@ export function onScanStart(listener: TScanStartListener): () => void {
 export function onScanComplete(listener: TScanCompleteListener): () => void {
   scanCompleteListeners.add(listener);
   return () => scanCompleteListeners.delete(listener);
+}
+
+// All, not settled: a listener that couldn't finish (an unsaved project) cancels the switch.
+// Resolves whether the switch can go on.
+async function emitBeforePathChange(): Promise<boolean> {
+  try {
+    await Promise.all([...beforePathChangeListeners].map((listener) => listener()));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Settled, not all: one consumer failing to refresh doesn't keep the others from doing it
@@ -104,14 +125,16 @@ export async function scanFolder(): Promise<void> {
   }
 }
 
-// Asks for a folder and switches to it: pathChanged closes whatever belonged to the old one (each
-// slice resets itself in its extraReducers), then the new folder is scanned. false when cancelled.
-// Open edits aren't saved here: the project autosaves.
+// Asks for a folder and switches to it: onBeforePathChange subscribers finish with the old one (the
+// project service saves and closes the open project), pathChanged resets whatever belonged to it
+// (each slice in its extraReducers), then the new folder is scanned. false when the user cancels or
+// a subscriber can't finish, and nothing changes then.
 export async function pickFolder(): Promise<boolean> {
   Service.dispatch(setIsBusy(true));
   try {
     const selected = await selectFolder();
     if (!selected) return false;
+    if (!(await emitBeforePathChange())) return false;
     await setTrackedFolder(selected);
     await runScan();
     return true;

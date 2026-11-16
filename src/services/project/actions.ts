@@ -8,6 +8,7 @@ import {
   makeProjectCreationAbortedMessage,
   makeProjectLoadFailedMessage,
   makeProjectLoadedMessage,
+  makeFolderChangeSaveFailedMessage,
   makeProjectStateReadFailedMessage,
   makeVideoFileCheckFailedMessage,
   makeVideoFileMissingMessage,
@@ -571,6 +572,18 @@ async function saveAndCloseOpenProject(): Promise<void> {
   media.resetPlayback();
   closeProject();
   Service.dispatch(clearFileData());
+}
+
+/** Saves and closes the open project, if any, before the folder switches to another one, whose
+ * pathChanged would otherwise drop edits the autosave hasn't written yet. A failed save is
+ * reported and rethrown, which cancels the switch and keeps the project open. */
+export async function closeProjectBeforeFolderChange(): Promise<void> {
+  try {
+    await saveAndCloseOpenProject();
+  } catch (error) {
+    toast.push(makeFolderChangeSaveFailedMessage(toErrorMessage(error)));
+    throw error;
+  }
 }
 
 /** Saves and closes the open project, if any, and goes to the import page. No confirmation: the
