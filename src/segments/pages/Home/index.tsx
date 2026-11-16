@@ -1,16 +1,14 @@
 import { CSSVar } from '@src/theme/utils';
-import { appearUpSpringSlow } from '@src/toolkit/motion/transitions';
 import { useStealFocus } from '@src/utils/getFocusableElements';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import { motion } from 'motion/react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-const Root = styled(motion.div)`
+const Root = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -23,7 +21,7 @@ export default function Home() {
   const createButtonRef = useRef<HTMLButtonElement>(null);
   useStealFocus(createButtonRef);
   return (
-    <Root {...appearUpSpringSlow}>
+    <Root>
       <Button
         ref={createButtonRef}
         onClick={() => navigate('/intro/import')}
