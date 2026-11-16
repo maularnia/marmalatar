@@ -9,6 +9,7 @@ import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import type { VirtualizedListHandle } from '../VirtualizedList/VirtualizedList';
 import Waveform from '../Waveform/Waveform';
 import { EditorTableHeader } from '../WorkTable/EditorTableHeader';
+import { CSSVar } from '@src/theme/utils';
 
 const VideoBlock = styled.div`
   position: sticky;
@@ -18,6 +19,7 @@ const VideoBlock = styled.div`
   top: 0;
   width: 100%;
   overflow: hidden;
+  padding: 0 0 ${CSSVar('size18')};
 `;
 
 const OverflowContainer = styled.div`
