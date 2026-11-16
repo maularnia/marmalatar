@@ -10,8 +10,7 @@ import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
-import { Fragment, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import VideoProgressBar from './VideoProgressBar';
@@ -243,13 +242,6 @@ type VideoPlayerProps = {
 
 export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: VideoPlayerProps) {
   const { t } = useTranslation('editor');
-  const navigate = useNavigate();
-  // An unplayable video closes the project: the editor can't be used in sync with it
-  const reportVideoUnplayable = useCallback(() => {
-    media.reportVideoUnplayable();
-    projects.close();
-    navigate('/');
-  }, [navigate]);
   const [
     lines,
     activeLineIndex,
@@ -348,7 +340,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       if (!err || err.code === MediaError.MEDIA_ERR_ABORTED) return;
       // An emptied player (no video selected) has nothing to report
       if (!video.currentSrc || !media.get.videoFilePath()) return;
-      reportVideoUnplayable();
+      // Only reported: the project stays open, its lines don't depend on the video playing
+      media.reportVideoUnplayable();
     };
 
     const audio = media.getAudioElement();
@@ -356,7 +349,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       const err = audio?.error;
       if (!err || err.code === MediaError.MEDIA_ERR_ABORTED) return;
       if (!audio?.currentSrc || !media.get.videoFilePath()) return;
-      reportVideoUnplayable();
+      media.reportVideoUnplayable();
     };
 
     if (!video.paused) {
@@ -377,7 +370,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
       video.removeEventListener('error', handleError);
       audio?.removeEventListener('error', handleAudioError);
     };
-  }, [onPlaybackPause, onPlaybackResume, reportVideoUnplayable]);
+  }, [onPlaybackPause, onPlaybackResume]);
 
   // Over a showing video, the panel lives inside the player box, so the box's rounded corners
   // and overflow clip it. Collapsed or without a video there's no box to sit in: it takes its

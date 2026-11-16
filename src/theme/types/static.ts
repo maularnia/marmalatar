@@ -273,24 +273,22 @@ export type TThemeStaticTooltipChapter = TThemeVarsChapter<{
 }>;
 
 export type TThemeStaticEmojiPickerChapter = TThemeVarsChapter<{
-  emojiPickerWidth: string;
   emojiPickerHeight: string;
   emojiPickerFontFamily: string;
   emojiPickerBorderRadius: string;
-  emojiPickerBorderSize: string;
+  emojiPickerSpacingX: string;
+  emojiPickerSpacingY: string;
   emojiPickerCategoryFontSize: string;
+  emojiPickerCategoryFontWeight: string;
+  emojiPickerCategoryLabelHeight: string;
+  emojiPickerNavButtonSize: string;
+  emojiPickerNavIconSize: string;
   emojiPickerEmojiSize: string;
-  emojiPickerTotalEmojiSize: string;
   emojiPickerEmojiPadding: string;
-  emojiPickerIndicatorHeight: string;
+  emojiPickerInputHeight: string;
   emojiPickerInputBorderRadius: string;
-  emojiPickerInputBorderSize: string;
   emojiPickerInputFontSize: string;
-  emojiPickerInputLineHeight: string;
-  emojiPickerInputPadding: string;
   emojiPickerNumColumns: number;
-  emojiPickerOutlineSize: string;
-  emojiPickerSkintoneBorderRadius: string;
 }>;
 
 export type TThemeStaticMarkChapter = TThemeVarsChapter<{

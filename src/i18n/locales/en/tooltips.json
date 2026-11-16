@@ -18,7 +18,7 @@
     "copyAllSourceToOutput": "Copy all\nsource to output",
     "completeAllTranslated": "Mark all\ntranslated lines\nas complete",
     "autoFixTempo": "Auto fix tempo",
-    "autoMarkLinesCompleted": "Mark rows with translation as completed automatically"
+    "autoMarkLinesCompleted": "Mark rows with translation\nas completed automatically"
   },
   "workTableLine": {
     "markLineComplete": "Toggle line complete",

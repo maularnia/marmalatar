@@ -610,13 +610,10 @@ export const variables: TThemeExporter = () => {
 
   const emojiPicker: TThemeEmojiPickerChapter = {
     ...new ThemeVariable('emojiPickerBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 0)).register(),
-    ...new ThemeVariable('emojiPickerBorderColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 10)).register(),
     ...new ThemeVariable('emojiPickerCategoryFontColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 90)).register(),
-    ...new ThemeVariable('emojiPickerIndicatorColor', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 100)).register(),
-    ...new ThemeVariable('emojiPickerInputBorderColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 20)).register(),
+    ...new ThemeVariable('emojiPickerAccentColor', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 100)).register(),
     ...new ThemeVariable('emojiPickerInputFontColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 90)).register(),
     ...new ThemeVariable('emojiPickerInputPlaceholderColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 40)).register(),
-    ...new ThemeVariable('emojiPickerOutlineColor', CSSColor(TColorAccent.ACCENT1, TShade.DEFAULT, 60)).register(),
     ...new ThemeVariable('emojiPickerButtonHoverBg', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 5)).register(),
     ...new ThemeVariable('emojiPickerButtonActiveBg', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 10)).register(),
   };

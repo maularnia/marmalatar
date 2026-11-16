@@ -122,6 +122,10 @@
   "projectLoadFailed": {
     "title": "Project can not be loaded"
   },
+  "folderChangeSaveFailed": {
+    "title": "Folder not changed",
+    "message": "The open project could not be saved: {{error}}"
+  },
   "noPromptTemplate": {
     "title": "No prompt template selected",
     "message": "To send a request to the AI integration chosen, please select a prompt template to use for the request"

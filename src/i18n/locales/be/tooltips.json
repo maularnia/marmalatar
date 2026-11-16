@@ -18,7 +18,7 @@
     "copyAllSourceToOutput": "Скапіяваць\n усе радкі крыніцы\nў пераклад",
     "completeAllTranslated": "Пазначыць усе\nрадкі з перакладам\nяк гатовыя",
     "autoFixTempo": "Аўта-тэмп",
-    "autoMarkLinesCompleted": "Аўтаматычна адзначаць радкі з перакладам як \"Гатовыя\""
+    "autoMarkLinesCompleted": "Аўтаматычна адзначаць радкі\nз перакладам як \"Гатовыя\""
   },
   "workTableLine": {
     "markLineComplete": "Адзначыць\nрадок як \"Гатовы\"",

@@ -173,8 +173,8 @@ export function playPause(): void {
   else pause();
 }
 
-/** Reports a video the player can't play. Closing the project and leaving the editor is up to
- * the caller, which owns navigation. */
+/** Reports a video the player can't play. The project stays open: the video isn't needed to edit
+ * its lines, and another one can be picked from the player. */
 export function reportVideoUnplayable(): void {
   toast.push(makeVideoPlaybackErrorMessage());
 }

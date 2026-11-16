@@ -7,6 +7,7 @@ import {
   changeProjectVideo,
   closeArchive,
   closeProject,
+  closeProjectBeforeFolderChange,
   createProject,
   deleteProject,
   openArchive,
@@ -162,6 +163,8 @@ export const projects = new Service('project', {
 
 // The folder can't import this service, so it hands every listing over through its scan event
 folder.onScanComplete(() => refreshProjects());
+// Saves the open project before pathChanged resets it; a failed save cancels the switch
+folder.onBeforePathChange(() => closeProjectBeforeFolderChange());
 
 // The editor service: the open project's lines with their undo history, focus and navigation, line
 // edits, timing, bulk operations, the edit/translate mode, and the rendered line inputs. This file

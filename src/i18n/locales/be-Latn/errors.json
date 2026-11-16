@@ -122,6 +122,10 @@
   "projectLoadFailed": {
     "title": "Pasyłka ładavannia prajekta"
   },
+  "folderChangeSaveFailed": {
+    "title": "Papka nie zmieniena",
+    "message": "Nie atrymałasia zachavać adkryty prajekt: {{error}}"
+  },
   "noPromptTemplate": {
     "title": "Brak šabłonu zapytu",
     "message": "Kab dasłać zapyt da ŠI, prahramie treba šabłon zapytu. Stvarycie šabłon u hałoŭnym mieniu i abiarycie jaho ŭ poli šabłonu"

@@ -3,16 +3,19 @@ import {
   HTMLAttributes,
   ReactElement,
   RefAttributes,
-  useCallback,
   useEffect,
   useRef,
   useState,
 } from 'react';
 import styled from 'styled-components';
-import { Picker } from 'emoji-picker-element';
-import type { EmojiClickEvent } from 'emoji-picker-element/shared';
+import EmojiPicker, {
+  Categories,
+  type CategoryIcons,
+  type EmojiClickData,
+} from 'emoji-picker-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
+import { staticVars } from '@src/theme/static';
 import { CSSVar } from '@src/theme/utils';
 
 type EmoPickerSide = 'top' | 'right' | 'bottom' | 'left';
@@ -32,134 +35,111 @@ type EmoPickerProps = {
   closeOnSelect?: boolean;
 };
 
-const PickerHost = styled.div`
-  width: ${CSSVar('emojiPickerWidth')};
-  height: ${CSSVar('emojiPickerHeight')};
+const CategoryIcon = styled.span`
+  font-family: ${CSSVar('emojiPickerFontFamily')};
+  font-size: ${CSSVar('emojiPickerNavIconSize')};
+  line-height: 1;
 `;
 
-// emoji-picker-element reads these as CSS custom properties scoped to its own shadow root, so they're
-// injected as a <style> inside picker.shadowRoot rather than relying on cross-boundary inheritance.
-// (--total-emoji-size is intentionally omitted: the library recomputes it internally from
-// --emoji-size/--emoji-padding via its own `.picker{}` rule, so a :host override here is a no-op.)
-const EMOJI_PICKER_SHADOW_VARS: Record<string, string> = {
-  // The library renders emoji glyphs via this var, not the inherited `font-family` -- it sets its
-  // own default on :host internally (see picker.js's EXTRA_STYLES), so it must be overridden here
-  // rather than via `picker.style.fontFamily`, which only affects non-emoji text (search input etc).
-  '--emoji-font-family': CSSVar('emojiPickerFontFamily'),
-  '--background': CSSVar('emojiPickerBg'),
-  '--border-color': CSSVar('emojiPickerBorderColor'),
-  '--border-radius': CSSVar('emojiPickerBorderRadius'),
-  '--border-size': CSSVar('emojiPickerBorderSize'),
-  '--button-hover-background': CSSVar('emojiPickerButtonHoverBg'),
-  '--button-active-background': CSSVar('emojiPickerButtonActiveBg'),
-  '--category-font-color': CSSVar('emojiPickerCategoryFontColor'),
-  '--category-font-size': CSSVar('emojiPickerCategoryFontSize'),
-  '--emoji-padding': CSSVar('emojiPickerEmojiPadding'),
-  '--emoji-size': CSSVar('emojiPickerEmojiSize'),
-  '--indicator-color': CSSVar('emojiPickerIndicatorColor'),
-  '--indicator-height': CSSVar('emojiPickerIndicatorHeight'),
-  '--input-border-color': CSSVar('emojiPickerInputBorderColor'),
-  '--input-border-radius': CSSVar('emojiPickerInputBorderRadius'),
-  '--input-border-size': CSSVar('emojiPickerInputBorderSize'),
-  '--input-font-color': CSSVar('emojiPickerInputFontColor'),
-  '--input-font-size': CSSVar('emojiPickerInputFontSize'),
-  '--input-line-height': CSSVar('emojiPickerInputLineHeight'),
-  '--input-padding': CSSVar('emojiPickerInputPadding'),
-  '--input-placeholder-color': CSSVar('emojiPickerInputPlaceholderColor'),
-  '--num-columns': CSSVar('emojiPickerNumColumns'),
-  '--outline-color': CSSVar('emojiPickerOutlineColor'),
-  '--outline-size': CSSVar('emojiPickerOutlineSize'),
-  '--skintone-border-radius': CSSVar('emojiPickerSkintoneBorderRadius'),
+// Emoji glyphs instead of the library's line icons, as the tabs looked before
+const CATEGORY_ICONS: CategoryIcons = {
+  [Categories.SUGGESTED]: <CategoryIcon>🕘</CategoryIcon>,
+  [Categories.SMILEYS_PEOPLE]: <CategoryIcon>😀</CategoryIcon>,
+  [Categories.ANIMALS_NATURE]: <CategoryIcon>🐱</CategoryIcon>,
+  [Categories.FOOD_DRINK]: <CategoryIcon>🍎</CategoryIcon>,
+  [Categories.TRAVEL_PLACES]: <CategoryIcon>🏠</CategoryIcon>,
+  [Categories.ACTIVITIES]: <CategoryIcon>⚽</CategoryIcon>,
+  [Categories.OBJECTS]: <CategoryIcon>📝</CategoryIcon>,
+  [Categories.SYMBOLS]: <CategoryIcon>⛔</CategoryIcon>,
+  [Categories.FLAGS]: <CategoryIcon>🏁</CategoryIcon>,
 };
 
-const EmojiShadowCSS = `
-  .picker {
+const PREVIEW_CONFIG = { showPreview: false };
+
+// The picker's look comes from its --epr-* tokens, every one linked to the emojiPicker theme chapter.
+// Its token defaults sit at zero specificity, but its part rules (borders, label typography) are
+// plain classes injected at runtime, so overrides use `&&` to win regardless of injection order.
+// No borders or separators: space (the spacing tokens) is what separates the search row, the tabs
+// and the grid.
+const Picker = styled(EmojiPicker)`
+  && {
+    --epr-font-family: ${CSSVar('emojiPickerFontFamily')};
+    --epr-emoji-font-family: ${CSSVar('emojiPickerFontFamily')};
+    --epr-bg-color: ${CSSVar('emojiPickerBg')};
+    --epr-text-color: ${CSSVar('emojiPickerCategoryFontColor')};
+    --epr-highlight-color: ${CSSVar('emojiPickerAccentColor')};
+    --epr-hover-bg-color: ${CSSVar('emojiPickerButtonHoverBg')};
+    --epr-hover-bg-color-reduced-opacity: ${CSSVar('emojiPickerButtonHoverBg')};
+    --epr-focus-bg-color: ${CSSVar('emojiPickerButtonActiveBg')};
+    --epr-picker-border-radius: ${CSSVar('emojiPickerBorderRadius')};
+    /* The variation menu's border, which the picker can't drop, blends in */
+    --epr-picker-border-color: ${CSSVar('emojiPickerBg')};
+
+    --epr-horizontal-padding: ${CSSVar('emojiPickerSpacingX')};
+    --epr-header-padding: 0 ${CSSVar('emojiPickerSpacingX')} ${CSSVar('emojiPickerSpacingY')};
+    --epr-emoji-size: ${CSSVar('emojiPickerEmojiSize')};
+    --epr-emoji-padding: ${CSSVar('emojiPickerEmojiPadding')};
+
+    --epr-search-input-height: ${CSSVar('emojiPickerInputHeight')};
+    --epr-search-input-border-radius: ${CSSVar('emojiPickerInputBorderRadius')};
+    --epr-search-input-bg-color: ${CSSVar('emojiPickerBg')};
+    --epr-search-input-bg-color-active: ${CSSVar('emojiPickerBg')};
+    --epr-search-input-text-color: ${CSSVar('emojiPickerInputFontColor')};
+    --epr-search-input-placeholder-color: ${CSSVar('emojiPickerInputPlaceholderColor')};
+    --epr-search-icon-color: ${CSSVar('emojiPickerInputPlaceholderColor')};
+
+    --epr-category-navigation-button-size: ${CSSVar('emojiPickerNavButtonSize')};
+    --epr-category-icon-active-color: ${CSSVar('emojiPickerAccentColor')};
+    --epr-category-icon-inactive-color: ${CSSVar('emojiPickerCategoryFontColor')};
+    --epr-category-label-height: ${CSSVar('emojiPickerCategoryLabelHeight')};
+    --epr-category-label-bg-color: ${CSSVar('emojiPickerBg')};
+    --epr-category-label-text-color: ${CSSVar('emojiPickerCategoryFontColor')};
+
+    --epr-emoji-variation-picker-bg-color: ${CSSVar('emojiPickerBg')};
+    --epr-emoji-variation-indicator-color: ${CSSVar('emojiPickerInputPlaceholderColor')};
+    --epr-emoji-variation-indicator-color-hover: ${CSSVar('emojiPickerCategoryFontColor')};
+
     border: none;
   }
-  .search-row {
-    gap: ${CSSVar('size10')}
+
+  && [data-epr-part='search-input'],
+  && [data-epr-part='search-input']:focus {
+    border: none;
+    font-size: ${CSSVar('emojiPickerInputFontSize')};
   }
-  .nav {
-    padding-bottom: ${CSSVar('size4')}
+
+  && [data-epr-part='category-tab'] {
+    border-radius: ${CSSVar('emojiPickerBorderRadius')};
   }
-  .tabpanel::-webkit-scrollbar {
+  && [data-epr-part='category-tab']:hover {
+    background: ${CSSVar('emojiPickerButtonHoverBg')};
+  }
+  /* The active tab and keyboard focus are a background, not the library's ring */
+  && [data-epr-part='category-tab'][aria-selected='true'],
+  && [data-epr-part='category-tab']:focus-visible {
+    background: ${CSSVar('emojiPickerButtonActiveBg')};
+  }
+  && [data-epr-part='category-tab']:focus::before {
+    display: none;
+  }
+
+  && [data-epr-part='category-label'] {
+    font-size: ${CSSVar('emojiPickerCategoryFontSize')};
+    font-weight: ${CSSVar('emojiPickerCategoryFontWeight')};
+  }
+
+  && [data-epr-part='viewport']::-webkit-scrollbar {
     width: ${CSSVar('appScrollbarWidth')};
   }
-  .tabpanel::-webkit-scrollbar-track {
+  && [data-epr-part='viewport']::-webkit-scrollbar-track {
     background: ${CSSVar('appScrollbarTrackColor')};
     border-radius: ${CSSVar('appScrollbarBorderRadius')};
   }
-  .tabpanel::-webkit-scrollbar-thumb {
-    width: calc(${CSSVar('appScrollbarWidth')} * 2);
+  && [data-epr-part='viewport']::-webkit-scrollbar-thumb {
     background: ${CSSVar('appScrollbarThumbColor')};
     border-radius: ${CSSVar('appScrollbarBorderRadius')};
   }
-  .favorites {
-    border-top: none;
-    padding-top: ${CSSVar('size4')};
-    overflow: visible;
-  }
 `;
-
-const EmojiPickerShadowStyles = `:host{${Object.entries(EMOJI_PICKER_SHADOW_VARS)
-  .map(([name, value]) => `${name}:${value}`)
-  .join(';')}}${EmojiShadowCSS}`;
-
-// A single <emoji-picker> instance shared by every EmoPicker in the app, created once and never
-// destroyed. Radix Tooltip's hover/grace-area state changes can re-render the content tree, and a
-// per-instance mount/unmount approach was getting torn down and recreated by that churn (losing
-// scroll position/search text). Opening an EmoPicker re-parents this single instance into its own
-// content container and force-closes whichever EmoPicker previously owned it.
-let sharedPicker: Picker | null = null;
-let activeOnSelect: ((emoji: string) => void) | null = null;
-
-function getSharedPicker(): Picker {
-  if (sharedPicker) return sharedPicker;
-
-  const picker = new Picker({ locale: 'en' });
-  picker.style.width = '100%';
-  picker.style.height = '100%';
-  picker.style.fontFamily = CSSVar('emojiPickerFontFamily');
-
-  const style = document.createElement('style');
-  style.textContent = EmojiPickerShadowStyles;
-  picker.shadowRoot?.appendChild(style);
-
-  picker.addEventListener('emoji-click', (event: EmojiClickEvent) => {
-    const { unicode } = event.detail;
-    if (unicode) activeOnSelect?.(unicode);
-  });
-
-  sharedPicker = picker;
-  return picker;
-}
-
-type PickerOwner = {
-  token: object;
-  close: () => void;
-};
-
-let currentOwner: PickerOwner | null = null;
-
-function claimSharedPicker(
-  owner: PickerOwner,
-  container: HTMLElement,
-  onSelect: (emoji: string) => void
-): void {
-  if (currentOwner && currentOwner.token !== owner.token) {
-    currentOwner.close();
-  }
-  currentOwner = owner;
-  activeOnSelect = onSelect;
-  container.appendChild(getSharedPicker());
-}
-
-function releaseSharedPicker(token: object): void {
-  if (currentOwner?.token !== token) return;
-  currentOwner = null;
-  activeOnSelect = null;
-  sharedPicker?.remove();
-}
 
 export default function EmoPicker({
   children,
@@ -171,29 +151,6 @@ export default function EmoPicker({
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
   const contentNodeRef = useRef<HTMLDivElement | null>(null);
-  const ownerTokenRef = useRef({});
-
-  const onEmojiSelectRef = useRef(onEmojiSelect);
-  onEmojiSelectRef.current = onEmojiSelect;
-  const closeOnSelectRef = useRef(closeOnSelect);
-  closeOnSelectRef.current = closeOnSelect;
-
-  // A ref callback (not a [open]-keyed effect) so claiming happens exactly when Radix's Presence
-  // actually attaches this node to the DOM -- that can take an extra render pass after `open` flips
-  // true, and an effect keyed on `open` alone would fire too early, find nothing to claim into, and
-  // never get a chance to retry.
-  const setContentNode = useCallback((node: HTMLDivElement | null) => {
-    contentNodeRef.current = node;
-    if (!node) return;
-
-    const token = ownerTokenRef.current;
-    claimSharedPicker({ token, close: () => setOpen(false) }, node, (emoji) => {
-      onEmojiSelectRef.current(emoji);
-      if (closeOnSelectRef.current) setOpen(false);
-    });
-
-    return () => releaseSharedPicker(token);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -208,6 +165,11 @@ export default function EmoPicker({
     document.addEventListener('pointerdown', handlePointerDown);
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [open]);
+
+  const handleEmojiClick = ({ emoji }: EmojiClickData) => {
+    onEmojiSelect(emoji);
+    if (closeOnSelect) setOpen(false);
+  };
 
   const trigger = cloneElement(children, {
     ref: triggerRef,
@@ -224,7 +186,23 @@ export default function EmoPicker({
       ariaLabel={t('emoPicker.ariaLabel')}
       label={
         <TooltipSimple>
-          <PickerHost ref={setContentNode} />
+          {/* React events bubble through the portal to the React parent, not the DOM one: without
+              this, a click in the picker reaches whatever wraps the trigger (a menu item opens its
+              project). The picker reserves its own event props, hence the wrapper. */}
+          <div ref={contentNodeRef} onClick={(e) => e.stopPropagation()}>
+            {/* Mounted while open only: the dataset is in memory, so there's nothing to keep alive,
+                and each open starts with an empty search. No autofocus: opening a picker doesn't
+                take focus away from where it was, as before. */}
+            <Picker
+              height={CSSVar('emojiPickerHeight')}
+              columns={staticVars.emojiPickerNumColumns.value}
+              previewConfig={PREVIEW_CONFIG}
+              categoryIcons={CATEGORY_ICONS}
+              autoFocusSearch={false}
+              skinTonesDisabled
+              onEmojiClick={handleEmojiClick}
+            />
+          </div>
         </TooltipSimple>
       }
     >
