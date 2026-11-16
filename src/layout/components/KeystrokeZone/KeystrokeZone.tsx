@@ -6,7 +6,6 @@ import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
 import {
   createContext,
-  FocusEvent,
   PropsWithChildren,
   useCallback,
   useEffect,
@@ -61,6 +60,9 @@ const HintBadge = styled.div`
   }
 `;
 
+// Radix renders popper content (tooltips, the emoji picker) into a portal wrapped in this element
+const POPPER_WRAPPER_SELECTOR = '[data-radix-popper-content-wrapper]';
+
 export const KeystrokeZoneContext = createContext<KeystrokeZoneContextType>({
   zoneRef: { current: null },
   setFocusOverride: () => {},
@@ -114,23 +116,41 @@ export default function KeystrokeZone({
     return () => unregisterZone(assigned);
   }, [hasHint, registerZone, unregisterZone]);
 
-  const handleFocusWithinChange = useCallback(
-    (isWithin: boolean) => {
-      setIsFocusWithin(isWithin);
-      onFocusWithinChange?.(isWithin);
-    },
-    [onFocusWithinChange]
-  );
+  const onFocusWithinChangeRef = useRef(onFocusWithinChange);
+  onFocusWithinChangeRef.current = onFocusWithinChange;
 
-  const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
-    handleFocusWithinChange(true);
-    if (event.target instanceof HTMLElement) zoneRef.current = event.target;
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
-    if (containerRef.current?.contains(event.relatedTarget as Node | null)) return;
-    handleFocusWithinChange(false);
-  };
+  // Whether focus is inside the zone, by where it really is on the page (native events and
+  // `contains`), not by React's component tree: React's onFocus/onBlur count a portal rendered from
+  // inside the zone as inside it, and an element removed while focused (an emoji picked in the
+  // picker, which then closes) fires no blur at all -- either left the zone believing it still had
+  // focus. Focus inside a popper (a tooltip, the emoji picker) changes nothing: it belongs to
+  // whichever zone opened it. A pointerdown re-checks after the browser has moved focus, which also
+  // catches focus that silently dropped to the page body.
+  useEffect(() => {
+    let isWithin = false;
+    const sync = (target: EventTarget | null) => {
+      if (target instanceof Element && target.closest(POPPER_WRAPPER_SELECTOR)) return;
+      const next = target instanceof Node && Boolean(containerRef.current?.contains(target));
+      if (next && target instanceof HTMLElement) zoneRef.current = target;
+      if (next === isWithin) return;
+      isWithin = next;
+      setIsFocusWithin(next);
+      onFocusWithinChangeRef.current?.(next);
+    };
+    const handleFocusIn = (event: globalThis.FocusEvent) => sync(event.target);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const handlePointerDown = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => sync(document.activeElement));
+    };
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+    };
+  }, []);
 
   const contextValue = useMemo<KeystrokeZoneContextType>(
     () => ({ zoneRef, setFocusOverride }),
@@ -138,7 +158,7 @@ export default function KeystrokeZone({
   );
 
   return (
-    <ZoneRoot ref={containerRef} tabIndex={0} onFocus={handleFocus} onBlur={handleBlur} $fit={fit}>
+    <ZoneRoot ref={containerRef} tabIndex={0} $fit={fit}>
       <KeystrokeZoneContext value={contextValue}>
         {shortcuts ? (
           <ScopedKeyHubProvider
