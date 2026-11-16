@@ -172,7 +172,7 @@ const text: TThemeStaticTextChapter = {
   ...new ThemeVariable('sizeH3', sizeValues.size34).register(),
   ...new ThemeVariable('weightH3', fontWeights.black).register(),
   ...new ThemeVariable('sizeH4', sizeValues.size24).register(),
-  ...new ThemeVariable('weightH4', fontWeights.bold).register(),
+  ...new ThemeVariable('weightH4', fontWeights.black).register(),
   ...new ThemeVariable('sizeH5', sizeValues.size18).register(),
   ...new ThemeVariable('weightH5', fontWeights.black).register(),
   ...new ThemeVariable('sizeH6', sizeValues.size16).register(),

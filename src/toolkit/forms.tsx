@@ -27,6 +27,16 @@ const FormsContentRoot = styled.div.attrs<RowAttrs>(({ $columns = 1, $templateCo
   }
 `;
 
+const FormTitleElement = styled(H)`
+  padding: ${CSSVar('formSpacingY')}
+    calc(
+      ${CSSVar('formSpacingX')} + ${CSSVar('formRowSpacingX')} + ${CSSVar('formSectionSpacingX')}
+    );
+  text-align: center;
+  border-bottom: 1px solid ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 5)};
+  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 50)};
+`;
+
 export const FormRoot = styled.form`
   display: flex;
   flex-direction: column;
@@ -35,14 +45,9 @@ export const FormRoot = styled.form`
   ${FormsContentRoot} + ${FormsContentRoot} {
     padding-top: ${CSSVar('formSpacingY')};
   }
-`;
-const FormTitleElement = styled(H)`
-  margin: 0
-    calc(
-      ${CSSVar('formSpacingX')} + ${CSSVar('formRowSpacingX')} + ${CSSVar('formSectionSpacingX')}
-    )
-    ${CSSVar('formSpacingY')};
-  border-bottom: 1px solid ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 5)};
+  &:has(${FormTitleElement}:first-child) {
+    padding-top: 0;
+  }
 `;
 export const FormTitle = ({ level = 4, ...rest }: HProps) => {
   return <FormTitleElement level={level} {...rest} />;
@@ -61,7 +66,7 @@ export const FormFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${CSSVar('formSpacingY')} ${CSSVar('formSpacingX')} 0;
+  padding: 0 ${CSSVar('formSpacingX')} 0;
   gap: ${CSSVar('formRowSpacingInner')};
 `;
 

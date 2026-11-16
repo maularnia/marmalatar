@@ -1,7 +1,8 @@
-import { CSSVar } from '@src/theme/utils';
+import { CSSColor, CSSVar } from '@src/theme/utils';
 import styled from 'styled-components';
 import { Outlet } from 'react-router-dom';
 import { AppTitle } from './components/AppTitle';
+import { TColorSystem, TShade } from '@src/theme/definitions';
 const Root = styled.div`
   display: flex;
   flex-direction: column;
@@ -10,7 +11,6 @@ const Root = styled.div`
   min-height: 100vh;
   max-width: 640px;
   margin: 0 auto;
-  padding: ${CSSVar('size92')} 0;
 `;
 const PageContent = styled.div`
   position: relative;
@@ -18,6 +18,9 @@ const PageContent = styled.div`
   flex-direction: column;
   justify-content: center;
   gap: ${CSSVar('size34')};
+  background: ${CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 5)};
+  border-radius: ${CSSVar('size12')};
+  padding-bottom: ${CSSVar('size12')};
 `;
 export const StaticPageLayout = () => {
   return (
