@@ -18,10 +18,6 @@
     "title": "UI/UX",
     "scrollVideoIntoViewPrefix": "Scroll the video to view on",
     "scrollVideoIntoViewSuffix": "hit (small screens only)",
-    "askBeforeMerge": "Confirm merging lines",
-    "askBeforeDelete": "Confirm deleting a line",
-    "askBeforeAITranslate": "Confirm AI translation",
-    "askBeforeSplit": "Confirm splitting a line",
     "autoMarkLinesCompleted": "Mark lines as completed automatically",
     "appLanguage": "Interface language"
   },

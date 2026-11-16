@@ -5,10 +5,7 @@ import {
   makeAiTranslationJobFailedMessage,
   makeBulkTranslationFailedMessage,
   makeNoPromptTemplateMessage,
-  makeTranslationCancelledMessage,
-  makeUnableToTranslateLineMessage,
 } from '@src/services/ai/toasts';
-import { confirmTranslationOverride } from './dialogs/translationOverrride/translationOverrideConfirmation';
 import { editor } from '@src/services/project';
 import { promptTemplates } from '@src/services/prompt';
 import { LANGUAGE_LABELS, TSubtitleLine } from '@src/types';
@@ -48,7 +45,6 @@ import {
 // facade: index.ts builds the facade from this file, so importing it here would be a cycle.
 
 const t = i18n.getFixedT(null, 'errors');
-const tDialogs = i18n.getFixedT(null, 'dialogs');
 
 // The wired AiClient instance isn't serializable (it carries functions like `.ping`/`.translate`),
 // so it can't live in Redux state -- it's tracked here as a plain module variable, alongside the
@@ -357,30 +353,10 @@ function isPromptTemplateSelected(): boolean {
   return true;
 }
 
-/** Translates one line, asking first when it already has a translation (or when settings say to
- * always ask). */
+/** Translates one line at once, without asking: replacing an existing translation is one undo
+ * step away. */
 export async function translateLine(lineIndex: number): Promise<void> {
   if (!isPromptTemplateSelected()) return;
-
-  const line = editor.get.lines()[lineIndex];
-  const outputNotEmpty = Boolean(line?.output?.trim());
-  if (outputNotEmpty || settings.get.askBeforeAITranslate()) {
-    let confirmed: boolean;
-    try {
-      confirmed = await confirmTranslationOverride({
-        text: outputNotEmpty
-          ? tDialogs('translationOverride.bodyHasContent')
-          : tDialogs('translationOverride.bodyWillTranslate'),
-      });
-    } catch {
-      toast.push(makeUnableToTranslateLineMessage());
-      return;
-    }
-    if (!confirmed) {
-      toast.push(makeTranslationCancelledMessage());
-      return;
-    }
-  }
 
   try {
     await startAutomatedTranslation(lineIndex);

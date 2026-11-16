@@ -126,9 +126,6 @@
     "title": "No prompt template selected",
     "message": "To send a request to the AI integration chosen, please select a prompt template to use for the request"
   },
-  "unableToTranslateLine": {
-    "title": "Failed to translate the line"
-  },
   "aiTranslationJobFailed": {
     "title": "Bulk translation failed"
   },
@@ -148,12 +145,6 @@
   },
   "copyOperationFailed": {
     "title": "Failed to copy text"
-  },
-  "mergeLinesFailed": {
-    "title": "Merge failed"
-  },
-  "deleteLineFailed": {
-    "title": "Unable to delete line"
   },
   "lineTooShortToSplit": {
     "title": "Unable to split the line",

@@ -40,42 +40,10 @@ export function makeLineSplitMessage(): TToastParams {
   };
 }
 
-export function makeMergeOperationCancelledMessage(): TToastParams {
-  return {
-    type: TMessageType.MESSAGE,
-    title: t('mergeOperationCancelled.title'),
-    message: t('mergeOperationCancelled.message'),
-  };
-}
-
-export function makeMergeLinesFailedMessage(message: string): TToastParams {
-  return {
-    type: TMessageType.ERROR,
-    title: tErrors('mergeLinesFailed.title'),
-    message,
-  };
-}
-
 export function makeLinesMergedMessage(): TToastParams {
   return {
     type: TMessageType.MESSAGE,
     title: t('linesMerged.title'),
-  };
-}
-
-export function makeDeleteLineCancelledMessage(): TToastParams {
-  return {
-    type: TMessageType.MESSAGE,
-    title: t('deleteLineCancelled.title'),
-    message: t('deleteLineCancelled.message'),
-  };
-}
-
-export function makeDeleteLineFailedMessage(message: string): TToastParams {
-  return {
-    type: TMessageType.ERROR,
-    title: tErrors('deleteLineFailed.title'),
-    message,
   };
 }
 

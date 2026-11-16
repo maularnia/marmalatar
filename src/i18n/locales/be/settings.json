@@ -18,10 +18,6 @@
     "title": "UI/UX",
     "scrollVideoIntoViewPrefix": "Падкручваць да відэа па націсканні",
     "scrollVideoIntoViewSuffix": "(толькі на малых экранах)",
-    "askBeforeMerge": "Пытаць перад аб’яднаннем",
-    "askBeforeDelete": "Пытаць перад выдаленнем",
-    "askBeforeAITranslate": "Пытаць перад аўта-перакладам",
-    "askBeforeSplit": "Пытаць перад разразаннем радка",
     "autoMarkLinesCompleted": "Адзначаць радкі як \"Гатовыя\" аўтаматычна",
     "appLanguage": "Мова праграмы"
   },

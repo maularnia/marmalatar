@@ -16,14 +16,6 @@ export function makeNoPromptTemplateMessage(): TToastParams {
   };
 }
 
-export function makeTranslationCancelledMessage(): TToastParams {
-  return { type: TMessageType.MESSAGE, title: t('translationCancelled.title') };
-}
-
-export function makeUnableToTranslateLineMessage(): TToastParams {
-  return { type: TMessageType.ERROR, title: tErrors('unableToTranslateLine.title') };
-}
-
 export function makeAiTranslationJobDoneMessage(): TToastParams {
   return {
     type: TMessageType.MESSAGE,

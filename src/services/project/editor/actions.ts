@@ -6,15 +6,11 @@ import {
   makeCopyAllFailedMessage,
   makeCopyOperationCancelledMessage,
   makeCopyOperationFailedMessage,
-  makeDeleteLineCancelledMessage,
-  makeDeleteLineFailedMessage,
   makeEntryTimeShiftBlockedMessage,
   makeLineDeletedMessage,
   makeLineSplitMessage,
   makeLineTooShortToSplitMessage,
   makeLinesMergedMessage,
-  makeMergeLinesFailedMessage,
-  makeMergeOperationCancelledMessage,
   makeTextCopiedMessage,
   makeTempoAutoFixCancelledMessage,
   makeTempoAutoFixFailedMessage,
@@ -38,9 +34,6 @@ import { TCleanupFormValues } from './dialogs/cleanup/CleanupDialog';
 import { confirmCleanup } from './dialogs/cleanup/cleanupConfirmation';
 import { confirmCopyAllSourceToOutput } from './dialogs/copyAllSourceToOutput/copyAllSourceToOutputConfirmation';
 import { confirmCopyOverride } from './dialogs/copyOverride/copyOverrideConfirmation';
-import { confirmDeleteLine } from './dialogs/delete/deleteLineConfirmation';
-import { confirmMerge } from './dialogs/lineMerge/mergeConfirmation';
-import { confirmSplit } from './dialogs/split/splitConfirmation';
 import type { TInputColumn, TSubtitleLine } from '@src/types';
 import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
 import { media } from '@src/services/media';
@@ -360,21 +353,18 @@ export function insertLine(lineIndex: number, position: 'before' | 'after'): voi
 }
 
 /** Splits a line at the caret position the line last recorded (`setSplitCursor`). */
-export async function splitLine(lineIndex: number): Promise<void> {
+export function splitLine(lineIndex: number): void {
   const cursorOffset = splitCursor;
   if (Service.select(selectFrozenLineNumbers).includes(lines()[lineIndex]?.line_no)) return;
   if (isBulkTranslationRunning()) return;
   const focusedColumn = Service.select(selectFocusedColumn);
   if (focusedColumn !== 'source' && focusedColumn !== 'output') return;
-  if (settings.get.askBeforeSplit() && !(await confirmSplit())) return;
   Service.dispatch(lineSplit({ lineIndex, cursorOffset, column: focusedColumn }));
   refocusLineAfterRender(lineIndex, focusedColumn);
   toast.push(makeLineSplitMessage());
 }
 
-const lineText = (line: TSubtitleLine): string => line.output || line.input || '';
-
-export async function mergeLines(lineIndex: number, direction: 'up' | 'down'): Promise<void> {
+export function mergeLines(lineIndex: number, direction: 'up' | 'down'): void {
   const current = lines();
   const partnerIndex = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
   if (partnerIndex < 0 || partnerIndex >= current.length) return;
@@ -383,57 +373,14 @@ export async function mergeLines(lineIndex: number, direction: 'up' | 'down'): P
   const frozen = new Set(Service.select(selectFrozenLineNumbers));
   if (frozen.has(line.line_no) || frozen.has(partnerLine.line_no)) return;
   if (isBulkTranslationRunning()) return;
-  if (settings.get.askBeforeMerge()) {
-    const [first, second] = direction === 'up' ? [partnerLine, line] : [line, partnerLine];
-    let confirmed: boolean;
-    try {
-      confirmed = await confirmMerge({
-        lines: [
-          { lineNo: first.line_no, text: lineText(first) },
-          { lineNo: second.line_no, text: lineText(second) },
-        ],
-      });
-    } catch (e) {
-      toast.push(
-        makeMergeLinesFailedMessage(
-          e instanceof Error ? e.message : 'Unexpected critical error while merging lines'
-        )
-      );
-      return;
-    }
-    if (!confirmed) {
-      toast.push(makeMergeOperationCancelledMessage());
-      return;
-    }
-  }
   Service.dispatch(linesMerged({ lineIndex, direction }));
   refocusLineAfterRender(direction === 'up' ? partnerIndex : lineIndex);
   toast.push(makeLinesMergedMessage());
 }
 
-export async function removeLine(lineIndex: number): Promise<void> {
+// Split, merge and delete apply at once, without asking: each is one undo step away
+export function removeLine(lineIndex: number): void {
   if (isBulkTranslationRunning()) return;
-  if (settings.get.askBeforeDelete()) {
-    const line = lines()[lineIndex];
-    let confirmed: boolean;
-    try {
-      confirmed = await confirmDeleteLine({
-        lineNo: line?.line_no ?? lineIndex + 1,
-        text: line ? lineText(line) : '',
-      });
-    } catch (e) {
-      toast.push(
-        makeDeleteLineFailedMessage(
-          e instanceof Error ? e.message : 'Critical unexpected failure while deleting a line'
-        )
-      );
-      return;
-    }
-    if (!confirmed) {
-      toast.push(makeDeleteLineCancelledMessage());
-      return;
-    }
-  }
   const lineCount = lines().length;
   const hasNext = lineIndex + 1 < lineCount;
   const hasPrev = lineIndex > 0;

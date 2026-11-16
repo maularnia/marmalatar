@@ -20,9 +20,6 @@
     "title": "Prajekt załadavany",
     "message": "Pryjemnaj pracy!"
   },
-  "translationCancelled": {
-    "title": "Pierakład praz ŠI skasavany"
-  },
   "aiTranslationJobDone": {
     "title": "Zadańnie vykananaje",
     "message": "ŠI paspiachova vykanaŭ zadaču pierakładu"
@@ -43,16 +40,8 @@
     "title": "Radok byŭ padzieleny",
     "message": "Novy radok dadany da spisu. Numaracyja radkoŭ vypraŭlena"
   },
-  "mergeOperationCancelled": {
-    "title": "Abjadnańnie radkoŭ skasavana",
-    "message": "Nivodnaha radku nie zmieniena"
-  },
   "linesMerged": {
     "title": "Radki byli abjadnanyja"
-  },
-  "deleteLineCancelled": {
-    "title": "Vydalennie radka skasavanaje",
-    "message": "Nivodnaha radku nie zmieniena"
   },
   "lineDeleted": {
     "title": "Radok byŭ vydaleny",

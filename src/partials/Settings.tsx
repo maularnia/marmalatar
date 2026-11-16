@@ -17,19 +17,7 @@ type TSettingsProps = {
 
 export default function Settings({ showSync = true }: TSettingsProps) {
   const { t } = useTranslation(['settings', 'errors']);
-  const [
-    askBeforeMerge,
-    askBeforeDelete,
-    askBeforeAITranslate,
-    askBeforeSplit,
-    timeAdjustmentStep,
-    scrollVideoIntoViewOnPlay,
-    autoMarkLinesCompleted,
-  ] = useAppSelectors(
-    settings.selectAskBeforeMerge,
-    settings.selectAskBeforeDelete,
-    settings.selectAskBeforeAITranslate,
-    settings.selectAskBeforeSplit,
+  const [timeAdjustmentStep, scrollVideoIntoViewOnPlay, autoMarkLinesCompleted] = useAppSelectors(
     settings.selectTimeAdjustmentStep,
     settings.selectScrollVideoIntoViewOnPlay,
     settings.selectAutoMarkLinesCompleted
@@ -86,32 +74,6 @@ export default function Settings({ showSync = true }: TSettingsProps) {
                 Enter
               </Tag>{' '}
               {t('uxUi.scrollVideoIntoViewSuffix')}
-            </Toggle>
-          </FormsSectionContent>
-          <FormsSectionContent $columns={2}>
-            <Toggle
-              checked={askBeforeMerge}
-              onChange={(e) => settings.setAskBeforeMerge(e.currentTarget.checked)}
-            >
-              {t('uxUi.askBeforeMerge')}
-            </Toggle>
-            <Toggle
-              checked={askBeforeDelete}
-              onChange={(e) => settings.setAskBeforeDelete(e.currentTarget.checked)}
-            >
-              {t('uxUi.askBeforeDelete')}
-            </Toggle>
-            <Toggle
-              checked={askBeforeAITranslate}
-              onChange={(e) => settings.setAskBeforeAITranslate(e.currentTarget.checked)}
-            >
-              {t('uxUi.askBeforeAITranslate')}
-            </Toggle>
-            <Toggle
-              checked={askBeforeSplit}
-              onChange={(e) => settings.setAskBeforeSplit(e.currentTarget.checked)}
-            >
-              {t('uxUi.askBeforeSplit')}
             </Toggle>
           </FormsSectionContent>
           <FormsSectionContent>

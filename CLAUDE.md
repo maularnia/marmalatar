@@ -142,7 +142,7 @@ Context shape:
 - Function props are wrapped in `useCallback`. Context values that are objects go through `useMemoizedObject` from `src/utils`, never an inline `value={{ ... }}`
 
 Reading state:
-- Inside handlers, read the store with the facade's `get` (`settings.get.askBeforeMerge()`), not `useAppSelector`. Handlers then stay stable and the provider doesn't re-render on every store change
+- Inside handlers, read the store with the facade's `get` (`settings.get.autoMarkLinesCompleted()`), not `useAppSelector`. Handlers then stay stable and the provider doesn't re-render on every store change
 - Use `useAppSelector` only when the provider must react to a change, for example to clear stale refs or focus
 - A component that needs more than one value from the store reads them in one call: `const [a, b] = useAppSelectors(x.selectA, y.selectB)` (`src/store/hooks.ts`), not several `useAppSelector` calls or an object selector with `shallowEqual`
 - Hold values that change often or don't affect rendering in refs

@@ -18,10 +18,6 @@
     "title": "UI/UX",
     "scrollVideoIntoViewPrefix": "Padkručvać da videa pa naciskańni",
     "scrollVideoIntoViewSuffix": "(tolki na małych ekranach)",
-    "askBeforeMerge": "Pytać pierad abjažnańniem",
-    "askBeforeDelete": "Pytać pierad vydaleńniem",
-    "askBeforeAITranslate": "Pytać pierad aŭta-pierakładam",
-    "askBeforeSplit": "Pytać pierad razrazańniem radka",
     "autoMarkLinesCompleted": "Adzančać radki jak \"Hatovyja\" aŭtamatyčna",
     "appLanguage": "Mova prahramy"
   },

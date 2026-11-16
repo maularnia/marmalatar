@@ -1,10 +1,9 @@
-import { CSSColor, CSSVar } from '@src/theme/utils';
+import { CSSVar } from '@src/theme/utils';
 import styled from 'styled-components';
 import { motion } from 'motion/react';
 import { staticPageAppear } from '@src/toolkit/motion/transitions';
 import { Outlet } from 'react-router-dom';
 import { AppTitle } from './components/AppTitle';
-import { TColorSystem, TShade } from '@src/theme/definitions';
 const Root = styled.div`
   display: flex;
   flex-direction: column;

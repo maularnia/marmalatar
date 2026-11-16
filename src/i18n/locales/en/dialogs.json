@@ -33,9 +33,6 @@
     "overrideToggleLabel": "Override output with source values",
     "confirmButton": "Copy all"
   },
-  "deleteLine": {
-    "title": "Delete line?"
-  },
   "deleteContext": {
     "title": "Delete context?"
   },
@@ -47,22 +44,6 @@
   },
   "deleteProject": {
     "title": "Delete project?"
-  },
-  "lineMerge": {
-    "title": "Merge these lines?",
-    "bodyQuestion": "Merge lines?",
-    "confirmButton": "Merge"
-  },
-  "split": {
-    "title": "Split the line?",
-    "body": "Split will accure at last carret position",
-    "confirmButton": "Split"
-  },
-  "translationOverride": {
-    "title": "Translate with AI?",
-    "confirmButton": "Override",
-    "bodyHasContent": "Output already has content",
-    "bodyWillTranslate": "The line will be translated with AI"
   },
   "selectAudioTrack": {
     "title": "Select audio track",
@@ -96,9 +77,9 @@
     "overlapping": "Lines overlapping in time will be separated using the minimal interline interval of <value>{{interval}}</value>",
     "partialOverlap": "Lines that partially overlap will be split in the middle of their intersection",
     "covering": "Lines that completely cover other lines will be omitted",
-    "interval": "{{frames}}\u00a0frames\u00a0({{ms}}\u00a0ms)",
+    "interval": "{{frames}} frames ({{ms}} ms)",
     "extendForCps": "Attempt to extend lines with CPS higher than the limit of <value>{{limit}}</value>",
-    "breakLongLines": "Break lines longer than <value>{{limit}}</value>\u00a0characters (entries over <value>{{total}}</value>\u00a0characters are omitted)",
+    "breakLongLines": "Break lines longer than <value>{{limit}}</value> characters (entries over <value>{{total}}</value> characters are omitted)",
     "skippedEmpty": "{{count}}/{{total}} lines without text will be ignored!",
     "skippedCovering": "{{count}}/{{total}} lines that completely overlap will be ignored",
     "skippedUnbreakable": "{{count}}/{{total}} lines too long to break will be ignored",

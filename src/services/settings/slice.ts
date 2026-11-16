@@ -7,10 +7,6 @@ import type { TUiLocale } from '@src/i18n/locales';
 import { folder } from '@src/services/folder';
 import {
   AI_INTEGRATION_ENABLED_DEFAULT,
-  ASK_BEFORE_AI_TRANSLATE_DEFAULT,
-  ASK_BEFORE_DELETE_DEFAULT,
-  ASK_BEFORE_MERGE_DEFAULT,
-  ASK_BEFORE_SPLIT_DEFAULT,
   AUTO_MARK_LINES_COMPLETED_DEFAULT,
   CHECK_GRAMMAR_DEFAULT,
   SCROLL_VIDEO_INTO_VIEW_ON_PLAY_DEFAULT,
@@ -25,10 +21,6 @@ type AppState = {
   sceenSize: TScreenSize;
   selectedIntegrationId: string | null;
   AIintegrationEnabled: boolean;
-  askBeforeMerge: boolean;
-  askBeforeDelete: boolean;
-  askBeforeAITranslate: boolean;
-  askBeforeSplit: boolean;
   scrollVideoIntoViewOnPlay: boolean;
   autoMarkLinesCompleted: boolean;
   timeAdjustmentStep: number;
@@ -46,10 +38,6 @@ const initialState: AppState = {
   sceenSize: TScreenSize.LARGE,
   selectedIntegrationId: DEFAULT_AI_CLIENT_ID,
   AIintegrationEnabled: AI_INTEGRATION_ENABLED_DEFAULT,
-  askBeforeMerge: ASK_BEFORE_MERGE_DEFAULT,
-  askBeforeDelete: ASK_BEFORE_DELETE_DEFAULT,
-  askBeforeAITranslate: ASK_BEFORE_AI_TRANSLATE_DEFAULT,
-  askBeforeSplit: ASK_BEFORE_SPLIT_DEFAULT,
   scrollVideoIntoViewOnPlay: SCROLL_VIDEO_INTO_VIEW_ON_PLAY_DEFAULT,
   autoMarkLinesCompleted: AUTO_MARK_LINES_COMPLETED_DEFAULT,
   timeAdjustmentStep: TIME_ADJUSTMENT_STEP_DEFAULT,
@@ -75,18 +63,6 @@ const settingsSlice = createSlice({
     },
     setAIintegrationEnabled(state, action: PayloadAction<boolean>) {
       state.AIintegrationEnabled = action.payload;
-    },
-    setAskBeforeMerge(state, action: PayloadAction<boolean>) {
-      state.askBeforeMerge = action.payload;
-    },
-    setAskBeforeDelete(state, action: PayloadAction<boolean>) {
-      state.askBeforeDelete = action.payload;
-    },
-    setAskBeforeAITranslate(state, action: PayloadAction<boolean>) {
-      state.askBeforeAITranslate = action.payload;
-    },
-    setAskBeforeSplit(state, action: PayloadAction<boolean>) {
-      state.askBeforeSplit = action.payload;
     },
     setScrollVideoIntoViewOnPlay(state, action: PayloadAction<boolean>) {
       state.scrollVideoIntoViewOnPlay = action.payload;
@@ -139,10 +115,6 @@ const settingsSlice = createSlice({
     selectAIintegrationEnabled: (state) => state.AIintegrationEnabled,
     selectIntegrationIsConfigured: (state) =>
       state.selectedIntegrationId !== null && state.AIintegrationEnabled,
-    selectAskBeforeMerge: (state) => state.askBeforeMerge,
-    selectAskBeforeDelete: (state) => state.askBeforeDelete,
-    selectAskBeforeAITranslate: (state) => state.askBeforeAITranslate,
-    selectAskBeforeSplit: (state) => state.askBeforeSplit,
     selectScrollVideoIntoViewOnPlay: (state) => state.scrollVideoIntoViewOnPlay,
     selectAutoMarkLinesCompleted: (state) => state.autoMarkLinesCompleted,
     selectTimeAdjustmentStep: (state) => state.timeAdjustmentStep,
@@ -159,10 +131,6 @@ export const {
   setScreenSize,
   setSelectedIntegration,
   setAIintegrationEnabled,
-  setAskBeforeMerge,
-  setAskBeforeDelete,
-  setAskBeforeAITranslate,
-  setAskBeforeSplit,
   setScrollVideoIntoViewOnPlay,
   setAutoMarkLinesCompleted,
   setTimeAdjustmentStep,
@@ -187,10 +155,6 @@ export const {
   selectSelectedIntegrationId,
   selectAIintegrationEnabled,
   selectIntegrationIsConfigured,
-  selectAskBeforeMerge,
-  selectAskBeforeDelete,
-  selectAskBeforeAITranslate,
-  selectAskBeforeSplit,
   selectScrollVideoIntoViewOnPlay,
   selectAutoMarkLinesCompleted,
   selectTimeAdjustmentStep,
