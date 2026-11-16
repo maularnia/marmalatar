@@ -5,9 +5,11 @@ import {
   ShortcutType,
   useShortcut,
 } from 'react-keyhub';
-import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
+import KeystrokeZone, {
+  KeystrokeZoneContext,
+} from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { menu } from '@src/services/menu';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, use, useEffect } from 'react';
 
 const myShortcuts = {
   previousMenuItem: {
@@ -72,6 +74,14 @@ const useAppMenuKeystroke = (
 // service's "FocusedItem" operations, which resolve the focused item themselves -- this component
 // just maps keys to actions.
 function MenuShortcuts() {
+  // Ctrl+1 (the zone's own focus shortcut) lands on the item matching what's open, not on whatever
+  // was focused last -- see menu.focusDefaultItem
+  const { setFocusOverride } = use(KeystrokeZoneContext);
+  useEffect(() => {
+    setFocusOverride(() => void menu.focusDefaultItem());
+    return () => setFocusOverride(undefined);
+  }, [setFocusOverride]);
+
   useAppMenuKeystroke('previousMenuItem', () => menu.moveFocus('up'));
   useAppMenuKeystroke('nextMenuItem', () => menu.moveFocus('down'));
 
