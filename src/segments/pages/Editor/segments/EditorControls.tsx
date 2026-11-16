@@ -340,28 +340,6 @@ export function EditorControls() {
           )}
         </PanelSection>
         <PanelSection>
-          <Tooltip
-            label={
-              <TooltipComplex
-                title={
-                  isEditMode
-                    ? t('editorControls.editModeActive')
-                    : t('editorControls.translationModeActive')
-                }
-              >
-                <TooltipKeystrokeHint keys={['Ctrl', 'M']} />
-              </TooltipComplex>
-            }
-            side="right"
-          >
-            <PanelButton
-              color={isEditMode ? ThemeColors.ACCENT2 : ThemeColors.TEXT}
-              disabled={isBusy}
-              variant={isEditMode ? TButtonVariant.PRIMARY : TButtonVariant.TRANSPARENT}
-              icon={isEditMode ? TIcon.COLUMNS_2 : TIcon.COLUMNS_3}
-              onClick={() => editor.toggleEditMode()}
-            />
-          </Tooltip>
           {isSmallScreen && !videoPath && (
             <Tooltip
               label={<TooltipSimple>{t('editorControls.pickVideoFile')}</TooltipSimple>}
