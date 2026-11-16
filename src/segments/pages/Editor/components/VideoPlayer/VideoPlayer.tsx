@@ -69,11 +69,15 @@ const ControlBar = styled.div`
     }
   }
 
-  /* Collapsed, the bar is all that's left of the player, so it stays fully visible */
+  /* Collapsed, the bar is all that's left of the player, so it stays fully visible -- without its
+     gradient, which only belongs over a video (hovering mustn't bring it back) */
   &.isCollapsed {
     position: relative;
     height: auto;
     opacity: 1;
+    &::before {
+      display: none;
+    }
   }
 `;
 
@@ -274,8 +278,12 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
   const panelColor = theme.variables.videoPlayerPanelColor.value;
   // 16:9 until the video's own ratio is known (or when it couldn't be read)
   const aspectRatio = videoAspectRatio ?? DEFAULT_ASPECT_RATIO;
-  // On small screens a player without a video counts as collapsed: only its control bar shows
-  const effectiveCollapsed = isSmallScreen && (isVideoCollapsed || !videoFilePath);
+  // Collapsed by the user on any screen; on small screens a player without a video also counts as
+  // collapsed. Either way only its control bar shows.
+  const effectiveCollapsed = isVideoCollapsed || (isSmallScreen && !videoFilePath);
+  // Small screens have nothing to expand until a video is picked; large screens always can (the
+  // empty player box is shown there)
+  const canToggleCollapse = Boolean(videoFilePath) || !isSmallScreen;
   // Follows the video element's own play/pause events (see the effect below), starting from its
   // state when the player mounts
   const [isPlaying, setIsPlaying] = useState(() => !(media.getVideoElement()?.paused ?? true));
@@ -376,8 +384,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
   // own place in the stage instead.
   // The player box is always shown -- black, at 16:9 -- even before a video is picked
   const isControlBarInShell = !effectiveCollapsed;
-  // Large screens show the empty player box, so its middle is where a video gets picked
-  const isCenterSelectShown = !videoFilePath && !isSmallScreen;
+  // An empty, expanded large player asks for a video in its middle; otherwise the panel offers it
+  const isCenterSelectShown = !videoFilePath && !effectiveCollapsed;
   const controlBar = (
     <ControlBar
       className={classNames({ isCollapsed: effectiveCollapsed, noVideo: !videoFilePath })}
@@ -417,8 +425,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
               </Button>
             </ControlBarSlot>
           )}
-          {/* Nothing to expand until a video is picked */}
-          {isSmallScreen && videoFilePath && (
+          {canToggleCollapse && (
             <ControlBarSlot>
               <Button
                 color={panelColor}
