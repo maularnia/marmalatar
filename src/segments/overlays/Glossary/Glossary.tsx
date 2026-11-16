@@ -23,6 +23,7 @@ import GlossaryTableHeader from './GlossaryTable/GlossaryTableHeader';
 import GlossaryTableLine from './GlossaryTable/GlossaryTableLine';
 import { EGlossaryTable } from './GlossaryTable/partials';
 import Overlay from '../Overlay';
+import { OVERLAY_APPEAR_DURATION } from '@src/toolkit/motion/transitions';
 
 const emptyFormData: AIGlossaryFileDataType = {
   version: 1,
@@ -71,9 +72,9 @@ export default function GlossaryOverlay() {
   return (
     <Overlay title={t('glossary:overlayTitle')} onClose={() => void glossaries.saveAndClose()}>
       <GlossaryKeystrokeProvider>
-        <FormsContent>
-          <FormsRow>
-            <FormsSection>
+        <FormsContent animated delay={OVERLAY_APPEAR_DURATION}>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.LANGUAGE} subtext={t('translationDirection.subtext')}>
                 {t('translationDirection.title')}
               </FormsSectionTitle>
@@ -103,8 +104,8 @@ export default function GlossaryOverlay() {
             </FormsSection>
           </FormsRow>
 
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.GLOSSARY}>{t('entries.title')}</FormsSectionTitle>
               <FormsSectionContent>
                 <EGlossaryTable>

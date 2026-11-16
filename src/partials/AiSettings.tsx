@@ -54,7 +54,7 @@ export default function AiSettings() {
   return (
     <>
       {isBusy && (
-        <FormsRow>
+        <FormsRow animated>
           <Message
             type={TMessageVariant.TERTIARY}
             size={TMessageSize.M}
@@ -64,8 +64,8 @@ export default function AiSettings() {
           </Message>
         </FormsRow>
       )}
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           <FormsSectionTitle
             icon={TIcon.AI}
             after={
@@ -81,8 +81,8 @@ export default function AiSettings() {
       </FormsRow>
       {aiTranslationEnabled && (
         <>
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.ROBOT} subtext={t('aiSettings.providers.subtext')}>
                 {t('aiSettings.providers.title')}
               </FormsSectionTitle>

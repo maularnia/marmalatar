@@ -9,7 +9,7 @@ export default function CleanCache() {
   const { t } = useTranslation('settings');
 
   return (
-    <FormsSection>
+    <FormsSection animated>
       <FormsSectionTitle icon={TIcon.CLEANUP} subtext={t('mediaCache.subtext')}>
         {t('mediaCache.title')}
       </FormsSectionTitle>

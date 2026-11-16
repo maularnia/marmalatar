@@ -129,8 +129,8 @@ export default function PageImport() {
   return (
     <FormRoot onSubmit={handleSubmit(onSubmit)} style={{ width: '580px' }}>
       <FormTitle>{t('import:title')}</FormTitle>
-      <FormsContent>
-        <FormsRow>
+      <FormsContent animated>
+        <FormsRow animated>
           <Controller
             control={control}
             name="subtitlesFile"
@@ -150,8 +150,8 @@ export default function PageImport() {
         {subtitlesFile && (
           <>
             <Hr variant={THrVariant.DIMMED} />
-            <FormsRow>
-              <FormsSection>
+            <FormsRow animated>
+              <FormsSection animated>
                 <FormsSectionTitle icon={TIcon.LOGO}>
                   {t('import:project.sectionTitle')}
                 </FormsSectionTitle>
@@ -196,7 +196,7 @@ export default function PageImport() {
                 </FormsSectionContent>
               </FormsSection>
 
-              <FormsSection>
+              <FormsSection animated>
                 <FormsSectionTitle
                   icon={TIcon.LANGUAGE}
                   subtext={t('import:languageAndMode.subtext')}

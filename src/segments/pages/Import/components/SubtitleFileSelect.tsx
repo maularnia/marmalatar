@@ -158,7 +158,7 @@ export default function SubtitleFileSelect({
   }, [value, subtitlesParseError, cleanedLines, onError]);
 
   return (
-    <FormsSection>
+    <FormsSection animated>
       <FormsSectionTitle
         icon={TIcon.CC}
         subtext={

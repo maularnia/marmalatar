@@ -27,6 +27,7 @@ import { parseCharacterList } from '@utils/characters';
 import { mergeSameCharacterLines } from '@utils/data/mergeSameCharacterLines';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { OVERLAY_APPEAR_DURATION } from '@src/toolkit/motion/transitions';
 
 enum SpecialCharacterOptions {
   ALL = 'All',
@@ -117,9 +118,9 @@ export default function Export() {
   return (
     <Overlay title={t('overlayTitle')} onClose={() => settings.closeExport()}>
       <FormRoot>
-        <FormsContent>
-          <FormsRow>
-            <FormsSection>
+        <FormsContent animated delay={OVERLAY_APPEAR_DURATION}>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle
                 icon={TIcon.PERSON}
                 subtext={t('characterFilter.subtext')}
@@ -150,8 +151,8 @@ export default function Export() {
               ) : null}
             </FormsSection>
           </FormsRow>
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle
                 icon={TIcon.TIME_CONFIG}
                 subtext={t('fpsCorrection.subtext')}
@@ -199,8 +200,8 @@ export default function Export() {
               )}
             </FormsSection>
           </FormsRow>
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle
                 icon={TIcon.MERGE}
                 subtext={t('mergeLines.subtext')}
@@ -234,8 +235,8 @@ export default function Export() {
               )}
             </FormsSection>
           </FormsRow>
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.FILE}>{t('outputFormat.title')}</FormsSectionTitle>
               <FormsSectionContent $columns={2}>
                 <Select
@@ -247,7 +248,7 @@ export default function Export() {
             </FormsSection>
           </FormsRow>
           {isEditMode && (
-            <FormsRow>
+            <FormsRow animated>
               <Message
                 type={TMessageVariant.SECONDARY}
                 size={TMessageSize.S}

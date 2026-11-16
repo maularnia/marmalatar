@@ -23,8 +23,8 @@ export function SpellcheckSettings() {
 
   return (
     <>
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           {/* The switch sits in the title, as the AI integration's does */}
           <FormsSectionTitle
             icon={TIcon.SPELLCHECK}

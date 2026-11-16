@@ -13,6 +13,7 @@ import TextArea from '@ui-toolkit/TextArea';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 import { useTranslation } from 'react-i18next';
 import Overlay from './Overlay';
+import { OVERLAY_APPEAR_DURATION } from '@src/toolkit/motion/transitions';
 
 const emptyFormData: PromptTemplateFileDataType = {
   version: 1,
@@ -38,9 +39,9 @@ export default function PromptOverlay() {
 
   return (
     <Overlay title={t('prompt:overlayTitle')} onClose={() => void promptTemplates.saveAndClose()}>
-      <FormsContent>
-        <FormsRow>
-          <FormsSection>
+      <FormsContent animated delay={OVERLAY_APPEAR_DURATION}>
+        <FormsRow animated>
+          <FormsSection animated>
             <FormsSectionTitle icon={TIcon.AI_FILE} subtext={t('subtext')}>
               {t('title')}
             </FormsSectionTitle>

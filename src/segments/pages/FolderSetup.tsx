@@ -1,5 +1,4 @@
 import { ThemeColors } from '@src/theme/utils';
-import { appearUpSpringSlow } from '@src/toolkit/motion/transitions';
 import { useStealFocus } from '@src/utils/getFocusableElements';
 import {
   FormRoot,
@@ -23,9 +22,9 @@ export default function FolderSetup() {
   return (
     <FormRoot style={{ alignSelf: 'center' }} onSubmit={(e) => e.preventDefault()}>
       <FormTitle>{t('folderSetup.title')}</FormTitle>
-      <FormsContent {...appearUpSpringSlow}>
-        <FormsRow>
-          <FormsSection>
+      <FormsContent animated>
+        <FormsRow animated>
+          <FormsSection animated>
             <FormsSectionTitle
               icon={TIcon.FOLDER_FAVORITE}
               subtext={

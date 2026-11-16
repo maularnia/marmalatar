@@ -60,8 +60,8 @@ export const ExportJSON = ({
 
   return (
     <>
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           <FormsSectionTitle icon={TIcon.FORMAT_JSON}>{t('json.sectionTitle')}</FormsSectionTitle>
           <FormsSectionContent>
             <P variant={TPVariant.SECONDARY}>{t('json.objectStructureLabel')}</P>

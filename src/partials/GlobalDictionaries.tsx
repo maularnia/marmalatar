@@ -4,7 +4,7 @@ import { TLanguage } from '@src/types';
 import { getLanguageLocale, useLanguageLabels } from '@src/utils/languageLabels';
 import { useAppSelector } from '@store/hooks';
 import { AlphaTagList } from '@ui-toolkit/AlphaTagList';
-import { FormsRow, FormsSection } from '@ui-toolkit/forms';
+import { FormsSection } from '@ui-toolkit/forms';
 import P, { TPVariant } from '@ui-toolkit/P';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,9 +38,9 @@ export function GlobalDictionaries() {
   }
 
   return (
-    <FormsRow>
+    <>
       {sections.map(({ language, words, label }) => (
-        <FormsSection key={language}>
+        <FormsSection animated key={language}>
           <AlphaTagList
             label={label}
             dictionary={words}
@@ -49,6 +49,6 @@ export function GlobalDictionaries() {
           />
         </FormsSection>
       ))}
-    </FormsRow>
+    </>
   );
 }
