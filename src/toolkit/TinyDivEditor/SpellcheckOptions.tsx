@@ -40,11 +40,16 @@ const Panel = styled.div`
   min-width: 120px;
   font-family: ${CSSVar('fontTextSansSerif')};
   font-size: ${CSSVar('tooltipFontSize')};
-  border-radius: ${CSSVar('tooltipBorderRadius')};
+  border-radius: ${CSSVar('size12')};
   background: ${CSSVar('tooltipBg')};
   backdrop-filter: ${CSSVar('tooltipBackdropFilter')};
   color: ${CSSVar('tooltipColor')};
   padding: ${CSSVar('tooltipSpacingY')} ${CSSVar('tooltipSpacingX')};
+`;
+
+// The line between the suggestions and the panel's actions, with a little air around it
+const PanelSeparator = styled(Hr)`
+  margin: ${CSSVar('size2')} 0;
 `;
 
 // Gap between the word and the panel when it opens to the side
@@ -173,7 +178,7 @@ export function SpellcheckOptions({
           </li>
         ))}
         <li>
-          <Hr />
+          <PanelSeparator />
         </li>
         {status === TSuggestionsStatus.LOADING && (
           <li>
