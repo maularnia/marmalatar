@@ -31,7 +31,7 @@ import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { Service } from '@src/services/Service';
 import { glossaries } from '@src/services/glossary';
 import { folder } from '@src/services/folder';
-import { clearSplitCursor } from './editor/actions';
+import { clearPendingFocus, clearSplitCursor, focusEditor } from './editor/actions';
 import {
   clearFileData,
   resetEditorMemoryState,
@@ -262,6 +262,7 @@ function resetOpenProjectMemory(): void {
   Service.dispatch(setCurrentProjectFilePath(null));
   Service.dispatch(resetEditorMemoryState());
   clearSplitCursor();
+  clearPendingFocus();
   media.resetPlayback();
 }
 
@@ -336,6 +337,10 @@ async function applyLoadedProject(
 
   toast.push(makeProjectLoadedMessage());
   navigate('/workspace');
+  // Part of opening: the editor takes focus (the first line, the open project's focus memory was
+  // just reset), wherever it was -- the menu item that opened it loses it. A row that isn't rendered
+  // yet is focused as soon as its input appears.
+  focusEditor();
 }
 
 // Prompts the user to pick another video (used whenever the saved one can't be used) and either
@@ -546,6 +551,8 @@ export async function createProject(params: TCreateProjectParams): Promise<void>
       createProjectFromLines(params)
     );
     navigate('/workspace');
+    // Same as opening: the new project's first line takes focus
+    focusEditor();
   } catch (error) {
     toast.push(
       makeProjectCreationAbortedMessage(error instanceof Error ? error.message : undefined)
@@ -560,6 +567,7 @@ async function saveAndCloseOpenProject(): Promise<void> {
   await saveProjectToDisk();
   Service.dispatch(resetEditorMemoryState());
   clearSplitCursor();
+  clearPendingFocus();
   media.resetPlayback();
   closeProject();
   Service.dispatch(clearFileData());

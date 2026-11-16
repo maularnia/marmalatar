@@ -8,7 +8,7 @@ import P from '@src/toolkit/P';
 import { TTagSize } from '@src/toolkit/Tag';
 import { TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TSubtitleLine } from '@src/types';
-import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
+import { useStealFocus } from '@src/utils/getFocusableElements';
 import { useAppSelectors } from '@store/hooks';
 import classNames from 'classnames';
 import {
@@ -118,12 +118,11 @@ export default function Editor() {
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // This route element remounts fresh every time a project is opened (navigating away from
-  // /workspace unmounts it) -- so a mount-only focus here means the editor always grabs focus as
-  // soon as a project opens, landing on the first line's first available input via
-  // editor.focus's own fallback (same "steal focus on mount" hook the static pages use, just
-  // given the editor's own richer target instead of a container to search).
-  useAutoFocusFirst(editor.focus);
+  // Arriving at /workspace by any route grabs focus for the editor: the last focused line, or the
+  // first one, focused as soon as its row mounts (same "steal focus on render" hook the static pages
+  // use, given the editor's own target). Opening or creating a project also steals focus as part of
+  // the project service's own action, so switching projects without remounting this page works too.
+  useStealFocus(editor.focus);
 
   // The focused line must never be thrown out by virtualization -- otherwise scrolling it
   // off-screen (e.g. via ctrl+2/arrow navigation) would unmount it out from under its own focus.

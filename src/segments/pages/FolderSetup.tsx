@@ -1,6 +1,6 @@
 import { ThemeColors } from '@src/theme/utils';
 import { appearUpSpringSlow } from '@src/toolkit/motion/transitions';
-import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
+import { useStealFocus } from '@src/utils/getFocusableElements';
 import {
   FormRoot,
   FormsContent,
@@ -18,10 +18,10 @@ import { useTranslation } from 'react-i18next';
 
 export default function FolderSetup() {
   const { t } = useTranslation('home');
-  const rootRef = useRef<HTMLFormElement>(null);
-  useAutoFocusFirst(rootRef);
+  const selectButtonRef = useRef<HTMLButtonElement>(null);
+  useStealFocus(selectButtonRef);
   return (
-    <FormRoot ref={rootRef} style={{ alignSelf: 'center' }} onSubmit={(e) => e.preventDefault()}>
+    <FormRoot style={{ alignSelf: 'center' }} onSubmit={(e) => e.preventDefault()}>
       <FormTitle>{t('folderSetup.title')}</FormTitle>
       <FormsContent {...appearUpSpringSlow}>
         <FormsRow>
@@ -40,7 +40,7 @@ export default function FolderSetup() {
               {t('folderSetup.sectionTitle')}
             </FormsSectionTitle>
             <FormsSectionContent>
-              <SelectFolderButton />
+              <SelectFolderButton ref={selectButtonRef} />
             </FormsSectionContent>
           </FormsSection>
         </FormsRow>
