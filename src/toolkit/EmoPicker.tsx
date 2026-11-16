@@ -14,6 +14,7 @@ import type { EmojiClickEvent } from 'emoji-picker-element/shared';
 import { useTranslation } from 'react-i18next';
 import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { CSSVar } from '@src/theme/utils';
+import { EMOJI_DATA_SOURCE, EMOJI_LOCALE } from '@src/utils/emoji';
 
 type EmoPickerSide = 'top' | 'right' | 'bottom' | 'left';
 
@@ -116,7 +117,7 @@ let activeOnSelect: ((emoji: string) => void) | null = null;
 function getSharedPicker(): Picker {
   if (sharedPicker) return sharedPicker;
 
-  const picker = new Picker({ locale: 'en' });
+  const picker = new Picker({ locale: EMOJI_LOCALE, dataSource: EMOJI_DATA_SOURCE });
   picker.style.width = '100%';
   picker.style.height = '100%';
   picker.style.fontFamily = CSSVar('emojiPickerFontFamily');
@@ -127,6 +128,7 @@ function getSharedPicker(): Picker {
 
   picker.addEventListener('emoji-click', (event: EmojiClickEvent) => {
     const { unicode } = event.detail;
+    console.log('emoji-click', event);
     if (unicode) activeOnSelect?.(unicode);
   });
 
