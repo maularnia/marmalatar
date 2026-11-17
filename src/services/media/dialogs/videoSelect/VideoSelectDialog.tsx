@@ -93,7 +93,9 @@ export function VideoSelectDialog({
         <DialogTitleContent>{t('videoSelect.title')}</DialogTitleContent>
       </DialogTitle>
       <DialogContent>
-        {banner && (
+        {/* Why the dialog opened (e.g. the saved video is missing): it's about the old file, so it
+            goes once another file is picked */}
+        {banner && !file && (
           <StatusMessage
             color={ThemeColors.RED}
             type={TMessageVariant.SECONDARY}
