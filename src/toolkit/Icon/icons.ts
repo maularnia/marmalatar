@@ -117,4 +117,5 @@ export enum TIcon {
   SHOW = 'show',
   HIDE = 'hide',
   CHECK_CIRCLE_DASHED = 'check-circle-dashed',
+  FLAG = 'flag',
 }

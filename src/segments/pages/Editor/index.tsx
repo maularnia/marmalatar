@@ -1,7 +1,6 @@
 import { media } from '@src/services/media';
-import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { settings } from '@src/services/settings';
-import { editor } from '@src/services/project';
+import { editor, projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
@@ -30,6 +29,14 @@ import EditorTableLine from './components/WorkTable/WorkTableLine/EditorTableLin
 import { FocusedLinePanel } from './components/WorkTable/WorkTableLine/FocusedLinePanel';
 import { type TLineRowState, useLineFingerprint } from './hooks/useLineFingerprint';
 import { useMergeCandidateLines } from './hooks/useMergeCandidateLines';
+import type { TLineGeometry } from './components/WorkTable/LineBackdrops/BackdropBase';
+import { FocusedLineBackdrop } from './components/WorkTable/LineBackdrops/FocusedLineBackdrop';
+import {
+  MergeCandidateBackdrops,
+  MergeCandidateButtons,
+  type TMergeCandidate,
+} from './components/WorkTable/LineBackdrops/MergeCandidateBackdrops';
+import { passesTempo } from '@utils/tempo';
 import { useRenderCache } from './hooks/useRenderCache';
 import { ExportButton } from './segments/ExportButton';
 
@@ -45,8 +52,10 @@ const EditorArea = styled.main`
   overflow-y: scroll;
   overflow-x: clip;
 
-  padding: 0 ${CSSVar('mainTableLineBackdropSpacingX')};
-  left: calc(${CSSVar('mainTableLineBackdropSpacingX')} * -1);
+  /* Room for the line backdrops spreading past the rows, and the gap towards the control panel
+     (which leaves its right side to this padding, EditorLayout.tsx) -- the same on both sides */
+  padding: 0 calc(${CSSVar('mainTableFocusBackdropSpacingX')} + ${CSSVar('size10')});
+  left: calc(${CSSVar('mainTableFocusBackdropSpacingX')} * -1);
 
   &::-webkit-scrollbar {
     width: ${CSSVar('appScrollbarWidth')};
@@ -62,9 +71,8 @@ const EditorArea = styled.main`
     background: ${CSSVar('appScrollbarThumbColor')};
     border-radius: ${CSSVar('appScrollbarBorderRadius')};
   }
-  &.isSmallScreen {
-    max-width: ${CSSVar('appScreenWidth')};
-  }
+  /* Small screens: the table takes the full width it's given (no cap), as on large screens it
+     grows into free space (EditorLayout.tsx) */
 `;
 
 const Root = styled.div`
@@ -93,10 +101,38 @@ const navigationHintKeystroke = (
 
 const overscrollAmount = 300;
 const estimatedRowHeight = 100;
+
+// The line number column fits the longest number the project has (one width per digit count) plus
+// room for the tempo error flag after it, set once for the whole table so the rows never
+// re-render for it
+function lineNumberWidth(lineCount: number): string {
+  const digitsWidth =
+    lineCount < 10 ? '15px' : lineCount < 100 ? '22px' : lineCount < 1000 ? '30px' : '38px';
+  return `calc(${digitsWidth} + ${CSSVar('size12')})`;
+}
+
+// Where the lines that the shared backdrops follow sit in the list
+type TTrackedGeometry = {
+  focused: TLineGeometry | null;
+  candidates: TMergeCandidate[];
+};
+
+const NO_GEOMETRY: TTrackedGeometry = { focused: null, candidates: [] };
+
+const isSameLineGeometry = (a: TLineGeometry | null, b: TLineGeometry | null) =>
+  a === b || (a != null && b != null && a.top === b.top && a.height === b.height);
+
+const isSameGeometry = (a: TTrackedGeometry, b: TTrackedGeometry) =>
+  isSameLineGeometry(a.focused, b.focused) &&
+  a.candidates.length === b.candidates.length &&
+  a.candidates.every(
+    (candidate, i) =>
+      candidate.direction === b.candidates[i].direction &&
+      isSameLineGeometry(candidate.geometry, b.candidates[i].geometry)
+  );
 export default function Editor() {
   const { t } = useTranslation('tooltips');
   const [
-    activeLineIndex,
     focusedLineIndex,
     isSmallScreen,
     isEditMode,
@@ -104,18 +140,20 @@ export default function Editor() {
     translationLines,
     frozenLineNumbers,
     characterOptions,
+    tempo,
+    timingIssues,
   ] = useAppSelectors(
-    media.selectActiveLineIndex,
     editor.selectFocusedLineIndex,
     settings.selectIsSmallScreen,
     editor.selectIsEditMode,
     editor.selectRenderEpoch,
     editor.selectLines,
     editor.selectFrozenLineNumbers,
-    editor.selectCharacterPool
+    editor.selectCharacterPool,
+    projects.selectTempo,
+    editor.selectTempoTimingIssues
   );
   const focusedItemIndex = focusedLineIndex ?? -1;
-  const { isAltShiftPressed } = useEditorKeystroke();
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -145,23 +183,52 @@ export default function Editor() {
   const { getLineFingerprint } = useLineFingerprint();
   const mergeCandidateLines = useMergeCandidateLines();
 
-  // The focused line's panel lives outside the rows, as static content of the list: it scrolls
-  // with them natively and is only re-anchored when the focused row's top moves (focus change, or
-  // the list reporting a layout change). setState bails out when the top is unchanged.
-  const [panelTop, setPanelTop] = useState<number | null>(null);
-  const syncPanelTop = useCallback(() => {
+  // What moves between rows -- the focused line's backdrop and panel, the merge candidates'
+  // backdrops and buttons -- lives outside the rows, as static content of the list: it scrolls with
+  // them natively and is only re-anchored when a tracked line moves (focus or the merge modifier
+  // changing, or the list reporting a layout change). The rows themselves never re-render for it.
+  const [geometry, setGeometry] = useState<TTrackedGeometry>(NO_GEOMETRY);
+  const syncLineGeometry = useCallback(() => {
     const list = virtualizedListRef.current;
-    setPanelTop(
-      list && focusedItemIndex >= 0 ? list.getElementPositionByIndex(focusedItemIndex) : null
-    );
-  }, [focusedItemIndex]);
-  useLayoutEffect(syncPanelTop, [syncPanelTop, translationLines, renderEpoch]);
+    const at = (index: number | null): TLineGeometry | null =>
+      list && index != null && index >= 0
+        ? {
+            top: list.getElementPositionByIndex(index),
+            height: list.getElementHeightByIndex(index),
+          }
+        : null;
+    const next: TTrackedGeometry = {
+      focused: at(focusedItemIndex),
+      candidates: [...mergeCandidateLines].flatMap((index) => {
+        const candidate = at(index);
+        if (!candidate) return [];
+        return [{ direction: index < focusedItemIndex ? 'up' : 'down', geometry: candidate }];
+      }),
+    };
+    setGeometry((previous) => (isSameGeometry(previous, next) ? previous : next));
+  }, [focusedItemIndex, mergeCandidateLines]);
+  useLayoutEffect(syncLineGeometry, [syncLineGeometry, translationLines, renderEpoch]);
+
+  // The focused backdrop's border follows the focused line's own state: red while it breaks a
+  // tempo limit (the same check its row makes), none while it's frozen
+  const focusedLine = focusedLineIndex != null ? translationLines[focusedLineIndex] : undefined;
+  const isFocusedFrozen = focusedLine ? frozenLineNumbers.includes(focusedLine.line_no) : false;
+  const isFocusedTempoFailed =
+    focusedLine != null &&
+    focusedLineIndex != null &&
+    tempo.enabled &&
+    (Boolean(timingIssues[focusedLineIndex]) ||
+      !passesTempo(
+        isEditMode ? focusedLine.input : (focusedLine.output ?? ''),
+        focusedLine.start_time,
+        focusedLine.end_time,
+        tempo
+      ));
 
   // A row's data: rendered as the row's props and fingerprinted for the render cache (and for the
   // list, which re-measures a row when its fingerprint changes), from one place
   const buildRowState = (line: TSubtitleLine): TLineRowState => {
     const lineIndex = translationLines.indexOf(line);
-    const isFocused = focusedLineIndex === lineIndex;
     return {
       lineIndex,
       lineNo: line.line_no,
@@ -171,10 +238,6 @@ export default function Editor() {
       endTime: line.end_time,
       character: line.character ?? '',
       isCompleted: Boolean(line.completed),
-      isFocused,
-      isActive: activeLineIndex === lineIndex,
-      isMergeCandidate: mergeCandidateLines.has(lineIndex),
-      isMergeMaster: isFocused && isAltShiftPressed,
       isFrozen: frozenLineNumbers.includes(line.line_no),
     };
   };
@@ -209,8 +272,6 @@ export default function Editor() {
             editor.setLineCompleted({ lineIndex, completed: Boolean(text), skipHistory: true });
         }}
         onSourceTextChange={(text) => editor.updateSourceText({ lineIndex, text })}
-        onMergeUpClick={() => editor.mergeLines(lineIndex, 'up')}
-        onMergeDownClick={() => editor.mergeLines(lineIndex, 'down')}
       />
     );
 
@@ -224,7 +285,12 @@ export default function Editor() {
         tabIndex={1}
         className={classNames({ isSmallScreen })}
         ref={scrollContainerRef}
-        style={{ '--current-grid-template': columnTemplate } as CSSProperties}
+        style={
+          {
+            '--current-grid-template': columnTemplate,
+            '--line-number-width': lineNumberWidth(translationLines.length),
+          } as CSSProperties
+        }
       >
         <Root>
           <FloatingVideoBlock
@@ -243,9 +309,24 @@ export default function Editor() {
             renderEpoch={renderEpoch}
             onRenderEpochEnded={() => editor.incrementRenderEpoch()}
             renderItem={({ item, onMeasure }) => renderVirtualizedLine(item, onMeasure)}
-            onLayoutChange={syncPanelTop}
+            onLayoutChange={syncLineGeometry}
           >
-            <FocusedLinePanel top={panelTop} />
+            {/* Under the rows: the merge candidates' backdrops, then the focused line's */}
+            <MergeCandidateBackdrops
+              focusedLineIndex={focusedLineIndex}
+              candidates={geometry.candidates}
+            />
+            <FocusedLineBackdrop
+              geometry={geometry.focused}
+              isTempoFailed={isFocusedTempoFailed}
+              isFrozen={isFocusedFrozen}
+            />
+            {/* Above the rows (their own z-index) */}
+            <MergeCandidateButtons
+              focusedLineIndex={focusedLineIndex}
+              candidates={geometry.candidates}
+            />
+            <FocusedLinePanel top={geometry.focused?.top ?? null} />
           </VirtualizedList>
           <ExportButton />
         </Root>

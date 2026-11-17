@@ -12,10 +12,10 @@ const Root = styled.div`
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: ${CSSVar('appMenuExpandedWidth')} auto;
+  grid-template-columns: ${CSSVar('appMenuExpandedWidth')} minmax(0, 1fr);
   position: relative;
   &.dynamic {
-    grid-template-columns: ${CSSVar('appMenuCollapsedWidth')} auto;
+    grid-template-columns: ${CSSVar('appMenuCollapsedWidth')} minmax(0, 1fr);
     /* The collapsed sidebar's column is narrower than the expanded sidebar an overlay keeps open
        over the content, so overlays (positioned in the content column) move right by the rest */
     --menu-overlap: calc(${CSSVar('appMenuExpandedWidth')} - ${CSSVar('appMenuCollapsedWidth')});

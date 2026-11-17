@@ -38,7 +38,7 @@ export default function MenuLogo({ compact }: TMenuLogoProps) {
           color={ThemeColors.TEXT}
           emoji={
             <LogoBox>
-              <Logo />
+              <Logo animated={false} />
             </LogoBox>
           }
         >

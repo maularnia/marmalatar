@@ -8,6 +8,8 @@
     "insertLineAfter": "Дадаць радок\nпасля абранага",
     "addSelectedToGlossary": "Дадаць\nвыдзеленае ў гласарый",
     "splitLineByCursor": "Разрэзаць\nрадок па карэтцы",
+    "mergeWithPrevious": "Зліць з\nпапярэднім радком",
+    "mergeWithNext": "Зліць з\nнаступным радком",
     "copySourceToOutput": "Скапіяваць\nкрыніцу ў пераклад",
     "removeTranslationColumn": "Прыбраць слупок перакладу і засяродзіцца на рэдагаванні крыніцы",
     "addTranslationColumn": "Дадаць слупок перакладу",

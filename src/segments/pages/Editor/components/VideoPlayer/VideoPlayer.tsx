@@ -191,6 +191,8 @@ const VideoPlayerShell = styled.div<{ $hidden?: boolean }>`
   /* Small screens run the player edge to edge, so its corners stay square */
   &.isSmallScreen {
     border-radius: 0;
+    /* It floats over the table there: never more than a fifth of the screen's height */
+    max-height: 33vh;
   }
 `;
 

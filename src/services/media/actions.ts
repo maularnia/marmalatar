@@ -9,7 +9,7 @@ import {
 import type { TAudioTrack } from '@bridge/definitions/audioTrack';
 import { IPC } from '@src/services/ipc/IPC';
 import { getTrackOptionLabel } from './dialogs/selectAudioTrack/trackLabels';
-import { pathToFileUrl } from '@src/utils/checkVideoPlayability';
+import { pathToFileUrl, releaseMediaElement } from '@src/utils/checkVideoPlayability';
 import { toErrorMessage } from '@src/utils/toErrorMessage';
 import { Service } from '@src/services/Service';
 import {
@@ -83,9 +83,12 @@ function loadVideoDuration(url: string): Promise<number> {
     el.src = url;
     el.onloadedmetadata = () => {
       resolve(Math.round(el.duration * 1000));
-      el.src = '';
+      releaseMediaElement(el);
     };
-    el.onerror = reject;
+    el.onerror = () => {
+      releaseMediaElement(el);
+      reject(new Error('Could not read the video duration'));
+    };
   });
 }
 

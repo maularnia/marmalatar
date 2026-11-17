@@ -130,19 +130,19 @@ export type TThemeStaticMessageChapter = TThemeVarsChapter<{
 export type TThemeStaticTableChapter = TThemeVarsChapter<{
   mainTableWidth: string;
   mainTableTextSize: string;
-  mainTableLineBackdropRadius: string;
+  mainTableFocusBackdropRadius: string;
+  mainTableLineRadius: string;
+  mainTableLineSpacing: string;
   mainTableLineCellSpacingX: string;
   mainTableLineCellSpacingY: string;
-  mainTableLineBackdropBorderWidth: string;
-  mainTableLineBackdropSpacingX: string;
-  mainTableLineBackdropSpacingY: string;
+  mainTableFocusBackdropBorderWidth: string;
+  mainTableFocusBackdropSpacingX: string;
+  mainTableFocusBackdropSpacingY: string;
   mainTableLineCellSpacingInnerX: string;
   mainTableLineCellBorderWidth: string;
   mainTableLineCellBorderWidthCompleted: string;
   mainTableLineCellBorderWidthHover: string;
   mainTableLineCellBorderWidthFocus: string;
-  mainTableLineCellBorderWidthActive: string;
-  mainTableLineCellBorderWidthMergeCandidate: string;
   mainTableCharacterSelectorSpacingX: string;
   mainTableCharacterSelectorSpacingY: string;
   mainTableCharacterSelectorSpacingInnerY: string;

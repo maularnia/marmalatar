@@ -1,5 +1,4 @@
 import { media } from '@src/services/media';
-import { useEditorKeystroke } from '@providers/EditorKeystrokeProvider';
 import { settings } from '@src/services/settings';
 import { editor } from '@src/services/project';
 import { useAppSelectors } from '@store/hooks';
@@ -18,10 +17,6 @@ export type TLineRowState = {
   endTime: number;
   character: string;
   isCompleted: boolean;
-  isFocused: boolean;
-  isActive: boolean;
-  isMergeCandidate: boolean;
-  isMergeMaster: boolean;
   isFrozen: boolean;
 };
 
@@ -35,10 +30,6 @@ const ROW_STATE_KEYS: readonly (keyof TLineRowState)[] = [
   'endTime',
   'character',
   'isCompleted',
-  'isFocused',
-  'isActive',
-  'isMergeCandidate',
-  'isMergeMaster',
   'isFrozen',
 ];
 
@@ -47,10 +38,9 @@ const serialize = (value: string | number | boolean) =>
 
 /** The render cache key of a row: its row state (see TLineRowState) plus what the row also depends
  * on without receiving it as a data prop -- the character pool, AI availability, the editor mode,
- * whether the line runs past the video, and the modifier keys held while it's focused. */
+ * and whether the line runs past the video. Focus, playback and merge candidates aren't part of it:
+ * they're drawn by shared backdrops under the rows, so rows never re-render for them. */
 export function useLineFingerprint() {
-  const { isCtrlPressed, isAltPressed, isCtrlAltPressed, isAltShiftPressed } = useEditorKeystroke();
-
   const [
     integrationIsConfigured,
     translationIsBusy,
@@ -71,12 +61,6 @@ export function useLineFingerprint() {
   );
 
   const getLineFingerprint = (row: TLineRowState): string => {
-    const ctrlMask = row.isFocused
-      ? (isCtrlPressed ? 1 : 0) +
-        (isAltShiftPressed ? 2 : 0) +
-        (isCtrlAltPressed ? 4 : 0) +
-        (isAltPressed ? 8 : 0)
-      : 0;
     const isBeyondVideo =
       videoDurationMs != null && (row.startTime > videoDurationMs || row.endTime > videoDurationMs);
     return [
@@ -84,7 +68,6 @@ export function useLineFingerprint() {
       characterOptionsHash,
       serialize(integrationIsConfigured && !translationIsBusy),
       serialize(isBeyondVideo),
-      ctrlMask,
       editorMode,
     ].join('::');
   };

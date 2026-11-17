@@ -13,7 +13,13 @@ export enum TLogoVariant {
 type TLogoProps = {
   size?: number;
   variant?: TLogoVariant;
+  /** Fly-in, stroke drawing, eyes appearing and blinking. Off: drawn still, in its final state --
+   * the blinks repeat forever, which keeps Motion's frame loop ticking every frame, so a logo
+   * that's always on screen (the menu's) shouldn't run them. */
+  animated?: boolean;
 };
+
+const NO_ANIMATION = {};
 
 const LEFT_EYE_PATH = 'M62 120.5a11.5 11.5 0 1 0 23 0a11.5 11.5 0 1 0 -23 0Z';
 const RIGHT_EYE_PATH = 'M102 119a13 13 0 1 0 26 0a13 13 0 1 0 -26 0Z';
@@ -78,7 +84,10 @@ const rightEyeBlinkAnimation = {
   },
 } satisfies MotionProps;
 
-export function Logo({ size = 64, variant = TLogoVariant.DEFAULT }: TLogoProps) {
+export function Logo({ size = 64, variant = TLogoVariant.DEFAULT, animated = true }: TLogoProps) {
+  // The motion props of a part, or none at all when the logo is still
+  const motionProps = <T extends object>(props: T): T | typeof NO_ANIMATION =>
+    animated ? props : NO_ANIMATION;
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const maskId = `logo-mask-${uid}`;
   const gradientId = `logo-gradient-${uid}`;
@@ -96,7 +105,7 @@ export function Logo({ size = 64, variant = TLogoVariant.DEFAULT }: TLogoProps) 
       viewBox="0 0 185 185"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      {...sceneAnimation}
+      {...motionProps(sceneAnimation)}
     >
       <defs>
         {/* Same diagonal ACCENT1 -> ACCENT2 gradient as the "special" icon variant in Icon.tsx --
@@ -124,28 +133,32 @@ export function Logo({ size = 64, variant = TLogoVariant.DEFAULT }: TLogoProps) 
           d={LOGO_STROKE_PATH}
           stroke={`url(#${gradientId})`}
           strokeWidth={33}
-          {...strokeAnimation}
+          {...motionProps(strokeAnimation)}
         />
       </g>
 
       <motion.g
-        {...eyeAppearAnimation}
-        transition={{ ...eyeAppearTransition, delay: LEFT_EYE_DELAY }}
+        {...motionProps({
+          ...eyeAppearAnimation,
+          transition: { ...eyeAppearTransition, delay: LEFT_EYE_DELAY },
+        })}
       >
         <motion.path
           d={isError ? LEFT_EYE_ERROR_PATH : LEFT_EYE_PATH}
           fill={eyeColor}
-          {...leftEyeBlinkAnimation}
+          {...motionProps(leftEyeBlinkAnimation)}
         />
       </motion.g>
       <motion.g
-        {...eyeAppearAnimation}
-        transition={{ ...eyeAppearTransition, delay: RIGHT_EYE_DELAY }}
+        {...motionProps({
+          ...eyeAppearAnimation,
+          transition: { ...eyeAppearTransition, delay: RIGHT_EYE_DELAY },
+        })}
       >
         <motion.path
           d={isError ? RIGHT_EYE_ERROR_PATH : RIGHT_EYE_PATH}
           fill={eyeColor}
-          {...rightEyeBlinkAnimation}
+          {...motionProps(rightEyeBlinkAnimation)}
         />
       </motion.g>
     </motion.svg>

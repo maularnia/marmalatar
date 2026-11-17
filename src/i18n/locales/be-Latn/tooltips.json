@@ -8,6 +8,8 @@
     "insertLineAfter": "Dadać radok\npasla abranaha",
     "addSelectedToGlossary": "Dadać\nvydzielenaje ŭ głasaryj",
     "splitLineByCursor": "Razrezać\nradok pa karetcy",
+    "mergeWithPrevious": "Zlić z\npapiarednim radkom",
+    "mergeWithNext": "Zlić z\nnastupnym radkom",
     "copySourceToOutput": "Skapijavać\n krynicu ŭ pierakład",
     "removeTranslationColumn": "Prybrać słupok pierakładu i zasiarodzicca na redahavanni krynicy",
     "addTranslationColumn": "Dadać słupok pierakładu",

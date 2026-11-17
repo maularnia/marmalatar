@@ -8,6 +8,8 @@
     "insertLineAfter": "Insert\nemty line\nafter",
     "addSelectedToGlossary": "Add selection\nto glossary",
     "splitLineByCursor": "Cut line\nat cursor position",
+    "mergeWithPrevious": "Merge with\nprevious line",
+    "mergeWithNext": "Merge with\nnext line",
     "copySourceToOutput": "Copy source text to output",
     "removeTranslationColumn": "Remove translation column and focus on editing the source",
     "addTranslationColumn": "Add translation column",
