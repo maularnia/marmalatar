@@ -11,13 +11,14 @@ import { parseCharacterList } from '@utils/characters';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelectors } from '@store/hooks';
 import { settings } from '@src/services/settings';
-import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useRenderCache } from '../../hooks/useRenderCache';
 import type { DragMode } from './types';
 import WaveformEntry from './WaveformEntry';
 import WaveformTile from './WaveformTile';
+import { throttle } from '@utils/throttle';
 import { getWaveformEntryFingerprint } from './useWaveformEntryFingerprint';
 
 type WaveformProps = {
@@ -35,6 +36,12 @@ const SHORT_LINE_MS = 1500;
 const CURSOR_OFFSET_RATIO = 0.3;
 const MIN_GAP_MS = 50;
 const WHEEL_SEEK_STEP_RATIO = 0.0005;
+// While the timeline is dragged or wheel-scrolled it follows every event on its own (straight to
+// the DOM), detached from the store. The video frame follows at most FRAME_SEEKS_PER_SECOND (each
+// seek makes the browser decode a frame); the store -- the time, the active line and so the rows
+// and subtitles -- and this component's own render at most STORE_UPDATES_PER_SECOND.
+const FRAME_SEEKS_PER_SECOND = 12;
+const STORE_UPDATES_PER_SECOND = 4;
 // A single canvas wider than 65535px paints as a solid block in Chromium, and at PX_PER_SECOND a
 // feature-length timeline is far wider than that -- so the timeline is drawn as tiles instead.
 const WAVEFORM_TILE_WIDTH = 4096;
@@ -180,6 +187,36 @@ export default function Waveform({
   const cursorRef = useRef<HTMLDivElement | null>(null);
   const [dragLineIndex, setDragLineIndex] = useState<number | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState<number>(0);
+  // A drag or wheel-scroll of the timeline in progress, and the time it shows: while it lasts, this
+  // position -- not the store's -- places the timeline
+  const isInteractingRef = useRef(false);
+  const viewTimeMsRef = useRef(0);
+  // Only the video and audio elements, no store: the picture follows the drag
+  const frameSeekRef = useRef(
+    throttle((ms: number) => {
+      const seconds = ms / 1000;
+      const video = media.getVideoElement();
+      const audio = media.getAudioElement();
+      if (video) video.currentTime = seconds;
+      if (audio) audio.currentTime = seconds;
+    }, 1000 / FRAME_SEEKS_PER_SECOND)
+  );
+  // The store's time and active line, and this component's render (tiles and line blocks mounted
+  // around the new position)
+  const storeSeekRef = useRef(
+    throttle((ms: number) => {
+      media.seekToMs(ms);
+      setCurrentTimeMs(ms);
+    }, 1000 / STORE_UPDATES_PER_SECOND)
+  );
+  useEffect(() => {
+    const frameSeek = frameSeekRef.current;
+    const storeSeek = storeSeekRef.current;
+    return () => {
+      frameSeek.cancel();
+      storeSeek.cancel();
+    };
+  }, []);
 
   const { getCached, setCached } = useRenderCache<TSubtitleLine, number, ReactElement>(
     translationLines,
@@ -201,13 +238,23 @@ export default function Waveform({
       if (direction === 0) return;
 
       const step = videoDurationMs * WHEEL_SEEK_STEP_RATIO;
-      const newTime = clamp(media.getCurrentTimeMs() + direction * step, 0, videoDurationMs);
-      setCurrentTimeMs(newTime);
-      media.seekToMs(newTime);
+      interactionRef.current.start();
+      interactionRef.current.moveTo(
+        clamp(viewTimeMsRef.current + direction * step, 0, videoDurationMs)
+      );
+    };
+
+    // A wheel-scroll lasts until the pointer leaves the waveform (a drag, until it's released)
+    const handlePointerLeave = () => {
+      if (!waveformDragRef.current) interactionRef.current.end();
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    container.addEventListener('pointerleave', handlePointerLeave);
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('pointerleave', handlePointerLeave);
+    };
   }, [videoDurationMs]);
 
   function handleEntryPointerDown(lineIndex: number, mode: DragMode, clientX: number) {
@@ -232,6 +279,8 @@ export default function Waveform({
 
   useEffect(() => {
     const interval = setInterval(() => {
+      // Detached while the timeline is dragged or scrolled: its own position wins
+      if (isInteractingRef.current) return;
       setCurrentTimeMs(media.getCurrentTimeMs());
     }, 100);
     return () => {
@@ -298,24 +347,65 @@ export default function Waveform({
     onLineTimingChange(drag.lineIndex, Math.round(nextStart), Math.round(nextEnd));
   }
 
-  useEffect(() => {
+  // Places the timeline (canvas tiles and line blocks) and the cursor for a time, straight on the
+  // DOM -- no render
+  function positionTimeline(ms: number) {
     const viewport = waveformViewportRef.current;
     const content = contentRef.current;
     const lineLayer = entriesContainerRef.current;
     const cursor = cursorRef.current;
+    if (!viewport || !content || !lineLayer || !cursor) return;
 
-    if (!viewport || !content || !lineLayer || !cursor) {
-      return;
-    }
-
+    const x =
+      videoDurationMs && videoDurationMs > 0 ? Math.round((ms / videoDurationMs) * canvasWidth) : 0;
     const viewportWidth = viewport.clientWidth;
-    const timelineOffset = getTimelineOffset(cursorX, viewportWidth, canvasWidth);
-    const cursorViewportX = clamp(cursorX - timelineOffset, 0, viewportWidth);
+    const timelineOffset = getTimelineOffset(x, viewportWidth, canvasWidth);
+    const cursorViewportX = clamp(x - timelineOffset, 0, viewportWidth);
 
     content.style.transform = `translateX(${-timelineOffset}px)`;
     lineLayer.style.transform = `translateX(${-timelineOffset}px)`;
     cursor.style.transform = `translateX(${cursorViewportX}px)`;
-  }, [canvasWidth, cursorX]);
+  }
+
+  function startInteraction() {
+    if (isInteractingRef.current) return;
+    isInteractingRef.current = true;
+    viewTimeMsRef.current = media.getCurrentTimeMs();
+  }
+
+  // Every event moves the timeline at once; the video frame and the store follow, throttled
+  function moveViewTo(ms: number) {
+    viewTimeMsRef.current = ms;
+    positionTimeline(ms);
+    frameSeekRef.current(ms);
+    storeSeekRef.current(ms);
+  }
+
+  // The final position lands in the player and the store at once, then the store leads again
+  function endInteraction() {
+    if (!isInteractingRef.current) return;
+    // Whatever the throttles still hold is superseded by the one final seek below
+    frameSeekRef.current.cancel();
+    storeSeekRef.current.cancel();
+    isInteractingRef.current = false;
+    media.seekToMs(viewTimeMsRef.current);
+    setCurrentTimeMs(viewTimeMsRef.current);
+  }
+
+  // The interaction operations as of this render, for the native listeners subscribed once
+  const interactionRef = useRef({
+    start: startInteraction,
+    moveTo: moveViewTo,
+    end: endInteraction,
+  });
+  interactionRef.current = { start: startInteraction, moveTo: moveViewTo, end: endInteraction };
+
+  // Layout effect: placed in the same frame as the render that mounted the tiles and line blocks
+  // for it. While interacting, the interaction's own position, so a throttled re-render can never
+  // pull the timeline back.
+  useLayoutEffect(() => {
+    positionTimeline(isInteractingRef.current ? viewTimeMsRef.current : currentTimeMs);
+  });
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -327,13 +417,9 @@ export default function Waveform({
       }
       if (waveformDragRef.current && videoDurationMs) {
         const delta = event.clientX - waveformDragRef.current.startX;
-        const newTime = clamp(
-          waveformDragRef.current.startTimeMs - pxToTime(delta),
-          0,
-          videoDurationMs
+        moveViewTo(
+          clamp(waveformDragRef.current.startTimeMs - pxToTime(delta), 0, videoDurationMs)
         );
-        setCurrentTimeMs(newTime);
-        media.seekToMs(newTime);
       }
     };
 
@@ -345,7 +431,10 @@ export default function Waveform({
       }
       dragStateRef.current = null;
       setDragLineIndex(null);
-      waveformDragRef.current = null;
+      if (waveformDragRef.current) {
+        waveformDragRef.current = null;
+        endInteraction();
+      }
     };
 
     window.addEventListener('pointermove', handlePointerMove);
@@ -362,8 +451,10 @@ export default function Waveform({
     const endPx = timeToPx(line.end_time);
     const viewportWidth = waveformViewportRef.current?.offsetWidth ?? 0;
     const timelineOffset = getTimelineOffset(cursorX, viewportWidth, canvasWidth);
-    const visibleStartPx = timelineOffset;
-    const visibleEndPx = timelineOffset + viewportWidth;
+    // Two viewport widths of margin each side: between the throttled re-renders of a drag the
+    // timeline runs ahead of this render's window, and blocks coming in must already be mounted
+    const visibleStartPx = timelineOffset - viewportWidth * 2;
+    const visibleEndPx = timelineOffset + viewportWidth * 3;
     if (startPx >= visibleEndPx || endPx <= visibleStartPx) return null;
     if (!videoDurationMs || videoDurationMs <= 0) return null;
 
@@ -467,9 +558,10 @@ export default function Waveform({
           ref={waveformViewportRef}
           onPointerDown={(event) => {
             if (dragStateRef.current) return;
+            startInteraction();
             waveformDragRef.current = {
               startX: event.clientX,
-              startTimeMs: media.getCurrentTimeMs(),
+              startTimeMs: viewTimeMsRef.current,
             };
             (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
           }}
