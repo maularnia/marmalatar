@@ -198,7 +198,8 @@ const screen: TThemeStaticScreenChapter = {
   ...new ThemeVariable('appScreenHorizontalSpacing', CSSVar('size2')).register(),
   ...new ThemeVariable('appScreenWidth', `920px`).register(),
   // Editor columns per screen size (see EditorLayout). Small screens have no aside.
-  ...new ThemeVariable('appTableWidthSmall', '1fr').register(),
+  // What's left after the controls -- minmax(0, …) so wide content can't stretch it past that
+  ...new ThemeVariable('appTableWidthSmall', 'minmax(0, 1fr)').register(),
   ...new ThemeVariable('appTableWidthMedium', '720px').register(),
   ...new ThemeVariable('appTableWidthLarge', '760px').register(),
   ...new ThemeVariable('appAsideWidthSmall', '0px').register(),
@@ -313,12 +314,16 @@ const inputs: TThemeStaticInputsChapter = {
 const table: TThemeStaticTableChapter = {
   ...new ThemeVariable('mainTableWidth', '986px').register(),
   ...new ThemeVariable('mainTableTextSize', CSSVar('sizeTextRegular')).register(),
-  ...new ThemeVariable('mainTableLineBackdropRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableLineRadius', CSSVar('size12')).register(),
+  // The gap between lines: a line's own bottom padding (so the virtualized list measures it), which
+  // its background and the backdrops under it stop short of
+  ...new ThemeVariable('mainTableLineSpacing', CSSVar('size1')).register(),
   ...new ThemeVariable('mainTableLineCellSpacingX', CSSVar('size14')).register(),
   ...new ThemeVariable('mainTableLineCellSpacingY', CSSVar('size14')).register(),
-  ...new ThemeVariable('mainTableLineBackdropSpacingX', CSSVar('size4')).register(),
-  ...new ThemeVariable('mainTableLineBackdropSpacingY', CSSVar('size4')).register(),
-  ...new ThemeVariable('mainTableLineBackdropBorderWidth', CSSVar('size1')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropSpacingX', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropSpacingY', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropBorderWidth', CSSVar('size1')).register(),
   ...new ThemeVariable('mainTableLineCellSpacingInnerX', CSSVar('size1')).register(),
   ...new ThemeVariable('mainTableLineCellBorderWidth', CSSVar('size1')).register(),
   ...new ThemeVariable(
@@ -331,14 +336,6 @@ const table: TThemeStaticTableChapter = {
   ).register(),
   ...new ThemeVariable(
     'mainTableLineCellBorderWidthFocus',
-    CSSVar('mainTableLineCellBorderWidth')
-  ).register(),
-  ...new ThemeVariable(
-    'mainTableLineCellBorderWidthActive',
-    CSSVar('mainTableLineCellBorderWidth')
-  ).register(),
-  ...new ThemeVariable(
-    'mainTableLineCellBorderWidthMergeCandidate',
     CSSVar('mainTableLineCellBorderWidth')
   ).register(),
   ...new ThemeVariable('mainTableCharacterSelectorSpacingInnerX', CSSVar('size4')).register(),

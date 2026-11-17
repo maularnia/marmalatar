@@ -6,13 +6,11 @@ import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';
-import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import { TCharacter } from '@src/types';
 import { ai } from '@src/services/ai';
 import { settings } from '@src/services/settings';
-import Button from '@ui-toolkit/Button/Button';
-import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
-import { TIcon } from '@ui-toolkit/Icon/icons';
+import Icon from '@ui-toolkit/Icon/Icon';
+import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
@@ -34,27 +32,33 @@ type EditorTableLineProps = {
   character: string;
   characterOptions: TCharacter[];
   onMeasure: (height: number) => void;
-  isFocused: boolean;
-  isActive: boolean;
-  isMergeCandidate: boolean;
-  isMergeMaster: boolean;
   isFrozen: boolean;
   isCompleted: boolean;
   onFocus: () => void;
   onCharacterChange: (character: string) => void;
   onOutputTextChange: (text: string) => void;
   onSourceTextChange: (text: string) => void;
-  onMergeUpClick: () => void;
-  onMergeDownClick: () => void;
 };
 
+// As wide as the project's longest line number needs (--line-number-width, set by the Editor page
+// for the whole table), so every row's text starts at the same place; the tag is centred in it
 const LineNumber = styled.div`
   z-index: 5;
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--line-number-width);
+  position: relative;
   left: 0;
   transition: opacity 0.2s ease;
 `;
+// A line breaking a tempo limit, completed or not: a small red flag right after its number, in
+// the room the line number column keeps for it
+const ErrorFlag = styled(Icon)`
+  color: ${CSSColor(ThemeColors.RED, TShade.DEFAULT, 100)};
+`;
+
 const LineCellContent = styled(TinyDivEditor)`
   padding: ${CSSVar('mainTableLineCellSpacingY')} ${CSSVar('mainTableLineCellSpacingX')};
   min-height: 100%;
@@ -89,15 +93,8 @@ const LineCell = styled.div`
 `;
 
 const NumberLineCell = styled(LineCell)`
-  padding-right: 0;
-  padding-left: ${CSSVar('mainTableLineCellSpacingX')};
+  padding: 0;
 `;
-
-// Experiment: lines sit apart with a small gap instead of a bottom border between them, each on a
-// rounded backdrop, borderless except on the focused line. The gap is the line's own bottom padding (so it's part of the
-// height VirtualizedList measures) and the backdrop stops short of it.
-const LINE_SPACING = CSSVar('size1');
-const LINE_RADIUS = '12px';
 
 const LineContent = styled.div`
   position: relative;
@@ -106,18 +103,6 @@ const LineContent = styled.div`
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 `;
 
-const Backdrop = styled.div`
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: calc(100% - ${LINE_SPACING});
-  opacity: ${CSSVar('mainTableLineBackdropOpacity')};
-  border: none;
-  border-radius: ${LINE_RADIUS};
-  will-change: background-color, opacity;
-  overflow: hidden;
-`;
 const AIThinkingMessage = styled.div`
   position: absolute;
   left: 0;
@@ -130,166 +115,70 @@ const AIThinkingMessage = styled.div`
   padding: ${CSSVar('mainTableLineCellSpacingY')} ${CSSVar('mainTableLineCellSpacingX')};
   color: ${CSSVar('mainTableLineColorFocus')};
 `;
+
+// A row styles only its own state: completed, frozen, breaking a tempo limit. What moves between
+// rows -- the playing line, the focused line, merge candidates -- is drawn by shared backdrops under
+// the rows (../LineBackdrops), so a row never re-renders for those.
 const Line = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
   gap: ${CSSVar('mainTableLineCellSpacingY')};
-  padding: 0 0 ${LINE_SPACING};
+  padding: 0 0 ${CSSVar('mainTableLineSpacing')};
   opacity: ${CSSVar('mainTableLineOpacity')};
+  border-radius: ${CSSVar('mainTableLineRadius')};
+  /* The state background stops short of the gap below the row, like the backdrops do */
+  background-clip: content-box;
 
-  @keyframes frozenAnimation {
+  @keyframes frozenShimmer {
     from {
-      left: -100%;
+      background-position-x: -100%;
     }
     to {
-      left: 100%;
+      background-position-x: 200%;
     }
   }
 
   &.isCompleted {
     opacity: ${CSSVar('mainTableLineOpacityCompleted')};
-    ${Backdrop} {
-      opacity: ${CSSVar('mainTableLineBackdropOpacityCompleted')};
-      background: ${CSSVar('mainTableLineBackdropBgCompleted')};
-      backdrop-filter: ${CSSVar('mainTableLineBackdropFilterCompleted')};
-      border-color: ${CSSVar('mainTableLineBackdropBorderColorCompleted')};
-    }
 
     ${LineCellContent} {
       color: ${CSSVar('mainTableLineColorCompleted')};
     }
   }
 
-  &.isActive {
-    opacity: ${CSSVar('mainTableLineOpacityActive')};
-    ${Backdrop} {
-      opacity: ${CSSVar('mainTableLineBackdropOpacityActive')};
-      border-color: ${CSSVar('mainTableLineBackdropBorderColorActive')};
-      background: ${CSSVar('mainTableLineBackdropBgActive')};
-      backdrop-filter: ${CSSVar('mainTableLineBackdropFilterActive')};
-    }
-
-    ${LineCellContent} {
-      color: ${CSSVar('mainTableLineColorActive')};
-    }
-  }
-
-  &.isFocused {
-    z-index: 3;
-    opacity: ${CSSVar('mainTableLineOpacityFocus')};
-    ${Backdrop} {
-      opacity: ${CSSVar('mainTableLineBackdropOpacityFocus')};
-      background: radial-gradient(
-        circle at center bottom,
-        ${CSSVar('mainTableLineBackdropBgFocus')} 0%,
-        transparent 150%
-      );
-      backdrop-filter: ${CSSVar('mainTableLineBackdropFilterFocus')};
-      height: calc(100% - ${LINE_SPACING} + (${CSSVar('mainTableLineBackdropSpacingY')} * 2));
-      width: calc(100% + (${CSSVar('mainTableLineBackdropSpacingX')} * 2));
-      top: calc(${CSSVar('mainTableLineBackdropSpacingY')} * -1);
-      left: calc(${CSSVar('mainTableLineBackdropSpacingX')} * -1);
-      transition:
-        top 0.1s cubic-bezier(0.34, 1.56, 0.64, 1),
-        height 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border: ${CSSVar('mainTableLineBackdropBorderWidth')} solid
-        ${CSSVar('mainTableLineBackdropBorderColorFocus')};
-    }
-
-    ${LineCellContent} {
-      color: ${CSSVar('mainTableLineColorFocus')};
-    }
-  }
-
-  &.isMergeCandidate {
-    opacity: ${CSSVar('mainTableLineOpacityMergeCandidate')};
-
-    ${Backdrop} {
-      opacity: ${CSSVar('mainTableLineBackdropOpacityMergeCandidate')};
-      background: radial-gradient(
-        circle at center bottom,
-        ${CSSVar('mainTableLineBackdropBgMergeCandidate')} 0%,
-        transparent 150%
-      );
-      backdrop-filter: ${CSSVar('mainTableLineBackdropFilterMergeCandidate')};
-      border-color: ${CSSVar('mainTableLineBackdropBorderColorMergeCandidate')};
-    }
-
-    ${LineCellContent} {
-      color: ${CSSVar('mainTableLineColorMergeCandidate')};
-    }
-  }
-
-  /* The line breaks one of the project's subtitle limits. Declared after the hover/active/
-     completed states so its colors win over theirs, and before .isFrozen (which also guards it
-     out) so a frozen line never shows it. A merge candidate is guarded out too: while a merge is
-     being picked, the candidate's own look matters more than the error. A completed line keeps
-     completed's opacities -- the row's own, never set here, and the backdrop's, excluded below --
-     and takes everything else from the error state: dimmed, but still red. */
-  &.isTempoFailed:not(.isFrozen):not(.isMergeCandidate) ${Backdrop} {
-    background: ${CSSVar('mainTableLineBackdropBgError')};
-    border-width: ${CSSVar('mainTableLineBackdropBorderWidthError')};
-  }
-  &.isTempoFailed.isFocused:not(.isFrozen):not(.isMergeCandidate) ${Backdrop} {
-    border-color: ${CSSVar('mainTableLineBackdropBorderColorError')};
-  }
-  &.isTempoFailed:not(.isFrozen):not(.isCompleted):not(.isMergeCandidate) ${Backdrop} {
-    opacity: ${CSSVar('mainTableLineBackdropOpacityError')};
-  }
-
+  /* Being translated by the AI: its own background and blur, and a shimmer running across it (a
+     pseudo-element under the content, clipped to the row's rounded shape) */
   &.isFrozen {
     opacity: ${CSSVar('mainTableLineOpacityFrozen')};
+    background: radial-gradient(
+      circle at center bottom,
+      ${CSSVar('mainTableLineBgFrozen')} 0%,
+      transparent 150%
+    );
+    background-clip: content-box;
+    backdrop-filter: ${CSSVar('mainTableLineFilterFrozen')};
 
-    ${Backdrop} {
-      opacity: ${CSSVar('mainTableLineBackdropOpacityFrozen')};
-      background: radial-gradient(
-        circle at center bottom,
-        ${CSSVar('mainTableLineBackdropBgFrozen')} 0%,
-        transparent 150%
-      );
-      backdrop-filter: ${CSSVar('mainTableLineBackdropFilterFrozen')};
-      border-color: ${CSSVar('mainTableLineBackdropBorderColorFrozen')};
-      width: 100%;
-      height: calc(100% - ${LINE_SPACING});
-      top: 0;
-      left: 0;
-      border: none;
-    }
-    ${Backdrop}:before {
+    &::before {
       content: '';
-      display: block;
       position: absolute;
-      width: 100%;
-      height: 100%;
-
-      animation: frozenAnimation 1s linear infinite;
+      inset: 0 0 ${CSSVar('mainTableLineSpacing')};
+      border-radius: inherit;
+      pointer-events: none;
       background: radial-gradient(
-        circle at center,
-        ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 5)} 0%,
-        transparent 99%
-      );
+          circle at center,
+          ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 5)} 0%,
+          transparent 70%
+        )
+        no-repeat;
+      background-size: 50% 100%;
+      animation: frozenShimmer 1s linear infinite;
     }
+
     ${LineCellContent} {
       color: ${CSSVar('mainTableLineColorFrozen')};
     }
   }
-`;
-
-const MegeSlot = styled.div`
-  position: absolute;
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 5)};
-  border-radius: ${CSSVar('size4')};
-  backdrop-filter: blur(${CSSVar('blurHeavy')});
-  left: 50%;
-`;
-const MergeSlotUp = styled(MegeSlot)`
-  top: 0;
-  transform: translate3d(-50%, -50%, 0);
-`;
-const MergeSlotDown = styled(MegeSlot)`
-  bottom: 0;
-  transform: translate3d(-50%, 50%, 0);
 `;
 
 function handlePlainTextPaste(event: ClipboardEvent<HTMLDivElement>) {
@@ -310,18 +199,12 @@ export default function EditorTableLine({
   endTime,
   character,
   characterOptions,
-  isFocused,
-  isActive,
-  isMergeCandidate,
-  isMergeMaster,
   isFrozen,
   isCompleted,
   onFocus,
   onCharacterChange,
   onOutputTextChange,
   onSourceTextChange,
-  onMergeUpClick,
-  onMergeDownClick,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
   const { zoneRef } = use(KeystrokeZoneContext);
@@ -360,6 +243,8 @@ export default function EditorTableLine({
     tempo.enabled &&
     (hasTimingIssue ||
       !passesTempo(isEditMode ? sourceText : translatedText, startTime, endTime, tempo));
+  // A frozen line (being translated) never shows it
+  const showTempoError = isTempoFailed && !isFrozen;
 
   const updateSourceSelection = () => {
     const input = sourceInputRef.current;
@@ -397,7 +282,7 @@ export default function EditorTableLine({
     };
     measure();
     return () => clearTimeout(to);
-  }, [isActive, onMeasure, isFocused, translatedText, selectedCharacters]);
+  }, [onMeasure, translatedText, selectedCharacters]);
 
   useEffect(() => {
     return () => {
@@ -450,10 +335,6 @@ export default function EditorTableLine({
     <Line
       ref={lineRef}
       className={classNames({
-        isFocused,
-        isMergeMaster,
-        isActive,
-        isMergeCandidate,
         isFrozen,
         isNegativeStart,
         isBeyondVideo,
@@ -461,17 +342,25 @@ export default function EditorTableLine({
         isTempoFailed,
       })}
     >
-      <Backdrop />
       <LineContent>
         <NumberLineCell style={{ cursor: 'text' }}>
           <LineNumber>
+            {/* The line number carries the line's state: green when completed, red when it breaks
+                a tempo limit -- which also shows a red flag right after it */}
             <Tag
-              color={isFocused ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-              variant={isFocused ? TTagVariant.SECONDARY : TTagVariant.SECONDARY}
+              color={
+                isCompleted
+                  ? ThemeColors.GREEN
+                  : showTempoError
+                    ? ThemeColors.RED
+                    : ThemeColors.TEXT
+              }
+              variant={TTagVariant.TRANSPARENT}
               size={TTagSize.SMALL}
             >
               {lineNo}
             </Tag>
+            {showTempoError && <ErrorFlag icon={TIcon.FLAG} size={TIconSize.XS} />}
           </LineNumber>
           <LineCellContent
             className={'text-regular'}
@@ -578,43 +467,6 @@ export default function EditorTableLine({
           </LineCell>
         )}
       </LineContent>
-      {isFocused && (
-        <>
-          <MergeSlotUp>
-            <Tooltip
-              label={
-                <TooltipComplex title={t('tableLine.mergeUp')}>
-                  <TooltipKeystrokeHint keys={['Alt', 'Shift', '⭡']} />
-                </TooltipComplex>
-              }
-            >
-              <Button
-                variant={TButtonVariant.TRANSPARENT}
-                size={TButtonSize.SMALL}
-                icon={TIcon.MERGE_UP}
-                onClick={onMergeUpClick}
-              />
-            </Tooltip>
-          </MergeSlotUp>
-          <MergeSlotDown>
-            <Tooltip
-              side="bottom"
-              label={
-                <TooltipComplex title={t('tableLine.mergeDown')}>
-                  <TooltipKeystrokeHint keys={['Alt', 'Shift', '🠧']} />
-                </TooltipComplex>
-              }
-            >
-              <Button
-                variant={TButtonVariant.TRANSPARENT}
-                size={TButtonSize.SMALL}
-                icon={TIcon.MERGE_DOWN}
-                onClick={onMergeDownClick}
-              />
-            </Tooltip>
-          </MergeSlotDown>
-        </>
-      )}
     </Line>
   );
 }

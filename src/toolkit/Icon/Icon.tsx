@@ -100,6 +100,7 @@ import iconMoveX from '@src/assets/icons/icon-move-x.svg?react';
 import iconShow from '@src/assets/icons/icon-show.svg?react';
 import iconHide from '@src/assets/icons/icon-hide.svg?react';
 import iconCheckCircleDashed from '@src/assets/icons/icon-check-circle-dashed.svg?react';
+import iconFlag from '@src/assets/icons/icon-flag.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -227,6 +228,7 @@ const ICON_COMPONENTS: {
   [TIcon.SHOW]: iconShow,
   [TIcon.HIDE]: iconHide,
   [TIcon.CHECK_CIRCLE_DASHED]: iconCheckCircleDashed,
+  [TIcon.FLAG]: iconFlag,
 };
 
 const Wrapper = styled.div`

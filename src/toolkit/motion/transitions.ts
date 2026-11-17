@@ -8,7 +8,7 @@ type TTransitionConfig = {
 
 const timeSlow = 0.66;
 const timeDefault = 0.24;
-const timeFast = 0.16;
+const timeFast = 0.08;
 
 const animateSpring: TTransitionConfig = {
   slow: { type: 'spring', mass: 1.5, damping: 12, stiffness: 50 },

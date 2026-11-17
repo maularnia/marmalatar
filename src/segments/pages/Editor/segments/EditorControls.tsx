@@ -60,10 +60,11 @@ const PanelButton: typeof Button = (props) => {
 
 export function EditorControls() {
   const { t } = useTranslation('tooltips');
-  const [integrationIsConfigured, focusedLineIndex, textSelection] = useAppSelectors(
+  const [integrationIsConfigured, focusedLineIndex, textSelection, lineCount] = useAppSelectors(
     settings.selectIntegrationIsConfigured,
     editor.selectFocusedLineIndex,
-    editor.selectTextSelection
+    editor.selectTextSelection,
+    (state) => editor.selectLines(state).length
   );
   const [
     currentBulkJob,
@@ -195,6 +196,7 @@ export function EditorControls() {
             </Tooltip>
           </PanelSection>
         )}
+        {/* Text and tempo cleanup */}
         <PanelSection>
           <Tooltip
             side="right"
@@ -221,54 +223,77 @@ export function EditorControls() {
             >
               <PanelButton
                 disabled={!isAutoMergeAvailable}
-                icon={TIcon.TIME_FIX}
+                icon={TIcon.TEMPO}
                 onClick={() => void editor.autoFixTempo()}
               />
             </Tooltip>
           )}
-          {!isEditMode && (
-            <>
-              <Tooltip
-                side="right"
-                label={
-                  <TooltipComplex title={t('editorControls.copyAllSourceToOutput')}>
-                    <TooltipKeystrokeHint keys={['Alt', 'Shift', 'C']} />
-                  </TooltipComplex>
-                }
-              >
-                <PanelButton
-                  disabled={!isAutoMergeAvailable}
-                  icon={TIcon.DOUBLE_RIGHT}
-                  onClick={() => void editor.copyAllSourceToOutput()}
-                />
-              </Tooltip>
-              <Tooltip
-                side="right"
-                label={
-                  <TooltipComplex title={t('editorControls.completeAllTranslated')}>
-                    <TooltipKeystrokeHint keys={['Alt', 'Shift', 'Enter']} />
-                  </TooltipComplex>
-                }
-              >
-                <PanelButton
-                  disabled={!isAutoMergeAvailable}
-                  icon={TIcon.DOUBLE_TICK}
-                  onClick={() => editor.completeAllTranslatedLines()}
-                />
-              </Tooltip>
-              {/* Translation mode only, like its effect: marking follows the translation column */}
-              <Tooltip
-                side="right"
-                label={<TooltipSimple>{t('editorControls.autoMarkLinesCompleted')}</TooltipSimple>}
-              >
-                <PanelButton
-                  color={autoMarkLinesCompleted ? ThemeColors.GREEN : ThemeColors.TEXT}
-                  icon={TIcon.CHECK_CIRCLE_DASHED}
-                  onClick={() => settings.setAutoMarkLinesCompleted(!autoMarkLinesCompleted)}
-                />
-              </Tooltip>
-            </>
-          )}
+        </PanelSection>
+        {/* Filling the translation column (translation mode only) */}
+        {!isEditMode && (
+          <PanelSection>
+            <Tooltip
+              side="right"
+              label={
+                <TooltipComplex title={t('editorControls.copyAllSourceToOutput')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', 'C']} />
+                </TooltipComplex>
+              }
+            >
+              <PanelButton
+                disabled={!isAutoMergeAvailable}
+                icon={TIcon.DOUBLE_RIGHT}
+                onClick={() => void editor.copyAllSourceToOutput()}
+              />
+            </Tooltip>
+            <Tooltip
+              side="right"
+              label={
+                <TooltipComplex title={t('editorControls.copySourceToOutput')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'C']} />
+                </TooltipComplex>
+              }
+              delay={0}
+            >
+              <PanelButton
+                disabled={focusedLineIndex === null || isBusy}
+                icon={TIcon.ARROW_COPY_RIGHT}
+                onClick={() => {
+                  if (focusedLineIndex !== null) {
+                    editor.copySourceToOutput(focusedLineIndex);
+                  }
+                }}
+              />
+            </Tooltip>
+            <Tooltip
+              side="right"
+              label={
+                <TooltipComplex title={t('editorControls.completeAllTranslated')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', 'Enter']} />
+                </TooltipComplex>
+              }
+            >
+              <PanelButton
+                disabled={!isAutoMergeAvailable}
+                icon={TIcon.DOUBLE_TICK}
+                onClick={() => editor.completeAllTranslatedLines()}
+              />
+            </Tooltip>
+            {/* Marking follows the translation column, like its effect */}
+            <Tooltip
+              side="right"
+              label={<TooltipSimple>{t('editorControls.autoMarkLinesCompleted')}</TooltipSimple>}
+            >
+              <PanelButton
+                color={autoMarkLinesCompleted ? ThemeColors.GREEN : ThemeColors.TEXT}
+                icon={TIcon.CHECK_CIRCLE_DASHED}
+                onClick={() => settings.setAutoMarkLinesCompleted(!autoMarkLinesCompleted)}
+              />
+            </Tooltip>
+          </PanelSection>
+        )}
+        {/* The focused line's structure: insert, merge, cut */}
+        <PanelSection>
           <Tooltip
             label={
               <TooltipComplex title={t('editorControls.insertLineBefore')}>
@@ -282,6 +307,38 @@ export function EditorControls() {
               icon={TIcon.INSERT_BEFORE}
               onClick={() => {
                 if (focusedLineIndex !== null) editor.insertLine(focusedLineIndex, 'before');
+              }}
+            />
+          </Tooltip>
+          <Tooltip
+            side="right"
+            label={
+              <TooltipComplex title={t('editorControls.mergeWithPrevious')}>
+                <TooltipKeystrokeHint keys={['Alt', 'Shift', '⭡']} />
+              </TooltipComplex>
+            }
+          >
+            <PanelButton
+              disabled={focusedLineIndex === null || focusedLineIndex === 0 || isBusy}
+              icon={TIcon.MERGE_UP}
+              onClick={() => {
+                if (focusedLineIndex !== null) editor.mergeLines(focusedLineIndex, 'up');
+              }}
+            />
+          </Tooltip>
+          <Tooltip
+            side="right"
+            label={
+              <TooltipComplex title={t('editorControls.mergeWithNext')}>
+                <TooltipKeystrokeHint keys={['Alt', 'Shift', '🠧']} />
+              </TooltipComplex>
+            }
+          >
+            <PanelButton
+              disabled={focusedLineIndex === null || focusedLineIndex >= lineCount - 1 || isBusy}
+              icon={TIcon.MERGE_DOWN}
+              onClick={() => {
+                if (focusedLineIndex !== null) editor.mergeLines(focusedLineIndex, 'down');
               }}
             />
           </Tooltip>
@@ -301,8 +358,6 @@ export function EditorControls() {
               }}
             />
           </Tooltip>
-        </PanelSection>
-        <PanelSection>
           <Tooltip
             side="right"
             label={
@@ -325,27 +380,6 @@ export function EditorControls() {
               }}
             />
           </Tooltip>
-          {!isEditMode && (
-            <Tooltip
-              side="right"
-              label={
-                <TooltipComplex title={t('editorControls.copySourceToOutput')}>
-                  <TooltipKeystrokeHint keys={['Alt', 'C']} />
-                </TooltipComplex>
-              }
-              delay={0}
-            >
-              <PanelButton
-                disabled={focusedLineIndex === null || isBusy}
-                icon={TIcon.ARROW_COPY_RIGHT}
-                onClick={() => {
-                  if (focusedLineIndex !== null) {
-                    editor.copySourceToOutput(focusedLineIndex);
-                  }
-                }}
-              />
-            </Tooltip>
-          )}
         </PanelSection>
       </Container>
     </>

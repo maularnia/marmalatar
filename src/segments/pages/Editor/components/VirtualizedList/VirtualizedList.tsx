@@ -30,6 +30,8 @@ export type VirtualizedListHandle = {
   scrollToIndex: (index: number, options?: { offset?: number; animate?: boolean }) => void;
   getListOffsetTop: () => number;
   getElementPositionByIndex: (index: number) => number;
+  /** The item's measured height, or the row height estimate until it's measured */
+  getElementHeightByIndex: (index: number) => number;
   isRenderedByIndex: (index: number) => boolean;
   forceRerender: () => void;
 };
@@ -185,6 +187,11 @@ export default function VirtualizedList<T extends VirtualizedItem>({
     },
     getListOffsetTop,
     getElementPositionByIndex: (index) => getElementPositionByIndexRef.current(index),
+    getElementHeightByIndex: (index) => {
+      const item = items[index];
+      if (!item) return 0;
+      return itemHeightsRef.current.get(getItemKey(item)) ?? rowHeightEstimateRef.current;
+    },
     isRenderedByIndex: (index) =>
       visiblePortionRef.current.some((portion) => portion.index === index),
     forceRerender: () => {

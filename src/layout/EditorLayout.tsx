@@ -17,7 +17,8 @@ const ASIDE_END_SPACING = CSSVar('size34');
 const COLUMN_TEMPLATES: Record<TScreenSize, string> = {
   [TScreenSize.SMALL]: `min-content ${CSSVar('appTableWidthSmall')} 1px ${CSSVar('appAsideWidthSmall')} 0px`,
   [TScreenSize.MEDIUM]: `min-content ${CSSVar('appTableWidthMedium')} 1px ${CSSVar('appAsideWidthMedium')} ${ASIDE_END_SPACING}`,
-  [TScreenSize.LARGE]: `min-content ${CSSVar('appTableWidthLarge')} 1px ${CSSVar('appAsideWidthLarge')} ${ASIDE_END_SPACING}`,
+  // Large screens let the table grow into the free space: from its usual width up to half the screen
+  [TScreenSize.LARGE]: `min-content minmax(${CSSVar('appTableWidthLarge')}, 50%) 1px ${CSSVar('appAsideWidthLarge')} ${ASIDE_END_SPACING}`,
 };
 
 const Screen = styled.div`
@@ -27,10 +28,11 @@ const Screen = styled.div`
   overflow: hidden;
 `;
 
-// Set apart from the menu on its left and, more tightly, from the table on its right
+// Set apart from the menu on its left. The space towards the table on its right is the table
+// area's own left padding (Editor's EditorArea), where the line backdrops can spread into it.
 const EditorControlsArea = styled.div`
   z-index: 10;
-  padding: ${CSSVar('size4')} ${CSSVar('size10')};
+  padding: ${CSSVar('size4')} 0 ${CSSVar('size4')} ${CSSVar('size10')};
 `;
 
 export default function EditorLayout() {
