@@ -10,6 +10,17 @@ import { ScannerService } from '../scanner/ScannerService';
 import { Service } from '../service/Service';
 import type { TVersioning } from '../service/storeVersioning';
 import { getAspectRatio, getDuration, listAudioTracks } from './metadata';
+import { MEDIA_BUNDLE_LOST_CHANNEL } from '../../../bridge/definitions/mediaBundle';
+import { MediaHealthBeacon, type TMediaBundleFiles } from './MediaHealthBeacon';
+import {
+  CACHE_KINDS,
+  cacheDir,
+  type TAudioTrackMeta,
+  type TCacheKind,
+  type TMediaData,
+  type TVideoFileMeta,
+} from './mediaStore';
+import { migrateV0Media } from './migrateV0Media';
 
 // Forge's Vite plugin strips node_modules from the packaged app, so ffmpeg-static's
 // JS (and its own __dirname-based path lookup) isn't available at runtime. The binary
@@ -20,38 +31,8 @@ const ffmpegPath = app.isPackaged
   ? path.join(process.resourcesPath, 'ffmpeg-static', ffmpegBinaryName)
   : path.join(__dirname, '../../node_modules/ffmpeg-static', ffmpegBinaryName);
 
-// Cache folders inside {trackedFolder}/.mrmlcache
-type TCacheKind = 'previews' | 'audio' | 'waveforms';
-const CACHE_KINDS: readonly TCacheKind[] = ['previews', 'audio', 'waveforms'];
-
 const WAVEFORM_SAMPLE_RATE = 44100;
 const WAVEFORM_PEAKS_PER_SECOND = 23;
-
-// One audio stream of a video, plus the files generated from it
-type TAudioTrackMeta = TAudioTrack & {
-  // Converted audio, in .mrmlcache/audio
-  cache?: string;
-  // Waveform peaks of the converted audio, in .mrmlcache/waveforms
-  waveform?: string;
-};
-
-// What the service knows about, and has generated from, one video
-type TVideoFileMeta = {
-  filePath: string;
-  // Thumbnail, in .mrmlcache/previews
-  thumb?: string;
-  // Displayed width / height (CSS aspect-ratio order). Undefined until probed, or when ffprobe
-  // couldn't read it, in which case the next request probes again.
-  aspectRatio?: number;
-  // Undefined until the video's streams have been listed
-  audioTracks?: TAudioTrackMeta[];
-};
-
-type TMediaData = {
-  // Keyed by the video's hash (getFileCacheKey: path, size, mtime). A changed video gets a new hash
-  // and so a new, empty entry; the old one and its files go on the next cleanup.
-  videos: Record<string, TVideoFileMeta>;
-};
 
 // The service names every file it generates after the video's hash, and the track's stream index
 // for per-track files, so each track of a video gets its own audio and waveform
@@ -60,10 +41,6 @@ const fileNames = {
   audio: (hash: string, trackId: number) => `${hash}-${trackId}.m4a`,
   waveform: (hash: string, trackId: number) => `${hash}-${trackId}.json`,
 };
-
-function cacheDir(trackedFolder: string, kind: TCacheKind): string {
-  return path.join(trackedFolder, '.mrmlcache', kind);
-}
 
 function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -218,74 +195,17 @@ function toAudioTrack({ cache: _, waveform: __, ...track }: TAudioTrackMeta): TA
   return track;
 }
 
-// Version 0 kept no media metadata: cache files were found by the video's key alone, and only the
-// first audio stream was ever converted. This builds an entry for every project video from the
-// files that are already there, so nothing is regenerated after the update.
-async function migrateV0Media(
-  store: Readonly<Record<string, unknown>>
-): Promise<Partial<TMediaData>> {
-  // 1. The cache lives in the tracked folder; without one there's nothing to pick up
-  const trackedFolder = store.trackedFolder;
-  if (typeof trackedFolder !== 'string' || !fs.existsSync(trackedFolder)) return {};
-
-  // 2. Version 0 kept each project's video path in projectStates, keyed by projectId. Skip videos
-  //    that are gone, and ones another project already shares.
-  const legacyStates = (store.projectStates ?? {}) as Record<string, { videoPath?: unknown }>;
-  const videoPaths = new Map<string, string>();
-  for (const legacyState of Object.values(legacyStates)) {
-    const videoPath = legacyState?.videoPath;
-    if (typeof videoPath !== 'string' || !fs.existsSync(videoPath)) continue;
-    const hash = runWithFallback(() => getFileCacheKey(videoPath), null);
-    if (hash && !videoPaths.has(hash)) videoPaths.set(hash, videoPath);
-  }
-
-  const entries = await Promise.all(
-    [...videoPaths].map(async ([hash, videoPath]): Promise<[string, TVideoFileMeta]> => {
-      // 3. Thumbnail: version 0 used the same {hash}.jpg name, so it carries over as is
-      const entry: TVideoFileMeta = { filePath: videoPath };
-      const thumb = `${hash}.jpg`;
-      if (fs.existsSync(path.join(cacheDir(trackedFolder, 'previews'), thumb))) {
-        entry.thumb = thumb;
-      }
-
-      // 4. Aspect ratio and audio tracks, probed the same way the service does at runtime. A file
-      //    ffprobe can't read gets them on first use instead.
-      const [aspectRatio, tracks] = await Promise.all([
-        getAspectRatio(videoPath),
-        listAudioTracks(videoPath).catch(() => null),
-      ]);
-      if (aspectRatio !== null) entry.aspectRatio = aspectRatio;
-      if (!tracks) return [hash, entry];
-      entry.audioTracks = tracks;
-
-      // 5. Converted audio: version 0 wrote {hash}.m4a from the first audio stream (-map 0:a:0)
-      const audio = `${hash}.m4a`;
-      const audioFile = path.join(cacheDir(trackedFolder, 'audio'), audio);
-      if (!tracks.length || !fs.existsSync(audioFile)) return [hash, entry];
-
-      // 6. Waveform: version 0 keyed it by the converted audio file, not the video
-      const waveformKey = runWithFallback(() => getFileCacheKey(audioFile), null);
-      const waveform = waveformKey && `${waveformKey}.json`;
-      const hasWaveform =
-        waveform && fs.existsSync(path.join(cacheDir(trackedFolder, 'waveforms'), waveform));
-
-      // 7. The old audio and waveform belong to the first track, the stream version 0 converted;
-      //    the other tracks start with nothing cached
-      entry.audioTracks = tracks.map((track, index) =>
-        index === 0 ? { ...track, cache: audio, ...(hasWaveform && { waveform }) } : track
-      );
-      return [hash, entry];
-    })
-  );
-  return { videos: Object.fromEntries(entries) };
-}
-
 export class MediaService extends Service<TMediaData> {
   static readonly serviceName = 'media';
 
   readonly versioning: TVersioning<TMediaData> = {
     0: migrateV0Media,
   };
+
+  // Tracks the health of the video bundle the renderer selected; the service only exposes it
+  private readonly healthBeacon = new MediaHealthBeacon();
+  // Windows that already stop the beacon when they close
+  private readonly beaconSenders = new WeakSet<Electron.WebContents>();
 
   readonly handlers = [
     // Waveform peaks of one audio track of a video (the first one by default): number[] of
@@ -350,6 +270,31 @@ export class MediaService extends Service<TMediaData> {
       }
     ),
 
+    // Starts tracking the bundle of the video the renderer just selected (the video, its converted
+    // audio and waveform for that track): checks it at once and returns its status, then reports
+    // on MEDIA_BUNDLE_LOST_CHANNEL to the calling window the moment any part breaks. Throws when
+    // the beacon is still tracking or failed: the renderer must stop it first (see
+    // MediaHealthBeacon).
+    this.handle(
+      'start-health-beacon',
+      async (event: IpcMainInvokeEvent, videoPath: string, trackId: number) => {
+        const sender = event.sender;
+        const bundle = this.resolveBundle(videoPath, trackId);
+        const status = await this.healthBeacon.start(bundle, (lost) => {
+          if (!sender.isDestroyed()) sender.send(MEDIA_BUNDLE_LOST_CHANNEL, lost);
+        });
+        // A closed window can't hear about its bundle any more: nothing left to track for it
+        if (!this.beaconSenders.has(sender)) {
+          this.beaconSenders.add(sender);
+          sender.once('destroyed', () => this.healthBeacon.stop());
+        }
+        return status;
+      }
+    ),
+
+    // Stops tracking (and acknowledges a failure). A beacon that isn't tracking stays as it is.
+    this.handle('stop-health-beacon', () => this.healthBeacon.stop()),
+
     // Drops the metadata of videos no project uses any more, or whose file changed since, along
     // with every cache file no remaining entry refers to. Videos in use are resolved by the project
     // service from its own list, not the renderer's, so this is right even if the renderer's
@@ -390,6 +335,26 @@ export class MediaService extends Service<TMediaData> {
       }
     }),
   ] as const;
+
+  // The files a video plays from for one of its tracks, as the service knows them. A part it has
+  // no file for (or a video that can't even be read) comes back null and counts as broken.
+  private resolveBundle(videoPath: string, trackId: number): TMediaBundleFiles {
+    const trackedFolder = ScannerService.getInstance().getWorkFolderPath();
+    const hash = runWithFallback(() => getFileCacheKey(videoPath), null);
+    const track = hash ? this.readVideos()[hash]?.audioTracks?.find((t) => t.id === trackId) : null;
+    const inCache = (kind: TCacheKind, fileName: string | undefined) =>
+      trackedFolder && fileName ? path.join(cacheDir(trackedFolder, kind), fileName) : null;
+    return {
+      videoPath,
+      trackId,
+      files: {
+        video: videoPath,
+        audio: inCache('audio', track?.cache),
+        waveform: inCache('waveforms', track?.waveform),
+      },
+      validators: { waveform: (file) => readWaveformFile(file) !== null },
+    };
+  }
 
   private requireTrackedFolder(): string {
     const trackedFolder = ScannerService.getInstance().getWorkFolderPath();

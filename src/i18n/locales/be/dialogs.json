@@ -84,5 +84,10 @@
     "skippedCovering": "Будзе праігнаравана {{count}} радкоў, якія цалкам перакрываюцца з {{total}}",
     "skippedUnbreakable": "Будзе праігнаравана {{count}} радкоў, задоўгіх для разбівання з {{total}}",
     "confirmButton": "Выправіць"
+  },
+  "videoBundleLost": {
+    "title": "Памылка медыя",
+    "message": "Відэа або яго кэш былі змененыя ці выдаленыя",
+    "pickAnotherVideoButton": "Абраць іншае відэа"
   }
 }

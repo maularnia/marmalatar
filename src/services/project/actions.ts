@@ -177,30 +177,31 @@ export async function writeProjectEditorState(
 
 // ── Video path ───────────────────────────────────────────────────────────────
 
-/** Remembers the project's video and audio track on this device. Resolves whether it was saved:
- * callers apply the video to the store only then, so the store never shows what the file lacks. */
-async function saveProjectVideo(
+/** Remembers the project's video and audio track on this device, or removes them when videoPath is
+ * null. Resolves whether it was written: callers apply the video to the store only then, so the
+ * store never shows what the file lacks. */
+async function setProjectVideo(
   projectId: string,
   videoPath: string | null,
-  audioTrackId: number
+  audioTrackId: number | null = null
 ): Promise<boolean> {
+  const removing = videoPath === null;
   try {
-    await writeProjectEditorState(projectId, { videoPath, audioTrackId });
+    await writeProjectEditorState(
+      projectId,
+      removing ? { videoPath: null, audioTrackId: null } : { videoPath, audioTrackId }
+    );
   } catch (err) {
-    toast.push(makeVideoPathSaveFailedMessage(toErrorMessage(err)));
+    const message = toErrorMessage(err);
+    toast.push(
+      removing
+        ? makeVideoPathRemovalFailedMessage(message)
+        : makeVideoPathSaveFailedMessage(message)
+    );
     return false;
   }
   void folder.cleanupMediaCache().catch(() => {});
   return true;
-}
-
-async function removeProjectVideoPath(projectId: string): Promise<void> {
-  try {
-    await writeProjectEditorState(projectId, { videoPath: null, audioTrackId: null });
-    void folder.cleanupMediaCache().catch(() => {});
-  } catch (err) {
-    toast.push(makeVideoPathRemovalFailedMessage(toErrorMessage(err)));
-  }
 }
 
 // ── List and file ────────────────────────────────────────────────────────────
@@ -354,9 +355,9 @@ async function openWithReselectedVideo(project: TProjectEntry, bannerKey: string
   });
   if (
     !selection ||
-    !(await saveProjectVideo(project.projectId, selection.videoPath, selection.audioTrack.id))
+    !(await setProjectVideo(project.projectId, selection.videoPath, selection.audioTrack.id))
   ) {
-    await removeProjectVideoPath(project.projectId);
+    await setProjectVideo(project.projectId, null);
     await applyLoadedProject(project, null);
     return;
   }
@@ -370,6 +371,16 @@ let isChangingVideo = false;
 /** Asks for another video for the open project through the media service's popup chain, saves it,
  * then loads it in the player at the active line and reports it. Nothing changes when the user
  * gives up at any step or the save fails. Does nothing while a change is already running. */
+// The selected video's files broke while it was open: the media service has already cleared the
+// selection. The project remembers it has no video now (its next open won't retry the broken
+// files), and the user may pick another one.
+async function handleVideoBundleLost(): Promise<void> {
+  const projectId = Service.select(selectProjectId);
+  if (projectId) await setProjectVideo(projectId, null);
+  if (await media.confirmVideoBundleLost()) await changeProjectVideo();
+}
+media.setBundleLostHandler(() => void handleVideoBundleLost());
+
 export async function changeProjectVideo(): Promise<void> {
   if (isChangingVideo) return;
   isChangingVideo = true;
@@ -380,7 +391,7 @@ export async function changeProjectVideo(): Promise<void> {
     const projectId = Service.select(selectProjectId);
     if (
       projectId &&
-      !(await saveProjectVideo(projectId, selection.videoPath, selection.audioTrack.id))
+      !(await setProjectVideo(projectId, selection.videoPath, selection.audioTrack.id))
     )
       return;
 
@@ -411,7 +422,7 @@ export async function changeProjectAudioTrack(): Promise<void> {
 
     const projectId = Service.select(selectProjectId);
     const videoPath = media.get.videoFilePath();
-    if (projectId && !(await saveProjectVideo(projectId, videoPath, track.audioTrack.id))) {
+    if (projectId && !(await setProjectVideo(projectId, videoPath, track.audioTrack.id))) {
       return;
     }
     media.applyAudioTrack(track);
@@ -459,7 +470,7 @@ export async function openProject(project: TProjectEntry): Promise<void> {
   }
   // The saved track may have been replaced by the first one (gone, or never chosen)
   if (selection.audioTrack.id !== editorState.audioTrackId) {
-    await saveProjectVideo(project.projectId, savedPath, selection.audioTrack.id);
+    await setProjectVideo(project.projectId, savedPath, selection.audioTrack.id);
   }
 
   await applyLoadedProject(project, selection);

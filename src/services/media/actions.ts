@@ -4,6 +4,7 @@ import {
   makeAudioExtractionFailedMessage,
   makeCacheCleanupFailedMessage,
   makeCacheCleanupSuccessMessage,
+  makeHealthBeaconFailedMessage,
   makeVideoPlaybackErrorMessage,
 } from '@src/services/media/toasts';
 import type { TAudioTrack } from '@bridge/definitions/audioTrack';
@@ -22,7 +23,9 @@ import {
   setVideoDurationMs,
   setWaveformPeaks,
   videoChanged,
+  clearVideo as clearVideoState,
 } from './slice';
+import type { TMediaBundleStatus } from '@bridge/definitions/mediaBundle';
 import { pickVideoAudioTrack, type TAudioTrackData, type TVideoSelection } from './videoFlow';
 
 // The media service's operations: the video and audio elements (a muted video plus a separate
@@ -182,13 +185,81 @@ export function reportVideoUnplayable(): void {
   toast.push(makeVideoPlaybackErrorMessage());
 }
 
+// ── Bundle health ────────────────────────────────────────────────────────────
+// The main process's health beacon watches the files the selected video plays from (the video, and
+// its audio and waveform in the cache) and reports when any of them breaks. This side decides what
+// it tracks: it always stops the beacon before starting it, and stops it when the video goes. The
+// beacon rejects being started without a stop and stays failed until stopped, so a misuse here
+// surfaces as an error toast instead of going unnoticed.
+
+let onBundleLostHandler: ((status: TMediaBundleStatus) => void) | null = null;
+
+/** What should happen after a broken bundle has cleared the selection -- the project service's
+ * part: remember the project has no video, and offer to pick another */
+export function setBundleLostHandler(handler: (status: TMediaBundleStatus) => void): void {
+  onBundleLostHandler = handler;
+}
+
+const isCurrentBundle = (status: TMediaBundleStatus): boolean =>
+  Service.select(selectVideoFilePath) === status.videoPath &&
+  Service.select(selectAudioTrackId) === status.trackId;
+
+// Beacon calls run one after another, in the order they were made: two selections in quick
+// succession must not interleave their stop/start pairs (the second start would find the first
+// one still tracking and rightly be refused)
+let beaconQueue: Promise<void> = Promise.resolve();
+
+function queueBeaconCall(call: () => Promise<void>): Promise<void> {
+  beaconQueue = beaconQueue.then(async () => {
+    try {
+      await call();
+    } catch (err) {
+      toast.push(makeHealthBeaconFailedMessage(toErrorMessage(err)));
+    }
+  });
+  return beaconQueue;
+}
+
+function stopTrackingBundle(): Promise<void> {
+  return queueBeaconCall(() => IPC.media.stopHealthBeacon());
+}
+
+function trackBundle(videoPath: string, trackId: number): Promise<void> {
+  return queueBeaconCall(async () => {
+    await IPC.media.stopHealthBeacon();
+    const status = await IPC.media.startHealthBeacon(videoPath, trackId);
+    if (!status.ok) handleBundleLost(status);
+  });
+}
+
+// Clears the selection at once -- the player and audio stop using the broken files -- then hands
+// over to the project service. A report about a video or track no longer selected is stale.
+function handleBundleLost(status: TMediaBundleStatus): void {
+  if (status.ok || !isCurrentBundle(status)) return;
+  applyVideo(null);
+  onBundleLostHandler?.(status);
+}
+
+// The renderer lives as long as the window: one subscription for good
+IPC.media.onBundleLost(handleBundleLost);
+
+/** No video any more (a project closed, or a new one started without one), and nothing to track */
+export function clearVideo(): void {
+  void stopTrackingBundle();
+  Service.dispatch(clearVideoState());
+}
+
 // ── Applying a selection ─────────────────────────────────────────────────────
 
 /** Shows a complete video selection (from media.pickVideo or loadSavedVideo) in the player, or no
  * video for null. Only the store: persisting it is the caller's (the project service's) job. */
 export function applyVideo(selection: TVideoSelection | null): void {
   loadVideo(selection?.videoPath ?? null, selection?.audioPath);
-  if (!selection) return;
+  if (!selection) {
+    void stopTrackingBundle();
+    return;
+  }
+  void trackBundle(selection.videoPath, selection.audioTrack.id);
   Service.dispatch(
     setVideoData({
       thumbnail: selection.thumbnail,
@@ -204,6 +275,9 @@ export function applyVideo(selection: TVideoSelection | null): void {
 /** Switches the open video to another of its audio tracks (from media.pickAudioTrack), keeping the
  * playback position. Paused first, so the new audio can't start out of sync with the video. */
 export function applyAudioTrack(track: TAudioTrackData): void {
+  // Another track plays from other cache files: those are the ones to watch now
+  const videoPath = Service.select(selectVideoFilePath);
+  if (videoPath) void trackBundle(videoPath, track.audioTrack.id);
   pause();
   Service.dispatch(setAudioTrack({ track: track.audioTrack }));
   Service.dispatch(setWaveformPeaks(track.waveformPeaks));

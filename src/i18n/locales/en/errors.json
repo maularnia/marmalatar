@@ -176,5 +176,8 @@
   },
   "tempoAutoFixFailed": {
     "title": "Failed to apply the tempo standard"
+  },
+  "healthBeaconFailed": {
+    "title": "Video health check failed"
   }
 }

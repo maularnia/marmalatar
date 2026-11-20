@@ -16,6 +16,19 @@ export const confirmAudioDataFailed = () =>
     }
   );
 
+/** The selected video's files (the video, or its audio or waveform in the cache) were deleted or
+ * broke while it was open. Resolves true for "Pick another video", false for "Continue without
+ * video". */
+export const confirmVideoBundleLost = () =>
+  modal.confirm(
+    FlowFailedDialog,
+    { title: t('videoBundleLost.title'), message: t('videoBundleLost.message') },
+    {
+      confirmButton: { children: t('videoBundleLost.pickAnotherVideoButton') },
+      dismissButton: { children: t('videoSelect.continueWithoutVideoButton') },
+    }
+  );
+
 /** The track's audio or waveform couldn't be extracted. Resolves true to go back (`retryLabel`:
  * another track, or another video when there's only one), false to give up (`dismissLabel`). */
 export const confirmWaveformFailed = (
