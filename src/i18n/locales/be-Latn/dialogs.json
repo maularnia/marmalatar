@@ -84,5 +84,10 @@
     "skippedCovering": "Budzie prajhnaravana {{count}} radkoŭ, jakija całkam pierakryvajucca z {{total}}",
     "skippedUnbreakable": "Budzie prajhnaravana {{count}} radkoŭ, zadoŭhich dla razbivannia z {{total}}",
     "confirmButton": "Vypravić"
+  },
+  "videoBundleLost": {
+    "title": "Pamyłka miedyja",
+    "message": "Videa abo jaho keš byli zmienienyja ci vydalienyja",
+    "pickAnotherVideoButton": "Abrać inšaje videa"
   }
 }

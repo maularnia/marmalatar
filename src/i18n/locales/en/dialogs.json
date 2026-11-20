@@ -84,5 +84,10 @@
     "skippedCovering": "{{count}}/{{total}} lines that completely overlap will be ignored",
     "skippedUnbreakable": "{{count}}/{{total}} lines too long to break will be ignored",
     "confirmButton": "Fix"
+  },
+  "videoBundleLost": {
+    "title": "Media error",
+    "message": "The video or its cache was changed or deleted",
+    "pickAnotherVideoButton": "Pick another video"
   }
 }

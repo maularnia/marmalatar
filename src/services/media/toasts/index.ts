@@ -24,6 +24,11 @@ export function makeAudioExtractionFailedMessage(message?: string): TToastParams
   };
 }
 
+/** The health beacon refused a start or stop: a flaw in how the renderer drives it */
+export function makeHealthBeaconFailedMessage(message: string): TToastParams {
+  return { type: TMessageType.ERROR, title: tErrors('healthBeaconFailed.title'), message };
+}
+
 export function makeAudioTracksListFailedMessage(): TToastParams {
   return { type: TMessageType.ERROR, title: tErrors('audioTracksListFailed.title') };
 }

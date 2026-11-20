@@ -176,5 +176,8 @@
   },
   "tempoAutoFixFailed": {
     "title": "Nie atrymałasia prymianić standart tempu"
+  },
+  "healthBeaconFailed": {
+    "title": "Nie atrymałasia pravieryć stan videa"
   }
 }

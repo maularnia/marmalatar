@@ -1,9 +1,11 @@
 import { Service } from '@src/services/Service';
 import { loadSavedVideo, pickVideo } from './videoFlow';
+import { confirmVideoBundleLost } from './dialogs/flowFailed/confirmFlowFailed';
 import {
   applyAudioTrack,
   applyVideo,
   cleanMediaCache,
+  clearVideo,
   getAudioElement,
   getAudioTrackLabel,
   getCurrentTimeMs,
@@ -19,9 +21,9 @@ import {
   seekToLine,
   seekToMs,
   setCurrentTimeMs,
+  setBundleLostHandler,
 } from './actions';
 import {
-  clearVideo,
   selectActiveLineIndex,
   selectThumbnail,
   selectAspectRatio,
@@ -43,7 +45,6 @@ export type { TVideoSelection } from './videoFlow';
 
 export const media = new Service('media', {
   actions: {
-    clearVideo,
     setActiveLineIndex,
   },
   selectors: {
@@ -60,6 +61,9 @@ export const media = new Service('media', {
   functions: {
     applyAudioTrack,
     applyVideo,
+    clearVideo,
+    confirmVideoBundleLost,
+    setBundleLostHandler,
     cleanMediaCache,
     getAudioElement,
     getAudioTrackLabel,
