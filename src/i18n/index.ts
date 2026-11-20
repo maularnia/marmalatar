@@ -12,6 +12,9 @@ void i18n.use(initReactI18next).init({
   lng: UI_LOCALE_DEFAULT,
   fallbackLng: UI_LOCALE_DEFAULT,
   interpolation: { escapeValue: false },
+  // i18next 27 treats '' as missing and falls back to English by default. Some translations are
+  // empty on purpose (e.g. tooltips.*.navigationHintPrefix in Belarusian), so '' stays a value.
+  returnEmptyString: true,
 });
 
 export default i18n;

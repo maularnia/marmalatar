@@ -2,7 +2,7 @@ import { TColor, TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { clamp } from '@src/utils/numbers';
 import classNames from 'classnames';
-import { createRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import styled, { css } from 'styled-components';
 
 export enum TProgressBarSize {
@@ -27,11 +27,8 @@ const Runner = styled.div`
   top: 0;
   left: 0;
   width: var(--runner-width);
-  background: linear-gradient(
-    to right,
-    var(--progress-bar-start-color) 0%,
-    var(--progress-bar-end-color) 100%
-  );
+  /* A flat fill in the bar's colour (its default shade) */
+  background: var(--progress-bar-color);
 `;
 
 const ProgressBarSizeToHeightMap: { [key in TProgressBarSize]: string } = {
@@ -85,23 +82,19 @@ export default function ProgressBar({
   allowTransition = true,
   animateLoading = false,
 }: ProgressBarProps) {
-  const runnerRef = createRef<HTMLDivElement>();
+  const runnerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!runnerRef.current) return;
     const precisePercentage = total > 0 ? clamp((value / total) * 100, 0, 100) : 0;
     const percentage = precise ? precisePercentage : Math.round(precisePercentage);
 
     runnerRef.current.style.setProperty('--runner-width', `${percentage}%`);
-  }, [value, total, runnerRef]);
+  }, [value, total, runnerRef, precise]);
   useEffect(() => {
     if (!runnerRef.current) return;
     runnerRef.current.style.setProperty(
-      '--progress-bar-start-color',
+      '--progress-bar-color',
       CSSColor(color, TShade.DEFAULT, 100)
-    );
-    runnerRef.current.style.setProperty(
-      '--progress-bar-end-color',
-      CSSColor(color, TShade.BRIGHT, 100)
     );
   }, [color, runnerRef]);
 

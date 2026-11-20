@@ -1,8 +1,12 @@
+import { projects } from '@src/services/project';
+import { normalizeKeyboardEvent } from '@utils/keyboard';
 import { providerNoop } from '@utils/noop';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { setThemeSelection } from '@store/slices/app';
-import { closeOverlays, selectCurrentOverlay } from '@store/slices/overlays';
-import { openExportOverlay, openSettingsOverlay } from '@store/thunks';
+import { useMemoizedObject } from '@src/utils/useMemoizedObject';
+import { settings } from '@src/services/settings';
+import { glossaries } from '@src/services/glossary';
+import { promptTemplates } from '@src/services/prompt';
+import { modal } from '@src/services/modal';
+import { useAppSelector } from '@store/hooks';
 import { TThemeSelection } from '@src/types';
 import {
   KeyHubProvider,
@@ -16,10 +20,9 @@ import {
 import {
   createContext,
   PropsWithChildren,
+  use,
   useCallback,
-  useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -200,19 +203,25 @@ const GlobalKeystrokeContext = createContext<TGlobalKeystrokeContext>({
   setPaused: noop,
 });
 
-export const useGlobalKeystrokeRegistry = () => useContext(GlobalKeystrokeContext);
+export function useGlobalKeystrokeRegistry(): TGlobalKeystrokeContext {
+  return use(GlobalKeystrokeContext);
+}
 
-const useAppGlobalKeyStroke = (
+const useAppGlobalKeystroke = (
   keystroke: keyof TGlobalShortcuts,
   action: (event: KeyboardEvent) => void
 ) => useShortcut(keystroke, action);
 
-// Must render inside KeyHubProvider (needs its context for useShortcut/useShortcutPause) and must
-// itself wrap ConfirmationProvider, so Confirmation can reach `useGlobalKeystrokePause` via React
-// context regardless of where its dialogs are portaled.
+// Must render inside KeyHubProvider (needs its context for useShortcut/useShortcutPause).
+function closeOverlays(): void {
+  promptTemplates.closeEditor();
+  glossaries.closeEditor();
+  settings.close();
+  settings.closeExport();
+  projects.closeArchive();
+}
+
 function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
-  const dispatch = useAppDispatch();
-  const currentOverlay = useAppSelector(selectCurrentOverlay);
   const slotsRef = useRef(new Map<TKeystrokeSlot, () => void>());
   const pauseSourcesRef = useRef(new Set<string>());
   const [isPaused, setIsPaused] = useState(false);
@@ -237,52 +246,68 @@ function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {
     setIsPaused(pauseSourcesRef.current.size > 0);
   }, []);
 
-  // While anything (currently: a confirmation dialog) has paused us, none of these shortcuts fire.
+  // The entire ctrl+1..0/esc isolation mechanism for dialogs: while a modal window is open, none of
+  // these shortcuts fire, so they can't steal focus from it
+  const isModalOpen = useAppSelector(modal.selectIsOpen);
+  useEffect(() => setPaused('modal', isModalOpen), [isModalOpen, setPaused]);
+
+  // While anything has paused us, none of these shortcuts fire.
   useShortcutPause(isPaused);
 
-  useAppGlobalKeyStroke('focusSlot1', () => focusSlot(1));
-  useAppGlobalKeyStroke('focusSlot2', () => focusSlot(2));
-  useAppGlobalKeyStroke('focusSlot3', () => focusSlot(3));
-  useAppGlobalKeyStroke('focusSlot4', () => focusSlot(4));
-  useAppGlobalKeyStroke('focusSlot5', () => focusSlot(5));
-  useAppGlobalKeyStroke('focusSlot6', () => focusSlot(6));
-  useAppGlobalKeyStroke('focusSlot7', () => focusSlot(7));
-  useAppGlobalKeyStroke('focusSlot8', () => focusSlot(8));
-  useAppGlobalKeyStroke('focusSlot9', () => focusSlot(9));
-  useAppGlobalKeyStroke('focusSlot0', () => focusSlot(0));
-  useAppGlobalKeyStroke('closeOverlay', () => {
-    if (currentOverlay !== null) dispatch(closeOverlays());
+  useAppGlobalKeystroke('focusSlot1', () => focusSlot(1));
+  useAppGlobalKeystroke('focusSlot2', () => focusSlot(2));
+  useAppGlobalKeystroke('focusSlot3', () => focusSlot(3));
+  useAppGlobalKeystroke('focusSlot4', () => focusSlot(4));
+  useAppGlobalKeystroke('focusSlot5', () => focusSlot(5));
+  useAppGlobalKeystroke('focusSlot6', () => focusSlot(6));
+  useAppGlobalKeystroke('focusSlot7', () => focusSlot(7));
+  useAppGlobalKeystroke('focusSlot8', () => focusSlot(8));
+  useAppGlobalKeystroke('focusSlot9', () => focusSlot(9));
+  useAppGlobalKeystroke('focusSlot0', () => focusSlot(0));
+  // Overlays are exclusive: each owner keeps its own open state, and this caller closes the others
+  // before opening one. Esc closes whichever is open, without saving the prompt or glossary editor.
+  useAppGlobalKeystroke('closeOverlay', () => {
+    closeOverlays();
   });
-  useAppGlobalKeyStroke('openSettings', () => {
-    dispatch(openSettingsOverlay());
+  useAppGlobalKeystroke('openSettings', () => {
+    closeOverlays();
+    settings.open();
   });
-  useAppGlobalKeyStroke('openExport', () => {
-    dispatch(openExportOverlay());
+  useAppGlobalKeystroke('openExport', () => {
+    closeOverlays();
+    settings.openExport();
   });
-  useAppGlobalKeyStroke('switchToDarkTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.DARK));
+  useAppGlobalKeystroke('switchToDarkTheme', () => {
+    settings.setThemeSelection(TThemeSelection.DARK);
   });
-  useAppGlobalKeyStroke('switchToLightTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.LIGHT));
+  useAppGlobalKeystroke('switchToLightTheme', () => {
+    settings.setThemeSelection(TThemeSelection.LIGHT);
   });
-  useAppGlobalKeyStroke('switchToSystemTheme', () => {
-    dispatch(setThemeSelection(TThemeSelection.SYSTEM));
+  useAppGlobalKeystroke('switchToSystemTheme', () => {
+    settings.setThemeSelection(TThemeSelection.SYSTEM);
   });
 
-  const value = useMemo<TGlobalKeystrokeContext>(
-    () => ({ registerZone, unregisterZone, setPaused }),
-    [registerZone, unregisterZone, setPaused]
-  );
+  const value = useMemoizedObject<TGlobalKeystrokeContext>({
+    registerZone,
+    unregisterZone,
+    setPaused,
+  });
 
-  return (
-    <GlobalKeystrokeContext.Provider value={value}>{children}</GlobalKeystrokeContext.Provider>
-  );
+  return <GlobalKeystrokeContext value={value}>{children}</GlobalKeystrokeContext>;
 }
 
 // The one deliberately `document`-scoped EventBus in the app -- these shortcuts must be reachable
-// regardless of where focus is. Isolation while a confirmation is open is achieved by
-// GlobalKeystrokeRegistry pausing this EventBus via React context, not by narrowing this target.
-export default function GlobalKeystrokeDispatcher({ children }: PropsWithChildren) {
+// regardless of where focus is. Isolation while a modal is open is achieved by
+// GlobalKeystrokeRegistry pausing this EventBus, not by narrowing this target.
+// It also owns the one `document`-level keydown normaliser: in the capture phase, before React's
+// root listener and every EventBus (this one and the zones'), each keydown is made to read as its
+// US-layout key, so `keyCombo`s written for a Latin layout fire under any (ctrl+з is ctrl+z).
+export function GlobalKeystrokeDispatcher({ children }: PropsWithChildren) {
+  useEffect(() => {
+    document.addEventListener('keydown', normalizeKeyboardEvent, true);
+    return () => document.removeEventListener('keydown', normalizeKeyboardEvent, true);
+  }, []);
+
   return (
     <KeyHubProvider
       shortcuts={globalShortcuts}
@@ -299,12 +324,4 @@ export default function GlobalKeystrokeDispatcher({ children }: PropsWithChildre
       <GlobalKeystrokeRegistry>{children}</GlobalKeystrokeRegistry>
     </KeyHubProvider>
   );
-}
-
-export function useGlobalKeystrokePause(paused: boolean, source = 'default') {
-  const { setPaused } = useGlobalKeystrokeRegistry();
-  useEffect(() => {
-    setPaused(source, paused);
-    return () => setPaused(source, false);
-  }, [paused, source, setPaused]);
 }

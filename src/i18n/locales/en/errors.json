@@ -8,21 +8,16 @@
     "invalidUrl": "Invalid URL"
   },
   "settings": {
-    "autoMergeThresholdRequired": "This field is required",
-    "autoMergeThresholdMin": "Value must be > 1",
     "timeAdjustmentStepRequired": "This field is required",
-    "timeAdjustmentStepMin": "Value must be > 1"
+    "timeAdjustmentStepMin": "Value must be > 1",
+    "tempoRequired": "This field is required",
+    "tempoMin": "Value must be ≥ 1"
   },
   "glossaryPairForm": {
     "originalRequired": "This field is required",
     "translationRequired": "This field is required"
   },
-  "videoSelect": {
-    "fileRequired": "This field is required"
-  },
   "mainMenuListItem": {
-    "nameTooLong": "Max length is [{{maxLength}}]",
-    "nameAlreadyExists": "File with this name already exists",
     "unreachableCommitError": "How did you get that message? [UNREACHABLE 01]"
   },
   "subtitleFileSelect": {
@@ -30,15 +25,6 @@
     "parseFailedFallback": "Failed to parse the file",
     "fileRequired": "This field is required",
     "noValidLines": "Invalid or empty file, nothing to work with"
-  },
-  "videoFileSelect": {
-    "fileRequired": "This field is required",
-    "pathUnresolved": "Unable to resolve file path",
-    "stillProcessing": "Video processing in progress",
-    "unsupportedVideoCodec": "Video can not be played. Unsupported video codec.",
-    "audioExtractionFailed": "Unable to extract or convert the audio track.",
-    "unplayableConvertedAudio": "Unable to convert audio to a playable format.",
-    "processingFailed": "Video file processing failed."
   },
   "import": {
     "projectTitleRequired": "This field is required",
@@ -76,22 +62,19 @@
   },
   "spellcheck": {
     "missingDictionaryAsset": "Missing dictionary [{{suffix}}]",
-    "dictionaryLoadFailed": "Unable to load dictionary [{{url}}]"
+    "dictionaryLoadFailed": "Unable to load dictionary [{{url}}]",
+    "workerFailed": "Could not start the spellchecker"
   },
   "project": {
-    "corrupted": "Corrupted project file",
     "invalidFile": "Corrupted data at [{{path}}]: {{message}}",
     "incompatibleVersion": "This project file was created by a newer version of the app and can't be opened here",
     "cannotRead": "Unable to read project file",
-    "cannotSaveWithoutName": "Project name is required",
     "nameRequired": "Project name is required",
     "alreadyExists": "File with the same name already exists",
     "folderNotTracked": "No working folder",
-    "editorStateReadFailed": "Unable to read editor state",
-    "progressPersistFailed": "Unable to save translation progress"
+    "editorStateReadFailed": "Unable to read editor state"
   },
   "createNewProject": {
-    "emojiSelectionFailed": "Failed to pick a random project emoji",
     "fileSaveFailed": "Failed to save the project file to disk",
     "editorStateSaveFailed": "Failed to save the project editor state",
     "cacheUpdateFailed": "Failed to add the project to the project cache"
@@ -114,9 +97,6 @@
     "fieldNamesEmpty": "Field can not be empty",
     "duplicateFieldName": "Field [{{fieldName}}] already exists"
   },
-  "confirmationProvider": {
-    "confirmDestroyed": "The confirmation provider message has already been destroyed"
-  },
   "videoPlaybackError": {
     "title": "Can not play video",
     "message": "Video may have been corrapted or deleted"
@@ -126,9 +106,6 @@
   },
   "audioExtractionFailed": {
     "title": "Can not process audio. File may be corrupted, or uses an audio codec unknown to science"
-  },
-  "autoMergeFailed": {
-    "title": "Auto-merge failed"
   },
   "spellcheckUnavailable": {
     "title": "Spellcheck unavailable"
@@ -142,21 +119,16 @@
   "videoFileCheckFailed": {
     "title": "Unable to check the video file"
   },
-  "waveformExtractionFailed": {
-    "title": "Unable to extract audio waveform"
-  },
-  "thumbnailGenerationFailed": {
-    "title": "Unable to generate video thumbnail"
-  },
   "projectLoadFailed": {
     "title": "Project can not be loaded"
+  },
+  "folderChangeSaveFailed": {
+    "title": "Folder not changed",
+    "message": "The open project could not be saved: {{error}}"
   },
   "noPromptTemplate": {
     "title": "No prompt template selected",
     "message": "To send a request to the AI integration chosen, please select a prompt template to use for the request"
-  },
-  "unableToTranslateLine": {
-    "title": "Failed to translate the line"
   },
   "aiTranslationJobFailed": {
     "title": "Bulk translation failed"
@@ -178,12 +150,6 @@
   "copyOperationFailed": {
     "title": "Failed to copy text"
   },
-  "mergeLinesFailed": {
-    "title": "Merge failed"
-  },
-  "deleteLineFailed": {
-    "title": "Unable to delete line"
-  },
   "lineTooShortToSplit": {
     "title": "Unable to split the line",
     "message": "Line duration is too short"
@@ -201,5 +167,17 @@
   "cacheCleanupFailed": {
     "title": "Cache cleaning error",
     "message": "Unable to clean up the cache"
+  },
+  "audioTracksListFailed": {
+    "title": "Unable to read the video audio tracks"
+  },
+  "spellcheckDictionaryUpdateFailed": {
+    "title": "Could not add the word to the dictionary"
+  },
+  "tempoAutoFixFailed": {
+    "title": "Failed to apply the tempo standard"
+  },
+  "healthBeaconFailed": {
+    "title": "Video health check failed"
   }
 }

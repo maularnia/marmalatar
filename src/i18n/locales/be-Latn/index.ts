@@ -1,7 +1,6 @@
 import app from './app.json';
 import dialogs from './dialogs.json';
 import editor from './editor.json';
-import editorAside from './editorAside.json';
 import editorControls from './editorControls.json';
 import errors from './errors.json';
 import exportChapter from './export.json';
@@ -18,7 +17,6 @@ export default {
   app,
   dialogs,
   editor,
-  editorAside,
   editorControls,
   errors,
   export: exportChapter,

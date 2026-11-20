@@ -10,5 +10,6 @@
   "table": {
     "originalHeader": "Original",
     "translationHeader": "Translation"
-  }
+  },
+  "overlayTitle": "Glossary"
 }

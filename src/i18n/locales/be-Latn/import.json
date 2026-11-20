@@ -14,16 +14,17 @@
     "removeAudioCuesSuffix": "kštałtu [music], [sigh] i t.p.",
     "fixShortDashes": "Vypravić karotkija złučki na doŭhija"
   },
-  "video": {
-    "sectionTitle": "Videa"
+  "project": {
+    "sectionTitle": "Prajekt"
   },
-  "projectTitle": {
-    "sectionTitle": "Nazva"
-  },
-  "translationDirection": {
-    "sectionTitle": "Kirunak pierakładu",
-    "subtext": "Abiarycie movu krynicy i pierakładu"
+  "languageAndMode": {
+    "sectionTitle": "Mova i režym",
+    "subtext": "Abiarycie, ci budziecie vy pierakładać ci redahavać subcitry, i ich movy",
+    "modePrefix": "Ja źbirajusia",
+    "translateButton": "pierakładać",
+    "editButton": "redahavać"
   },
   "backButton": "Nazad",
-  "startButton": "Pačać"
+  "startButton": "Pačać",
+  "title": "Stvaryć novy prajekt"
 }

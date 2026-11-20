@@ -1,12 +1,10 @@
-import EditorStateProvider from '@providers/EditorStateProvider';
-import { TShade } from '@src/theme/definitions';
-import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
-import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
+import { CSSVar } from '@src/theme/utils';
 import styled from 'styled-components';
 import { Outlet } from 'react-router-dom';
 import MainMenu from '../segments/menu';
 import Overlays from '../segments/overlays/Overlays';
-import { useMainMenuState } from '../providers/MenuStateProvider';
+import { menu } from '@src/services/menu';
+import { useAppSelector } from '@store/hooks';
 import classNames from 'classnames';
 
 const Root = styled.div`
@@ -14,16 +12,18 @@ const Root = styled.div`
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 240px 1px auto;
+  grid-template-columns: ${CSSVar('appMenuExpandedWidth')} minmax(0, 1fr);
   position: relative;
   &.dynamic {
-    grid-template-columns: 34px 1px auto;
+    grid-template-columns: ${CSSVar('appMenuCollapsedWidth')} minmax(0, 1fr);
+    /* The collapsed sidebar's column is narrower than the expanded sidebar an overlay keeps open
+       over the content, so overlays (positioned in the content column) move right by the rest */
+    --menu-overlap: calc(${CSSVar('appMenuExpandedWidth')} - ${CSSVar('appMenuCollapsedWidth')});
   }
 `;
 
 const RootMenu = styled.div`
   overflow: hidden;
-  background-color: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 10)};
 `;
 
 const RootContent = styled.div`
@@ -49,19 +49,19 @@ const RootContent = styled.div`
 `;
 
 export default function GeneralLayout() {
-  const { dynamic, setCompact } = useMainMenuState();
+  const dynamic = useAppSelector(menu.selectIsDynamic);
   return (
-    <EditorStateProvider>
-      <Root className={classNames({ dynamic })}>
-        <RootMenu onMouseEnter={() => setCompact(false)} onMouseLeave={() => setCompact(true)}>
-          <MainMenu />
-        </RootMenu>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.VERTICAL} />
-        <RootContent>
-          <Outlet />
-          <Overlays />
-        </RootContent>
-      </Root>
-    </EditorStateProvider>
+    <Root className={classNames({ dynamic })}>
+      <RootMenu
+        onMouseEnter={() => menu.setPointerOutside(false)}
+        onMouseLeave={() => menu.setPointerOutside(true)}
+      >
+        <MainMenu />
+      </RootMenu>
+      <RootContent>
+        <Outlet />
+        <Overlays />
+      </RootContent>
+    </Root>
   );
 }

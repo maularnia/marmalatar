@@ -1,5 +1,6 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
+import type { TColor } from '@src/theme/definitions';
 import { Fragment, HTMLAttributes, PropsWithChildren, ReactNode } from 'react';
 import styled from 'styled-components';
 import Tag, { TTagSize, TTagVariant } from './Tag';
@@ -18,8 +19,9 @@ type TooltipProps = PropsWithChildren<{
   side?: 'top' | 'right' | 'bottom' | 'left';
 }>;
 
-const Content = styled(TooltipPrimitive.Content)`
+const Content = styled(TooltipPrimitive.Content)<{ $interactive: boolean }>`
   z-index: 1000;
+  pointer-events: ${({ $interactive }) => ($interactive ? 'auto' : 'none')};
   font-family: ${CSSVar('fontTextSansSerif')};
   font-size: ${CSSVar('tooltipFontSize')};
   border-radius: ${CSSVar('tooltipBorderRadius')};
@@ -82,15 +84,21 @@ const KeystrokeHint = styled.div`
 type TooltipKeystrokeHintProps = {
   keys: ReactNode[];
   size?: TTagSize;
+  /** The key tags' color; the theme's text color unless shown over something else (e.g. video) */
+  color?: TColor;
 };
 
-export const TooltipKeystrokeHint = ({ keys, size = TTagSize.NANO }: TooltipKeystrokeHintProps) => {
+export const TooltipKeystrokeHint = ({
+  keys,
+  size = TTagSize.NANO,
+  color = ThemeColors.TEXT,
+}: TooltipKeystrokeHintProps) => {
   return (
     <KeystrokeHint>
       {keys.map((key, index) => (
         <Fragment key={index}>
           {index > 0 && ' + '}
-          <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={size}>
+          <Tag variant={TTagVariant.SECONDARY} color={color} size={size}>
             {key}
           </Tag>
         </Fragment>
@@ -114,12 +122,23 @@ export default function Tooltip({
     return <>{children}</>;
   }
 
+  // A hover tooltip shows only while its trigger is hovered: leaving the trigger closes it at once,
+  // and the tooltip itself takes no pointer events, so it can't be hovered to stay open. Only a
+  // controlled one (forceOpen, e.g. EmoPicker's picker) is interactive content and keeps both.
+  const isInteractive = typeof forceOpen === 'boolean';
+
   return (
-    <TooltipPrimitive.Provider delayDuration={delay}>
-      <TooltipPrimitive.Root open={typeof forceOpen === 'boolean' ? forceOpen : undefined}>
+    <TooltipPrimitive.Provider delayDuration={delay} disableHoverableContent={!isInteractive}>
+      <TooltipPrimitive.Root open={isInteractive ? forceOpen : undefined}>
         <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
-          <Content side={side} align={align} sideOffset={sideOffset} aria-label={ariaLabel}>
+          <Content
+            $interactive={isInteractive}
+            side={side}
+            align={align}
+            sideOffset={sideOffset}
+            aria-label={ariaLabel}
+          >
             {label}
             <Arrow width={8} height={4} />
           </Content>

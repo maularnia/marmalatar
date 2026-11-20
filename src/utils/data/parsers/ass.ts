@@ -66,6 +66,14 @@ function hasLetters(text: string): boolean {
   return /\p{L}/u.test(text);
 }
 
+// ASS's Name/Actor field has no quoting mechanism (see splitAssFields above): field splitting is a
+// literal ASCII ',' scan, so joining multiple character names with a real ',' would shift every
+// later column and corrupt Text on re-import. The fullwidth comma '，' (U+FF0C) looks like a normal
+// comma-separated list (matching the internal ', '-joined storage format) but is a different code
+// point the ASCII-comma field splitter ignores. parseAss below converts it back to ',' before
+// parsing, so exporting then re-importing a multi-actor line round-trips correctly.
+const ASS_ACTOR_NAME_SEPARATOR = '，';
+
 export function parseAss(text: string): TSubtitleLine[] {
   const lines = text.replace(/\r\n/g, '\n').split('\n');
 
@@ -127,7 +135,9 @@ export function parseAss(text: string): TSubtitleLine[] {
         : actorIndex >= 0
           ? (values[actorIndex] ?? '')
           : '';
-    const character = serializeCharacterList(parseCharacterList(rawCharacter));
+    const character = serializeCharacterList(
+      parseCharacterList(rawCharacter.split(ASS_ACTOR_NAME_SEPARATOR).join(','))
+    );
 
     if (startTime == null || endTime == null || !subtitleText || !hasLetters(subtitleText)) {
       continue;
@@ -173,8 +183,9 @@ export function exportAsAss(lines: TSubtitleLine[], sourceFps: number, targetFps
     const start = formatAssTimestamp(startMs);
     const end = formatAssTimestamp(endMs);
     const text = lineBreakInternalToAss(normalizeText(line.output));
+    const name = parseCharacterList(line.character).join(`${ASS_ACTOR_NAME_SEPARATOR} `);
 
-    return `Dialogue: 0,${start},${end},Default,,0,0,0,,${text}`;
+    return `Dialogue: 0,${start},${end},Default,${name},0,0,0,,${text}`;
   });
 
   return [...header, ...events].join('\n');

@@ -4,10 +4,10 @@ import i18n from '@src/i18n';
 const t = i18n.getFixedT(null, 'export');
 
 export enum ExportFormats {
-  'JSON' = 'json',
-  'CSV' = 'csv',
-  'ASS' = 'ass',
-  'SRT' = 'srt',
+  JSON = 'json',
+  CSV = 'csv',
+  ASS = 'ass',
+  SRT = 'srt',
 }
 export const ExportFormatlabels: { [key in ExportFormats]: string } = {
   [ExportFormats.ASS]: t('formats.ass'),
@@ -17,10 +17,10 @@ export const ExportFormatlabels: { [key in ExportFormats]: string } = {
 };
 
 export enum FrameRate {
-  'FPS24' = '24',
-  'FPS25' = '25',
-  'FPS23P976' = '23.976',
-  'FPS23P97' = '23.97',
+  FPS24 = '24',
+  FPS25 = '25',
+  FPS23P976 = '23.976',
+  FPS23P97 = '23.97',
 }
 
 export type ExporterProps = {

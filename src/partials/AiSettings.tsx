@@ -1,16 +1,12 @@
-import { aiClients } from '@src/services/ai/clients';
-import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/config';
-import type { AiClient } from '@src/services/ai/types';
-import {
-  selectAIintegrationEnabled,
-  selectSelectedIntegrationId,
-  setAIintegrationEnabled,
-} from '@src/store/slices/app';
-import { selectIsProjectOpen } from '@src/store/slices/project';
+import { aiClients } from '@src/services/ai/connector/clients';
+import { aiClientSettingsForms } from '@src/services/ai/connector/settingsForms';
+import { DEFAULT_AI_CLIENT_ID } from '@src/services/ai/connector/config';
+import { settings } from '@src/services/settings';
+import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import Toggle from '@src/toolkit/Toggle';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { initializeAiIntegration, selectTranslationIsBusy } from '@store/slices/aiTranslation';
+import { useAppSelectors } from '@store/hooks';
+import { ai } from '@src/services/ai';
 import {
   FormSectionEntry,
   FormsRow,
@@ -27,16 +23,15 @@ import AiUserInputSection from './PromptSetup';
 
 export default function AiSettings() {
   const { t } = useTranslation('settings');
-  const dispatch = useAppDispatch();
-  const isBusy = useAppSelector(selectTranslationIsBusy);
-
-  const selectedIntegrationId = useAppSelector(selectSelectedIntegrationId);
-  const aiTranslationEnabled = useAppSelector(selectAIintegrationEnabled);
-  const isProjectOpen = useAppSelector(selectIsProjectOpen);
+  const [isBusy, selectedIntegrationId, aiTranslationEnabled, isProjectOpen] = useAppSelectors(
+    ai.selectIsBusy,
+    settings.selectSelectedIntegrationId,
+    settings.selectAIintegrationEnabled,
+    projects.selectIsOpen
+  );
 
   const activeId = selectedIntegrationId ?? DEFAULT_AI_CLIENT_ID;
-  const activeClient = (aiClients as Record<string, AiClient>)[activeId];
-  const SelectedForm = activeClient?.SettingsForm;
+  const SelectedForm = aiClientSettingsForms[activeId];
 
   const [settingsValid, setSettingsValid] = useState(false);
 
@@ -53,13 +48,13 @@ export default function AiSettings() {
 
   const handleSwitchIntegration = (newId: string) => {
     setSettingsValid(false);
-    void dispatch(initializeAiIntegration(newId));
+    void ai.initializeAiIntegration(newId);
   };
 
   return (
     <>
       {isBusy && (
-        <FormsRow>
+        <FormsRow animated>
           <Message
             type={TMessageVariant.TERTIARY}
             size={TMessageSize.M}
@@ -69,14 +64,14 @@ export default function AiSettings() {
           </Message>
         </FormsRow>
       )}
-      <FormsRow>
-        <FormsSection>
+      <FormsRow animated>
+        <FormsSection animated>
           <FormsSectionTitle
             icon={TIcon.AI}
             after={
               <Toggle
                 checked={aiTranslationEnabled}
-                onChange={(e) => dispatch(setAIintegrationEnabled(e.currentTarget.checked))}
+                onChange={(e) => settings.setAIintegrationEnabled(e.currentTarget.checked)}
               />
             }
           >
@@ -86,8 +81,8 @@ export default function AiSettings() {
       </FormsRow>
       {aiTranslationEnabled && (
         <>
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.ROBOT} subtext={t('aiSettings.providers.subtext')}>
                 {t('aiSettings.providers.title')}
               </FormsSectionTitle>

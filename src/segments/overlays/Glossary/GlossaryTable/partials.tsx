@@ -1,5 +1,5 @@
 import { CSSVar } from '@src/theme/utils';
-import TinyDivEditor from '@ui-toolkit/TinyDivEditor';
+import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
 import styled from 'styled-components';
 
 export const EGlossaryTable = styled.div`
@@ -32,8 +32,8 @@ export const EGlossaryBackdrop = styled.div`
   top: 0;
   width: 100%;
   height: 100%;
-  opacity: ${CSSVar('mainTableLineBackdropOpacity')};
-  border: ${CSSVar('mainTableLineBackdropBorderWidth')} solid transparent;
+  opacity: 0;
+  border: ${CSSVar('mainTableFocusBackdropBorderWidth')} solid transparent;
   will-change: background-color, opacity;
 `;
 
@@ -84,23 +84,23 @@ export const EGlossaryTableLine = styled.div`
       border-bottom-color: transparent;
     }
     ${EGlossaryBackdrop} {
-      opacity: ${CSSVar('mainTableLineBackdropOpacityFocus')};
+      opacity: ${CSSVar('mainTableFocusBackdropOpacity')};
       z-index: 2;
       background: radial-gradient(
         circle at center bottom,
-        ${CSSVar('mainTableLineBackdropBgFocus')} 0%,
+        ${CSSVar('mainTableFocusBackdropBg')} 0%,
         transparent 99%
       );
-      backdrop-filter: ${CSSVar('mainTableLineBackdropFilterFocus')};
-      height: calc(100% + (${CSSVar('mainTableLineBackdropSpacingY')} * 2));
-      width: calc(100% + (${CSSVar('mainTableLineBackdropSpacingX')} * 2));
-      top: calc(${CSSVar('mainTableLineBackdropSpacingY')} * -1);
-      left: calc(${CSSVar('mainTableLineBackdropSpacingX')} * -1);
+      backdrop-filter: ${CSSVar('mainTableFocusBackdropFilter')};
+      height: calc(100% + (${CSSVar('mainTableFocusBackdropSpacingY')} * 2));
+      width: calc(100% + (${CSSVar('mainTableFocusBackdropSpacingX')} * 2));
+      top: calc(${CSSVar('mainTableFocusBackdropSpacingY')} * -1);
+      left: calc(${CSSVar('mainTableFocusBackdropSpacingX')} * -1);
       transition:
         top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
         height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border-radius: ${CSSVar('mainTableLineBackdropRadius')};
-      border-color: ${CSSVar('mainTableLineBackdropBorderColorFocus')};
+      border-radius: ${CSSVar('mainTableFocusBackdropRadius')};
+      border-color: ${CSSVar('mainTableFocusBackdropBorderColor')};
     }
   }
 `;

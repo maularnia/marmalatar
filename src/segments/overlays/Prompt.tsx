@@ -1,13 +1,6 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
 import type { PromptTemplateFileDataType } from '@src/utils/data/schemas';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  selectCurrentPromptTemplate,
-  selectPromptTemplateData,
-  setPromptTemplateData,
-} from '@store/slices/aiPromptEditor';
-import { closeOverlays } from '@store/slices/overlays';
-import { savePromptTemplate } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { promptTemplates } from '@src/services/prompt';
 import {
   FormsContent,
   FormsRow,
@@ -19,8 +12,8 @@ import { TIcon } from '@ui-toolkit/Icon/icons';
 import TextArea from '@ui-toolkit/TextArea';
 import { FALLBACK_EMOJI } from '@utils/emoji';
 import { useTranslation } from 'react-i18next';
-import { Loader } from '../dialogs/Loader';
 import Overlay from './Overlay';
+import { OVERLAY_APPEAR_DURATION } from '@src/toolkit/motion/transitions';
 
 const emptyFormData: PromptTemplateFileDataType = {
   version: 1,
@@ -31,35 +24,24 @@ const emptyFormData: PromptTemplateFileDataType = {
 
 export default function PromptOverlay() {
   const { t } = useTranslation(['prompt', 'messages']);
-  const dispatch = useAppDispatch();
-  const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
-  const promptTemplateData = useAppSelector(selectPromptTemplateData);
-  const { show: showLoading } = useInfoWindow(Loader);
+  const [currentPromptTemplate, promptTemplateData] = useAppSelectors(
+    promptTemplates.selectCurrent,
+    promptTemplates.selectData
+  );
 
   const formData = promptTemplateData ?? emptyFormData;
 
   const handleChange = (field: keyof PromptTemplateFileDataType, value: string) => {
-    dispatch(setPromptTemplateData({ ...formData, [field]: value }));
-  };
-
-  const handleClose = async () => {
-    await showLoading(
-      {
-        message: t('messages:promptTemplate.savingLabel', { title: formData.title || '...' }),
-        animate: false,
-      },
-      dispatch(savePromptTemplate()) as Promise<unknown>
-    );
-    dispatch(closeOverlays());
+    promptTemplates.setData({ ...formData, [field]: value });
   };
 
   if (!currentPromptTemplate) return null;
 
   return (
-    <Overlay onClose={() => void handleClose()}>
-      <FormsContent>
-        <FormsRow>
-          <FormsSection>
+    <Overlay title={t('prompt:overlayTitle')} onClose={() => void promptTemplates.saveAndClose()}>
+      <FormsContent animated delay={OVERLAY_APPEAR_DURATION}>
+        <FormsRow animated>
+          <FormsSection animated>
             <FormsSectionTitle icon={TIcon.AI_FILE} subtext={t('subtext')}>
               {t('title')}
             </FormsSectionTitle>

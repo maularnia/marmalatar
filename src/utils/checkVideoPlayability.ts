@@ -2,6 +2,17 @@ export function pathToFileUrl(filePath: string): string {
   return 'file:///' + filePath.replace(/\\/g, '/');
 }
 
+/** Lets go of a throwaway media element's file. Its handlers go first, and the source is removed
+ * rather than set to '': `src = ''` resolves to the page's own URL, which fails to load and fires
+ * `error` -- an onerror that "cleans up" with `src = ''` again then loops forever, flooding the
+ * main thread. */
+export function releaseMediaElement(el: HTMLMediaElement): void {
+  el.onerror = null;
+  el.onloadedmetadata = null;
+  el.removeAttribute('src');
+  el.load();
+}
+
 const AUDIO_DECODE_TIMEOUT_MS = 1500;
 const AUDIO_DECODE_POLL_MS = 50;
 
@@ -18,11 +29,11 @@ export function checkVideoDecodable(filePath: string): Promise<void> {
     el.preload = 'metadata';
 
     el.onerror = () => {
-      el.src = '';
+      releaseMediaElement(el);
       reject(new Error('Video is not decodable'));
     };
     el.onloadedmetadata = () => {
-      el.src = '';
+      releaseMediaElement(el);
       resolve();
     };
 
@@ -51,7 +62,7 @@ export function checkAudioPlayability(filePath: string): Promise<void> {
       if (pollInterval !== undefined) clearInterval(pollInterval);
       if (timeoutId !== undefined) clearTimeout(timeoutId);
       el.pause();
-      el.src = '';
+      releaseMediaElement(el);
       if (playable) {
         resolve();
       } else {

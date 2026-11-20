@@ -1,6 +1,7 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
+import { editor } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import H from '@src/toolkit/H';
 import { appearRightEase } from '@src/toolkit/motion/transitions';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
@@ -10,10 +11,13 @@ import { motion } from 'motion/react';
 import { PropsWithChildren } from 'react';
 import styled from 'styled-components';
 
+// Always starts right of the expanded sidebar: next to the static one, and past the part of a
+// collapsed (dynamic) one that expands over the content (--menu-overlap, set by GeneralLayout)
 const OverlayRoot = styled.div`
   position: absolute;
   display: flex;
   inset: 0;
+  left: var(--menu-overlap, 0px);
   z-index: 20;
 `;
 
@@ -23,15 +27,13 @@ const OverlayBackdrop = styled.div`
   top: 0;
   width: 100%;
   height: 100%;
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 70)};
+  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 90)};
   backdrop-filter: blur(${CSSVar('blurHeavy')});
 `;
 
 const OverlayInner = styled(motion.div).attrs(appearRightEase)`
   position: relative;
   width: 680px;
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 90)};
-
   overflow-y: auto;
   &::-webkit-scrollbar {
     width: ${CSSVar('appScrollbarWidth')};
@@ -51,22 +53,27 @@ const OverlayInner = styled(motion.div).attrs(appearRightEase)`
 
 const OverlayButton = styled(Button)`
   position: absolute;
-  right: 0;
-  top: 0;
+  right: ${CSSVar('size10')};
+  top: ${CSSVar('size4')};
+`;
+
+const OverlayTitle = styled(H)`
+  padding: 0 ${CSSVar('formSpacingX')};
 `;
 
 type OverlayProps = PropsWithChildren<{
   onClose: () => void;
+  title: string;
 }>;
 
-export default function Overlay({ onClose, children }: OverlayProps) {
-  const { handleFocusEditor } = useEditorActions();
+export default function Overlay({ title, onClose, children }: OverlayProps) {
   return (
     <OverlayRoot>
       <OverlayBackdrop onClick={onClose} />
       <OverlayInner>
-        <FocusTrap active onUnmount={handleFocusEditor}>
+        <FocusTrap active onUnmount={editor.focus}>
           <>
+            <OverlayTitle level={3}>{title}</OverlayTitle>
             {children}
             <OverlayButton
               size={TButtonSize.REGULAR}

@@ -10,10 +10,6 @@
   "videoUpdated": {
     "title": "Дапасавана новае відэа праекту"
   },
-  "autoMergeCancelled": {
-    "title": "Аўта-аб’яднанне скасаванае",
-    "message": "Ніводнага радку не зменена"
-  },
   "videoPathSaveFailed": {
     "title": "Не атрымалася захаваць шлях да відэа"
   },
@@ -23,9 +19,6 @@
   "projectLoaded": {
     "title": "Праект заладаваны",
     "message": "Прыемнай працы!"
-  },
-  "translationCancelled": {
-    "title": "Пераклад праз ШІ скасаваны"
   },
   "aiTranslationJobDone": {
     "title": "Заданне выкананае",
@@ -47,16 +40,8 @@
     "title": "Радок быў падзелены",
     "message": "Новы радок даданы да спісу. Нумарацыя радкоў выпраўлена"
   },
-  "mergeOperationCancelled": {
-    "title": "Аб’яднанне радкоў скасавана",
-    "message": "Ніводнага радку не зменена"
-  },
   "linesMerged": {
     "title": "Радкі былі аб’яднаныя"
-  },
-  "deleteLineCancelled": {
-    "title": "Выдаленне радка скасаванае",
-    "message": "Ніводнага радку не зменена"
   },
   "lineDeleted": {
     "title": "Радок быў выдалены",
@@ -75,18 +60,40 @@
     "renamingFile": "Перайменаванне файла"
   },
   "projectLoader": {
-    "loadingVideo": "Відэа загружаецца"
+    "loadingVideo": "Апрацоўваем відэа",
+    "blamingProcessor": "Вінавацім працэсар у марудлівасці",
+    "reevaluatingExpectations": "Пераглядаем свае чаканні",
+    "computingWaveforms": "Вылічаем хвалевыя формы",
+    "surfingWaveforms": "Сёрфім па хвалевых формах",
+    "demandingRam": "Патрабуем больш аператыўкі"
   },
   "submitNewProject": {
     "creatingProject": "Ініцыялізацыя"
   },
   "glossary": {
+    "loadingLabel": "Ладаванне гласарыя [{{title}}]",
     "savingLabel": "Захаванне гласарыя [{{title}}]"
   },
   "promptTemplate": {
+    "loadingLabel": "Ладаванне шаблону запыту [{{title}}]",
     "savingLabel": "Захаванне шаблону запыту [{{title}}]"
   },
   "cacheCleanupSuccess": {
     "title": "Кэш быў ачышчаны"
+  },
+  "audioTracksLoader": {
+    "extracting": "Чытаем звесткі пра аўдыядарожкі"
+  },
+  "tempoAutoFixed": {
+    "title": "Тэмп выпраўлены",
+    "message": "Зменена радкоў: {{count}}"
+  },
+  "tempoAutoFixNothing": {
+    "title": "Усё ў парадку",
+    "message": "Не знайшлося радкоў для выпраўлення"
+  },
+  "tempoAutoFixCancelled": {
+    "title": "Выпраўленне тэмпу скасаванае",
+    "message": "Ніводнага радку не зменена"
   }
 }

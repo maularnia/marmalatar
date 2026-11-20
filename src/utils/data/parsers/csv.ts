@@ -6,6 +6,10 @@ export const DEFAULT_CSV_COLUMN_FORMULA =
   '{line_number},{start_time},{end_time},{character},{text}';
 export const DEFAULT_CSV_TIME_FORMAT = '{hh}:{mm}:{ss}:{ff}';
 
+function lineBreakInternalToCsv(text: string): string {
+  return text.replace(/\n+/g, ' ');
+}
+
 function escapeCsvValue(value: string): string {
   if (/["\n,]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
@@ -51,7 +55,6 @@ export function exportAsCsv(
 ): string {
   const resolvedFormula = columnFormula.trim() || DEFAULT_CSV_COLUMN_FORMULA;
   const formulaParts = resolvedFormula.split(',').map((part) => part.trim());
-  const header = formulaParts.map((part) => part || '');
 
   const rows = lines.map((line) => {
     const startMs = convertTimeByFps(line.start_time, sourceFps, targetFps);
@@ -61,12 +64,12 @@ export function exportAsCsv(
       '{start_time}': formatCsvTime(startMs, targetFps, timeFormat),
       '{end_time}': formatCsvTime(endMs, targetFps, timeFormat),
       '{character}': line.character ?? '',
-      '{text}': normalizeText(line.output),
+      '{text}': lineBreakInternalToCsv(normalizeText(line.output)),
       '{completed}': String(Boolean(line.completed)),
     };
 
     return formulaParts.map((part) => escapeCsvValue(applyCsvFormula(part, values))).join(',');
   });
 
-  return [header.join(','), ...rows].join('\n');
+  return rows.join('\n');
 }

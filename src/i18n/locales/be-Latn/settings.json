@@ -1,20 +1,17 @@
 {
-  "sync": {
-    "title": "Sinchranizacyja",
-    "autoMergeThresholdLabel": "Adlehłaśc aŭta-abjadnańnia (ms)",
-    "timeAdjustmentStepLabel": "Krok karekcyi času (ms)"
+  "tempo": {
+    "title": "Temp",
+    "standard": "Standart",
+    "custom": "Svoj",
+    "maxLinesPerEntryLabel": "Maks. radkoŭ u nadpisie",
+    "maxCharsPerLineLabel": "Maks. simv. u radku",
+    "maxCharsPerSecondLabel": "Maks. simb/sek",
+    "minDurationMsLabel": "Min. praciahłaść (ms)",
+    "minIntervalFramesLabel": "Min. interval (kadraŭ)",
+    "highlightOverlaps": "Padsviečvać radki, jakija pierakryvajucca"
   },
-  "uxUi": {
-    "title": "UI/UX",
-    "scrollVideoIntoViewPrefix": "Padkručvać da videa pa naciskańni",
-    "scrollVideoIntoViewSuffix": "(tolki na małych ekranach)",
-    "askBeforeMerge": "Pytać pierad abjažnańniem",
-    "askBeforeDelete": "Pytać pierad vydaleńniem",
-    "askBeforeAITranslate": "Pytać pierad aŭta-pierakładam",
-    "askBeforeSplit": "Pytać pierad razrazańniem radka",
-    "autoMarkLinesCompleted": "Adzančać radki jak \"Hatovyja\" aŭtamatyčna",
-    "checkGrammar": "Praviarać pravapis",
-    "appLanguage": "Mova prahramy"
+  "appLanguage": {
+    "title": "Mova prahramy"
   },
   "aiSettings": {
     "busyNotice": "Nałady zabłakavanyja, pakul vykonvajecca ŠI-pierakład",
@@ -88,5 +85,21 @@
     "title": "Keš miedyja",
     "subtext": "Aŭta-ačystka papki .mrmlcache",
     "cleanButton": "Ačyscić keš"
+  },
+  "overlayTitle": "Nałady",
+  "spellcheck": {
+    "title": "Pravierka pravapisu",
+    "checkGrammar": "Praviarać pravapis",
+    "dictionariesEmpty": "U ahulnyja słoŭniki jaščę nie dadadziena nivodnaha słova",
+    "tabs": {
+      "global": "Ahulny",
+      "project": "Prajekt"
+    },
+    "dictionaries": "Słoŭniki"
+  },
+  "tabs": {
+    "general": "Ahulnyja",
+    "ai": "ŠI",
+    "spellchecker": "Pravapis"
   }
 }

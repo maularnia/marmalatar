@@ -5,19 +5,19 @@ import { HTMLMotionProps } from 'motion/react';
 import { PropsWithChildren, Ref } from 'react';
 
 export enum TButtonSize {
-  'LARGE' = 'large',
-  'REGULAR' = 'default',
-  'SMALL' = 'small',
-  'NANO' = 'nano',
+  LARGE = 'large',
+  REGULAR = 'default',
+  SMALL = 'small',
+  NANO = 'nano',
 }
 
 export enum TButtonVariant {
-  'SPECIAL' = 'special',
-  'SECONDARY_SPECIAL' = 'secondary-special',
-  'PRIMARY' = 'primary',
-  'SECONDARY' = 'secondary',
-  'TRANSPARENT' = 'transparent',
-  'TRANSPARENT_SPECIAL' = 'transparent-speacial',
+  SPECIAL = 'special',
+  SECONDARY_SPECIAL = 'secondary-special',
+  PRIMARY = 'primary',
+  SECONDARY = 'secondary',
+  TRANSPARENT = 'transparent',
+  TRANSPARENT_SPECIAL = 'transparent-speacial',
 }
 
 interface ButtonLocalProps {
@@ -42,3 +42,9 @@ export type TButtonStyledProps = {
   $iconic: boolean;
   $withContent: boolean;
 };
+
+/** CSS custom property a parent can set on a Button to change its corner radius (any
+ * `border-radius` value, e.g. `4px 0 0 4px`). The radius is drawn on an inner pseudo-element, so
+ * setting `border-radius` on the button itself has no effect. Unset, the theme's input radius
+ * applies. */
+export const BUTTON_BORDER_RADIUS_VAR = '--button-border-radius';

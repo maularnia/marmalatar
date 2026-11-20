@@ -33,3 +33,9 @@ export function useLanguageOptions(): Array<{ value: TLanguage; label: string; e
     [labels]
   );
 }
+
+/** The locale of an app language code (BE_be → be), for sorting and casing words in that
+ * language. undefined for anything that isn't such a code. */
+export function getLanguageLocale(languageCode: string): string | undefined {
+  return /^[A-Z]{2}_([a-z]{2})$/.exec(languageCode)?.[1];
+}

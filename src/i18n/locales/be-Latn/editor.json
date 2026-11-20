@@ -8,6 +8,30 @@
     "mergeDown": "Abjadnać z nižnim"
   },
   "videoPlayer": {
-    "noCharacter": "Biez piersanažu"
+    "selectVideo": "Abrać videa",
+    "playFromLine": "Prajhrać z biahučaha radka",
+    "stopToLine": "Spynić i viarnucca da pačatku abranaha radka",
+    "timeAdjustmentStep": "Krok karekcyi času (ms)",
+    "scrollIntoViewOnPlay": "Padkručvać da videa pry prajhravanni (małyja ekrany)",
+    "duration": "Praciahłasć: {{time}}"
+  },
+  "spellcheck": {
+    "loadingSuggestions": "Šukajem varyjanty...",
+    "noSuggestions": "Niama varyjantaŭ",
+    "addToProject": "Prajekt",
+    "addToGlobal": "Ahulny"
+  },
+  "tempoPanel": {
+    "lines": "Radki",
+    "charsPerLine": "Simvałaŭ u radku",
+    "charsPerLineTooLong": "Zašmat simvałaŭ u radku {{line}}",
+    "cps": "Simb/sek",
+    "seconds": "s",
+    "tooCloseToPrevious": "Papiaredni radok zanadta blizka",
+    "tooCloseToNext": "Nastupny radok zanadta blizka",
+    "tooCloseToNeighbours": "Susiednija radki zanadta blizka",
+    "durationTooShort": "Radok zakarotki pa časie",
+    "cpsTooHigh": "Zašmat tekstu dla praciahłasci radka",
+    "duration": "Praciahłasć"
   }
 }

@@ -3,13 +3,18 @@
   "characterFilter": {
     "title": "Character filter",
     "subtext": "Filers lines of specific characters. Leave empty to export everything",
-    "checkboxLabel": "Select characters",
     "selectPlaceholder": "Only export lines for"
   },
   "fpsCorrection": {
     "title": "FPS correction",
-    "subtext": "Adjust the FPS for output file",
-    "checkboxLabel": "Adjust FPS"
+    "subtext": "Adjust the FPS for output file"
+  },
+  "mergeLines": {
+    "title": "Merge lines of the same character",
+    "subtext": "Consecutive lines of the same character close enough in time are merged into one",
+    "thresholdLabel": "Max gap (ms)",
+    "thresholdRequired": "This field is required",
+    "thresholdMin": "Value must be a whole number ≥ 1"
   },
   "outputFormat": {
     "title": "Format"
@@ -61,5 +66,6 @@
       "character": "Character",
       "completed": "Completed"
     }
-  }
+  },
+  "overlayTitle": "Export"
 }

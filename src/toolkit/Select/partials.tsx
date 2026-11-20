@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import styled, { createGlobalStyle, css } from 'styled-components';
-import { TOptionSelect } from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
 import Tag, { TTagSize } from '@ui-toolkit/Tag';
 import { TIconSize, TIcon } from '@ui-toolkit/Icon/icons';
 import { TColor, TOpacity } from '@src/theme/definitions';
@@ -9,7 +9,6 @@ import { TTheme } from '@src/theme/types';
 import { ListItem } from '../ListItem';
 import Span from '@ui-toolkit/Span';
 import Icon from '@ui-toolkit/Icon/Icon';
-import { noop } from '@utils/noop';
 import type {
   DropdownIndicatorProps,
   MenuListProps,
@@ -331,7 +330,6 @@ export function buildReactSelectComponents<T extends TOptionSelect>() {
           e.stopPropagation();
           removeProps.onClick?.(e as never);
         }}
-        onRemove={noop}
       >
         {data.label}
       </Tag>

@@ -1,99 +1,52 @@
-import { SETTINGS_KEY } from '@providers/MenuActionsProvider';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
-import { useKeystrokeZone } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { selectCurrentOverlay } from '@src/store/slices/overlays';
-import { TShade } from '@src/theme/definitions';
-import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { openSettingsOverlay } from '@store/thunks';
-import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
-import { TIcon } from '@ui-toolkit/Icon/icons';
+import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { ListItem } from '@ui-toolkit/ListItem';
-import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
-import classNames from 'classnames';
-import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Logo } from '@ui-toolkit/Logo/Logo';
+import Span from '@ui-toolkit/Span';
 import styled from 'styled-components';
-import { useMainMenuState } from '../../providers/MenuStateProvider';
-import ThemeSelector from './ThemeSelector';
+import { MenuSection } from './MenuSection';
 
-const PanelSwitch = styled.div`
-  display: flex;
-  align-items: center;
-  color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 100)};
-  gap: ${CSSVar('size2')};
-`;
-
-const VanityContainer = styled.div`
-  display: flex;
-  width: min-content;
-  align-items: center;
-  gap: ${CSSVar('size6')};
-  color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 100)};
-`;
+// Same box as FileList's rows. It's a label, not a control: the item underneath stays out of
+// reach of the pointer (no hover, no pointer cursor) and of Tab.
 const Root = styled.div`
   padding: ${CSSVar('projectListSpacingY')} ${CSSVar('projectListSpacingX')};
+  pointer-events: none;
+`;
+
+// Logo draws at a fixed px size (width/height attributes); the theme's size wins over them here
+const LogoBox = styled.span`
   display: flex;
-  justify-content: space-between;
-  &.dynamic {
-    flex-direction: column;
-    align-items: stretch;
-    ${PanelSwitch} {
-      flex-direction: column;
-      align-items: stretch;
-    }
+  svg {
+    width: ${CSSVar('menuLogoSize')};
+    height: ${CSSVar('menuLogoSize')};
   }
 `;
-export default function MenuLogo() {
-  const { t } = useTranslation('menu');
-  const dispatch = useAppDispatch();
-  const { dynamic, compact } = useMainMenuState();
-  const overlay = useAppSelector(selectCurrentOverlay);
-  const { registerMenuItemRef } = useMenuRefs();
-  const { zoneRef } = useKeystrokeZone();
-  const setSettingsRef = useCallback(
-    (el: HTMLDivElement | null) => {
-      registerMenuItemRef(SETTINGS_KEY, el);
-      // Seeds the menu zone's fallback focus target -- always-mounted, so ctrl+N has somewhere
-      // reliable to go even before anything in the menu has ever been focused.
-      zoneRef.current = el;
-    },
-    [registerMenuItemRef, zoneRef]
-  );
+
+// The menu's header: one menu item with the app's logo as its icon, then its name and version.
+// Only the logo stays while the sidebar is collapsed to its icon column.
+type TMenuLogoProps = {
+  /** Whether the sidebar is collapsed: the same value FileList gets */
+  compact: boolean;
+};
+
+export default function MenuLogo({ compact }: TMenuLogoProps) {
   return (
-    <Root className={classNames({ dynamic })}>
-      <VanityContainer>
-        <ListItem tabIndex={-1} isDisabled color={ThemeColors.ACCENT2} icon={TIcon.LOGO} />
-        {!(dynamic && compact) && (
-          <Tag variant={TTagVariant.SECONDARY} size={TTagSize.NANO} color={ThemeColors.ACCENT2}>
-            {`v${__APP_VERSION__}`}
-          </Tag>
-        )}
-      </VanityContainer>
-      <Hr variant={THrVariant.DIMMED} />
-      <PanelSwitch>
-        <Tooltip
-          side={dynamic ? 'right' : 'bottom'}
-          label={
-            <TooltipComplex title={t('buttons.settings')}>
-              <TooltipKeystrokeHint keys={['Ctrl', 'S']} />
-            </TooltipComplex>
+    <Root>
+      <MenuSection>
+        <ListItem
+          tabIndex={-1}
+          compact={compact}
+          color={ThemeColors.TEXT}
+          emoji={
+            <LogoBox>
+              <Logo animated={false} />
+            </LogoBox>
           }
         >
-          <ListItem
-            ref={setSettingsRef}
-            compact={dynamic ? compact : true}
-            icon={TIcon.SETTINGS}
-            isActive={overlay === 'settings'}
-            onClick={() => dispatch(openSettingsOverlay())}
-          >
-            {t('buttons.settings')}
-          </ListItem>
-        </Tooltip>
-
-        <ThemeSelector />
-      </PanelSwitch>
+          <>
+            Marmalatar <Span color={ThemeColors.ACCENT1}>{`v${__APP_VERSION__}`}</Span>
+          </>
+        </ListItem>
+      </MenuSection>
     </Root>
   );
 }

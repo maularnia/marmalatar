@@ -75,7 +75,7 @@ export default function FocusTrap({
         !document.activeElement || document.activeElement === document.body;
       if (nothingElseHasFocus && previous && document.body.contains(previous)) previous.focus();
     };
-  }, [active]);
+  }, [active, initialFocusRef]);
 
   // The entire trap: on Tab/Shift+Tab, if focus would leave (or already isn't in) the container,
   // wrap it to the other end instead. Capture phase on `document` so it sees the key first.

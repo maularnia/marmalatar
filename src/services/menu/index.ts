@@ -1,0 +1,89 @@
+import { Service } from '@src/services/Service';
+import {
+  archiveProject,
+  cancelCreatingGlossary,
+  commitMenuItemTitle,
+  cancelCreatingPromptTemplate,
+  deleteFocusedItem,
+  deleteGlossary,
+  deleteProject,
+  deletePromptTemplate,
+  focusDefaultItem,
+  focusMenuItem,
+  moveMenuFocus,
+  openArchive,
+  openFocusedItem,
+  openGlossary,
+  openProject,
+  openPromptTemplate,
+  registerMenuItem,
+  renameFocusedItem,
+  startNewProject,
+  startRenaming,
+  stopRenaming,
+} from './actions';
+import {
+  selectIsMenuCompact,
+  selectIsMenuDynamic,
+  selectIsMenuOverlayOpen,
+  setMenuFocusWithin,
+  setMenuPointerOutside,
+  selectIsCreatingGlossary,
+  selectIsCreatingPromptTemplate,
+  selectMenuRenamingKey,
+  setIsCreatingGlossary,
+  setIsCreatingPromptTemplate,
+} from './slice';
+
+// The menu service: the sidebar's items (projects, prompt templates, glossaries, Settings and the
+// Create buttons), their keyboard navigation, rename, and opening, creating and deleting from the
+// menu. This file is its only entry point: the slice lives in slice.ts, the operations in
+// actions.ts.
+
+export { default as menuReducer } from './slice';
+export {
+  CREATE_GLOSSARY_KEY,
+  CREATE_PROJECT_KEY,
+  CREATE_PROMPT_TEMPLATE_KEY,
+  SETTINGS_KEY,
+} from './actions';
+
+export const menu = new Service('menu', {
+  actions: {
+    setIsCreatingGlossary,
+    setIsCreatingPromptTemplate,
+    setMenuFocusWithin,
+    setMenuPointerOutside,
+  },
+  selectors: {
+    selectIsCreatingGlossary,
+    selectIsCreatingPromptTemplate,
+    selectIsMenuCompact,
+    selectIsMenuDynamic,
+    selectIsMenuOverlayOpen,
+    selectMenuRenamingKey,
+  },
+  functions: {
+    archiveProject,
+    cancelCreatingGlossary,
+    commitMenuItemTitle,
+    cancelCreatingPromptTemplate,
+    deleteFocusedItem,
+    deleteGlossary,
+    deleteProject,
+    deletePromptTemplate,
+    focusDefaultItem,
+    focusMenuItem,
+    moveMenuFocus,
+    openArchive,
+    openFocusedItem,
+    openGlossary,
+    openProject,
+    openPromptTemplate,
+    registerMenuItem,
+    renameFocusedItem,
+    startNewProject,
+    startRenaming,
+    stopRenaming,
+  },
+});

@@ -1,20 +1,32 @@
 import { z } from 'zod';
-import { TLanguage } from '@src/types';
 import { ThemeColors } from '@src/theme/utils';
 import { defineVersionedContract, createVersionedReader } from '@bridge/versioning';
-import { ProjectStateV1Schema } from '@bridge/definitions/projectState';
-import { ProjectCacheEntryV1Schema as ProjectCacheEntryContractSchema } from '@bridge/definitions/projectCacheEntry';
-import { PromptTemplateCacheEntryV1Schema as PromptTemplateCacheEntryContractSchema } from '@bridge/definitions/promptTemplateCacheEntry';
-import { GlossaryCacheEntryContractV1Schema } from '@bridge/definitions/glossaryCacheEntry';
+import { ProjectStateV2Schema } from '@bridge/definitions/projectState';
+import {
+  GlossaryFileHeaderSchema,
+  GlossaryPairSchema,
+  type TGlossaryListEntry,
+} from '@bridge/definitions/glossaryEntry';
+import {
+  PROJECT_TEMPO_DEFAULTS,
+  ProjectFileBodySchema,
+  ProjectFileHeaderSchema,
+  ProjectLineSchema,
+  ProjectTempoSchema,
+} from '@bridge/definitions/projectEntry';
+import { LanguageCodeSchema } from '@bridge/definitions/language';
+import { ProjectSpellcheckSchema } from '@bridge/definitions/spellcheckDictionary';
+import { buildTempoForLanguage } from '@utils/tempoTemplates';
+import {
+  PromptTemplateFileBodySchema,
+  PromptTemplateFileHeaderSchema,
+} from '@bridge/definitions/promptTemplateEntry';
 
-const LanguageCodeSchema = z.enum(Object.values(TLanguage) as [TLanguage, ...TLanguage[]]);
-
-const PromptTemplateFileV1Schema = z.object({
-  version: z.literal(1).default(1),
-  title: z.string(),
-  emoji: z.string(),
-  promptTemplate: z.string().optional(),
-});
+// File schemas are composed from the bridge's header and body schemas, with values only this app
+// knows (languages, theme colors) narrowed
+const PromptTemplateFileV1Schema = PromptTemplateFileHeaderSchema.merge(
+  PromptTemplateFileBodySchema
+);
 export type PromptTemplateFileDataType = z.infer<typeof PromptTemplateFileV1Schema>;
 
 const PromptTemplateFileVersioning = defineVersionedContract({
@@ -27,18 +39,10 @@ const PromptTemplateFileVersioning = defineVersionedContract({
 });
 export const readPromptTemplateFileContract = createVersionedReader(PromptTemplateFileVersioning);
 
-const AIGlossaryEntrySchema = z.object({
-  original: z.string(),
-  translation: z.string(),
-});
-
-const AIGlossaryFileV1Schema = z.object({
-  version: z.literal(1).default(1),
-  title: z.string(),
-  emoji: z.string(),
+const AIGlossaryFileV1Schema = GlossaryFileHeaderSchema.extend({
   sourceLanguage: LanguageCodeSchema,
   targetLanguage: LanguageCodeSchema,
-  list: z.array(AIGlossaryEntrySchema),
+  list: z.array(GlossaryPairSchema),
 });
 export type AIGlossaryFileDataType = z.infer<typeof AIGlossaryFileV1Schema>;
 
@@ -52,16 +56,6 @@ const AIGlossaryFileVersioning = defineVersionedContract({
 });
 export const readGlossaryFileContract = createVersionedReader(AIGlossaryFileVersioning);
 
-const TranslationLineSchema = z.object({
-  line_no: z.number(),
-  start_time: z.number(),
-  end_time: z.number(),
-  input: z.string(),
-  output: z.string(),
-  character: z.string().optional(),
-  completed: z.boolean().optional(),
-});
-
 const CharacterPoolItemSchema = z.object({
   name: z.string(),
   color: z.enum(ThemeColors),
@@ -70,70 +64,76 @@ const CharacterPoolItemSchema = z.object({
 // The file mirrors the store directly: `project`/`editor` sections match the
 // `project`/`editor` redux slices 1:1 (only the subset of each slice that's
 // actual project content, not session/device-specific UI state).
-export const ProjectSaveV1Schema = z.object({
-  version: z.literal(1).default(1),
-  project: z.object({
-    projectId: z.string(),
+const ProjectSaveV1Schema = ProjectFileHeaderSchema.extend({
+  version: z.literal(1),
+  project: ProjectFileHeaderSchema.shape.project.extend({
     projectName: z.string().min(1, 'Project name is required.'),
-    emoji: z.string(),
     sourceLanguage: LanguageCodeSchema,
     targetLanguage: LanguageCodeSchema,
   }),
-  editor: z.object({
-    lines: z.array(TranslationLineSchema),
+  editor: ProjectFileBodySchema.shape.editor.extend({
+    lines: z.array(ProjectLineSchema),
     characterPool: z.array(CharacterPoolItemSchema),
   }),
 });
 
-export type TProjectFileData = z.infer<typeof ProjectSaveV1Schema>;
+// Version 2 adds the project's own spellcheck dictionary, per language code (the project service
+// writes it, projects.addToDictionary; the renderer only reads it) and the project's subtitle
+// limits, `tempo`, which the renderer writes with the body. Version 2 files from before `tempo`
+// or `spellcheck` read with their defaults: both were added without a version bump, so version 2
+// files without them exist, and the project service (which lists them) already reads them that way.
+const ProjectSaveV2Schema = ProjectSaveV1Schema.extend({
+  version: z.literal(2),
+  spellcheck: ProjectSpellcheckSchema.catch({}).default({}),
+  tempo: ProjectTempoSchema.default(PROJECT_TEMPO_DEFAULTS),
+});
+
+// The current file format
+export const ProjectSaveSchema = ProjectSaveV2Schema;
+
+// The part of the file the renderer writes; the project service owns the rest
+export type TProjectFileBody = Pick<TProjectFileData, 'editor' | 'tempo'>;
+
+export type TProjectFileData = z.infer<typeof ProjectSaveV2Schema>;
 
 const ProjectSaveVersioning = defineVersionedContract({
   name: 'ProjectSave',
   minSupportedVersion: 1,
-  currentVersion: 1,
-  schemas: { 1: ProjectSaveV1Schema },
-  transforms: {},
-  current: ProjectSaveV1Schema,
+  currentVersion: 2,
+  schemas: { 1: ProjectSaveV1Schema, 2: ProjectSaveV2Schema },
+  transforms: {
+    // A file from before spellcheck dictionaries and tempo: an empty dictionary and the standard of
+    // the project's target language (the general defaults for a code that isn't one). The project
+    // service writes it out as version 2 the next time it saves the file.
+    1: (data) => ({
+      ...(data as object),
+      version: 2,
+      spellcheck: {},
+      tempo: buildTempoForLanguage(
+        (data as { project?: { targetLanguage?: unknown } }).project?.targetLanguage as string
+      ),
+    }),
+  },
+  current: ProjectSaveV2Schema,
 });
 export const readProjectSaveFile = createVersionedReader(ProjectSaveVersioning);
 
-// Device-specific editor/UI preferences for a project, persisted in electron-store
-// keyed by projectId instead of in the .mrml file (they aren't project content).
-// Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-export const ProjectEditorStateSchema = ProjectStateV1Schema;
+// Device-specific data for a project, persisted in electron-store keyed by projectId instead of in
+// the .mrml file (it isn't project content). Re-exported from the shared bridge contract as-is --
+// no FE-only enums involved. The renderer writes only the preferences in it, see
+// TProjectStatePrefs.
+export const ProjectEditorStateSchema = ProjectStateV2Schema;
 
 export type TProjectEditorState = z.infer<typeof ProjectEditorStateSchema>;
 
-// Lightweight, persisted folder-scan cache: everything the Main Menu list needs to
-// render (name/emoji/progress) without reading any project/prompt-template/glossary
-// file content from disc. Kept alongside other project info (not a separate
-// progress-only bucket) so the Main Menu can hydrate from a single electron-store read.
-// sourceLanguage/targetLanguage are deliberately not cached here -- nothing reads them
-// off the list entry (only the live `project` redux slice, populated on project open,
-// is ever consulted), so caching them would just be dead weight kept in sync for nothing.
-// Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-const ProjectCacheEntrySchema = ProjectCacheEntryContractSchema;
-export type TProjectCacheEntry = z.infer<typeof ProjectCacheEntrySchema>;
-
-// Re-exported from the shared bridge contract as-is -- no FE-only enums involved.
-const PromptTemplateCacheEntrySchema = PromptTemplateCacheEntryContractSchema;
-export type TPromptTemplateCacheEntry = z.infer<typeof PromptTemplateCacheEntrySchema>;
-
-// Narrows the bridge contract's loose sourceLanguage/targetLanguage (plain strings) to this
-// app's TLanguage enum.
-const GlossaryCacheEntrySchema = GlossaryCacheEntryContractV1Schema.extend({
+// Narrows the glossary list entry's loose sourceLanguage/targetLanguage (plain strings) to this
+// app's TLanguage enum
+export const GlossaryListEntrySchema = z.object({
+  fileName: z.string(),
+  filePath: z.string(),
+  title: z.string(),
+  emoji: z.string(),
   sourceLanguage: LanguageCodeSchema,
   targetLanguage: LanguageCodeSchema,
-});
-export type TGlossaryCacheEntry = z.infer<typeof GlossaryCacheEntrySchema>;
-
-// Rebuilt (rather than re-exporting the bridge contract's FolderScanResultV1Schema) so its
-// `glossaries` record uses the strict, FE-narrowed GlossaryCacheEntrySchema above.
-export const FolderScanCacheSchema = z.object({
-  folder: z.string(),
-  scannedAt: z.number(),
-  projects: z.record(z.string(), ProjectCacheEntrySchema).catch({}),
-  promptTemplates: z.record(z.string(), PromptTemplateCacheEntrySchema).catch({}),
-  glossaries: z.record(z.string(), GlossaryCacheEntrySchema).catch({}),
-});
-export type TFolderScanCache = z.infer<typeof FolderScanCacheSchema>;
+}) satisfies z.ZodType<TGlossaryListEntry>;
+export type TGlossaryEntry = z.infer<typeof GlossaryListEntrySchema>;

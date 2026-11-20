@@ -1,8 +1,8 @@
 import { CSSVar } from '@src/theme/utils';
-import { useAppDispatch } from '@store/hooks';
-import { pickFolder } from '@store/thunks';
+import { folder } from '@src/services/folder';
 import Button from '@ui-toolkit/Button/Button';
 import { TIcon } from '@ui-toolkit/Icon/icons';
+import type { Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -13,13 +13,12 @@ const Root = styled.div`
   gap: ${CSSVar('formSpacingInnerX')};
 `;
 
-export default function SelectFolderButton() {
+export default function SelectFolderButton({ ref }: { ref?: Ref<HTMLButtonElement> }) {
   const { t } = useTranslation('settings');
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
 
   const handleSelectFolder = async () => {
-    const didPickFolder = await dispatch(pickFolder());
+    const didPickFolder = await folder.pick();
     if (didPickFolder) navigate('/');
   };
 
@@ -27,6 +26,7 @@ export default function SelectFolderButton() {
     <>
       <Root>
         <Button
+          ref={ref}
           style={{ justifySelf: 'flex-start' }}
           type="button"
           variant={TButtonVariant.SPECIAL}

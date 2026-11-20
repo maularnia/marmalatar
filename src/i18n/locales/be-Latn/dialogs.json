@@ -14,14 +14,6 @@
     "confirmButton": "Dadać",
     "dismissButton": "Skasavać"
   },
-  "autoMergeLines": {
-    "title": "Zapuścić aŭta-abjadnańnie?",
-    "bodyPrefix": "Skrypt znojdzie radki nie dalej ",
-    "bodyApart": "adzin ad adnaho",
-    "bodyAssigned": "pryznačanyja adnamu piersanažu",
-    "bodySuffix": "i abjadnaje ich",
-    "confirmButton": "Abjadnać"
-  },
   "copyOverride": {
     "title": "Skapijavać krynicu ŭ pierakład?"
   },
@@ -33,15 +25,13 @@
     "cleanAssStyling": "Prybrać pašyranaje farmatavańnie (błoki {} i inšyja styli ASS)",
     "cleanAudioCues": "Prybrać aŭdyjo-padkazki kštałtu [music], [sigh] i inš.",
     "fixShortDashes": "Zamianić karotkija złučki na doŭhija",
+    "removeEmptyLines": "Vydalić pustyja radki",
     "confirmButton": "Ačyścić"
   },
   "copyAllSourceToOutput": {
     "title": "Skapijavać use radki krynicy ŭ pierakład?",
     "overrideToggleLabel": "Pierazapisać isnujučyja pierakłady",
     "confirmButton": "Skapijavać"
-  },
-  "deleteLine": {
-    "title": "Vydalić radok?"
   },
   "deleteContext": {
     "title": "Vydalić kantekst?"
@@ -55,21 +45,11 @@
   "deleteProject": {
     "title": "Vydalić prajekt?"
   },
-  "lineMerge": {
-    "title": "Abjadnać hetyja radki?",
-    "bodyQuestion": "Abjadnać radki?",
-    "confirmButton": "Abjadnać"
-  },
-  "split": {
-    "title": "Razrezać radok?",
-    "body": "Razreža radok na miescy kretki",
-    "confirmButton": "Razrezać"
-  },
-  "translationOverride": {
-    "title": "Pierakłaści praz ŠI?",
-    "confirmButton": "Tak",
-    "bodyHasContent": "Heta pierazapiša tekst pierakładu",
-    "bodyWillTranslate": "radok budzie pierakładzieny ŠI"
+  "selectAudioTrack": {
+    "title": "Abiarycie aŭdyjadarožku",
+    "selectButton": "Abrać",
+    "placeholder": "Aŭdyjadarožka",
+    "unnamed": "Biez nazvy"
   },
   "videoSelect": {
     "title": "Abiarycie videa-fajł",
@@ -77,6 +57,37 @@
     "selectVideoButton": "Abrać videa",
     "continueWithoutVideoButton": "Praciahnuć biaz videa",
     "savedFileNotFoundBanner": "Nie atrymałasia adšukać videa, dapasavanaje da prajekta",
-    "processingFailedBanner": "Nie atrymałasia apracavać videa, niesumiaščalny kodek"
+    "processingFailedBanner": "Nie atrymałasia apracavać videa, niesumiaščalny kodek",
+    "readingMetadata": "Čytajem mietadanyja videa...",
+    "metadataFailed": "Nie atrymałasia pračytać mietadanyja. Videa-fajł paškodžany abo nie padtrymlivajecca"
+  },
+  "audioDataFailed": {
+    "title": "Nie atrymałasia pračytać aŭdyjadanyja",
+    "message": "Niemahčyma pračytać zviestki pra aŭdyjadarožki, abo ŭ videa niama aŭdyjadarožak",
+    "selectAnotherVideoButton": "Abrać inšaje videa"
+  },
+  "waveformFailed": {
+    "title": "Nie atrymałasia vyličyć chvalevyja formy",
+    "message": "Niemahčyma pračytać danyja aŭdyjadarožki {{track}}. Fajł paškodžany abo zakadavany nieviadomym navucy kodekam",
+    "selectOtherTrackButton": "Abrać inšuju aŭdyjadarožku"
+  },
+  "autoFixTempo": {
+    "title": "Zapuscić aŭtavyraŭliennie tempu?",
+    "column": "Słupok tekstu dla acenki",
+    "overlapping": "Radki, jakija nakładajucca adzin na adzin, buduć razdzielenyja minimalnym intervałam u <value>{{interval}}</value>",
+    "partialOverlap": "Radki, jakija častkova nakładajucca, buduć padzielienyja pasiaredzinie pierasiačennia",
+    "covering": "Radki, jakija całkam pierakryvajuć inšyja, buduć prapuščanyja",
+    "interval": "{{frames}} kadr. ({{ms}} ms)",
+    "extendForCps": "Pasprabavać padoŭžyć radki z chutkasciu vyšej za limit u <value>{{limit}} simb/sek</value>",
+    "breakLongLines": "Razbivać radki, daŭžejšyja za <value>{{limit}}</value> simvałaŭ (nadpisy bolš za <value>{{total}}</value> simvałaŭ prapuskajucca)",
+    "skippedEmpty": "Budzie prajhnaravana {{count}} biez tekstu z {{total}}",
+    "skippedCovering": "Budzie prajhnaravana {{count}} radkoŭ, jakija całkam pierakryvajucca z {{total}}",
+    "skippedUnbreakable": "Budzie prajhnaravana {{count}} radkoŭ, zadoŭhich dla razbivannia z {{total}}",
+    "confirmButton": "Vypravić"
+  },
+  "videoBundleLost": {
+    "title": "Pamyłka miedyja",
+    "message": "Videa abo jaho keš byli zmienienyja ci vydalienyja",
+    "pickAnotherVideoButton": "Abrać inšaje videa"
   }
 }

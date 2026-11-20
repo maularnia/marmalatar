@@ -47,6 +47,9 @@ export type TEntryCleanupOptions = {
   cleanAssStyling?: boolean;
   cleanAudioCues?: boolean;
   fixShortDashes?: boolean;
+  /** Drops entries whose text has no visible word content once cleaned. Off, they're kept with
+   * their (empty) text -- in the editor, an empty column is still a line to translate or fill */
+  removeEmptyLines?: boolean;
 };
 
 /** Runs the enabled cleanups, in this fixed order, against a single block of text. */
@@ -71,8 +74,8 @@ function dropBlankLinesWithinEntry(text: string): string {
  * type through the accessors, so this stays reusable for whatever "array of entries" shows up next.
  *
  * Order: cleanupText (html -> ASS styling -> audio cues -> short dashes, per the enabled options),
- * then postcheck (drop blank-only lines within each entry, then drop entries left with no visible
- * word content at all).
+ * then postcheck (drop blank-only lines within each entry, then -- with `removeEmptyLines` --
+ * drop entries left with no visible word content at all).
  */
 export function cleanupEntries<T>(
   entries: T[],
@@ -80,7 +83,10 @@ export function cleanupEntries<T>(
   getText: (entry: T) => string,
   setText: (entry: T, text: string) => T
 ): T[] {
-  return entries
-    .map((entry) => setText(entry, dropBlankLinesWithinEntry(cleanupText(getText(entry), options))))
-    .filter((entry) => hasVisibleWordContent(getText(entry)));
+  const cleaned = entries.map((entry) =>
+    setText(entry, dropBlankLinesWithinEntry(cleanupText(getText(entry), options)))
+  );
+  return options.removeEmptyLines
+    ? cleaned.filter((entry) => hasVisibleWordContent(getText(entry)))
+    : cleaned;
 }

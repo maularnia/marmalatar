@@ -55,42 +55,85 @@ const sizeValues = {
   size92: '92px',
 };
 
-const weightValues = {
-  black: 900,
-  bold: 700,
+// Every weight fonts.css declares, by its CSS name. The weights and text chapters below and the
+// families' weight lists all read from here, so a number is written once
+const fontWeights = {
+  thin: 100,
+  extralight: 200,
   light: 300,
-  extralight: 100,
   regular: 400,
+  medium: 500,
   semibold: 600,
+  bold: 700,
+  extrabold: 800,
+  black: 900,
+} as const;
+const allFontWeights: readonly number[] = Object.values(fontWeights);
+
+type TFontStyle = 'normal' | 'italic';
+export type TFontFamily = {
+  name: string;
+  weights: readonly number[];
+  styles: readonly TFontStyle[];
 };
+
+// The families fonts.css declares that the UI uses, with the weights and styles it declares for
+// each -- what preloadThemeFonts loads at startup (src/theme/fontPreload.ts). The font stacks
+// below are built from the names, so a family is added here, once. The Condensed and 18pt/36pt/48pt
+// families fonts.css also declares are not listed: nothing uses them, so they stay lazy.
+const fontFamilies = {
+  belarusFlagOverride: {
+    name: 'Belarus Flag Override',
+    weights: [fontWeights.regular],
+    styles: ['normal'],
+  },
+  twemojiMozilla: {
+    name: 'Twemoji Mozilla',
+    weights: [fontWeights.regular],
+    styles: ['normal'],
+  },
+  sofiaSans: { name: 'Sofia Sans', weights: allFontWeights, styles: ['normal', 'italic'] },
+  sourceSerif4: {
+    name: 'Source Serif 4',
+    weights: allFontWeights.filter((weight) => weight >= fontWeights.extralight),
+    styles: ['normal', 'italic'],
+  },
+  notoSans: { name: 'Noto Sans', weights: allFontWeights, styles: ['normal', 'italic'] },
+  notoSansMono: { name: 'Noto Sans Mono', weights: allFontWeights, styles: ['normal'] },
+} as const satisfies Record<string, TFontFamily>;
+export const themeFontFamilies: readonly TFontFamily[] = Object.values(fontFamilies);
+
+const quoted = (family: TFontFamily): string => `"${family.name}"`;
 
 // Prepended to every font stack below -- scoped via unicode-range (see fonts.css) to emoji/flag
 // code points only, so it never affects normal text rendering, just fills in flag glyphs that
 // Windows' default emoji font doesn't ship. "Belarus Flag Override" goes first: it only defines a
 // ligature for the BY flag sequence, so it overrides just that one flag before Twemoji Mozilla
 // handles everything else.
-const emojiFontFallback = `"Belarus Flag Override", "Twemoji Mozilla", `;
+const emojiFontFallback = `${quoted(fontFamilies.belarusFlagOverride)}, ${quoted(fontFamilies.twemojiMozilla)}, `;
 
+// The generic fallbacks ("Arial", "Times New Roman", sans-serif...) stay literal: they're the
+// system's, not ours to load
 const fonts: TThemeStaticFontsChapter = {
   ...new ThemeVariable(
     'fontHeadingSansSerif',
-    `${emojiFontFallback}"Sofia Sans", "Arial", sans-serif`
+    `${emojiFontFallback}${quoted(fontFamilies.sofiaSans)}, "Arial", sans-serif`
   ).register(),
   ...new ThemeVariable(
     'fontHeadingSerif',
-    `${emojiFontFallback}"Source Serif 4", "Times New Roman", serif`
+    `${emojiFontFallback}${quoted(fontFamilies.sourceSerif4)}, "Times New Roman", serif`
   ).register(),
   ...new ThemeVariable(
     'fontTextSansSerif',
-    `${emojiFontFallback}"Noto Sans", "Arial", sans-serif`
+    `${emojiFontFallback}${quoted(fontFamilies.notoSans)}, "Arial", sans-serif`
   ).register(),
   ...new ThemeVariable(
     'fontTextSerif',
-    `${emojiFontFallback}"Source Serif 4", "Times New Roman", serif`
+    `${emojiFontFallback}${quoted(fontFamilies.sourceSerif4)}, "Times New Roman", serif`
   ).register(),
   ...new ThemeVariable(
     'fontMonospace',
-    `${emojiFontFallback}"Noto Sans Mono", monospace`
+    `${emojiFontFallback}${quoted(fontFamilies.notoSansMono)}, monospace`
   ).register(),
 };
 
@@ -111,35 +154,37 @@ const sizes: TThemeStaticSizesChapter = {
 };
 
 const weights: TThemeStaticWeightsChapter = {
-  ...new ThemeVariable('black', weightValues.black).register(),
-  ...new ThemeVariable('bold', weightValues.bold).register(),
-  ...new ThemeVariable('light', weightValues.light).register(),
-  ...new ThemeVariable('extralight', weightValues.extralight).register(),
-  ...new ThemeVariable('regular', weightValues.regular).register(),
-  ...new ThemeVariable('semibold', weightValues.semibold).register(),
+  ...new ThemeVariable('black', fontWeights.black).register(),
+  ...new ThemeVariable('bold', fontWeights.bold).register(),
+  ...new ThemeVariable('light', fontWeights.light).register(),
+  // Kept at 100 (CSS 'thin'), which is what this variable has always been: switching it to the
+  // CSS extralight (200) would make every text using it heavier
+  ...new ThemeVariable('extralight', fontWeights.thin).register(),
+  ...new ThemeVariable('regular', fontWeights.regular).register(),
+  ...new ThemeVariable('semibold', fontWeights.semibold).register(),
 };
 
 const text: TThemeStaticTextChapter = {
   ...new ThemeVariable('sizeH1', sizeValues.size92).register(),
-  ...new ThemeVariable('weightH1', weightValues.black).register(),
+  ...new ThemeVariable('weightH1', fontWeights.black).register(),
   ...new ThemeVariable('sizeH2', sizeValues.size56).register(),
-  ...new ThemeVariable('weightH2', weightValues.black).register(),
+  ...new ThemeVariable('weightH2', fontWeights.black).register(),
   ...new ThemeVariable('sizeH3', sizeValues.size34).register(),
-  ...new ThemeVariable('weightH3', weightValues.regular).register(),
-  ...new ThemeVariable('sizeH4', sizeValues.size18).register(),
-  ...new ThemeVariable('weightH4', weightValues.regular).register(),
-  ...new ThemeVariable('sizeH5', sizeValues.size16).register(),
-  ...new ThemeVariable('weightH5', weightValues.semibold).register(),
-  ...new ThemeVariable('sizeH6', sizeValues.size14).register(),
-  ...new ThemeVariable('weightH6', weightValues.semibold).register(),
+  ...new ThemeVariable('weightH3', fontWeights.black).register(),
+  ...new ThemeVariable('sizeH4', sizeValues.size24).register(),
+  ...new ThemeVariable('weightH4', fontWeights.black).register(),
+  ...new ThemeVariable('sizeH5', sizeValues.size18).register(),
+  ...new ThemeVariable('weightH5', fontWeights.black).register(),
+  ...new ThemeVariable('sizeH6', sizeValues.size16).register(),
+  ...new ThemeVariable('weightH6', fontWeights.black).register(),
   ...new ThemeVariable('sizeTextLarge', sizeValues.size18).register(),
-  ...new ThemeVariable('weightTextLarge', weightValues.regular).register(),
+  ...new ThemeVariable('weightTextLarge', fontWeights.regular).register(),
   ...new ThemeVariable('sizeTextNano', sizeValues.size10).register(),
-  ...new ThemeVariable('weightTextNano', weightValues.light).register(),
+  ...new ThemeVariable('weightTextNano', fontWeights.light).register(),
   ...new ThemeVariable('sizeTextRegular', sizeValues.size14).register(),
-  ...new ThemeVariable('weightTextRegular', weightValues.light).register(),
+  ...new ThemeVariable('weightTextRegular', fontWeights.light).register(),
   ...new ThemeVariable('sizeTextSmall', sizeValues.size12).register(),
-  ...new ThemeVariable('weightTextSmall', weightValues.semibold).register(),
+  ...new ThemeVariable('weightTextSmall', fontWeights.semibold).register(),
 };
 
 const blur: TThemeStaticBlurChapter = {
@@ -152,8 +197,22 @@ const blur: TThemeStaticBlurChapter = {
 const screen: TThemeStaticScreenChapter = {
   ...new ThemeVariable('appScreenHorizontalSpacing', CSSVar('size2')).register(),
   ...new ThemeVariable('appScreenWidth', `920px`).register(),
+  // Editor columns per screen size (see EditorLayout). Small screens have no aside.
+  // What's left after the controls -- minmax(0, …) so wide content can't stretch it past that
+  ...new ThemeVariable('appTableWidthSmall', 'minmax(0, 1fr)').register(),
+  ...new ThemeVariable('appTableWidthMedium', '720px').register(),
+  ...new ThemeVariable('appTableWidthLarge', '760px').register(),
+  ...new ThemeVariable('appAsideWidthSmall', '0px').register(),
+  ...new ThemeVariable('appAsideWidthMedium', '1fr').register(),
+  ...new ThemeVariable('appAsideWidthLarge', '1fr').register(),
   ...new ThemeVariable('appScrollbarWidth', CSSVar('size2')).register(),
   ...new ThemeVariable('appScrollbarBorderRadius', CSSVar('inputBorderRadius')).register(),
+  // The sidebar's width while collapsed to its icon column (the grid track, the menu itself and
+  // its collapse animation all use it)
+  ...new ThemeVariable('appMenuCollapsedWidth', '44px').register(),
+  // The expanded sidebar's width: the static column on large screens, and the overlay a collapsed
+  // sidebar expands into on smaller ones
+  ...new ThemeVariable('appMenuExpandedWidth', '264px').register(),
 };
 
 const message: TThemeStaticMessageChapter = {
@@ -208,7 +267,7 @@ const inputs: TThemeStaticInputsChapter = {
   ...new ThemeVariable('inputSpacingYLarge', '0').register(),
   ...new ThemeVariable('inputSpacingYInnerLarge', CSSVar('size12')).register(),
 
-  ...new ThemeVariable('inputSpacingXRegular', CSSVar('size10')).register(),
+  ...new ThemeVariable('inputSpacingXRegular', CSSVar('size12')).register(),
   ...new ThemeVariable('inputSpacingXInnerRegular', CSSVar('size6')).register(),
   ...new ThemeVariable('inputSpacingXRegularIconic', CSSVar('size6')).register(),
   ...new ThemeVariable('inputSpacingYRegular', '0').register(),
@@ -226,11 +285,11 @@ const inputs: TThemeStaticInputsChapter = {
   ...new ThemeVariable('inputSpacingYNano', '0').register(),
   ...new ThemeVariable('inputSpacingYInnerNano', CSSVar('size2')).register(),
 
-  ...new ThemeVariable('inputBorderWidth', CSSVar('size1')).register(),
+  ...new ThemeVariable('inputBorderWidth', '0').register(),
   ...new ThemeVariable('inputBorderWidthFocus', CSSVar('size1')).register(),
   ...new ThemeVariable('inputBorderWidthHover', CSSVar('size1')).register(),
   ...new ThemeVariable('inputBorderWidthDisabled', CSSVar('size1')).register(),
-  ...new ThemeVariable('inputBorderRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('inputBorderRadius', CSSVar('size12')).register(),
   ...new ThemeVariable('inputOptionBorderRadius', CSSVar('inputBorderRadius')).register(),
   ...new ThemeVariable('inputOptionSpacingX', CSSVar('inputSpacingXRegular')).register(),
   ...new ThemeVariable('inputOptionSpacingY', CSSVar('inputSpacingYRegular')).register(),
@@ -240,7 +299,6 @@ const inputs: TThemeStaticInputsChapter = {
   ...new ThemeVariable('inputDropdownSpacingInner', CSSVar('size4')).register(),
   ...new ThemeVariable('inputOpacity', CSSVar('opacity-100')).register(),
   ...new ThemeVariable('inputOpacityDisabled', CSSVar('opacity-20')).register(),
-  ...new ThemeVariable('inputBorderWidthFocus', CSSVar('size1')),
 
   ...new ThemeVariable('buttonHeightLarge', CSSVar('size56')).register(),
   ...new ThemeVariable('buttonHeightRegular', CSSVar('size34')).register(),
@@ -256,12 +314,16 @@ const inputs: TThemeStaticInputsChapter = {
 const table: TThemeStaticTableChapter = {
   ...new ThemeVariable('mainTableWidth', '986px').register(),
   ...new ThemeVariable('mainTableTextSize', CSSVar('sizeTextRegular')).register(),
-  ...new ThemeVariable('mainTableLineBackdropRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableLineRadius', CSSVar('size12')).register(),
+  // The gap between lines: a line's own bottom padding (so the virtualized list measures it), which
+  // its background and the backdrops under it stop short of
+  ...new ThemeVariable('mainTableLineSpacing', CSSVar('size1')).register(),
   ...new ThemeVariable('mainTableLineCellSpacingX', CSSVar('size14')).register(),
   ...new ThemeVariable('mainTableLineCellSpacingY', CSSVar('size14')).register(),
-  ...new ThemeVariable('mainTableLineBackdropSpacingX', CSSVar('size4')).register(),
-  ...new ThemeVariable('mainTableLineBackdropSpacingY', CSSVar('size4')).register(),
-  ...new ThemeVariable('mainTableLineBackdropBorderWidth', CSSVar('size1')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropSpacingX', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropSpacingY', CSSVar('size4')).register(),
+  ...new ThemeVariable('mainTableFocusBackdropBorderWidth', CSSVar('size1')).register(),
   ...new ThemeVariable('mainTableLineCellSpacingInnerX', CSSVar('size1')).register(),
   ...new ThemeVariable('mainTableLineCellBorderWidth', CSSVar('size1')).register(),
   ...new ThemeVariable(
@@ -274,14 +336,6 @@ const table: TThemeStaticTableChapter = {
   ).register(),
   ...new ThemeVariable(
     'mainTableLineCellBorderWidthFocus',
-    CSSVar('mainTableLineCellBorderWidth')
-  ).register(),
-  ...new ThemeVariable(
-    'mainTableLineCellBorderWidthActive',
-    CSSVar('mainTableLineCellBorderWidth')
-  ).register(),
-  ...new ThemeVariable(
-    'mainTableLineCellBorderWidthMergeCandidate',
     CSSVar('mainTableLineCellBorderWidth')
   ).register(),
   ...new ThemeVariable('mainTableCharacterSelectorSpacingInnerX', CSSVar('size4')).register(),
@@ -321,9 +375,9 @@ const player: TThemeStaticVideoPlayerTypeChapter = {
   ...new ThemeVariable('videoPlayerSubtitleMaxHeight', `min(90%, 420px)`).register(),
   ...new ThemeVariable('videoPlayerSpacingX', CSSVar('size10')).register(),
   ...new ThemeVariable('videoPlayerSpacingY', CSSVar('size10')).register(),
-  ...new ThemeVariable('videoPlayerSpacingInnerX', CSSVar('size4')).register(),
+  ...new ThemeVariable('videoPlayerSpacingInnerX', CSSVar('size12')).register(),
   ...new ThemeVariable('videoPlayerSpacingInnerY', CSSVar('size4')).register(),
-  ...new ThemeVariable('videoPlayerBorderRadius', '0').register(),
+  ...new ThemeVariable('videoPlayerBorderRadius', '8px').register(),
   ...new ThemeVariable('videoPlayerSubtitlesSpacingX', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSubtitlesSpacingY', CSSVar('size4')).register(),
   ...new ThemeVariable('videoPlayerSubtitlesBorderRadius', CSSVar('size4')).register(),
@@ -352,16 +406,17 @@ const forms: TThemeStaticFormsChapter = {
   ...new ThemeVariable('formSpacingY', CSSVar('size12')).register(),
   ...new ThemeVariable('formSpacingInnerX', CSSVar('size10')).register(),
   ...new ThemeVariable('formSpacingInnerY', CSSVar('size18')).register(),
-  ...new ThemeVariable('formRowSpacingX', '0').register(),
-  ...new ThemeVariable('formRowSpacingY', '0').register(),
+  ...new ThemeVariable('formRowSpacingX', '0px').register(),
+  ...new ThemeVariable('formRowSpacingY', '0px').register(),
   ...new ThemeVariable('formRowSpacingInner', CSSVar('size4')).register(),
-  ...new ThemeVariable('formSectionSpacingX', '0').register(),
-  ...new ThemeVariable('formSectionSpacingY', '0').register(),
-  ...new ThemeVariable('formSectionSpacingInner', CSSVar('size6')).register(),
+  ...new ThemeVariable('formSectionSpacingX', '0px').register(),
+  ...new ThemeVariable('formSectionSpacingY', CSSVar('size10')).register(),
+  ...new ThemeVariable('formSectionSpacingInnerX', CSSVar('size24')).register(),
+  ...new ThemeVariable('formSectionSpacingInnerY', CSSVar('size14')).register(),
   ...new ThemeVariable('formSectionBorderWidth', CSSVar('size1')).register(),
-  ...new ThemeVariable('fromRowBorderWidth', '0').register(),
-  ...new ThemeVariable('fromBorderRadius', '0').register(),
-  ...new ThemeVariable('fromRowBorderRadius', '0').register(),
+  ...new ThemeVariable('fromRowBorderWidth', '0px').register(),
+  ...new ThemeVariable('fromBorderRadius', '0px').register(),
+  ...new ThemeVariable('fromRowBorderRadius', '0px').register(),
   ...new ThemeVariable('formSectionBorderRadius', CSSVar('size4')).register(),
   ...new ThemeVariable('formSectionEntrySpacingX', CSSVar('size6')).register(),
   ...new ThemeVariable('formSectionEntrySpacingY', CSSVar('size6')).register(),
@@ -369,34 +424,35 @@ const forms: TThemeStaticFormsChapter = {
 };
 
 const tooltip: TThemeStaticTooltipChapter = {
-  ...new ThemeVariable('tooltipSpacingX', CSSVar('size4')).register(),
-  ...new ThemeVariable('tooltipSpacingY', CSSVar('size4')).register(),
+  ...new ThemeVariable('tooltipSpacingX', CSSVar('size6')).register(),
+  ...new ThemeVariable('tooltipSpacingY', CSSVar('size6')).register(),
   ...new ThemeVariable('tooltipSpacingInnerX', CSSVar('size4')).register(),
   ...new ThemeVariable('tooltipSpacingInnerY', CSSVar('size4')).register(),
-  ...new ThemeVariable('tooltipBorderRadius', CSSVar('size4')).register(),
+  ...new ThemeVariable('tooltipBorderRadius', CSSVar('size12')).register(),
   ...new ThemeVariable('tooltipFontSize', CSSVar('inputTextSizeSmall')).register(),
   ...new ThemeVariable('tooltipTitleFontSize', CSSVar('inputTextSizeSmall')).register(),
 };
 
 const emojiPicker: TThemeStaticEmojiPickerChapter = {
-  ...new ThemeVariable('emojiPickerWidth', '320px').register(),
   ...new ThemeVariable('emojiPickerHeight', '400px').register(),
+  // Emoji glyphs too: the app's font stacks start with the Twemoji fallback
   ...new ThemeVariable('emojiPickerFontFamily', CSSVar('fontTextSansSerif')).register(),
   ...new ThemeVariable('emojiPickerBorderRadius', CSSVar('size4')).register(),
-  ...new ThemeVariable('emojiPickerBorderSize', CSSVar('size1')).register(),
+  // Space, not lines, separates the search row, the category tabs and the grid
+  ...new ThemeVariable('emojiPickerSpacingX', CSSVar('size6')).register(),
+  ...new ThemeVariable('emojiPickerSpacingY', CSSVar('size6')).register(),
   ...new ThemeVariable('emojiPickerCategoryFontSize', CSSVar('sizeTextSmall')).register(),
+  ...new ThemeVariable('emojiPickerCategoryFontWeight', CSSVar('weightTextSmall')).register(),
+  ...new ThemeVariable('emojiPickerCategoryLabelHeight', CSSVar('size24')).register(),
+  ...new ThemeVariable('emojiPickerNavButtonSize', CSSVar('size24')).register(),
+  ...new ThemeVariable('emojiPickerNavIconSize', CSSVar('size18')).register(),
   ...new ThemeVariable('emojiPickerEmojiSize', CSSVar('size18')).register(),
-  ...new ThemeVariable('emojiPickerTotalEmojiSize', CSSVar('size24')).register(),
   ...new ThemeVariable('emojiPickerEmojiPadding', CSSVar('size4')).register(),
-  ...new ThemeVariable('emojiPickerIndicatorHeight', CSSVar('size1')).register(),
-  ...new ThemeVariable('emojiPickerInputBorderRadius', '0').register(),
-  ...new ThemeVariable('emojiPickerInputBorderSize', '0').register(),
+  ...new ThemeVariable('emojiPickerInputHeight', CSSVar('size34')).register(),
+  ...new ThemeVariable('emojiPickerInputBorderRadius', CSSVar('size4')).register(),
   ...new ThemeVariable('emojiPickerInputFontSize', CSSVar('sizeTextSmall')).register(),
-  ...new ThemeVariable('emojiPickerInputLineHeight', '1.5').register(),
-  ...new ThemeVariable('emojiPickerInputPadding', CSSVar('size6')).register(),
+  // Read in JS too: the picker takes its column count as a prop, and its width follows the grid
   ...new ThemeVariable('emojiPickerNumColumns', 9).register(),
-  ...new ThemeVariable('emojiPickerOutlineSize', '0').register(),
-  ...new ThemeVariable('emojiPickerSkintoneBorderRadius', CSSVar('size18')).register(),
 };
 
 const mark: TThemeStaticMarkChapter = {
@@ -406,14 +462,17 @@ const mark: TThemeStaticMarkChapter = {
 
 const listItem: TThemeStaticListItemChapter = {
   ...new ThemeVariable('listItemHeight', 'auto').register(),
-  ...new ThemeVariable('listItemBorderRadius', CSSVar('size2')).register(),
-  ...new ThemeVariable('listItemSpacingX', CSSVar('size2')).register(),
-  ...new ThemeVariable('listItemSpacingY', CSSVar('size2')).register(),
+  ...new ThemeVariable('listItemBorderRadius', CSSVar('size10')).register(),
+  ...new ThemeVariable('listItemSpacingX', CSSVar('size4')).register(),
+  ...new ThemeVariable('listItemSpacingY', CSSVar('size4')).register(),
   ...new ThemeVariable('listItemSpacingInnerX', CSSVar('size4')).register(),
   ...new ThemeVariable('listItemTextSize', CSSVar('sizeTextRegular')).register(),
   ...new ThemeVariable('projectListSpacingX', CSSVar('size4')).register(),
   ...new ThemeVariable('projectListSpacingY', CSSVar('size4')).register(),
-  ...new ThemeVariable('projectListSpacingInnerY', sizeValues.size2).register(),
+  ...new ThemeVariable('projectListSpacingInnerY', sizeValues.size4).register(),
+  ...new ThemeVariable('projectListSectionBorderRadius', CSSVar('size12')).register(),
+  // The logo in the menu's header: a menu item icon's size, so it lines up with the icons below
+  ...new ThemeVariable('menuLogoSize', sizeValues.size16).register(),
 };
 
 export const staticVars: TThemeStaticVars = {

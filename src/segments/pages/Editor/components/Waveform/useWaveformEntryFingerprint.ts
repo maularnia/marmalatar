@@ -5,6 +5,9 @@ type WaveformEntryFingerprintProps = {
   isActive: boolean;
   isFocused: boolean;
   isDragging: boolean;
+  /** The line's characters as `name:color`, so a recolored or reassigned role re-renders it */
+  characterKey: string;
+  isShort: boolean;
 };
 
 export function getWaveformEntryFingerprint(props: WaveformEntryFingerprintProps): string {
@@ -15,5 +18,7 @@ export function getWaveformEntryFingerprint(props: WaveformEntryFingerprintProps
     props.isActive ? 1 : 0,
     props.isFocused ? 1 : 0,
     props.isDragging ? 1 : 0,
+    props.characterKey,
+    props.isShort ? 1 : 0,
   ].join('::');
 }

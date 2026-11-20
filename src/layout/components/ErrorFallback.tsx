@@ -1,8 +1,8 @@
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { appearUpSpring, appearUpSpringSlow } from '@ui-toolkit/motion/transitions';
+import { appearUpSpringSlow } from '@ui-toolkit/motion/transitions';
 import H from '@ui-toolkit/H';
-import { Logo, TLogoVariant } from '@ui-toolkit/Logo';
+import { Logo, TLogoVariant } from '@ui-toolkit/Logo/Logo';
 import P, { TPVariant } from '@ui-toolkit/P';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +26,7 @@ const Content = styled.div`
   gap: ${CSSVar('size10')};
 `;
 
-const LogoWrapper = styled(motion.div)`
+const LogoWrapper = styled.div`
   display: inline-block;
   color: ${CSSColor(ThemeColors.RED, TShade.DEFAULT, 100)};
   padding-bottom: ${CSSVar('size24')};
@@ -73,7 +73,7 @@ export function ErrorFallback({ error }: FallbackProps) {
   return (
     <Root>
       <Content as={motion.div} {...appearUpSpringSlow}>
-        <LogoWrapper {...appearUpSpring}>
+        <LogoWrapper>
           <Logo size={128} variant={TLogoVariant.ERROR} />
         </LogoWrapper>
         <H level={3}>{t('errorBoundary.title')}</H>

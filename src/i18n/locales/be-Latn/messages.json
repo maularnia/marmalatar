@@ -10,10 +10,6 @@
   "videoUpdated": {
     "title": "Dapasavana novaje videa prajektu"
   },
-  "autoMergeCancelled": {
-    "title": "Aŭta-abjadnannie skasavanaje",
-    "message": "Nivodnaha radku nie zmieniena"
-  },
   "videoPathSaveFailed": {
     "title": "Nie atrymałasia zachavać šlach da videa"
   },
@@ -23,9 +19,6 @@
   "projectLoaded": {
     "title": "Prajekt załadavany",
     "message": "Pryjemnaj pracy!"
-  },
-  "translationCancelled": {
-    "title": "Pierakład praz ŠI skasavany"
   },
   "aiTranslationJobDone": {
     "title": "Zadańnie vykananaje",
@@ -47,16 +40,8 @@
     "title": "Radok byŭ padzieleny",
     "message": "Novy radok dadany da spisu. Numaracyja radkoŭ vypraŭlena"
   },
-  "mergeOperationCancelled": {
-    "title": "Abjadnańnie radkoŭ skasavana",
-    "message": "Nivodnaha radku nie zmieniena"
-  },
   "linesMerged": {
     "title": "Radki byli abjadnanyja"
-  },
-  "deleteLineCancelled": {
-    "title": "Vydalennie radka skasavanaje",
-    "message": "Nivodnaha radku nie zmieniena"
   },
   "lineDeleted": {
     "title": "Radok byŭ vydaleny",
@@ -75,18 +60,40 @@
     "renamingFile": "Pierajmienavańnie fajła"
   },
   "projectLoader": {
-    "loadingVideo": "Videa zahružajecca"
+    "loadingVideo": "Apracoŭvajem videa",
+    "blamingProcessor": "Vinavacim pracesar u marudlivaści",
+    "reevaluatingExpectations": "Pierahladajem svaje čakańni",
+    "computingWaveforms": "Vyličajem chvalevyja formy",
+    "surfingWaveforms": "Siorfim pa chvalach",
+    "demandingRam": "Patrabujem bolš apieratyŭki"
   },
   "submitNewProject": {
     "creatingProject": "Inicyjalizacyja"
   },
   "glossary": {
+    "loadingLabel": "Ładavańnie głasaryja [{{title}}]",
     "savingLabel": "Zachavańnie głasaryja [{{title}}]"
   },
   "promptTemplate": {
+    "loadingLabel": "Ładavańnie šabłonu zapytu [{{title}}]",
     "savingLabel": "Zachavańnie šabłonu zapytu [{{title}}]"
   },
   "cacheCleanupSuccess": {
     "title": "Keš byŭ ačyščany"
+  },
+  "audioTracksLoader": {
+    "extracting": "Čytajem zviestki pra aŭdyjadarožki"
+  },
+  "tempoAutoFixed": {
+    "title": "Temp vypraŭleny",
+    "message": "Zmieniena radkoŭ: {{count}}"
+  },
+  "tempoAutoFixNothing": {
+    "title": "Usio ŭ paradku",
+    "message": "Nie znajšłosia radkoŭ dla vypraŭliennia"
+  },
+  "tempoAutoFixCancelled": {
+    "title": "Vypraŭlennie tempu skasavanaje",
+    "message": "Nivodnaha radku nie zmieniena"
   }
 }

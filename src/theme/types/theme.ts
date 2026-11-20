@@ -1,5 +1,5 @@
 import { TColor, TOpacity, TShade } from '@src/theme/definitions';
-import { TThemeVarsChapter } from '@src/theme/types';
+import type { TThemeVarsChapter } from '@src/theme/types/chapter';
 
 export type TThemeAppChapter = TThemeVarsChapter<{
   appScrollbarThumbColor: string;
@@ -166,44 +166,24 @@ export type TThemeTableChapter = TThemeVarsChapter<{
   mainTableLineOpacityCompleted: string;
   mainTableLineOpacityFrozen: string;
   mainTableLineOpacityHover: string;
-  mainTableLineOpacityFocus: string;
-  mainTableLineOpacityActive: string;
-  mainTableLineOpacityMergeCandidate: string;
-  mainTableLineBackdropFilter: string;
-  mainTableLineBackdropFilterFrozen: string;
-  mainTableLineBackdropFilterCompleted: string;
-  mainTableLineBackdropFilterHover: string;
-  mainTableLineBackdropFilterFocus: string;
-  mainTableLineBackdropFilterActive: string;
-  mainTableLineBackdropFilterMergeCandidate: string;
-  mainTableLineBackdropOpacity: string;
-  mainTableLineBackdropOpacityFrozen: string;
-  mainTableLineBackdropOpacityCompleted: string;
-  mainTableLineBackdropOpacityHover: string;
-  mainTableLineBackdropOpacityFocus: string;
-  mainTableLineBackdropOpacityActive: string;
-  mainTableLineBackdropOpacityMergeCandidate: string;
-  mainTableLineBackdropBg: string;
-  mainTableLineBackdropBgFrozen: string;
-  mainTableLineBackdropBgCompleted: string;
-  mainTableLineBackdropBgHover: string;
-  mainTableLineBackdropBgFocus: string;
-  mainTableLineBackdropBgActive: string;
-  mainTableLineBackdropBgMergeCandidate: string;
-  mainTableLineBackdropBorderColor: string;
-  mainTableLineBackdropBorderColorFrozen: string;
-  mainTableLineBackdropBorderColorCompleted: string;
-  mainTableLineBackdropBorderColorHover: string;
-  mainTableLineBackdropBorderColorFocus: string;
-  mainTableLineBackdropBorderColorActive: string;
-  mainTableLineBackdropBorderColorMergeCandidate: string;
+  mainTableLineFilterFrozen: string;
+  mainTableFocusBackdropFilter: string;
+  mainTableMergeCandidateBackdropFilter: string;
+  mainTableFocusBackdropOpacity: string;
+  mainTableMergeCandidateBackdropOpacity: string;
+  mainTableLineBgFrozen: string;
+  mainTableFocusBackdropBg: string;
+  mainTableMergeCandidateBackdropBg: string;
+  mainTableFocusBackdropBorderColor: string;
+  mainTableMergeCandidateBackdropBorderColor: string;
+  // The error state: a line that fails a check (today the tempo limits). Named for the state, not
+  // the check, so later checks reuse it
+  mainTableFocusBackdropBorderColorError: string;
   mainTableLineColor: string;
   mainTableLineColorFrozen: string;
   mainTableLineColorCompleted: string;
   mainTableLineColorHover: string;
   mainTableLineColorFocus: string;
-  mainTableLineColorActive: string;
-  mainTableLineColorMergeCandidate: string;
   mainTableLineCellBg: string;
   mainTableLineCellBgHover: string;
   mainTableLineCellBgFocus: string;
@@ -213,8 +193,6 @@ export type TThemeTableChapter = TThemeVarsChapter<{
   mainTableLineCellBorderColorFrozen: string;
   mainTableLineCellBorderColorHover: string;
   mainTableLineCellBorderColorFocus: string;
-  mainTableLineCellBorderColorActive: string;
-  mainTableLineCellBorderColorMergeCandidate: string;
   mainTableCharacterSelectorBg: string;
   mainTableCharacterSelectorBgHover: string;
   mainTableCharacterSelectorBgFocus: string;
@@ -269,6 +247,9 @@ export type TThemeVideoPlayerChapter = TThemeVarsChapter<{
   videoPlayerOverlayBg: string;
   videoPlayerOverlayTextBg: string;
   videoPlayerOverlayTextColor: string;
+  videoPlayerBg: string;
+  videoPlayerPanelBg: string;
+  videoPlayerPanelColor: [TColor, false];
 }>;
 
 export type TThemeFormsChapter = TThemeVarsChapter<{
@@ -287,13 +268,10 @@ export type TThemeTooltipChapter = TThemeVarsChapter<{
 
 export type TThemeEmojiPickerChapter = TThemeVarsChapter<{
   emojiPickerBg: string;
-  emojiPickerBorderColor: string;
   emojiPickerCategoryFontColor: string;
-  emojiPickerIndicatorColor: string;
-  emojiPickerInputBorderColor: string;
+  emojiPickerAccentColor: string;
   emojiPickerInputFontColor: string;
   emojiPickerInputPlaceholderColor: string;
-  emojiPickerOutlineColor: string;
   emojiPickerButtonHoverBg: string;
   emojiPickerButtonActiveBg: string;
 }>;
@@ -309,8 +287,8 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemBgOpacityActive: [TOpacity, false];
   listItemBgShadeActiveHover: [TShade, false];
   listItemBgOpacityActiveHover: [TOpacity, false];
-  listItemBgShadeFocused: [TShade, false];
-  listItemBgOpacityFocused: [TOpacity, false];
+  listItemBgShadeActiveFocus: [TShade, false];
+  listItemBgOpacityActiveFocus: [TOpacity, false];
   listItemBgShadeDisabled: [TShade, false];
   listItemBgOpacityDisabled: [TOpacity, false];
   listItemColorShade: [TShade, false];
@@ -323,10 +301,12 @@ export type TThemeListItemChapter = TThemeVarsChapter<{
   listItemColorOpacityActive: [TOpacity, false];
   listItemColorShadeActiveHover: [TShade, false];
   listItemColorOpacityActiveHover: [TOpacity, false];
-  listItemColorShadeFocused: [TShade, false];
-  listItemColorOpacityFocused: [TOpacity, false];
+  listItemColorShadeActiveFocus: [TShade, false];
+  listItemColorOpacityActiveFocus: [TOpacity, false];
   listItemColorShadeDisabled: [TShade, false];
   listItemColorOpacityDisabled: [TOpacity, false];
+  projectListSectionBg: string;
+  menuExpandedBg: string;
 }>;
 
 export type TThemeVarsTheme = TThemeAppChapter &

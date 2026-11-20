@@ -2,7 +2,7 @@ import { TColor, TShade } from '@src/theme/definitions';
 import { TTheme } from '@src/theme/types';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@src/services/settings';
 import { CSSProperties, HTMLProps, MouseEvent, Ref } from 'react';
 import styled from 'styled-components';
 import Icon from './Icon/Icon';
@@ -17,6 +17,8 @@ export enum TTagSize {
 export enum TTagVariant {
   PRIMARY = 'primary',
   SECONDARY = 'secondary',
+  // Secondary without the border: coloured text and icon only
+  TRANSPARENT = 'transparent',
 }
 
 export type TagProps = {
@@ -26,6 +28,7 @@ export type TagProps = {
   variant?: TTagVariant;
   elementRef?: Ref<HTMLDivElement>;
   onRemove?: (event: MouseEvent<HTMLButtonElement>) => void;
+  removeIcon?: TIcon;
 } & Omit<HTMLProps<HTMLDivElement>, 'color' | 'size'>;
 
 const getVariantCSS = (theme: TTheme, variant: TTagVariant, color: TColor): CSSProperties => {
@@ -38,6 +41,10 @@ const getVariantCSS = (theme: TTheme, variant: TTagVariant, color: TColor): CSSP
     case 'secondary':
       return {
         border: `${CSSVar('inputBorderWidth')} solid var(--tag-border-color, transparent)`,
+        color: 'var(--tag-color)',
+      };
+    case 'transparent':
+      return {
         color: 'var(--tag-color)',
       };
   }
@@ -161,9 +168,10 @@ export default function Tag({
   variant = TTagVariant.PRIMARY,
   elementRef,
   onRemove,
+  removeIcon = TIcon.CROSS,
   ...rootProps
 }: TagProps) {
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   return (
     <TagBrick
       ref={elementRef}
@@ -192,7 +200,7 @@ export default function Tag({
             onRemove(event);
           }}
         >
-          <Icon icon={TIcon.CROSS} size={TIconSize.XS} />
+          <Icon icon={removeIcon} size={TIconSize.XS} />
         </TagRemoveButton>
       )}
     </TagBrick>

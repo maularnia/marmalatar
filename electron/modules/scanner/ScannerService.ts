@@ -1,0 +1,148 @@
+import { BrowserWindow, dialog, type IpcMainInvokeEvent } from 'electron';
+import fs from 'fs';
+import path from 'path';
+import { runWithFallback } from '../../utils/runWithFallback';
+import { Service } from '../service/Service';
+import type { TVersioning } from '../service/storeVersioning';
+import type { TScanResult } from '../../../bridge/definitions/scan';
+import { EMPTY_SCAN, scanFolder } from './scanFolder';
+
+type TScannerData = {
+  trackedFolder: string;
+  // Listing of the tracked folder, kept until the scanner drops it
+  scan: TScanResult;
+};
+
+// Version 0 steps scan the folder the store tracked back then. Every step that runs in one
+// migration lists the same files, so their file hashes match the scan the scanner stores.
+export function scanLegacyTrackedFolder(
+  store: Readonly<Record<string, unknown>>
+): TScanResult | null {
+  const folder = store.trackedFolder;
+  return typeof folder === 'string' && fs.existsSync(folder) ? scanFolder(folder) : null;
+}
+
+// Owns the tracked folder: picking and remembering it, file I/O inside it, and listing its files.
+// It never reads file contents for the listing; the project, prompt template and glossary
+// services build their own entries from it. File I/O is for those services only, not exposed to
+// the renderer: each service checks a file is one of its listed entries before touching it.
+export class ScannerService extends Service<TScannerData> {
+  static readonly serviceName = 'scanner';
+
+  readonly versioning: TVersioning<TScannerData> = {
+    0: (store) => {
+      const scan = scanLegacyTrackedFolder(store);
+      return {
+        ...(typeof store.trackedFolder === 'string' && { trackedFolder: store.trackedFolder }),
+        ...(scan && { scan }),
+      };
+    },
+  };
+
+  readonly handlers = [
+    this.handle('get-tracked-folder', () => this.store.get('trackedFolder') ?? null),
+    this.handle('set-tracked-folder', (_: IpcMainInvokeEvent, folder: string) => {
+      this.store.set('trackedFolder', folder);
+      this.dropCache();
+    }),
+    this.handle('select-folder', async (event: IpcMainInvokeEvent) => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      const { canceled, filePaths } = await dialog.showOpenDialog(win!, {
+        properties: ['openDirectory'],
+      });
+      return canceled ? null : filePaths[0];
+    }),
+    // The listing, cached or freshly scanned -- what the renderer loads at startup
+    this.handle('get-scan', () => this.scan()),
+    // Rescan on request: picks up files changed outside the app, and returns the new listing
+    this.handle('rescan', () => {
+      this.dropCache();
+      return this.scan();
+    }),
+    // Video files live wherever the user picked them from, not inside the tracked folder -- this
+    // handler is intentionally not resolved against the tracked folder, used only to check whether a
+    // previously-saved video path is still on disk.
+    this.handle('check-foreign-file-exists', (_: IpcMainInvokeEvent, absolutePath: string) =>
+      runWithFallback(() => fs.existsSync(absolutePath), false)
+    ),
+  ] as const;
+
+  // The tracked ("working") folder path, or null if none is set or it no longer exists on disk
+  // (e.g. moved/deleted externally since it was tracked)
+  getWorkFolderPath(): string | null {
+    const trackedFolder = this.store.get('trackedFolder');
+    if (!trackedFolder || !fs.existsSync(trackedFolder)) return null;
+    return trackedFolder;
+  }
+
+  // Resolves relativePath against the tracked folder and refuses anything that would escape it
+  // (e.g. a `../` traversal) -- nothing outside the tracked folder can ever be reached through
+  // this. Throws if no tracked folder is set (or it no longer exists on disk).
+  resolveWorkFolderPath(relativePath: string): string {
+    const workFolder = this.getWorkFolderPath();
+    if (!workFolder) {
+      throw new Error('No tracked folder is set.');
+    }
+    const root = path.resolve(workFolder);
+    const resolved = path.resolve(root, relativePath);
+    if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+      throw new Error(`Refusing to access a path outside the tracked folder: ${relativePath}`);
+    }
+    return resolved;
+  }
+
+  // A JSON file in the tracked folder, parsed. null if it's missing, unreadable or not JSON.
+  readFile(relativePath: string): unknown {
+    return runWithFallback(
+      (): unknown => JSON.parse(fs.readFileSync(this.resolveWorkFolderPath(relativePath), 'utf8')),
+      null
+    );
+  }
+
+  writeFile(relativePath: string, data: unknown): void {
+    fs.writeFileSync(
+      this.resolveWorkFolderPath(relativePath),
+      JSON.stringify(data, null, 2),
+      'utf8'
+    );
+    // The new modification time changes the file's hash
+    this.dropCache();
+  }
+
+  // false, with nothing moved, when another file already has the new name
+  moveFile(fromRelativePath: string, toRelativePath: string): boolean {
+    if (fromRelativePath === toRelativePath) return true;
+    if (this.fileExists(toRelativePath)) return false;
+    fs.renameSync(
+      this.resolveWorkFolderPath(fromRelativePath),
+      this.resolveWorkFolderPath(toRelativePath)
+    );
+    this.dropCache();
+    return true;
+  }
+
+  deleteFile(relativePath: string): void {
+    runWithFallback(() => fs.unlinkSync(this.resolveWorkFolderPath(relativePath)), undefined);
+    this.dropCache();
+  }
+
+  fileExists(relativePath: string): boolean {
+    return runWithFallback(() => fs.existsSync(this.resolveWorkFolderPath(relativePath)), false);
+  }
+
+  // The tracked folder's listing: the cached one, or a fresh scan that is cached until dropped.
+  // Without a tracked folder it's empty and isn't cached.
+  scan(): TScanResult {
+    const workFolder = this.getWorkFolderPath();
+    if (!workFolder) return EMPTY_SCAN;
+    const cached = this.store.get('scan');
+    if (cached) return cached;
+    const scan = scanFolder(workFolder);
+    this.store.set('scan', scan);
+    return scan;
+  }
+
+  private dropCache(): void {
+    this.store.delete('scan');
+  }
+}

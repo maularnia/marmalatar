@@ -5,10 +5,11 @@ import {
   ShortcutType,
   useShortcut,
 } from 'react-keyhub';
-import KeystrokeZone from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { useMenuActions } from '@providers/MenuActionsProvider';
-import { useMainMenuState } from '@providers/MenuStateProvider';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import KeystrokeZone, {
+  KeystrokeZoneContext,
+} from '@src/layout/components/KeystrokeZone/KeystrokeZone';
+import { menu } from '@src/services/menu';
+import { PropsWithChildren, use, useEffect } from 'react';
 
 const myShortcuts = {
   previousMenuItem: {
@@ -63,41 +64,42 @@ const myShortcuts = {
   },
 } satisfies ShortcutSettings;
 
-const useAppMenuKeyStroke = (
+const useAppMenuKeystroke = (
   keystroke: keyof typeof myShortcuts,
   action: (event: KeyboardEvent) => void
 ) => useShortcut(keystroke, action);
 
 // Registers useShortcut handlers -- must render as KeystrokeZone's child so these hooks run inside
-// the KeyHubProvider context KeystrokeZone creates for `shortcuts`. Delegates entirely to
-// MenuActionsProvider's own "FocusedItem" handlers rather than reaching into its refs/getters
-// (combinedItems, getFocusedItem, renamingKey) directly -- this component just maps keys to actions.
+// the KeyHubProvider context KeystrokeZone creates for `shortcuts`. Delegates entirely to the menu
+// service's "FocusedItem" operations, which resolve the focused item themselves -- this component
+// just maps keys to actions.
 function MenuShortcuts() {
-  const {
-    handleMoveMenuFocus,
-    handleRenameFocusedItem,
-    handleDeleteFocusedItem,
-    handleOpenFocusedItem,
-  } = useMenuActions();
+  // Ctrl+1 (the zone's own focus shortcut) lands on the item matching what's open, not on whatever
+  // was focused last -- see menu.focusDefaultItem
+  const { setFocusOverride } = use(KeystrokeZoneContext);
+  useEffect(() => {
+    setFocusOverride(() => void menu.focusDefaultItem());
+    return () => setFocusOverride(undefined);
+  }, [setFocusOverride]);
 
-  useAppMenuKeyStroke('previousMenuItem', () => handleMoveMenuFocus('up'));
-  useAppMenuKeyStroke('nextMenuItem', () => handleMoveMenuFocus('down'));
+  useAppMenuKeystroke('previousMenuItem', () => menu.moveFocus('up'));
+  useAppMenuKeystroke('nextMenuItem', () => menu.moveFocus('down'));
 
-  useAppMenuKeyStroke('renameFocusedItem', () => handleRenameFocusedItem());
+  useAppMenuKeystroke('renameFocusedItem', () => menu.renameFocusedItem());
 
-  useAppMenuKeyStroke('deleteFocusedItemDelete', (event: KeyboardEvent) => {
+  useAppMenuKeystroke('deleteFocusedItemDelete', (event: KeyboardEvent) => {
     event.preventDefault();
-    handleDeleteFocusedItem();
+    menu.deleteFocusedItem();
   });
 
   // ignoreInputFields:false means this shortcut would otherwise fire in parallel with a rename
-  // input's own Enter/Space handling -- handleOpenFocusedItem itself no-ops while renaming.
-  useAppMenuKeyStroke('openFocusedItem', () => handleOpenFocusedItem());
+  // input's own Enter/Space handling -- menu.openFocusedItem itself no-ops while renaming.
+  useAppMenuKeystroke('openFocusedItem', () => menu.openFocusedItem());
 
   return null;
 }
 
-export default function MenuKeystrokeProvider({ children }: PropsWithChildren) {
+export function MenuKeystrokeProvider({ children }: PropsWithChildren) {
   return <MenuKeystrokeBody>{children}</MenuKeystrokeBody>;
 }
 
@@ -107,16 +109,6 @@ export default function MenuKeystrokeProvider({ children }: PropsWithChildren) {
 // mouseleave. Lives here (outside KeystrokeZone's own KeyHubProvider subtree) since it doesn't
 // need shortcut context, unlike <MenuShortcuts/> below.
 function MenuKeystrokeBody({ children }: PropsWithChildren) {
-  const { renamingKey, isCreatingPromptTemplate, isCreatingGlossary } = useMenuActions();
-  const { setStaleOpen } = useMainMenuState();
-
-  const [isFocusWithin, setIsFocusWithin] = useState(false);
-  const staleOpen =
-    isFocusWithin || renamingKey != null || isCreatingPromptTemplate || isCreatingGlossary;
-  useEffect(() => {
-    setStaleOpen(staleOpen);
-  }, [staleOpen, setStaleOpen]);
-
   return (
     <KeystrokeZone
       shortcuts={myShortcuts}
@@ -129,8 +121,8 @@ function MenuKeystrokeBody({ children }: PropsWithChildren) {
         ignoreInputFields: false,
         ignoreModifierOnlyEvents: true,
       }}
-      onFocusWithinChange={setIsFocusWithin}
-      hint={{ corner: 'bottom-left' }}
+      onFocusWithinChange={menu.setFocusWithin}
+      hint
     >
       <MenuShortcuts />
       {children}

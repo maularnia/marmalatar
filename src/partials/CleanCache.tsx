@@ -1,8 +1,4 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
-import { useMessageHelmet } from '@providers/MessageHelmetProvider';
-import { emitCacheCleanupFailedMessage, emitCacheCleanupSuccessMessage } from '@src/messages';
-import { Loader } from '@src/segments/dialogs/Loader';
-import { cleanupMediaCache } from '@src/utils/data/discIO';
+import { media } from '@src/services/media';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
@@ -11,20 +7,9 @@ import { useTranslation } from 'react-i18next';
 
 export default function CleanCache() {
   const { t } = useTranslation('settings');
-  const { pushMessage } = useMessageHelmet();
-  const { show: showLoading } = useInfoWindow(Loader);
-
-  const handleClean = async () => {
-    try {
-      await showLoading({}, cleanupMediaCache());
-      emitCacheCleanupSuccessMessage(pushMessage);
-    } catch {
-      emitCacheCleanupFailedMessage(pushMessage);
-    }
-  };
 
   return (
-    <FormsSection>
+    <FormsSection animated>
       <FormsSectionTitle icon={TIcon.CLEANUP} subtext={t('mediaCache.subtext')}>
         {t('mediaCache.title')}
       </FormsSectionTitle>
@@ -33,7 +18,7 @@ export default function CleanCache() {
           type="button"
           variant={TButtonVariant.SECONDARY}
           icon={TIcon.CLEANUP}
-          onClick={() => void handleClean()}
+          onClick={() => void media.cleanCache()}
         >
           {t('mediaCache.cleanButton')}
         </Button>

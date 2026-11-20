@@ -6,6 +6,20 @@
     "createButton": "Стварыць"
   },
   "buttons": {
-    "settings": "Налады"
+    "settings": "Налады",
+    "switchTheme": "Змяніць тэму",
+    "theme": {
+      "system": "Сістэмная тэма",
+      "light": "Светлая тэма",
+      "dark": "Цёмная тэма"
+    }
+  },
+  "archive": {
+    "overlayTitle": "Архіў",
+    "openButton": "Архіў",
+    "archiveButton": "Перанесці ў архіў",
+    "restoreButton": "Аднавіць",
+    "deleteButton": "Выдаліць",
+    "empty": "Архіў пусты"
   }
 }

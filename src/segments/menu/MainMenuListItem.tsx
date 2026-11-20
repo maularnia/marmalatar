@@ -1,9 +1,4 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
-import { useMenuActions } from '@providers/MenuActionsProvider';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
-import i18n from '@src/i18n';
-import { emitFileProcessingFailedMessage } from '@src/messages';
-import { useMessageHelmet } from '@src/providers/MessageHelmetProvider';
+import { menu } from '@src/services/menu';
 import { TColor } from '@src/theme/definitions';
 import { ThemeColors } from '@src/theme/utils';
 import Button from '@ui-toolkit/Button/Button';
@@ -12,154 +7,72 @@ import Emoji from '@ui-toolkit/Emoji';
 import EmoPicker from '@ui-toolkit/EmoPicker';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import { ListItem } from '@ui-toolkit/ListItem';
-import { toSlug } from '@utils/string';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader } from '../dialogs/Loader';
-import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
-
-const MAX_NAME_LENGTH = 64;
-const t = i18n.getFixedT(null, 'errors');
-const tMessages = i18n.getFixedT(null, 'messages');
+import { useCallback, useEffect, useRef } from 'react';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@src/toolkit/Tooltip';
+import { useTranslation } from 'react-i18next';
 
 type MainMenuListItemProps = {
   itemKey: string;
-  fileName: string | null;
   title: string;
+  /** Whether the title is being edited (renamed, or typed for a new file). The consumer decides. */
+  isEditing: boolean;
+  /** Whether the name being typed can be committed; shown as the error state while editing */
+  isValid: boolean;
   isActive?: boolean;
   isDisabled?: boolean;
   color?: TColor;
   progress?: number;
-  fileExtension: string;
-  slugFallback: string;
-  existingFileNames: string[];
   emoji?: string;
   compact?: boolean;
   onEmojiSelect?: (emoji: string) => void;
+  /** Shows the archive action first in the panel (projects only) */
+  onArchive?: () => void;
   onClick?: () => void;
-  onCommit: (fileName: string | null, newTitle: string) => Promise<void>;
-  onDelete?: (fileName: string, title: string) => void;
+  /** Editing only: the name as typed, the commit (Enter) and the discard (Escape, blur) */
+  onChange?: (name: string) => void;
+  onCommit?: () => void;
   onDiscard?: () => void;
+  onDelete?: () => void;
 };
 
-function validate(
-  draft: string,
-  fileName: string | null,
-  existingFileNames: string[],
-  fileExtension: string,
-  slugFallback: string
-): string | null {
-  const trimmed = draft.trim();
-  if (!trimmed) return t('shared.nameEmpty');
-  if (trimmed.length > MAX_NAME_LENGTH)
-    return t('mainMenuListItem.nameTooLong', { maxLength: MAX_NAME_LENGTH });
-  const newFileName = `${toSlug(trimmed, slugFallback)}${fileExtension}`;
-  if (newFileName !== fileName && existingFileNames.includes(newFileName)) {
-    return t('mainMenuListItem.nameAlreadyExists');
-  }
-  return null;
-}
-
+// A menu row for a file. Controlled: the consumer owns whether it's edited, the typed name and its
+// validity, and what committing or discarding does. The row keeps only DOM concerns -- its element
+// in the menu's registry, and focus going back to it when an edit ends.
 export function MainMenuListItem({
   itemKey,
-  fileName,
   title,
+  isEditing,
+  isValid,
   isActive,
   isDisabled,
   color,
   progress,
-  fileExtension,
-  slugFallback,
   compact,
-  existingFileNames,
   emoji,
   onEmojiSelect,
+  onArchive,
   onClick,
+  onChange,
   onCommit,
-  onDelete,
   onDiscard,
+  onDelete,
 }: MainMenuListItemProps) {
-  const { renamingKey, handleStartRenaming, handleStopRenaming, handleFocusMenuItem } =
-    useMenuActions();
-  const { registerMenuItemRef } = useMenuRefs();
-  const isEditing = fileName === null || renamingKey === itemKey;
-  const [draftValue, setDraftValue] = useState(title);
-  const [error, setError] = useState<string | null>(null);
-  const committingRef = useRef(false);
+  const { t: tMenu } = useTranslation('menu');
   const wasEditingRef = useRef(isEditing);
 
-  const { pushMessage } = useMessageHelmet();
-  const { show: showLoading } = useInfoWindow(Loader);
-
   const setItemRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(itemKey, el),
-    [itemKey, registerMenuItemRef]
+    (el: HTMLDivElement | null) => menu.registerItem(itemKey, el),
+    [itemKey]
   );
-
-  useEffect(() => {
-    if (isEditing) {
-      setDraftValue(title);
-      setError(null);
-    }
-    // Only reset when entering edit mode (via pencil click or the alt+r keystroke) -- not on
-    // every title change, which would clobber in-progress typing.
-  }, [isEditing]);
 
   useEffect(() => {
     // Rename just ended (commit or cancel) -- the contentEditable it was in is gone, so the row
     // itself should regain focus rather than leaving focus wherever the browser defaults it to.
     if (wasEditingRef.current && !isEditing) {
-      handleFocusMenuItem(itemKey);
+      menu.focusItem(itemKey);
     }
     wasEditingRef.current = isEditing;
-  }, [isEditing, itemKey, handleFocusMenuItem]);
-
-  const handleChange = (value: string) => {
-    setDraftValue(value);
-    setError(validate(value, fileName, existingFileNames, fileExtension, slugFallback));
-  };
-
-  const handleDiscard = () => {
-    if (committingRef.current) return;
-    if (fileName === null) {
-      onDiscard?.();
-    } else {
-      setDraftValue(title);
-      setError(null);
-      handleStopRenaming(itemKey);
-    }
-  };
-
-  const handleCommit = async () => {
-    const validationError = validate(
-      draftValue,
-      fileName,
-      existingFileNames,
-      fileExtension,
-      slugFallback
-    );
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    committingRef.current = true;
-    const label =
-      fileName === null
-        ? tMessages('mainMenuListItem.creatingNewFile')
-        : tMessages('mainMenuListItem.renamingFile');
-
-    try {
-      await showLoading({ message: label, animate: false }, onCommit(fileName, draftValue));
-      setError(null);
-      handleStopRenaming(itemKey);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : t('mainMenuListItem.unreachableCommitError');
-      setError(msg);
-      emitFileProcessingFailedMessage(pushMessage, msg);
-    } finally {
-      committingRef.current = false;
-    }
-  };
+  }, [isEditing, itemKey]);
 
   return (
     <ListItem
@@ -167,14 +80,14 @@ export function MainMenuListItem({
       isActive={isActive && !isEditing}
       isDisabled={isDisabled}
       isFocused={isEditing}
-      isError={!!error}
+      isError={isEditing && !isValid}
       color={color}
       progress={progress}
       compact={compact}
       onClick={isEditing ? undefined : onClick}
-      onChange={isEditing ? handleChange : undefined}
-      onCommit={isEditing ? handleCommit : undefined}
-      onDiscard={isEditing ? handleDiscard : undefined}
+      onChange={isEditing ? onChange : undefined}
+      onCommit={isEditing ? onCommit : undefined}
+      onDiscard={isEditing ? onDiscard : undefined}
       emoji={
         emoji != null && onEmojiSelect ? (
           <EmoPicker side="right" onEmojiSelect={onEmojiSelect}>
@@ -185,6 +98,21 @@ export function MainMenuListItem({
       panel={
         isEditing || isDisabled ? undefined : (
           <>
+            {onArchive != null && (
+              <Tooltip label={<TooltipSimple>{tMenu('archive.archiveButton')}</TooltipSimple>}>
+                <Button
+                  variant={TButtonVariant.TRANSPARENT}
+                  size={TButtonSize.NANO}
+                  icon={TIcon.ARCHIVE}
+                  color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
+                  onClick={(e) => {
+                    // The row itself would open the project
+                    e.stopPropagation();
+                    onArchive();
+                  }}
+                />
+              </Tooltip>
+            )}
             <Tooltip
               label={
                 <TooltipComplex title={'Rename'}>
@@ -196,10 +124,10 @@ export function MainMenuListItem({
                 variant={TButtonVariant.TRANSPARENT}
                 size={TButtonSize.NANO}
                 icon={TIcon.EDIT}
-                color={ThemeColors.TEXT}
+                color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleStartRenaming(itemKey);
+                  menu.startRenaming(itemKey);
                 }}
               />
             </Tooltip>
@@ -213,12 +141,12 @@ export function MainMenuListItem({
               >
                 <Button
                   variant={TButtonVariant.TRANSPARENT}
-                  color={ThemeColors.TEXT}
+                  color={isActive ? ThemeColors.BG : ThemeColors.TEXT}
                   size={TButtonSize.NANO}
                   icon={TIcon.BIN}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (fileName) onDelete(fileName, title);
+                    onDelete();
                   }}
                 />
               </Tooltip>
@@ -227,7 +155,8 @@ export function MainMenuListItem({
         )
       }
     >
-      {isEditing ? draftValue : title}
+      {/* The editor is filled from it when editing starts; typing goes to onChange */}
+      {title}
     </ListItem>
   );
 }

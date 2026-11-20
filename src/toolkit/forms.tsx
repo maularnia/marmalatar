@@ -2,25 +2,24 @@ import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import classNames from 'classnames';
 import { motion } from 'motion/react';
-import { ReactNode } from 'react';
+import { ComponentProps, ReactNode } from 'react';
 import styled from 'styled-components';
 import H, { HProps } from './H';
 import Icon from './Icon/Icon';
 import { IconSize, TIcon, TIconSize } from './Icon/icons';
 import P, { TPVariant } from './P';
+import { formAnimation } from './motion/transitions';
 
 type RowAttrs = {
   $columns?: number;
   $templateColumns?: string;
 };
 
-export const FormsContent = styled(motion.div).attrs<RowAttrs>(
-  ({ $columns = 1, $templateColumns }) => ({
-    style: {
-      gridTemplateColumns: $templateColumns ? $templateColumns : `repeat(${$columns}, 1fr)`,
-    },
-  })
-)`
+const FormsContentRoot = styled.div.attrs<RowAttrs>(({ $columns = 1, $templateColumns }) => ({
+  style: {
+    gridTemplateColumns: $templateColumns ? $templateColumns : `repeat(${$columns}, 1fr)`,
+  },
+}))`
   display: grid;
   gap: ${CSSVar('formSpacingInnerY')};
   & & {
@@ -28,21 +27,34 @@ export const FormsContent = styled(motion.div).attrs<RowAttrs>(
   }
 `;
 
+const FormTitleElement = styled(H)`
+  padding: ${CSSVar('formSpacingY')}
+    calc(
+      ${CSSVar('formSpacingX')} + ${CSSVar('formRowSpacingX')} + ${CSSVar('formSectionSpacingX')}
+    );
+  text-align: center;
+`;
+
 export const FormRoot = styled.form`
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  ${FormsContent} + ${FormsContent} {
+  padding-top: ${CSSVar('formSpacingY')};
+  ${FormsContentRoot} + ${FormsContentRoot} {
     padding-top: ${CSSVar('formSpacingY')};
   }
+  &:has(${FormTitleElement}:first-child) {
+    padding-top: 0;
+  }
 `;
-export const FormsRow = styled(motion.div).attrs<RowAttrs>(
-  ({ $columns = 1, $templateColumns }) => ({
-    style: {
-      gridTemplateColumns: $templateColumns ? $templateColumns : `repeat(${$columns}, 1fr)`,
-    },
-  })
-)`
+export const FormTitle = ({ level = 4, ...rest }: HProps) => {
+  return <FormTitleElement level={level} {...rest} />;
+};
+const FormsRowRoot = styled.div.attrs<RowAttrs>(({ $columns = 1, $templateColumns }) => ({
+  style: {
+    gridTemplateColumns: $templateColumns ? $templateColumns : `repeat(${$columns}, 1fr)`,
+  },
+}))`
   display: grid;
   padding: 0 ${CSSVar('formSpacingX')};
   gap: ${CSSVar('formRowSpacingInner')};
@@ -52,7 +64,7 @@ export const FormFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${CSSVar('formSpacingY')} ${CSSVar('formSpacingX')} 0;
+  padding: 0 ${CSSVar('formSpacingX')} 0;
   gap: ${CSSVar('formRowSpacingInner')};
 `;
 
@@ -86,11 +98,11 @@ export const FormsSectionContent = styled.div.attrs<RowAttrs>(
 )`
   display: grid;
   align-items: flex-end;
-  gap: ${CSSVar('formSectionSpacingInner')};
+  gap: ${CSSVar('formSectionSpacingInnerY')};
   flex-direction: column;
 `;
 const SectionTitleRoot = styled.div`
-  padding: ${CSSVar('size6')} 0;
+  padding: ${CSSVar('size10')} 0 0;
   &.iconic ~ ${FormsSectionContent} {
     margin-left: calc(${CSSVar('formSpacingInnerX')} + ${IconSize.L}px);
   }
@@ -126,20 +138,20 @@ export const FormsSectionTitle = ({
   </SectionTitleRoot>
 );
 
-export const FormsSection = styled.div`
+const FormsSectionRoot = styled.div`
   flex-basis: 100%;
   background-color: ${CSSVar('formSectionBg')};
   border: ${CSSVar('formSectionBorderWidth')} solid ${CSSVar('formSectionBorderColor')};
   border-radius: ${CSSVar('formSectionBorderRadius')};
-  padding: ${CSSVar('formSectionSpacingY')} ${CSSVar('formSectionSpacingX')};
+  padding: 0 ${CSSVar('formSectionSpacingX')} ${CSSVar('formSectionSpacingY')};
   color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 80)};
   display: flex;
   flex-direction: column;
   justify-content: stretch;
-  gap: ${CSSVar('formSectionSpacingInner')};
+  gap: ${CSSVar('formSectionSpacingInnerY')};
   ${FormsSectionContent} + ${FormsSectionContent} {
     border-top: ${CSSVar('formSectionBorderWidth')} solid ${CSSVar('formSectionBorderColor')};
-    padding: ${CSSVar('formSectionSpacingInner')} 0;
+    padding: 0;
   }
 `;
 
@@ -148,3 +160,62 @@ export const FormSectionEntry = styled.div`
   flex-direction: column;
   gap: ${CSSVar('formSectionEntrySpacingInner')};
 `;
+
+// ── Animation ────────────────────────────────────────────────────────────────
+// FormsContent, FormsRow and FormsSection render plain divs by default. With `animated` they render
+// motion divs instead and appear in a cascade (timing in formAnimation, motion/transitions.ts):
+// an animated content staggers the animated rows below it -- wherever they're rendered, partials
+// included -- and each animated row staggers its animated sections. An animated row or section
+// outside an animated content just renders, unanimated. Every other prop goes to the div as is.
+
+type TFormsAnimation = {
+  /** Render a motion div that takes part in the form's appearance cascade */
+  animated?: boolean;
+  /** Seconds before this element starts its children's cascade (content and rows) */
+  delay?: number;
+};
+
+const MotionFormsContent = motion.create(FormsContentRoot);
+const MotionFormsRow = motion.create(FormsRowRoot);
+const MotionFormsSection = motion.create(FormsSectionRoot);
+
+export const FormsContent = ({
+  animated,
+  delay,
+  ...props
+}: ComponentProps<typeof FormsContentRoot> & TFormsAnimation) =>
+  animated ? (
+    <MotionFormsContent
+      {...formAnimation.content(delay)}
+      {...(props as ComponentProps<typeof MotionFormsContent>)}
+    />
+  ) : (
+    <FormsContentRoot {...props} />
+  );
+
+export const FormsRow = ({
+  animated,
+  delay,
+  ...props
+}: ComponentProps<typeof FormsRowRoot> & TFormsAnimation) =>
+  animated ? (
+    <MotionFormsRow
+      variants={formAnimation.row(delay)}
+      {...(props as ComponentProps<typeof MotionFormsRow>)}
+    />
+  ) : (
+    <FormsRowRoot {...props} />
+  );
+
+export const FormsSection = ({
+  animated,
+  ...props
+}: ComponentProps<typeof FormsSectionRoot> & Pick<TFormsAnimation, 'animated'>) =>
+  animated ? (
+    <MotionFormsSection
+      variants={formAnimation.section}
+      {...(props as ComponentProps<typeof MotionFormsSection>)}
+    />
+  ) : (
+    <FormsSectionRoot {...props} />
+  );

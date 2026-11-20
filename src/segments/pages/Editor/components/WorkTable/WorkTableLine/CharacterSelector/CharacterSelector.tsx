@@ -2,6 +2,7 @@ import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { TCharacter } from '@src/types';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
+import { TIcon } from '@ui-toolkit/Icon/icons';
 import { noop } from '@utils/noop';
 import classNames from 'classnames';
 import {
@@ -114,7 +115,6 @@ const CharacterOption = styled.div<{ $focused?: boolean }>`
     background-color: ${CSSVar('inputOptionBgFocused')};
     color: ${CSSVar('inputOptionColorFocused')};
   }
-
   ${({ $focused }) =>
     $focused &&
     css`
@@ -227,21 +227,28 @@ export function CharacterSelector({
 }: CharacterSelectorProps) {
   const [state, dispatch] = useReducer(reducer, getSelectorDefaultState(value, characters));
   const colorByName = new Map(state.options.map((item) => [item.name, item.color]));
-  const inputDiv = useRef<HTMLDivElement>(null);
+  const inputDivRef = useRef<HTMLDivElement>(null);
   const suggestionListRef = useRef<HTMLDivElement>(null);
 
-  useImperativeHandle(ref, () => ({ inputRef: inputDiv.current }), []);
+  useImperativeHandle(ref, () => ({ inputRef: inputDivRef.current }), []);
   useEffect(() => {
     dispatch({ type: 'SET_VALUE', payload: value });
-    if (inputDiv.current) inputDiv.current.textContent = '';
+    if (inputDivRef.current) inputDivRef.current.textContent = '';
   }, [value]);
   useEffect(() => {
     dispatch({ type: 'SET_OPTIONS', payload: characters });
-    if (inputDiv.current) inputDiv.current.textContent = '';
+    if (inputDivRef.current) inputDivRef.current.textContent = '';
   }, [characters]);
 
   const deleteOptionByIndex = (index: number) => {
     state.value.splice(index >= 0 ? index : value.length + index, 1);
+  };
+
+  const commitPendingInput = () => {
+    const pendingText = state.filterValue.trim();
+    if (pendingText) {
+      onChange([...state.value, pendingText]);
+    }
   };
 
   const deleteFocusedOption: KeyboardEventHandler<HTMLDivElement> = (event) => {
@@ -262,19 +269,20 @@ export function CharacterSelector({
   useEffect(() => {
     if (!suggestionListRef.current || state.focusedOptionIndex <= 0) return;
     const focused = suggestionListRef.current.children[state.focusedOptionIndex - 1] as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     focused?.scrollIntoView({ block: 'nearest' });
   }, [state.focusedOptionIndex]);
   return (
-    <Container tabIndex={1} onFocus={() => inputDiv.current?.focus()}>
+    <Container tabIndex={1} onFocus={() => inputDivRef.current?.focus()}>
       <CharacterList className={classNames({ suggested: suggestionListVisible })}>
         {state.value.map((item, index) => (
           <Tag
+            style={{ cursor: disabled ? 'default' : 'pointer' }}
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
               if (disabled) return;
               if (!state.filterFocused) {
-                inputDiv.current?.focus();
+                inputDivRef.current?.focus();
                 return;
               }
               onChange(state.value.filter((v) => v !== item));
@@ -282,6 +290,7 @@ export function CharacterSelector({
             color={colorByName.get(item) ?? ThemeColors.ACCENT1}
             variant={TTagVariant.PRIMARY}
             onRemove={state.value.length + state.focusedOptionIndex == index ? noop : undefined}
+            removeIcon={TIcon.BIN}
             size={TTagSize.SMALL}
             key={item}
           >
@@ -289,10 +298,10 @@ export function CharacterSelector({
           </Tag>
         ))}
         <CharacterInput
-          ref={inputDiv}
+          ref={inputDivRef}
           contentEditable={!disabled}
           onKeyDown={(event) => {
-            if (disabled || !inputDiv.current) return;
+            if (disabled || !inputDivRef.current) return;
             switch (event.key) {
               case 'ArrowUp': {
                 event.preventDefault();
@@ -311,7 +320,7 @@ export function CharacterSelector({
               case 'Enter': {
                 event.preventDefault();
                 return state.focusedOptionIndex === 0
-                  ? onChange([...state.value, inputDiv.current.textContent])
+                  ? commitPendingInput()
                   : void deleteFocusedOption(event);
               }
               case 'Delete': {
@@ -321,7 +330,7 @@ export function CharacterSelector({
               }
               case 'Backspace': {
                 if (state.focusedOptionIndex !== 0) return;
-                if (!inputDiv.current.textContent) {
+                if (!inputDivRef.current.textContent) {
                   deleteOptionByIndex(-1);
                   onChange([...state.value]);
                 } else {
@@ -339,6 +348,7 @@ export function CharacterSelector({
           }}
           data-line-characterinput={line_no}
           onBlur={() => {
+            commitPendingInput();
             dispatch({ type: 'SET_FILTER_FOCUSED', payload: false });
           }}
           onFocus={() => {
@@ -354,6 +364,7 @@ export function CharacterSelector({
             <CharacterOption
               key={character.name}
               $focused={state.focusedOptionIndex === index + 1}
+              onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
                 if (disabled) return;
                 onChange([...value, character.name]);

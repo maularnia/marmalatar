@@ -1,10 +1,12 @@
-import { CSSVar, ThemeColors } from '@src/theme/utils';
+import { TShade } from '@src/theme/definitions';
+import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@src/toolkit/Tooltip';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
+import type { TCharacter } from '@src/types';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { DragMode } from './Waveform';
+import type { DragMode } from './types';
 
 const EDGE_HITBOX_PX = 10;
 
@@ -16,6 +18,10 @@ export type WaveformEntryProps = {
   isActive: boolean;
   isFocused: boolean;
   isDragging: boolean;
+  /** The line's roles, each marked by its first letter in its own color */
+  characters: TCharacter[];
+  /** A short line: its roles always show as dots, never letter tags */
+  isShort: boolean;
   onEntryPointerDown: (lineIndex: number, mode: DragMode, clientX: number) => void;
 };
 
@@ -136,6 +142,34 @@ const EntryNumber = styled.div`
   top: ${CSSVar('size2')};
 `;
 
+const EntryCharacters = styled.div`
+  position: absolute;
+  right: ${CSSVar('size4')};
+  bottom: ${CSSVar('size2')};
+  display: flex;
+  align-items: center;
+  gap: ${CSSVar('size1')};
+`;
+
+// A block has room for a few roles. Beyond that -- or on a short line, whatever the count -- they
+// turn into plain color dots (names in their titles); past the limit the rest collapse into a "+".
+const MAX_SHOWN_CHARACTERS = 3;
+
+const CharacterDot = styled.span`
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+`;
+
+const MoreCharacters = styled.span`
+  font-family: ${CSSVar('fontTextSansSerif')};
+  font-size: ${CSSVar('sizeTextNano')};
+  font-weight: ${CSSVar('bold')};
+  color: ${CSSColor(ThemeColors.TEXT, TShade.DEFAULT, 100)};
+  line-height: 1;
+`;
+
 const startTimeKeystrokeHint = <TooltipKeystrokeHint keys={['Alt', 'Q / E']} />;
 const endTimeKeystrokeHint = <TooltipKeystrokeHint keys={['Alt', 'A / D']} />;
 const entryTimeKeystrokeHint = <TooltipKeystrokeHint keys={['Ctrl', 'Alt', 'A / D']} />;
@@ -148,9 +182,13 @@ export default function WaveformEntry({
   isActive,
   isFocused,
   isDragging,
+  characters,
+  isShort,
   onEntryPointerDown,
 }: WaveformEntryProps) {
   const { t } = useTranslation('tooltips');
+  const hasMoreCharacters = characters.length > MAX_SHOWN_CHARACTERS;
+  const showDots = isShort || hasMoreCharacters;
 
   return (
     <Tooltip
@@ -206,6 +244,33 @@ export default function WaveformEntry({
             {lineNo}
           </Tag>
         </EntryNumber>
+        {characters.length > 0 && (
+          <EntryCharacters>
+            {characters.slice(0, MAX_SHOWN_CHARACTERS).map(({ name, color }) =>
+              showDots ? (
+                <CharacterDot
+                  key={name}
+                  title={name}
+                  style={{ background: CSSColor(color, TShade.DEFAULT, 100) }}
+                />
+              ) : (
+                <Tag key={name} size={TTagSize.NANO} color={color} title={name}>
+                  {name.charAt(0).toUpperCase()}
+                </Tag>
+              )
+            )}
+            {hasMoreCharacters && (
+              <MoreCharacters
+                title={characters
+                  .slice(MAX_SHOWN_CHARACTERS)
+                  .map(({ name }) => name)
+                  .join(', ')}
+              >
+                +
+              </MoreCharacters>
+            )}
+          </EntryCharacters>
+        )}
         <Tooltip
           delay={400}
           label={

@@ -1,53 +1,38 @@
+import { toGlossaryFileName, toProjectFileName, toPromptTemplateFileName } from '@bridge/fileNames';
+import { ai } from '@src/services/ai';
+import { folder } from '@src/services/folder';
+import { glossaries } from '@src/services/glossary';
 import {
   CREATE_GLOSSARY_KEY,
   CREATE_PROJECT_KEY,
   CREATE_PROMPT_TEMPLATE_KEY,
-  useMenuActions,
-} from '@providers/MenuActionsProvider';
-import { useMenuRefs } from '@providers/MenuRefsProvider';
-import i18n from '@src/i18n';
-import { selectIntegrationIsConfigured } from '@src/store/slices/app';
-import { selectProjectId } from '@src/store/slices/project';
+  menu,
+} from '@src/services/menu';
+import { projects } from '@src/services/project';
+import { promptTemplates } from '@src/services/prompt';
+import { settings } from '@src/services/settings';
+import { type TColor } from '@src/theme/definitions';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { selectCurrentGlossary, selectCurrentPromptTemplate } from '@store/slices/aiPromptEditor';
-import { selectTranslationIsBusy } from '@store/slices/aiTranslation';
-import {
-  renameProjectFile,
-  selectDiscIsBusy,
-  selectFolder,
-  selectGlossaryItems,
-  selectProjects,
-  selectPromptTemplateItems,
-  updateProjectEmoji,
-} from '@store/slices/disc';
-import {
-  createGlossaryFile,
-  createPromptTemplateFile,
-  renameGlossaryFile,
-  renamePromptTemplateFile,
-  updateGlossaryEmoji,
-  updatePromptTemplateEmoji,
-} from '@store/thunks';
-import H from '@ui-toolkit/H';
-import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
+import { useAppSelectors } from '@store/hooks';
+import Button from '@ui-toolkit/Button/Button';
+import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import { ListItem } from '@ui-toolkit/ListItem';
+import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import classNames from 'classnames';
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import { ListHeader } from './ListHeader';
 import { MainMenuListItem } from './MainMenuListItem';
-import { useMainMenuState } from '../../providers/MenuStateProvider';
+import { MenuSection } from './MenuSection';
+import { makeNameValidator, useMenuRename } from './useMenuRename';
 
-const Section = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${CSSVar('projectListSpacingY')};
-  width: 100%;
-  padding: ${CSSVar('projectListSpacingY')} ${CSSVar('projectListSpacingX')};
-`;
+// Keys of the rows where a new prompt template's / glossary's name is typed
+const NEW_PROMPT_TEMPLATE_KEY = '##new-prompt-template##';
+const NEW_GLOSSARY_KEY = '##new-glossary##';
+
+type TMenuFileKind = 'project' | 'promptTemplate' | 'glossary';
 
 const List = styled.div`
   display: flex;
@@ -56,168 +41,217 @@ const List = styled.div`
   width: 100%;
 `;
 
-const ListHeader = styled(H)`
-  padding: ${CSSVar('size6')} ${CSSVar('size6')} 0;
-`;
+type TFileListProps = {
+  /** Whether the sidebar is collapsed. MainMenu derives it from the menu's compact state:
+   * collapsing is immediate, expanding waits for the backdrop's animation, so full titles and
+   * actions don't spill out of a sidebar that's still narrow. Everything here follows this prop,
+   * never the store's compact state. */
+  compact: boolean;
+};
 
-const ListHeaderText = styled.div`
-  line-height: ${CSSVar('buttonHeightNano')};
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const t = i18n.getFixedT(null, 'errors');
-
-export default function FileList() {
+export default function FileList({ compact }: TFileListProps) {
   const { t: tMenu } = useTranslation('menu');
-  const dispatch = useAppDispatch();
-  const folder = useAppSelector(selectFolder);
-  const projects = useAppSelector(selectProjects);
-  const promptTemplateItems = useAppSelector(selectPromptTemplateItems);
-  const glossaryItems = useAppSelector(selectGlossaryItems);
-  const discIsBusy = useAppSelector(selectDiscIsBusy);
-  const translationIsBusy = useAppSelector(selectTranslationIsBusy);
-  const listIsDisabled = discIsBusy || translationIsBusy;
-  const currentPromptTemplate = useAppSelector(selectCurrentPromptTemplate);
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
-  const { compact, dynamic } = useMainMenuState();
-  const currentProjectId = useAppSelector(selectProjectId);
-  const integrationIsConfigured = useAppSelector(selectIntegrationIsConfigured);
-
-  const {
+  const [
+    folderPath,
+    projectList,
+    visibleProjectList,
+    hasArchivedProjects,
+    currentProjectId,
+    promptTemplateItems,
+    currentPromptTemplate,
+    glossaryItems,
+    currentGlossary,
+    workingFolderIsBusy,
+    translationIsBusy,
+    integrationIsConfigured,
     isCreatingPromptTemplate,
-    setIsCreatingPromptTemplate,
     isCreatingGlossary,
-    setIsCreatingGlossary,
-    handleOpenProject,
-    handleOpenPromptTemplate,
-    handleOpenGlossary,
-    handleStartNewProject,
-    handleDeleteProject,
-    handleDeletePromptTemplate,
-    handleDeleteGlossary,
-    handleCancelCreatingPromptTemplate,
-    handleCancelCreatingGlossary,
-  } = useMenuActions();
-  const { registerMenuItemRef } = useMenuRefs();
+    renamingKey,
+  ] = useAppSelectors(
+    folder.selectPath,
+    projects.selectList,
+    projects.selectVisibleList,
+    projects.selectHasArchived,
+    projects.selectId,
+    promptTemplates.selectItems,
+    promptTemplates.selectCurrent,
+    glossaries.selectItems,
+    glossaries.selectCurrent,
+    folder.selectIsBusy,
+    ai.selectIsBusy,
+    settings.selectIntegrationIsConfigured,
+    menu.selectIsCreatingPromptTemplate,
+    menu.selectIsCreatingGlossary,
+    menu.selectRenamingKey
+  );
+  const listIsDisabled = workingFolderIsBusy || translationIsBusy;
 
   const setCreateProjectRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_PROJECT_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLButtonElement | null) => menu.registerItem(CREATE_PROJECT_KEY, el),
+    []
   );
   const setCreatePromptTemplateRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_PROMPT_TEMPLATE_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLButtonElement | null) => menu.registerItem(CREATE_PROMPT_TEMPLATE_KEY, el),
+    []
   );
   const setCreateGlossaryRef = useCallback(
-    (el: HTMLDivElement | null) => registerMenuItemRef(CREATE_GLOSSARY_KEY, el),
-    [registerMenuItemRef]
+    (el: HTMLButtonElement | null) => menu.registerItem(CREATE_GLOSSARY_KEY, el),
+    []
   );
 
-  const projectFileNames = useMemo(() => projects.map((p) => p.fileName), [projects]);
+  // A section's "+" in its header: icon only, with the label as tooltip
+  const renderCreateButton = (
+    ref: (el: HTMLButtonElement | null) => void,
+    color: TColor,
+    onClick: () => void
+  ) => (
+    <Tooltip label={<TooltipSimple>{tMenu('fileList.createButton')}</TooltipSimple>}>
+      <Button
+        ref={ref}
+        type="button"
+        size={TButtonSize.SMALL}
+        variant={TButtonVariant.TRANSPARENT}
+        color={color}
+        icon={TIcon.PLUS}
+        onClick={onClick}
+      />
+    </Tooltip>
+  );
+
+  const projectFileNames = useMemo(() => projectList.map((p) => p.fileName), [projectList]);
   const promptTemplateFileNames = useMemo(
     () => promptTemplateItems.map((c) => c.fileName),
     [promptTemplateItems]
   );
   const glossaryFileNames = useMemo(() => glossaryItems.map((g) => g.fileName), [glossaryItems]);
 
-  const handleCommitProject = async (fileName: string | null, newTitle: string) => {
-    const project = projects.find((p) => p.fileName === fileName);
-    if (!project) throw new Error(t('fileList.projectNotFound'));
-    await dispatch(renameProjectFile(project.filePath, newTitle));
-  };
+  // The rows in edit mode: the one being renamed, and a new file's row while its name is typed
+  const editingKeys = [
+    ...(renamingKey != null ? [renamingKey] : []),
+    ...(isCreatingPromptTemplate ? [NEW_PROMPT_TEMPLATE_KEY] : []),
+    ...(isCreatingGlossary ? [NEW_GLOSSARY_KEY] : []),
+  ];
+  const rename = useMenuRename(editingKeys);
 
-  const handleCommitPromptTemplate = async (fileName: string | null, newTitle: string) => {
-    if (fileName) {
-      await dispatch(renamePromptTemplateFile(fileName, newTitle));
-    } else {
-      await dispatch(createPromptTemplateFile(newTitle));
-      setIsCreatingPromptTemplate(false);
-    }
-  };
-
-  const handleCommitGlossary = async (fileName: string | null, newTitle: string) => {
-    if (fileName) {
-      await dispatch(renameGlossaryFile(fileName, newTitle));
-    } else {
-      await dispatch(createGlossaryFile(newTitle));
-      setIsCreatingGlossary(false);
-    }
-  };
+  // A row's edit-mode props: whether it's edited, its typed name's validity, and committing it as
+  // a rename (or, for a new file's row with `fileName` null, as the new file's title)
+  const editing = ({
+    kind,
+    itemKey,
+    fileName,
+    title,
+    existingFileNames,
+    toFileName,
+    cancel = () => menu.stopRenaming(itemKey),
+  }: {
+    kind: TMenuFileKind;
+    itemKey: string;
+    fileName: string | null;
+    title: string;
+    existingFileNames: string[];
+    toFileName: (title: string) => string;
+    cancel?: () => void;
+  }) => ({
+    isEditing: editingKeys.includes(itemKey),
+    ...rename.row({
+      itemKey,
+      title,
+      isValidName: makeNameValidator(fileName, existingFileNames, toFileName),
+      commit: (name) => menu.commitItemTitle(kind, fileName, name),
+      cancel,
+    }),
+  });
 
   if (
-    !folder ||
-    (projects.length === 0 && promptTemplateItems.length === 0 && glossaryItems.length === 0)
+    !folderPath ||
+    (projectList.length === 0 && promptTemplateItems.length === 0 && glossaryItems.length === 0)
   )
     return null;
   return (
     <>
-      {projects.length > 0 && (
+      {projectList.length > 0 && (
         <>
-          <Section>
-            {!dynamic && (
-              <ListHeader className={classNames({ compact })} level={6}>
-                <ListHeaderText>{tMenu('fileList.projectsHeader')}</ListHeaderText>
-              </ListHeader>
-            )}
+          <MenuSection>
+            <ListHeader
+              compact={compact}
+              actionBar={
+                <>
+                  {/* Only while there's something archived */}
+                  {hasArchivedProjects && (
+                    <Tooltip label={<TooltipSimple>{tMenu('archive.openButton')}</TooltipSimple>}>
+                      <Button
+                        type="button"
+                        size={TButtonSize.SMALL}
+                        variant={TButtonVariant.TRANSPARENT}
+                        icon={TIcon.ARCHIVE}
+                        onClick={() => void menu.openArchive()}
+                      />
+                    </Tooltip>
+                  )}
+                  {renderCreateButton(
+                    setCreateProjectRef,
+                    ThemeColors.ACCENT1,
+                    menu.startNewProject
+                  )}
+                </>
+              }
+            >
+              {tMenu('fileList.projectsHeader')}
+            </ListHeader>
             <List>
-              {projects.length
-                ? projects.map((project) => {
-                    const isActive = project.project.projectId === currentProjectId;
+              {visibleProjectList.length
+                ? visibleProjectList.map((project) => {
+                    const isActive = project.projectId === currentProjectId;
                     return (
                       <MainMenuListItem
                         key={project.filePath}
                         itemKey={project.filePath}
-                        fileName={project.fileName}
-                        title={project.project.projectName}
+                        title={project.projectName}
+                        {...editing({
+                          kind: 'project',
+                          itemKey: project.filePath,
+                          fileName: project.fileName,
+                          title: project.projectName,
+                          existingFileNames: projectFileNames,
+                          toFileName: toProjectFileName,
+                        })}
                         isActive={isActive}
                         isDisabled={listIsDisabled}
                         compact={compact}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
                         progress={project.translationProgress}
-                        fileExtension=".mrml"
-                        slugFallback="project"
-                        existingFileNames={projectFileNames}
-                        emoji={project.project.emoji}
+                        onArchive={() => void menu.archiveProject(project)}
+                        emoji={project.emoji}
                         onEmojiSelect={(emoji) =>
-                          void dispatch(updateProjectEmoji(project.filePath, emoji))
+                          void projects.updateEmoji(project.projectId, emoji)
                         }
-                        onClick={() => void handleOpenProject(project, isActive)}
-                        onCommit={handleCommitProject}
-                        onDelete={() =>
-                          handleDeleteProject(
-                            project.filePath,
-                            project.project.projectName,
-                            project.project.projectId
-                          )
-                        }
+                        onClick={() => void menu.openProject(project)}
+                        onDelete={() => menu.deleteProject(project)}
                       />
                     );
                   })
                 : null}
-              <ListItem
-                ref={setCreateProjectRef}
-                icon={TIcon.PLUS}
-                compact={compact}
-                color={ThemeColors.ACCENT1}
-                onClick={handleStartNewProject}
-              >
-                {tMenu('fileList.createButton')}
-              </ListItem>
             </List>
-          </Section>
-          <Hr variant={THrVariant.DIMMED} />
+          </MenuSection>
         </>
       )}
 
       {integrationIsConfigured && (
         <>
-          <Section>
-            {!dynamic && (
-              <ListHeader className={classNames({ compact })} level={6}>
-                <ListHeaderText>{tMenu('fileList.promptTemplatesHeader')}</ListHeaderText>
-              </ListHeader>
-            )}
+          <MenuSection>
+            <ListHeader
+              className={classNames({ compact })}
+              compact={compact}
+              actionBar={
+                // Hidden while the new item's name is being typed
+                !isCreatingPromptTemplate &&
+                renderCreateButton(setCreatePromptTemplateRef, ThemeColors.ACCENT2, () =>
+                  menu.setIsCreatingPromptTemplate(true)
+                )
+              }
+            >
+              {tMenu('fileList.promptTemplatesHeader')}
+            </ListHeader>
             <List>
               {promptTemplateItems.length
                 ? promptTemplateItems.map(({ fileName, title, emoji }) => {
@@ -226,61 +260,62 @@ export default function FileList() {
                       <MainMenuListItem
                         key={fileName}
                         itemKey={fileName}
-                        fileName={fileName}
                         title={title}
+                        {...editing({
+                          kind: 'promptTemplate',
+                          itemKey: fileName,
+                          fileName,
+                          title,
+                          existingFileNames: promptTemplateFileNames,
+                          toFileName: toPromptTemplateFileName,
+                        })}
                         isActive={isActive}
                         compact={compact}
                         isDisabled={listIsDisabled}
                         color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                        fileExtension=".mrmlpt"
-                        slugFallback="prompt-template"
-                        existingFileNames={promptTemplateFileNames}
                         emoji={emoji}
                         onEmojiSelect={(newEmoji) =>
-                          void dispatch(updatePromptTemplateEmoji(fileName, newEmoji))
+                          void promptTemplates.updateEmoji(fileName, newEmoji)
                         }
-                        onClick={() => void handleOpenPromptTemplate(fileName, title)}
-                        onCommit={handleCommitPromptTemplate}
-                        onDelete={() => handleDeletePromptTemplate(fileName, title)}
+                        onClick={() => void menu.openPromptTemplate(fileName, title)}
+                        onDelete={() => menu.deletePromptTemplate(fileName, title)}
                       />
                     );
                   })
                 : null}
               {isCreatingPromptTemplate && (
                 <MainMenuListItem
-                  key="##new-prompt-template##"
-                  itemKey="##new-prompt-template##"
-                  fileName={null}
+                  key={NEW_PROMPT_TEMPLATE_KEY}
+                  itemKey={NEW_PROMPT_TEMPLATE_KEY}
                   title=""
-                  fileExtension=".mrmlpt"
-                  slugFallback="prompt-template"
-                  existingFileNames={promptTemplateFileNames}
-                  onCommit={handleCommitPromptTemplate}
-                  onDiscard={handleCancelCreatingPromptTemplate}
+                  {...editing({
+                    kind: 'promptTemplate',
+                    itemKey: NEW_PROMPT_TEMPLATE_KEY,
+                    fileName: null,
+                    title: '',
+                    existingFileNames: promptTemplateFileNames,
+                    toFileName: toPromptTemplateFileName,
+                    cancel: menu.cancelCreatingPromptTemplate,
+                  })}
                 />
               )}
-              {!isCreatingPromptTemplate && (
-                <ListItem
-                  ref={setCreatePromptTemplateRef}
-                  icon={TIcon.PLUS}
-                  color={ThemeColors.ACCENT2}
-                  compact={compact}
-                  onClick={() => setIsCreatingPromptTemplate(true)}
-                >
-                  {tMenu('fileList.createButton')}
-                </ListItem>
-              )}
             </List>
-          </Section>
+          </MenuSection>
 
-          <Hr variant={THrVariant.DIMMED} />
-
-          <Section>
-            {!dynamic && (
-              <ListHeader className={classNames({ compact })} level={6}>
-                <ListHeaderText>{tMenu('fileList.glossariesHeader')}</ListHeaderText>
-              </ListHeader>
-            )}
+          <MenuSection>
+            <ListHeader
+              className={classNames({ compact })}
+              compact={compact}
+              actionBar={
+                // Hidden while the new item's name is being typed
+                !isCreatingGlossary &&
+                renderCreateButton(setCreateGlossaryRef, ThemeColors.ACCENT2, () =>
+                  menu.setIsCreatingGlossary(true)
+                )
+              }
+            >
+              {tMenu('fileList.glossariesHeader')}
+            </ListHeader>
             <List>
               <AnimatePresence>
                 {glossaryItems.length
@@ -290,22 +325,25 @@ export default function FileList() {
                         <MainMenuListItem
                           key={fileName}
                           itemKey={fileName}
-                          fileName={fileName}
                           title={title}
+                          {...editing({
+                            kind: 'glossary',
+                            itemKey: fileName,
+                            fileName,
+                            title,
+                            existingFileNames: glossaryFileNames,
+                            toFileName: toGlossaryFileName,
+                          })}
                           compact={compact}
                           isActive={isActive}
                           isDisabled={listIsDisabled}
                           color={isActive ? ThemeColors.ACCENT1 : ThemeColors.TEXT}
-                          fileExtension=".mrmlg"
-                          slugFallback="glossary"
-                          existingFileNames={glossaryFileNames}
                           emoji={emoji}
                           onEmojiSelect={(newEmoji) =>
-                            void dispatch(updateGlossaryEmoji(fileName, newEmoji))
+                            void glossaries.updateEmoji(fileName, newEmoji)
                           }
-                          onClick={() => void handleOpenGlossary(fileName, title)}
-                          onCommit={handleCommitGlossary}
-                          onDelete={() => handleDeleteGlossary(fileName, title)}
+                          onClick={() => void menu.openGlossary(fileName, title)}
+                          onDelete={() => menu.deleteGlossary(fileName, title)}
                         />
                       );
                     })
@@ -313,30 +351,22 @@ export default function FileList() {
               </AnimatePresence>
               {isCreatingGlossary && (
                 <MainMenuListItem
-                  key="##new-glossary##"
-                  itemKey="##new-glossary##"
-                  fileName={null}
+                  key={NEW_GLOSSARY_KEY}
+                  itemKey={NEW_GLOSSARY_KEY}
                   title=""
-                  fileExtension=".mrmlg"
-                  slugFallback="glossary"
-                  existingFileNames={glossaryFileNames}
-                  onCommit={handleCommitGlossary}
-                  onDiscard={handleCancelCreatingGlossary}
+                  {...editing({
+                    kind: 'glossary',
+                    itemKey: NEW_GLOSSARY_KEY,
+                    fileName: null,
+                    title: '',
+                    existingFileNames: glossaryFileNames,
+                    toFileName: toGlossaryFileName,
+                    cancel: menu.cancelCreatingGlossary,
+                  })}
                 />
               )}
-              {!isCreatingGlossary && (
-                <ListItem
-                  ref={setCreateGlossaryRef}
-                  onClick={() => setIsCreatingGlossary(true)}
-                  color={ThemeColors.ACCENT2}
-                  icon={TIcon.PLUS}
-                  compact={compact}
-                >
-                  {tMenu('fileList.createButton')}
-                </ListItem>
-              )}
             </List>
-          </Section>
+          </MenuSection>
         </>
       )}
     </>

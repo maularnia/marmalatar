@@ -1,6 +1,5 @@
 import { ThemeColors } from '@src/theme/utils';
-import { appearUpSpringSlow } from '@src/toolkit/motion/transitions';
-import { useAutoFocusFirst } from '@src/utils/getFocusableElements';
+import { useStealFocus } from '@src/utils/getFocusableElements';
 import {
   FormRoot,
   FormsContent,
@@ -8,35 +7,39 @@ import {
   FormsSection,
   FormsSectionContent,
   FormsSectionTitle,
+  FormTitle,
 } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import SelectFolderButton from '@ui-toolkit/SelectFolderButton/SelectFolderButton';
 import Span from '@ui-toolkit/Span';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function FolderSetup() {
-  const rootRef = useRef<HTMLFormElement>(null);
-  useAutoFocusFirst(rootRef);
+  const { t } = useTranslation('home');
+  const selectButtonRef = useRef<HTMLButtonElement>(null);
+  useStealFocus(selectButtonRef);
   return (
-    <FormRoot ref={rootRef} style={{ alignSelf: 'center' }} onSubmit={(e) => e.preventDefault()}>
-      <FormsContent {...appearUpSpringSlow}>
-        <FormsRow>
-          <FormsSection>
+    <FormRoot style={{ alignSelf: 'center' }} onSubmit={(e) => e.preventDefault()}>
+      <FormTitle>{t('folderSetup.title')}</FormTitle>
+      <FormsContent animated>
+        <FormsRow animated>
+          <FormsSection animated>
             <FormsSectionTitle
               icon={TIcon.FOLDER_FAVORITE}
               subtext={
                 <>
                   <Span color={ThemeColors.ACCENT1} bold>
-                    Select a folder
+                    {t('folderSetup.subtextHighlight')}
                   </Span>{' '}
-                  where you projects will be stored
+                  {t('folderSetup.subtextRest')}
                 </>
               }
             >
-              One thing before we start...
+              {t('folderSetup.sectionTitle')}
             </FormsSectionTitle>
             <FormsSectionContent>
-              <SelectFolderButton />
+              <SelectFolderButton ref={selectButtonRef} />
             </FormsSectionContent>
           </FormsSection>
         </FormsRow>

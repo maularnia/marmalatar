@@ -1,12 +1,13 @@
+import { settings } from '@src/services/settings';
 import { exporterList } from './formats/list';
 import { ExportFormatlabels, ExportFormats, FrameRate } from './types';
 import Overlay from '@src/segments/overlays/Overlay';
-import { selectCharacterPool, selectLines } from '@src/store/slices/editor';
-import { closeOverlays } from '@src/store/slices/overlays';
-import { selectIsEditMode, selectProjectTargetLanguage } from '@src/store/slices/project';
+import { editor } from '@src/services/project';
+import { projects } from '@src/services/project';
 import { ThemeColors } from '@src/theme/utils';
 import { LANGUAGE_LABELS, TCharacter } from '@src/types';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { useAppSelectors } from '@store/hooks';
+import TextInput from '@ui-toolkit/TextInput';
 import Toggle from '@ui-toolkit/Toggle';
 import {
   FormRoot,
@@ -19,13 +20,17 @@ import {
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import Message, { TMessageSize, TMessageVariant } from '@ui-toolkit/Message';
-import Select, { TOptionSelect } from '@ui-toolkit/Select/Select';
+import Select from '@ui-toolkit/Select/Select';
+import type { TOptionSelect } from '@ui-toolkit/Select/types';
+import { AUTO_MERGE_THRESHOLD_DEFAULT } from '@src/consts';
 import { parseCharacterList } from '@utils/characters';
+import { mergeSameCharacterLines } from '@utils/data/mergeSameCharacterLines';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { OVERLAY_APPEAR_DURATION } from '@src/toolkit/motion/transitions';
 
 enum SpecialCharacterOptions {
-  'ALL' = 'All',
+  ALL = 'All',
 }
 
 interface CharacterOption extends TOptionSelect {
@@ -36,11 +41,12 @@ interface CharacterOption extends TOptionSelect {
 
 export default function Export() {
   const { t } = useTranslation('export');
-  const dispatch = useAppDispatch();
-  const translationLines = useAppSelector(selectLines);
-  const characterPool = useAppSelector(selectCharacterPool);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const [translationLines, characterPool, targetLanguage, isEditMode] = useAppSelectors(
+    editor.selectLines,
+    editor.selectCharacterPool,
+    projects.selectTargetLanguage,
+    editor.selectIsEditMode
+  );
 
   const formatOptions = Object.values(ExportFormats).map((format) => ({
     value: format,
@@ -66,6 +72,18 @@ export default function Export() {
   const [characterFilter, setCharacterFilter] = useState<string[]>([]);
   const [applyCharacterFilter, setApplyCharacterFilter] = useState<boolean>(false);
   const [applyTimeCorrection, setApplyTimeCorrection] = useState<boolean>(false);
+  const [applyLineMerge, setApplyLineMerge] = useState<boolean>(false);
+  // The merge threshold is chosen per export, here, and not kept anywhere. The field holds what's
+  // typed; merging uses the last valid value (a whole number of ms, at least 1).
+  const [mergeThresholdInput, setMergeThresholdInput] = useState(
+    String(AUTO_MERGE_THRESHOLD_DEFAULT)
+  );
+  const [mergeThreshold, setMergeThreshold] = useState(AUTO_MERGE_THRESHOLD_DEFAULT);
+  const mergeThresholdError = (() => {
+    if (!mergeThresholdInput.trim()) return t('mergeLines.thresholdRequired');
+    const value = Number(mergeThresholdInput);
+    return Number.isInteger(value) && value >= 1 ? null : t('mergeLines.thresholdMin');
+  })();
 
   // Gated on the checkbox itself, not just on `characterFilter`/`sourceFps`/`resultFps` being at
   // their reset defaults -- the inputs are also reset when their checkbox is unchecked, but that's
@@ -86,35 +104,40 @@ export default function Export() {
     );
   }, [applyCharacterFilter, characterFilter, translationLines]);
 
-  const exportLines = useMemo(
-    () => (isEditMode ? filteredLines.map((l) => ({ ...l, output: l.input })) : filteredLines),
-    [filteredLines, isEditMode]
-  );
+  // Merging is the last step before the lines reach the exporter, so it works on exactly what's
+  // exported: the filtered lines, with the edited column as the output
+  const exportLines = useMemo(() => {
+    const columnLines = isEditMode
+      ? filteredLines.map((l) => ({ ...l, output: l.input }))
+      : filteredLines;
+    return applyLineMerge ? mergeSameCharacterLines(columnLines, mergeThreshold) : columnLines;
+  }, [filteredLines, isEditMode, applyLineMerge, mergeThreshold]);
 
   const effectiveSourceFps = applyTimeCorrection ? sourceFps : FrameRate.FPS23P976;
   const effectiveResultFps = applyTimeCorrection ? resultFps : FrameRate.FPS23P976;
   return (
-    <Overlay onClose={() => dispatch(closeOverlays())}>
+    <Overlay title={t('overlayTitle')} onClose={() => settings.closeExport()}>
       <FormRoot>
-        <FormsContent>
-          <FormsRow>
-            <FormsSection>
-              <FormsSectionTitle icon={TIcon.PERSON} subtext={t('characterFilter.subtext')}>
+        <FormsContent animated delay={OVERLAY_APPEAR_DURATION}>
+          <FormsRow animated>
+            <FormsSection animated>
+              <FormsSectionTitle
+                icon={TIcon.PERSON}
+                subtext={t('characterFilter.subtext')}
+                after={
+                  <Toggle
+                    checked={applyCharacterFilter}
+                    onChange={(e) => {
+                      setApplyCharacterFilter(e.currentTarget.checked);
+                      if (!e.currentTarget.checked) {
+                        setCharacterFilter([]);
+                      }
+                    }}
+                  />
+                }
+              >
                 {t('characterFilter.title')}
               </FormsSectionTitle>
-              <FormsSectionContent>
-                <Toggle
-                  checked={applyCharacterFilter}
-                  onChange={(e) => {
-                    setApplyCharacterFilter(e.currentTarget.checked);
-                    if (!e.currentTarget.checked) {
-                      setCharacterFilter([]);
-                    }
-                  }}
-                >
-                  {t('characterFilter.checkboxLabel')}
-                </Toggle>
-              </FormsSectionContent>
               {applyCharacterFilter ? (
                 <FormsSectionContent>
                   <Select
@@ -128,25 +151,26 @@ export default function Export() {
               ) : null}
             </FormsSection>
           </FormsRow>
-          <FormsRow>
-            <FormsSection>
-              <FormsSectionTitle icon={TIcon.TIME_CONFIG} subtext={t('fpsCorrection.subtext')}>
+          <FormsRow animated>
+            <FormsSection animated>
+              <FormsSectionTitle
+                icon={TIcon.TIME_CONFIG}
+                subtext={t('fpsCorrection.subtext')}
+                after={
+                  <Toggle
+                    checked={applyTimeCorrection}
+                    onChange={(e) => {
+                      setApplyTimeCorrection(e.currentTarget.checked);
+                      if (!e.currentTarget.checked) {
+                        setSourceFps(FrameRate.FPS23P976);
+                        setResultFps(FrameRate.FPS23P976);
+                      }
+                    }}
+                  />
+                }
+              >
                 {t('fpsCorrection.title')}
               </FormsSectionTitle>
-              <FormsSectionContent>
-                <Toggle
-                  checked={applyTimeCorrection}
-                  onChange={(e) => {
-                    setApplyTimeCorrection(e.currentTarget.checked);
-                    if (!e.currentTarget.checked) {
-                      setSourceFps(FrameRate.FPS23P976);
-                      setResultFps(FrameRate.FPS23P976);
-                    }
-                  }}
-                >
-                  {t('fpsCorrection.checkboxLabel')}
-                </Toggle>
-              </FormsSectionContent>
               {applyTimeCorrection && (
                 <FormsSectionContent $columns={3} $templateColumns={'1fr min-content 1fr'}>
                   <Select
@@ -176,8 +200,43 @@ export default function Export() {
               )}
             </FormsSection>
           </FormsRow>
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
+              <FormsSectionTitle
+                icon={TIcon.MERGE}
+                subtext={t('mergeLines.subtext')}
+                after={
+                  <Toggle
+                    checked={applyLineMerge}
+                    onChange={(e) => setApplyLineMerge(e.currentTarget.checked)}
+                  />
+                }
+              >
+                {t('mergeLines.title')}
+              </FormsSectionTitle>
+              {applyLineMerge && (
+                <FormsSectionContent $columns={2}>
+                  <TextInput
+                    icon={TIcon.SPACING}
+                    value={mergeThresholdInput}
+                    errors={mergeThresholdError ? [mergeThresholdError] : []}
+                    onChange={(e) => {
+                      const text = e.currentTarget.value;
+                      setMergeThresholdInput(text);
+                      const value = Number(text);
+                      if (text.trim() && Number.isInteger(value) && value >= 1) {
+                        setMergeThreshold(value);
+                      }
+                    }}
+                  >
+                    {t('mergeLines.thresholdLabel')}
+                  </TextInput>
+                </FormsSectionContent>
+              )}
+            </FormsSection>
+          </FormsRow>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.FILE}>{t('outputFormat.title')}</FormsSectionTitle>
               <FormsSectionContent $columns={2}>
                 <Select
@@ -189,7 +248,7 @@ export default function Export() {
             </FormsSection>
           </FormsRow>
           {isEditMode && (
-            <FormsRow>
+            <FormsRow animated>
               <Message
                 type={TMessageVariant.SECONDARY}
                 size={TMessageSize.S}

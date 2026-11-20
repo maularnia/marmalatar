@@ -1,24 +1,24 @@
 import { useGlobalKeystrokeRegistry } from '@providers/GlobalKeystroke/GlobalKeystrokeDispatcher';
 import { TKeystrokeSlot } from '@providers/GlobalKeystroke/types';
-import ScopedKeyHubProvider from '@providers/ScopedKeyHubProvider';
+import { ScopedKeyHubProvider } from '@providers/ScopedKeyHubProvider';
 import { CSSVar, ThemeColors } from '@src/theme/utils';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipComplex } from '@ui-toolkit/Tooltip';
 import {
   createContext,
-  FocusEvent,
   PropsWithChildren,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
+import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { useShortcutPause } from 'react-keyhub';
 import styled, { css } from 'styled-components';
-import { KeystrokeZoneContextType, KeystrokeZoneHintCorner, KeystrokeZoneProps } from './types';
+import { KeystrokeZoneContextType, KeystrokeZoneProps } from './types';
+import { useIsCtrlHeld } from './useIsCtrlHeld';
 
 const ZoneRoot = styled.div<{ $fit: 'fill' | 'content' }>`
   position: relative;
@@ -38,54 +38,35 @@ const ZoneRoot = styled.div<{ $fit: 'fill' | 'content' }>`
         `}
 `;
 
-const CORNER_STYLES: Record<KeystrokeZoneHintCorner, ReturnType<typeof css>> = {
-  'top-left': css`
-    top: ${CSSVar('size4')};
-    left: ${CSSVar('size4')};
-  `,
-  'top-right': css`
-    top: ${CSSVar('size4')};
-    right: ${CSSVar('size4')};
-  `,
-  'bottom-left': css`
-    bottom: ${CSSVar('size4')};
-    left: ${CSSVar('size4')};
-  `,
-  'bottom-right': css`
-    bottom: ${CSSVar('size4')};
-    right: ${CSSVar('size4')};
-  `,
-};
-
-// Only the badge itself is interactive (needed to trigger its explanatory tooltip on hover) --
-// everything around it stays click-through, since it's an absolutely-positioned overlay sitting on
-// top of the zone's real content.
-const HintBadge = styled.div<{ $corner: KeystrokeZoneHintCorner }>`
+// Shown only while Ctrl is held (the moment its Ctrl+number shortcut is in reach). Otherwise it's
+// fully transparent and click-through, so it never covers the zone's real content. While shown,
+// only the badge itself is interactive (for its explanatory tooltip on hover); everything around
+// it stays click-through, since it's an absolutely-positioned overlay on top of the zone.
+const HintBadge = styled.div`
   position: absolute;
-  ${({ $corner }) => CORNER_STYLES[$corner]}
+  top: ${CSSVar('size4')};
+  left: ${CSSVar('size4')};
   display: flex;
   align-items: center;
   gap: ${CSSVar('size1')};
-  pointer-events: auto;
   cursor: help;
   z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 100ms ease-in-out;
+  &.isVisible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 `;
 
-const HINT_TOOLTIP_SIDE: Record<KeystrokeZoneHintCorner, 'top' | 'bottom'> = {
-  'top-left': 'bottom',
-  'top-right': 'bottom',
-  'bottom-left': 'top',
-  'bottom-right': 'top',
-};
+// Radix renders popper content (tooltips, the emoji picker) into a portal wrapped in this element
+const POPPER_WRAPPER_SELECTOR = '[data-radix-popper-content-wrapper]';
 
-const KeystrokeZoneContext = createContext<KeystrokeZoneContextType>({
+export const KeystrokeZoneContext = createContext<KeystrokeZoneContextType>({
   zoneRef: { current: null },
   setFocusOverride: () => {},
 });
-
-export function useKeystrokeZone(): KeystrokeZoneContextType {
-  return useContext(KeystrokeZoneContext);
-}
 
 // Must render inside ScopedKeyHubProvider's own KeyHubProvider (useShortcutPause reads the
 // nearest one via useKeyHub()).
@@ -110,6 +91,7 @@ export default function KeystrokeZone({
   const { registerZone, unregisterZone } = useGlobalKeystrokeRegistry();
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [slot, setSlot] = useState<TKeystrokeSlot | null>(null);
+  const isCtrlHeld = useIsCtrlHeld();
 
   const setFocusOverride = useCallback((fn: (() => void) | undefined) => {
     focusOverrideRef.current = fn;
@@ -126,7 +108,7 @@ export default function KeystrokeZone({
     (zoneRef.current ?? containerRef.current)?.focus();
   });
 
-  const hasHint = hint != null;
+  const hasHint = Boolean(hint);
   useEffect(() => {
     if (!hasHint) return;
     const assigned = registerZone(focusZoneActionRef.current);
@@ -134,23 +116,41 @@ export default function KeystrokeZone({
     return () => unregisterZone(assigned);
   }, [hasHint, registerZone, unregisterZone]);
 
-  const handleFocusWithinChange = useCallback(
-    (isWithin: boolean) => {
-      setIsFocusWithin(isWithin);
-      onFocusWithinChange?.(isWithin);
-    },
-    [onFocusWithinChange]
-  );
+  const onFocusWithinChangeRef = useRef(onFocusWithinChange);
+  onFocusWithinChangeRef.current = onFocusWithinChange;
 
-  const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
-    handleFocusWithinChange(true);
-    if (event.target instanceof HTMLElement) zoneRef.current = event.target;
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
-    if (containerRef.current?.contains(event.relatedTarget as Node | null)) return;
-    handleFocusWithinChange(false);
-  };
+  // Whether focus is inside the zone, by where it really is on the page (native events and
+  // `contains`), not by React's component tree: React's onFocus/onBlur count a portal rendered from
+  // inside the zone as inside it, and an element removed while focused (an emoji picked in the
+  // picker, which then closes) fires no blur at all -- either left the zone believing it still had
+  // focus. Focus inside a popper (a tooltip, the emoji picker) changes nothing: it belongs to
+  // whichever zone opened it. A pointerdown re-checks after the browser has moved focus, which also
+  // catches focus that silently dropped to the page body.
+  useEffect(() => {
+    let isWithin = false;
+    const sync = (target: EventTarget | null) => {
+      if (target instanceof Element && target.closest(POPPER_WRAPPER_SELECTOR)) return;
+      const next = target instanceof Node && Boolean(containerRef.current?.contains(target));
+      if (next && target instanceof HTMLElement) zoneRef.current = target;
+      if (next === isWithin) return;
+      isWithin = next;
+      setIsFocusWithin(next);
+      onFocusWithinChangeRef.current?.(next);
+    };
+    const handleFocusIn = (event: globalThis.FocusEvent) => sync(event.target);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const handlePointerDown = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => sync(document.activeElement));
+    };
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+    };
+  }, []);
 
   const contextValue = useMemo<KeystrokeZoneContextType>(
     () => ({ zoneRef, setFocusOverride }),
@@ -158,8 +158,8 @@ export default function KeystrokeZone({
   );
 
   return (
-    <ZoneRoot ref={containerRef} tabIndex={0} onFocus={handleFocus} onBlur={handleBlur} $fit={fit}>
-      <KeystrokeZoneContext.Provider value={contextValue}>
+    <ZoneRoot ref={containerRef} tabIndex={0} $fit={fit}>
+      <KeystrokeZoneContext value={contextValue}>
         {shortcuts ? (
           <ScopedKeyHubProvider
             shortcuts={shortcuts}
@@ -171,7 +171,7 @@ export default function KeystrokeZone({
         ) : (
           children
         )}
-      </KeystrokeZoneContext.Provider>
+      </KeystrokeZoneContext>
       {hint && slot !== null && (
         <Tooltip
           label={
@@ -188,9 +188,9 @@ export default function KeystrokeZone({
               {t('keystrokeZone.hintSuffix')}
             </TooltipComplex>
           }
-          side={HINT_TOOLTIP_SIDE[hint.corner ?? 'top-right']}
+          side="bottom"
         >
-          <HintBadge $corner={hint.corner ?? 'top-right'}>
+          <HintBadge className={classNames({ isVisible: isCtrlHeld })}>
             <Tag variant={TTagVariant.SECONDARY} color={ThemeColors.TEXT} size={TTagSize.NANO}>
               {String(slot)}
             </Tag>

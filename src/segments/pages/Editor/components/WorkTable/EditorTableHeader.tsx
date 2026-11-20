@@ -1,36 +1,30 @@
+import { editor } from '@src/services/project';
 import Select from '@ui-toolkit/Select/Select';
-import { useAppDispatch, useAppSelector } from '@src/store/hooks';
-import {
-  selectIsEditMode,
-  selectProjectSourceLanguage,
-  selectProjectTargetLanguage,
-  setProjectSourceLanguage,
-  setProjectTargetLanguage,
-} from '@src/store/slices/project';
-import { CSSVar } from '@src/theme/utils';
+import { useAppSelectors } from '@src/store/hooks';
+import { projects } from '@src/services/project';
+import { CSSVar, ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { reconcileGlossarySelectionWithDirection } from '@src/store/thunks';
+import { glossaries } from '@src/services/glossary';
+import { ai } from '@src/services/ai';
+import Button from '@ui-toolkit/Button/Button';
+import { TButtonVariant } from '@ui-toolkit/Button/types';
+import { TIcon } from '@ui-toolkit/Icon/icons';
+import Tooltip, { TooltipComplex, TooltipKeystrokeHint } from '@ui-toolkit/Tooltip';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
+// No background or blur of its own: the floating block it sits in (FloatingVideoBlock.tsx)
+// carries them for the whole stack
 const Row = styled.div`
-  border: ${CSSVar('mainTableLineCellBorderWidth')} solid ${CSSVar('mainTableLineCellBorderColor')};
-  border-top: none;
+  position: relative;
   display: grid;
   grid-template-columns: var(--current-grid-template);
   gap: 0;
   align-items: stretch;
-  background-color: ${CSSVar('mainTableHeaderBg')};
-  backdrop-filter: ${CSSVar('mainTableHeaderBackdrop')};
   width: 100%;
 `;
 const Cell = styled.div`
-  border-left: ${CSSVar('mainTableLineCellBorderWidth')} solid
-    ${CSSVar('mainTableLineCellBorderColor')};
-  &:first-child {
-    border-left: none;
-  }
   padding: ${CSSVar('size4')} ${CSSVar('size6')};
   font-family: ${CSSVar('fontTextSansSerif')};
   font-size: ${CSSVar('sizeTextRegular')};
@@ -44,36 +38,97 @@ const Cell = styled.div`
   gap: ${CSSVar('mainTableLineCellSpacingX')};
 `;
 
+// A language select followed by the mode button, which keeps its own width
+const SelectWithAction = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${CSSVar('size4')};
+  & > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+`;
+
+// The actor column's title stays centred, with the mode button (edit mode only) at the cell's end
+const ActorHeader = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  & > :last-child {
+    justify-self: end;
+  }
+`;
+
+// Switches between translating and editing the source (Ctrl+M): removes the translation column
+// from its own header, or adds it back from the actor column's
+function ModeButton({ isEditMode, disabled }: { isEditMode: boolean; disabled: boolean }) {
+  const { t } = useTranslation('tooltips');
+  return (
+    <Tooltip
+      label={
+        <TooltipComplex
+          title={t(
+            isEditMode
+              ? 'editorControls.addTranslationColumn'
+              : 'editorControls.removeTranslationColumn'
+          )}
+        >
+          <TooltipKeystrokeHint keys={['Ctrl', 'M']} />
+        </TooltipComplex>
+      }
+    >
+      <Button
+        variant={TButtonVariant.TRANSPARENT}
+        color={ThemeColors.TEXT}
+        icon={isEditMode ? TIcon.COLUMNS_3 : TIcon.CROSS}
+        disabled={disabled}
+        onClick={() => editor.toggleEditMode()}
+      />
+    </Tooltip>
+  );
+}
+
 export const EditorTableHeader = () => {
   const { t } = useTranslation('editor');
-  const dispatch = useAppDispatch();
   const languageOptions = useLanguageOptions();
-  const sourceLanguage = useAppSelector(selectProjectSourceLanguage);
-  const targetLanguage = useAppSelector(selectProjectTargetLanguage);
-  const isEditMode = useAppSelector(selectIsEditMode);
+  const [sourceLanguage, targetLanguage, isEditMode, isBusy] = useAppSelectors(
+    projects.selectSourceLanguage,
+    projects.selectTargetLanguage,
+    editor.selectIsEditMode,
+    ai.selectIsBusy
+  );
   return (
     <Row>
       <Cell>
         <Select
           value={sourceLanguage ?? TLanguage.English}
           onChange={([value]) => {
-            dispatch(setProjectSourceLanguage(value as TLanguage));
-            dispatch(reconcileGlossarySelectionWithDirection());
+            projects.setSourceLanguage(value as TLanguage);
+            glossaries.reconcileSelectionWithDirection();
           }}
           options={languageOptions}
         />
       </Cell>
-      <Cell style={{ textAlign: 'center' }}>{t('tableHeader.character')}</Cell>
+      <Cell>
+        <ActorHeader>
+          <span />
+          <span style={{ textAlign: 'center' }}>{t('tableHeader.character')}</span>
+          {isEditMode ? <ModeButton isEditMode disabled={isBusy} /> : <span />}
+        </ActorHeader>
+      </Cell>
       {!isEditMode && (
-        <Cell style={{ justifyContent: 'flex-end' }}>
-          <Select
-            value={targetLanguage ?? TLanguage.Belarusian}
-            onChange={([value]) => {
-              dispatch(setProjectTargetLanguage(value as TLanguage));
-              dispatch(reconcileGlossarySelectionWithDirection());
-            }}
-            options={languageOptions}
-          />
+        <Cell>
+          <SelectWithAction>
+            <Select
+              value={targetLanguage ?? TLanguage.Belarusian}
+              onChange={([value]) => {
+                projects.setTargetLanguage(value as TLanguage);
+                glossaries.reconcileSelectionWithDirection();
+              }}
+              options={languageOptions}
+            />
+            <ModeButton isEditMode={false} disabled={isBusy} />
+          </SelectWithAction>
         </Cell>
       )}
     </Row>

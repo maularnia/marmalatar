@@ -8,6 +8,30 @@
     "mergeDown": "Аб'яднаць з ніжнім"
   },
   "videoPlayer": {
-    "noCharacter": "Без персанажу"
+    "selectVideo": "Абраць відэа",
+    "playFromLine": "Прайграць з бягучага радка",
+    "stopToLine": "Спыніць і вярнуцца да пачатку абранага радка",
+    "timeAdjustmentStep": "Крок карэкцыі часу (мс)",
+    "scrollIntoViewOnPlay": "Падкручваць да відэа пры прайграванні (малыя экраны)",
+    "duration": "Працягласць: {{time}}"
+  },
+  "spellcheck": {
+    "loadingSuggestions": "Шукаем варыянты...",
+    "noSuggestions": "Няма варыянтаў",
+    "addToProject": "Праект",
+    "addToGlobal": "Агульны"
+  },
+  "tempoPanel": {
+    "lines": "Радкі",
+    "charsPerLine": "Сімвалаў у радку",
+    "charsPerLineTooLong": "Зашмат сімвалаў у радку {{line}}",
+    "cps": "Сімб/сек",
+    "seconds": "с",
+    "tooCloseToPrevious": "Папярэдні радок занадта блізка",
+    "tooCloseToNext": "Наступны радок занадта блізка",
+    "tooCloseToNeighbours": "Суседнія радкі занадта блізка",
+    "durationTooShort": "Радок закароткі па часе",
+    "cpsTooHigh": "Зашмат тэксту для працягласці радка",
+    "duration": "Працягласць"
   }
 }

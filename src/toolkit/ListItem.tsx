@@ -3,7 +3,7 @@ import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import { TTheme } from '@src/theme/types';
 import { clamp } from '@src/utils/numbers';
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@src/services/settings';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Span from '@ui-toolkit/Span';
@@ -22,8 +22,11 @@ interface ListItemProps extends Omit<ComponentPropsWithoutRef<'div'>, 'onChange'
   isError?: boolean;
   progress?: number;
   panel?: ReactNode;
+  /** Shows `panel` all the time instead of only while the item is hovered */
+  staticPanel?: boolean;
   emoji?: ReactNode;
-  children?: string | null;
+  /** The label. Only a string can be edited (`onChange`): the editable field is seeded with it */
+  children?: ReactNode;
   onChange?: (value: string) => void;
   onCommit?: () => void;
   onDiscard?: () => void;
@@ -88,7 +91,7 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
     &:focus-within,
     &.isFocused {
       color: ${CSSColor(
-        $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
+        $color,
         $theme.variables.listItemColorShadeFocus.value,
         $theme.variables.listItemColorOpacityFocus.value
       )};
@@ -100,14 +103,14 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
       border-color: ${CSSColor(
         $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
         $theme.variables.listItemBgShadeFocus.value,
-        10
+        0
       )};
     }
 
     &.isActive {
       cursor: default;
       color: ${CSSColor(
-        $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
+        $theme.colors[$color].text,
         $theme.variables.listItemColorShadeActive.value,
         $theme.variables.listItemColorOpacityActive.value
       )};
@@ -119,11 +122,11 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
       border-color: ${CSSColor(
         $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
         $theme.variables.listItemBgShadeActive.value,
-        30
+        0
       )};
       &:hover {
         color: ${CSSColor(
-          $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
+          $theme.colors[$color].text,
           $theme.variables.listItemColorShadeActiveHover.value,
           $theme.variables.listItemColorOpacityActiveHover.value
         )};
@@ -137,19 +140,19 @@ const Root = styled.div<{ $theme: TTheme; $color: TColor }>`
       &:focus-within,
       &.isFocused {
         color: ${CSSColor(
-          $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
-          $theme.variables.listItemColorShadeFocus.value,
-          $theme.variables.listItemColorOpacityFocus.value
+          $theme.colors[$color].text,
+          $theme.variables.listItemColorShadeActiveFocus.value,
+          $theme.variables.listItemColorOpacityActiveFocus.value
         )};
         background-color: ${CSSColor(
           $color,
-          $theme.variables.listItemBgShadeFocus.value,
-          $theme.variables.listItemBgOpacityFocus.value
+          $theme.variables.listItemBgShadeActiveFocus.value,
+          $theme.variables.listItemBgOpacityActiveFocus.value
         )};
         border-color: ${CSSColor(
           $color === ThemeColors.TRANSPARENT ? $theme.colors[$color].text : $color,
-          $theme.variables.listItemBgShadeFocus.value,
-          30
+          $theme.variables.listItemBgShadeActiveFocus.value,
+          0
         )};
       }
     }
@@ -224,6 +227,7 @@ export const ListItem = ({
   progress,
   children,
   panel,
+  staticPanel = false,
   emoji,
   onChange,
   onCommit,
@@ -234,7 +238,7 @@ export const ListItem = ({
   ref: forwardedRef,
   ...rest
 }: ListItemProps) => {
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   const [isHovered, setIsHovered] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -252,14 +256,14 @@ export const ListItem = ({
   useEffect(() => {
     if (!isEditable || !editableRef.current) return;
     const el = editableRef.current;
-    el.textContent = children ?? '';
+    el.textContent = typeof children === 'string' ? children : '';
     el.focus();
     const range = document.createRange();
     range.selectNodeContents(el);
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
-  }, [isEditable]);
+  }, [isEditable, children]);
 
   useEffect(() => {
     if (isError && !prevIsErrorRef.current && rootRef.current) {
@@ -325,7 +329,8 @@ export const ListItem = ({
         ) : (
           children && <ListItemText>{children}</ListItemText>
         ))}
-      {!compact && (
+      {!compact && staticPanel && panel != null && <PanelWrapper>{panel}</PanelWrapper>}
+      {!compact && !staticPanel && (
         <AnimatePresence>
           {isHovered && panel != null && (
             <PanelWrapper

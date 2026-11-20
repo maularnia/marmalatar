@@ -1,30 +1,11 @@
-import { useVideo } from '@providers/VideoProvider';
-import GeneralSettings from '@src/partials/Settings';
-import {
-  selectActiveLineIndex,
-  selectFocusedLineIndex,
-  selectLines,
-  updateLineTiming,
-} from '@src/store/slices/editor';
-import { selectIsEditMode, selectVideoFilePath } from '@src/store/slices/project';
-import { CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import Button from '@ui-toolkit/Button/Button';
-import {
-  FormRoot,
-  FormSectionEntry,
-  FormsRow,
-  FormsSection,
-  FormsSectionContent,
-  FormsSectionTitle,
-} from '@ui-toolkit/forms';
+import { media } from '@src/services/media';
+import { SpellcheckSettings } from '@src/partials/SpellcheckSettings';
+import TempoSettings from '@src/partials/TempoSettings';
+import { editor } from '@src/services/project';
+import { CSSVar } from '@src/theme/utils';
+import { useAppSelectors } from '@store/hooks';
 import Hr, { THrVariant } from '@ui-toolkit/Hr/Hr';
-import { TIcon } from '@ui-toolkit/Icon/icons';
-import P, { TPVariant } from '@ui-toolkit/P';
-import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
-import { useVideoFileSwap } from '../../components/VideoPlayer/useVideoFileSwap';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import Waveform from '../../components/Waveform/Waveform';
 import AiTranslationStatusPanel from './components/AiTranslationStatusPanel';
@@ -61,68 +42,45 @@ const AsideVideoContainer = styled.div`
 const AsideVideoWrapper = styled.div``;
 
 export default function EditorAside() {
-  const { t } = useTranslation(['editorAside', 'app']);
-  const dispatch = useAppDispatch();
-  const isEditMode = useAppSelector(selectIsEditMode);
-  const { translationLines, activeLineIndex, focusedLineIndex } = useAppSelector(
-    (state) => ({
-      translationLines: selectLines(state),
-      activeLineIndex: selectActiveLineIndex(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
-    }),
-    shallowEqual
+  const [
+    isEditMode,
+    timelineDurationMs,
+    waveformPeaks,
+    translationLines,
+    activeLineIndex,
+    focusedLineIndex,
+  ] = useAppSelectors(
+    editor.selectIsEditMode,
+    editor.selectTimelineDurationMs,
+    media.selectWaveformPeaks,
+    editor.selectLines,
+    media.selectActiveLineIndex,
+    editor.selectFocusedLineIndex
   );
-  const { videoDurationMs, waveformPeaks } = useVideo();
-  const videoFilePath = useAppSelector(selectVideoFilePath);
-  const { swapVideo } = useVideoFileSwap();
   return (
     <Aside tabIndex={1}>
-      {videoFilePath && (
-        <AsideVideoContainer>
-          <AsideVideoWrapper>
-            <VideoPlayer />
-          </AsideVideoWrapper>
-          <Waveform
-            peaks={waveformPeaks}
-            videoDurationMs={videoDurationMs}
-            activeLineIndex={activeLineIndex}
-            focusedLineIndex={focusedLineIndex}
-            translationLines={translationLines}
-            onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
-            }}
-          />
-        </AsideVideoContainer>
-      )}
-      {!videoFilePath && (
-        <FormRoot>
-          <FormsRow>
-            <FormsSection>
-              <FormsSectionTitle icon={TIcon.VIDEO} subtext={t('video.subtext')}>
-                {t('video.title')}
-              </FormsSectionTitle>
-              <FormsSectionContent>
-                <FormSectionEntry>
-                  <Button style={{ alignSelf: 'flex-start' }} onClick={swapVideo}>
-                    {t('video.pickVideoButton')}
-                  </Button>
-                </FormSectionEntry>
-                <FormSectionEntry>
-                  <P color={ThemeColors.TEXT} variant={TPVariant.TERTIARY}>
-                    {t('app:video.supportedFormats')}
-                  </P>
-                  <P color={ThemeColors.TEXT} variant={TPVariant.TERTIARY}>
-                    {t('app:video.supportedCodecs')}
-                  </P>
-                </FormSectionEntry>
-              </FormsSectionContent>
-            </FormsSection>
-          </FormsRow>
-        </FormRoot>
-      )}
-      <Hr variant={THrVariant.DIMMED} />
+      {/* Always there: an empty black player and a flat waveform until a video is picked */}
+      <AsideVideoContainer>
+        <AsideVideoWrapper>
+          <VideoPlayer />
+        </AsideVideoWrapper>
+        <Waveform
+          peaks={waveformPeaks}
+          videoDurationMs={timelineDurationMs}
+          activeLineIndex={activeLineIndex}
+          focusedLineIndex={focusedLineIndex}
+          translationLines={translationLines}
+          onLineTimingChange={(lineIndex, startTime, endTime) => {
+            editor.updateLineTiming({ lineIndex, startTime, endTime });
+          }}
+        />
+      </AsideVideoContainer>
+      <Hr variant={THrVariant.TRANSPARENT} />
       {!isEditMode && <AiTranslationStatusPanel />}
-      <GeneralSettings />
+      {/* The same tempo (subtitle limits) section as the Settings overlay's General tab */}
+      <TempoSettings />
+      {/* The same spellcheck switch and dictionaries as the Settings overlay's Spellchecker tab */}
+      <SpellcheckSettings />
     </Aside>
   );
 }

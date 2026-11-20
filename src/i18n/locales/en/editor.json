@@ -8,6 +8,30 @@
     "mergeDown": "Merge Down"
   },
   "videoPlayer": {
-    "noCharacter": "No character"
+    "selectVideo": "Select video",
+    "playFromLine": "Play from the current line",
+    "stopToLine": "Stop and return to the focused line’s beginning",
+    "timeAdjustmentStep": "Time adjustment step (ms)",
+    "scrollIntoViewOnPlay": "Scroll the video into view on play (small screens)",
+    "duration": "Duration: {{time}}"
+  },
+  "spellcheck": {
+    "loadingSuggestions": "Loading suggestions...",
+    "noSuggestions": "No suggestions",
+    "addToProject": "Project",
+    "addToGlobal": "Global"
+  },
+  "tempoPanel": {
+    "lines": "Lines",
+    "charsPerLine": "Chars per line",
+    "charsPerLineTooLong": "Too many chars in line {{line}}",
+    "cps": "CPS",
+    "seconds": "s",
+    "tooCloseToPrevious": "Previous line is too close",
+    "tooCloseToNext": "Next line is too close",
+    "tooCloseToNeighbours": "Neighbouring lines are too close",
+    "durationTooShort": "Line duration is too short",
+    "cpsTooHigh": "Too much text for line duration",
+    "duration": "Duration"
   }
 }

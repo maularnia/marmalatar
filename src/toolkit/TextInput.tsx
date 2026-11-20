@@ -1,5 +1,5 @@
 import { useAppSelector } from '@store/hooks';
-import { selectCurrentThemeData } from '@store/slices/app';
+import { settings } from '@src/services/settings';
 import { TColor } from '@src/theme/definitions';
 import { ThemeColors, CSSColor, CSSVar } from '@src/theme/utils';
 import { TTheme } from '@src/theme/types';
@@ -293,7 +293,7 @@ export default function TextInput({
   ...props
 }: TextInputProps) {
   const hasErrors = Boolean(errors?.length);
-  const theme = useAppSelector(selectCurrentThemeData);
+  const theme = useAppSelector(settings.selectCurrentThemeData);
   const color: TColor = hasErrors
     ? ThemeColors.RED
     : valid

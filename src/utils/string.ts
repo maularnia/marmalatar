@@ -1,14 +1,5 @@
 export const camelToKebab = (name: string) => '--' + name.replace(/([A-Z])/g, '-$1').toLowerCase();
 
-export function toSlug(value: string, fallback: string): string {
-  const slug = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-  return slug || fallback;
-}
-
 export function formatToFileName(text: string): string {
   return text
     .trim()

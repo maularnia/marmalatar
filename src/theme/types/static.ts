@@ -1,5 +1,5 @@
 import { TOpacity } from '@src/theme/definitions';
-import { TThemeVarsChapter } from '@src/theme/types';
+import type { TThemeVarsChapter } from '@src/theme/types/chapter';
 
 export type TThemeStaticFontsChapter = TThemeVarsChapter<{
   fontHeadingSansSerif: string;
@@ -66,8 +66,16 @@ export type TThemeStaticBlurChapter = TThemeVarsChapter<{
 export type TThemeStaticScreenChapter = TThemeVarsChapter<{
   appScreenHorizontalSpacing: string;
   appScreenWidth: string;
+  appTableWidthSmall: string;
+  appTableWidthMedium: string;
+  appTableWidthLarge: string;
+  appAsideWidthSmall: string;
+  appAsideWidthMedium: string;
+  appAsideWidthLarge: string;
   appScrollbarWidth: string;
   appScrollbarBorderRadius: string;
+  appMenuCollapsedWidth: string;
+  appMenuExpandedWidth: string;
 }>;
 
 export type TThemeStaticWindowsChapter = TThemeVarsChapter<{
@@ -122,19 +130,19 @@ export type TThemeStaticMessageChapter = TThemeVarsChapter<{
 export type TThemeStaticTableChapter = TThemeVarsChapter<{
   mainTableWidth: string;
   mainTableTextSize: string;
-  mainTableLineBackdropRadius: string;
+  mainTableFocusBackdropRadius: string;
+  mainTableLineRadius: string;
+  mainTableLineSpacing: string;
   mainTableLineCellSpacingX: string;
   mainTableLineCellSpacingY: string;
-  mainTableLineBackdropBorderWidth: string;
-  mainTableLineBackdropSpacingX: string;
-  mainTableLineBackdropSpacingY: string;
+  mainTableFocusBackdropBorderWidth: string;
+  mainTableFocusBackdropSpacingX: string;
+  mainTableFocusBackdropSpacingY: string;
   mainTableLineCellSpacingInnerX: string;
   mainTableLineCellBorderWidth: string;
   mainTableLineCellBorderWidthCompleted: string;
   mainTableLineCellBorderWidthHover: string;
   mainTableLineCellBorderWidthFocus: string;
-  mainTableLineCellBorderWidthActive: string;
-  mainTableLineCellBorderWidthMergeCandidate: string;
   mainTableCharacterSelectorSpacingX: string;
   mainTableCharacterSelectorSpacingY: string;
   mainTableCharacterSelectorSpacingInnerY: string;
@@ -246,7 +254,8 @@ export type TThemeStaticFormsChapter = TThemeVarsChapter<{
   formSectionSpacingX: string;
   formSectionBorderWidth: string;
   formSectionSpacingY: string;
-  formSectionSpacingInner: string;
+  formSectionSpacingInnerX: string;
+  formSectionSpacingInnerY: string;
   formSectionBorderRadius: string;
   formSectionEntrySpacingX: string;
   formSectionEntrySpacingY: string;
@@ -264,24 +273,22 @@ export type TThemeStaticTooltipChapter = TThemeVarsChapter<{
 }>;
 
 export type TThemeStaticEmojiPickerChapter = TThemeVarsChapter<{
-  emojiPickerWidth: string;
   emojiPickerHeight: string;
   emojiPickerFontFamily: string;
   emojiPickerBorderRadius: string;
-  emojiPickerBorderSize: string;
+  emojiPickerSpacingX: string;
+  emojiPickerSpacingY: string;
   emojiPickerCategoryFontSize: string;
+  emojiPickerCategoryFontWeight: string;
+  emojiPickerCategoryLabelHeight: string;
+  emojiPickerNavButtonSize: string;
+  emojiPickerNavIconSize: string;
   emojiPickerEmojiSize: string;
-  emojiPickerTotalEmojiSize: string;
   emojiPickerEmojiPadding: string;
-  emojiPickerIndicatorHeight: string;
+  emojiPickerInputHeight: string;
   emojiPickerInputBorderRadius: string;
-  emojiPickerInputBorderSize: string;
   emojiPickerInputFontSize: string;
-  emojiPickerInputLineHeight: string;
-  emojiPickerInputPadding: string;
   emojiPickerNumColumns: number;
-  emojiPickerOutlineSize: string;
-  emojiPickerSkintoneBorderRadius: string;
 }>;
 
 export type TThemeStaticMarkChapter = TThemeVarsChapter<{
@@ -303,6 +310,8 @@ export type TThemeStaticListItemChapter = TThemeVarsChapter<{
   projectListSpacingX: string;
   projectListSpacingY: string;
   projectListSpacingInnerY: string;
+  projectListSectionBorderRadius: string;
+  menuLogoSize: string;
 }>;
 
 export type TThemeStaticVars = TThemeStaticFontsChapter &

@@ -1,18 +1,9 @@
-import { useInfoWindow } from '@providers/ConfirmationProvider/ConfirmationProvider';
-import GlossaryKeyStrokeProvider from '@providers/GlossaryKeyStrokeProvider';
-import { useGlossaryActions } from '@providers/GlossaryActionsProvider';
-import { Loader } from '@src/segments/dialogs/Loader';
+import { GlossaryKeystrokeProvider } from '@providers/GlossaryKeystrokeProvider';
 import type { AIGlossaryFileDataType } from '@src/utils/data/schemas';
 import { TLanguage } from '@src/types';
 import { useLanguageOptions } from '@src/utils/languageLabels';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  selectCurrentGlossary,
-  selectGlossaryData,
-  setGlossaryData,
-} from '@store/slices/aiPromptEditor';
-import { closeOverlays } from '@store/slices/overlays';
-import { saveGlossary } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { glossaries } from '@src/services/glossary';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonVariant } from '@ui-toolkit/Button/types';
 import {
@@ -32,6 +23,7 @@ import GlossaryTableHeader from './GlossaryTable/GlossaryTableHeader';
 import GlossaryTableLine from './GlossaryTable/GlossaryTableLine';
 import { EGlossaryTable } from './GlossaryTable/partials';
 import Overlay from '../Overlay';
+import { OVERLAY_APPEAR_DURATION } from '@src/toolkit/motion/transitions';
 
 const emptyFormData: AIGlossaryFileDataType = {
   version: 1,
@@ -45,52 +37,44 @@ const emptyFormData: AIGlossaryFileDataType = {
 export default function GlossaryOverlay() {
   const { t } = useTranslation(['glossary', 'tooltips', 'messages']);
   const languageOptions = useLanguageOptions();
-  const dispatch = useAppDispatch();
-  const currentGlossary = useAppSelector(selectCurrentGlossary);
-  const glossaryData = useAppSelector(selectGlossaryData);
-  const { show: showLoading } = useInfoWindow(Loader);
-  const { handleSetFocusedPair, handleInsertPair, handleDeletePair } = useGlossaryActions();
+  const [currentGlossary, glossaryData] = useAppSelectors(
+    glossaries.selectCurrent,
+    glossaries.selectData
+  );
 
   const formData = glossaryData ?? emptyFormData;
 
-  const handleChange = useCallback(
-    <K extends keyof AIGlossaryFileDataType>(field: K, value: AIGlossaryFileDataType[K]) => {
-      dispatch(setGlossaryData({ ...formData, [field]: value }));
+  // Languages are part of the file header, which only the main process writes: they're saved right
+  // away rather than with the pairs on close
+  const handleLanguagesChange = useCallback(
+    (sourceLanguage: TLanguage, targetLanguage: TLanguage) => {
+      if (!currentGlossary) return;
+      void glossaries.updateLanguages(currentGlossary, sourceLanguage, targetLanguage);
     },
-    [dispatch, formData]
+    [currentGlossary]
   );
   const handleRowChange = useCallback(
     (index: number, field: 'original' | 'translation', value: string) => {
       const list = formData.list.map((entry, i) =>
         i === index ? { ...entry, [field]: value } : entry
       );
-      dispatch(setGlossaryData({ ...formData, list }));
+      glossaries.setData({ ...formData, list });
     },
-    [dispatch, formData]
+    [formData]
   );
 
   const handleAddRow = useCallback(() => {
-    handleInsertPair(formData.list.length - 1, 'after');
-  }, [handleInsertPair, formData.list.length]);
+    glossaries.insertPair(formData.list.length - 1, 'after');
+  }, [formData.list.length]);
 
-  const handleClose = async () => {
-    await showLoading(
-      {
-        message: t('messages:glossary.savingLabel', { title: formData.title || '...' }),
-        animate: false,
-      },
-      dispatch(saveGlossary()) as Promise<unknown>
-    );
-    dispatch(closeOverlays());
-  };
   if (!currentGlossary) return null;
 
   return (
-    <Overlay onClose={() => void handleClose()}>
-      <GlossaryKeyStrokeProvider>
-        <FormsContent>
-          <FormsRow>
-            <FormsSection>
+    <Overlay title={t('glossary:overlayTitle')} onClose={() => void glossaries.saveAndClose()}>
+      <GlossaryKeystrokeProvider>
+        <FormsContent animated delay={OVERLAY_APPEAR_DURATION}>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.LANGUAGE} subtext={t('translationDirection.subtext')}>
                 {t('translationDirection.title')}
               </FormsSectionTitle>
@@ -99,7 +83,10 @@ export default function GlossaryOverlay() {
                   options={languageOptions}
                   value={formData.sourceLanguage}
                   onChange={([v]) =>
-                    handleChange('sourceLanguage', (v as TLanguage) ?? TLanguage.English)
+                    handleLanguagesChange(
+                      (v as TLanguage) ?? TLanguage.English,
+                      formData.targetLanguage
+                    )
                   }
                 />
                 <Icon icon={TIcon.ARROW_RIGHT} size={TIconSize.L} style={{ alignSelf: 'center' }} />
@@ -107,33 +94,37 @@ export default function GlossaryOverlay() {
                   options={languageOptions}
                   value={formData.targetLanguage}
                   onChange={([v]) =>
-                    handleChange('targetLanguage', (v as TLanguage) ?? TLanguage.Belarusian)
+                    handleLanguagesChange(
+                      formData.sourceLanguage,
+                      (v as TLanguage) ?? TLanguage.Belarusian
+                    )
                   }
                 />
               </FormsSectionContent>
             </FormsSection>
           </FormsRow>
 
-          <FormsRow>
-            <FormsSection>
+          <FormsRow animated>
+            <FormsSection animated>
               <FormsSectionTitle icon={TIcon.GLOSSARY}>{t('entries.title')}</FormsSectionTitle>
               <FormsSectionContent>
                 <EGlossaryTable>
                   <GlossaryTableHeader />
                   {formData.list.map((entry, index) => (
                     <GlossaryTableLine
+                      // eslint-disable-next-line @eslint-react/no-array-index-key -- controlled rows with no id: their text changes while typing and new rows are empty, so it can't be the key
                       key={index}
                       pairIndex={index}
                       original={entry.original}
                       translation={entry.translation}
                       sourceLanguage={formData.sourceLanguage}
                       targetLanguage={formData.targetLanguage}
-                      onFocus={(column) => handleSetFocusedPair(index, column)}
+                      onFocus={(column) => glossaries.setFocusedPair({ pairIndex: index, column })}
                       onOriginalChange={(v) => handleRowChange(index, 'original', v)}
                       onTranslationChange={(v) => handleRowChange(index, 'translation', v)}
-                      onDelete={() => handleDeletePair(index)}
-                      onInsertBefore={() => handleInsertPair(index, 'before')}
-                      onInsertAfter={() => handleInsertPair(index, 'after')}
+                      onDelete={() => void glossaries.deletePair(index)}
+                      onInsertBefore={() => glossaries.insertPair(index, 'before')}
+                      onInsertAfter={() => glossaries.insertPair(index, 'after')}
                     />
                   ))}
                 </EGlossaryTable>
@@ -153,7 +144,7 @@ export default function GlossaryOverlay() {
             </FormsSection>
           </FormsRow>
         </FormsContent>
-      </GlossaryKeyStrokeProvider>
+      </GlossaryKeystrokeProvider>
     </Overlay>
   );
 }

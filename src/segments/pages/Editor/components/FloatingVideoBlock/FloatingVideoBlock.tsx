@@ -1,25 +1,17 @@
-import { useVideo } from '@providers/VideoProvider';
-import {
-  selectIsSmallScreen,
-  selectScreenSize,
-  selectScrollVideoIntoViewOnPlay,
-} from '@src/store/slices/app';
-import {
-  selectActiveLineIndex,
-  selectIsVideoCollapsed,
-  selectLines,
-  updateLineTiming,
-} from '@src/store/slices/editor';
-import { selectVideoFilePath } from '@src/store/slices/project';
+import { media } from '@src/services/media';
+import { settings } from '@src/services/settings';
+import { editor } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { fromCurrentStore } from '@store/store';
+import { useAppSelectors } from '@store/hooks';
 import { RefObject, useEffect, useRef } from 'react';
+import classNames from 'classnames';
 import styled from 'styled-components';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import type { VirtualizedListHandle } from '../VirtualizedList/VirtualizedList';
 import Waveform from '../Waveform/Waveform';
 import { EditorTableHeader } from '../WorkTable/EditorTableHeader';
+import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
+import { TShade } from '@src/theme/definitions';
 
 const VideoBlock = styled.div`
   position: sticky;
@@ -29,6 +21,28 @@ const VideoBlock = styled.div`
   top: 0;
   width: 100%;
   overflow: hidden;
+  padding: 0 0 ${CSSVar('size18')};
+
+  /* One background and blur for the whole floating stack (player on small screens, waveform,
+     table header) instead of one per part. They live on a layer under the content, masked so that
+     both the theme background (half strength) and the blur hold down to 90% of the block, then
+     fade out over the last 10% -- a backdrop-filter can't be graded itself, and masking the block
+     would fade its content too. Isolation keeps the layer's negative z-index inside the block. */
+  isolation: isolate;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 50)};
+    backdrop-filter: blur(${CSSVar('blurExtreme')});
+    mask-image: linear-gradient(to bottom, black 0%, black 90%, transparent 100%);
+    pointer-events: none;
+  }
+  /* Larger screens hold only the table header here: a longer fade, from 75% down */
+  &.isLargeScreen::before {
+    mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+  }
 `;
 
 const OverflowContainer = styled.div`
@@ -52,20 +66,33 @@ export default function FloatingVideoBlock({
   virtualizedListRef,
   focusedItemIndex,
 }: FloatingVideoBlockProps) {
-  const dispatch = useAppDispatch();
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const videoFilePath = useAppSelector(selectVideoFilePath);
-  const activeLineIndex = useAppSelector(selectActiveLineIndex);
-  const translationLines = useAppSelector(selectLines);
-  const screenSize = useAppSelector(selectScreenSize);
-  const isVideoCollapsed = useAppSelector(selectIsVideoCollapsed);
-  const { videoDurationMs, waveformPeaks, videoElementRef } = useVideo();
+  const [
+    isSmallScreen,
+    activeLineIndex,
+    translationLines,
+    screenSize,
+    isVideoCollapsed,
+    videoFilePath,
+    timelineDurationMs,
+    waveformPeaks,
+  ] = useAppSelectors(
+    settings.selectIsSmallScreen,
+    media.selectActiveLineIndex,
+    editor.selectLines,
+    settings.selectScreenSize,
+    editor.selectIsVideoCollapsed,
+    media.selectVideoFilePath,
+    editor.selectTimelineDurationMs,
+    media.selectWaveformPeaks
+  );
   const isLargeScreen = screenSize !== TScreenSize.SMALL;
+  // Without a video the player shows only its control bar, as if collapsed
+  const isCollapsed = isVideoCollapsed || !videoFilePath;
 
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
   const videoContainerShiftRef = useRef<number>(0);
-  const maxVideoShift = useRef<number>(1);
-  const currentAnchor = useRef(0);
+  const maxVideoShiftRef = useRef<number>(1);
+  const currentAnchorRef = useRef(0);
   const focusedItemIndexRef = useRef(focusedItemIndex);
   focusedItemIndexRef.current = focusedItemIndex;
   const scrollBeforePlayRef = useRef<number | null>(null);
@@ -73,7 +100,7 @@ export default function FloatingVideoBlock({
   const handlePlaybackResume = () => {
     if (!scrollContainerRef.current) return;
     scrollBeforePlayRef.current = scrollContainerRef.current.scrollTop;
-    if (fromCurrentStore(selectScrollVideoIntoViewOnPlay))
+    if (settings.get.scrollVideoIntoViewOnPlay())
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollTop - videoContainerShiftRef.current,
         behavior: 'smooth',
@@ -92,16 +119,11 @@ export default function FloatingVideoBlock({
     if (!scrollContainer) return;
 
     const handleScroll = (event: Event) => {
-      if (
-        isLargeScreen ||
-        isVideoCollapsed ||
-        !videoContainerRef.current ||
-        !videoElementRef.current
-      )
-        return;
+      const videoElement = media.getVideoElement();
+      if (isLargeScreen || isCollapsed || !videoContainerRef.current || !videoElement) return;
       const scrollTop = (event.currentTarget as HTMLElement).scrollTop;
-      const videoHeight = videoElementRef.current.clientHeight;
-      const maxShift = videoHeight * maxVideoShift.current;
+      const videoHeight = videoElement.clientHeight;
+      const maxShift = videoHeight * maxVideoShiftRef.current;
 
       const focusedIndex = focusedItemIndexRef.current;
       if (focusedIndex >= 0 && virtualizedListRef.current) {
@@ -113,16 +135,16 @@ export default function FloatingVideoBlock({
         if (focusedLineScreenTop < videoBottomAfterMaxShift) {
           videoContainerShiftRef.current = maxShift;
           videoContainerRef.current.style.transform = `translateY(-${maxShift}px)`;
-          currentAnchor.current = scrollTop - videoContainerRef.current.offsetHeight - maxShift;
+          currentAnchorRef.current = scrollTop - videoContainerRef.current.offsetHeight - maxShift;
           return;
         }
       }
 
       const relativeScroll = scrollTop - videoContainerRef.current.offsetHeight;
-      const distance = relativeScroll - currentAnchor.current;
+      const distance = relativeScroll - currentAnchorRef.current;
 
-      if (distance >= maxShift) currentAnchor.current = relativeScroll - maxShift;
-      if (distance <= 0) currentAnchor.current = relativeScroll;
+      if (distance >= maxShift) currentAnchorRef.current = relativeScroll - maxShift;
+      if (distance <= 0) currentAnchorRef.current = relativeScroll;
 
       videoContainerShiftRef.current =
         distance < maxShift ? (distance < 0 ? 0 : distance) : maxShift;
@@ -131,7 +153,7 @@ export default function FloatingVideoBlock({
 
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
-  }, [scrollContainerRef, virtualizedListRef, isLargeScreen, isVideoCollapsed, videoElementRef]);
+  }, [scrollContainerRef, virtualizedListRef, isLargeScreen, isCollapsed]);
 
   useEffect(() => {
     if (focusedItemIndex < 0) return;
@@ -140,7 +162,7 @@ export default function FloatingVideoBlock({
         !virtualizedListRef.current ||
         !scrollContainerRef.current ||
         !videoContainerRef.current ||
-        !videoElementRef.current
+        !media.getVideoElement()
       )
         return;
       const listOffsetTop = virtualizedListRef.current.getListOffsetTop();
@@ -156,20 +178,22 @@ export default function FloatingVideoBlock({
       if (focusedLineScreenTop < videoVisibleBottom) {
         scrollContainerRef.current.scrollTo({
           top: focusedLineTop - videoContainerRef.current.offsetHeight,
-          behavior: 'smooth',
+          // Instant: smooth scrolling lags behind fast line switching (a held Ctrl+Down), leaving
+          // the next lines outside the rendered window
+          behavior: 'instant',
         });
       } else if (focusedLineScreenTop > viewportHeight - bottomMargin) {
         scrollContainerRef.current.scrollTo({
           top: focusedLineTop - (viewportHeight - bottomMargin),
-          behavior: 'smooth',
+          behavior: 'instant',
         });
       }
     });
-  }, [focusedItemIndex, videoElementRef, scrollContainerRef, virtualizedListRef]);
+  }, [focusedItemIndex, scrollContainerRef, virtualizedListRef]);
 
   useEffect(() => {
     videoContainerShiftRef.current = 0;
-    currentAnchor.current = 0;
+    currentAnchorRef.current = 0;
     if (videoContainerRef.current) {
       videoContainerRef.current.style.transform = '';
     }
@@ -184,30 +208,32 @@ export default function FloatingVideoBlock({
     if (videoContainerRef.current) {
       videoContainerRef.current.style.transform = '';
     }
-    if (!isVideoCollapsed && scrollContainerRef.current && videoContainerRef.current) {
-      currentAnchor.current =
+    if (!isCollapsed && scrollContainerRef.current && videoContainerRef.current) {
+      currentAnchorRef.current =
         scrollContainerRef.current.scrollTop - videoContainerRef.current.offsetHeight;
     } else {
-      currentAnchor.current = 0;
+      currentAnchorRef.current = 0;
     }
-  }, [isVideoCollapsed, scrollContainerRef]);
+  }, [isCollapsed, scrollContainerRef]);
 
   return (
-    <VideoBlock ref={videoContainerRef}>
-      {isSmallScreen && videoFilePath && (
+    <VideoBlock ref={videoContainerRef} className={classNames({ isLargeScreen })}>
+      {isSmallScreen && (
         <>
+          {/* Always there: an empty player (whose control bar picks a video) and a flat waveform until
+              a video is picked */}
           <VideoPlayer
             onPlaybackResume={handlePlaybackResume}
             onPlaybackPause={handlePlaybackPause}
           />
           <Waveform
             peaks={waveformPeaks}
-            videoDurationMs={videoDurationMs}
+            videoDurationMs={timelineDurationMs}
             activeLineIndex={activeLineIndex}
             focusedLineIndex={focusedItemIndex >= 0 ? focusedItemIndex : null}
             translationLines={translationLines}
             onLineTimingChange={(lineIndex, startTime, endTime) => {
-              dispatch(updateLineTiming({ lineIndex, startTime, endTime }));
+              editor.updateLineTiming({ lineIndex, startTime, endTime });
             }}
           />
         </>

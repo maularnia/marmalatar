@@ -10,10 +10,6 @@
   "videoUpdated": {
     "title": "New video has been asssigned"
   },
-  "autoMergeCancelled": {
-    "title": "Auto-merged cancelled",
-    "message": "No lines has been changed"
-  },
   "videoPathSaveFailed": {
     "title": "Can not save video path"
   },
@@ -23,9 +19,6 @@
   "projectLoaded": {
     "title": "Project loaded",
     "message": "Happy working!"
-  },
-  "translationCancelled": {
-    "title": "Translation cancelled"
   },
   "aiTranslationJobDone": {
     "title": "Job complete",
@@ -47,16 +40,8 @@
     "title": "Line has been split",
     "message": "New line entry has been added"
   },
-  "mergeOperationCancelled": {
-    "title": "Merge has been canceled",
-    "message": "No line has been modified"
-  },
   "linesMerged": {
     "title": "Merged succesfully"
-  },
-  "deleteLineCancelled": {
-    "title": "Line deletion discarded",
-    "message": "No line has been modified"
   },
   "lineDeleted": {
     "title": "Line has been deleted",
@@ -75,18 +60,40 @@
     "renamingFile": "Renaming file"
   },
   "projectLoader": {
-    "loadingVideo": "Video is loading..."
+    "loadingVideo": "Processing attached project video",
+    "blamingProcessor": "Blaming processor for slow performance",
+    "reevaluatingExpectations": "Re-evaluating expectations",
+    "computingWaveforms": "Computing waveforms",
+    "surfingWaveforms": "Surfing the waveforms",
+    "demandingRam": "Demanding more RAM"
   },
   "submitNewProject": {
     "creatingProject": "Project is being initialized..."
   },
   "glossary": {
+    "loadingLabel": "Loading glossary [{{title}}]...",
     "savingLabel": "Saving glossary [{{title}}]..."
   },
   "promptTemplate": {
+    "loadingLabel": "Loading prompt template [{{title}}]...",
     "savingLabel": "Saving prompt template [{{title}}]"
   },
   "cacheCleanupSuccess": {
     "title": "Cache has been cleaned up"
+  },
+  "audioTracksLoader": {
+    "extracting": "Extracting audio tracks information"
+  },
+  "tempoAutoFixed": {
+    "title": "Tempo fixed",
+    "message": "Lines retimed: {{count}}"
+  },
+  "tempoAutoFixNothing": {
+    "title": "All good",
+    "message": "No lines to fix were found"
+  },
+  "tempoAutoFixCancelled": {
+    "title": "Tempo fix declined",
+    "message": "No lines were changed"
   }
 }

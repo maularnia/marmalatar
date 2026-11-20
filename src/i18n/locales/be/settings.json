@@ -1,20 +1,17 @@
 {
-  "sync": {
-    "title": "Сінхранізацыя",
-    "autoMergeThresholdLabel": "Адлегласць аўта-аб’яднання (мс)",
-    "timeAdjustmentStepLabel": "Крок карэкцыі часу (мс)"
+  "tempo": {
+    "title": "Тэмп",
+    "standard": "Стандарт",
+    "custom": "Свой",
+    "maxLinesPerEntryLabel": "Макс. радкоў у надпісе",
+    "maxCharsPerLineLabel": "Макс. сімв. у радку",
+    "maxCharsPerSecondLabel": "Макс. сімб/сек",
+    "minDurationMsLabel": "Мін. працягласць (мс)",
+    "minIntervalFramesLabel": "Мін. інтэрвал (кадраў)",
+    "highlightOverlaps": "Падсвечваць радкі, якія перакрываюцца"
   },
-  "uxUi": {
-    "title": "UI/UX",
-    "scrollVideoIntoViewPrefix": "Падкручваць да відэа па націсканні",
-    "scrollVideoIntoViewSuffix": "(толькі на малых экранах)",
-    "askBeforeMerge": "Пытаць перад аб’яднаннем",
-    "askBeforeDelete": "Пытаць перад выдаленнем",
-    "askBeforeAITranslate": "Пытаць перад аўта-перакладам",
-    "askBeforeSplit": "Пытаць перад разразаннем радка",
-    "autoMarkLinesCompleted": "Адзначаць радкі як \"Гатовыя\" аўтаматычна",
-    "checkGrammar": "Правяраць правапіс",
-    "appLanguage": "Мова праграмы"
+  "appLanguage": {
+    "title": "Мова праграмы"
   },
   "aiSettings": {
     "busyNotice": "Налады заблакаваныя, пакуль выконваецца ШІ-пераклад",
@@ -88,5 +85,21 @@
     "title": "Кэш медыя",
     "subtext": "Aўта-ачыстка папкі .mrmlcache",
     "cleanButton": "Ачысціць кэш"
+  },
+  "overlayTitle": "Налады",
+  "spellcheck": {
+    "title": "Праверка правапісу",
+    "checkGrammar": "Правяраць правапіс",
+    "dictionariesEmpty": "У агульныя слоўнікі яшчэ не дададзена ніводнага слова",
+    "tabs": {
+      "global": "Агульны",
+      "project": "Праект"
+    },
+    "dictionaries": "Слоўнікі"
+  },
+  "tabs": {
+    "general": "Агульныя",
+    "ai": "ШІ",
+    "spellchecker": "Правапіс"
   }
 }

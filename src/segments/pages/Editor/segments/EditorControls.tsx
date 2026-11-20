@@ -1,60 +1,36 @@
-import { useEditorActions } from '@providers/EditorActionsProvider';
-import { useVideo } from '@providers/VideoProvider';
-import { useEditorAIActions } from '@src/providers/EditorAIActionsProvider';
-import { useEditorRefs } from '@src/providers/EditorRefsProvider';
-import {
-  selectIntegrationIsConfigured,
-  selectIsSmallScreen,
-  selectTimeAdjustmentStep,
-} from '@src/store/slices/app';
-import {
-  selectCanRedo,
-  selectCanUndo,
-  selectFocusedColumn,
-  selectFocusedLineIndex,
-  selectLines,
-  selectTextSelection,
-  shiftAllLinesEarlier,
-  shiftAllLinesLater,
-} from '@src/store/slices/editor';
-import { selectIsEditMode, selectVideoFilePath } from '@src/store/slices/project';
+import { projects } from '@src/services/project';
+import { settings } from '@src/services/settings';
+import { editor } from '@src/services/project';
+import { glossaries } from '@src/services/glossary';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { useAppDispatch, useAppSelector } from '@store/hooks';
-import {
-  cancelAutomatedBulkTranslation,
-  selectCurrentBulkJob,
-  selectTranslationIsBusy,
-} from '@store/slices/aiTranslation';
-import { openExportOverlay } from '@store/thunks';
+import { useAppSelectors } from '@store/hooks';
+import { ai } from '@src/services/ai';
 import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
-import Hr, { THrOrient, THrVariant } from '@ui-toolkit/Hr/Hr';
 import { TIcon } from '@ui-toolkit/Icon/icons';
 import Tooltip, { TooltipComplex, TooltipKeystrokeHint, TooltipSimple } from '@ui-toolkit/Tooltip';
-import { type CSSProperties, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { shallowEqual } from 'react-redux';
 import styled from 'styled-components';
-import { useVideoFileSwap } from '../components/VideoPlayer/useVideoFileSwap';
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  gap: ${CSSVar('size4')};
   color: white;
 `;
 
-const AutomatedTranslationWrapper = styled.div`
-  position: relative;
-`;
-
-//TODO: remove or upgrade bulk translate job button
-const AutomatedTranslationRunner = styled.div`
-  position: absolute;
-  height: 100%;
-  background: ${CSSVar('controlPanelBg')};
+// A group of related buttons, set apart from the next one by Container's gap
+const PanelSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  backdrop-filter: blur(${CSSVar('blurExtreme')});
+  border-radius: ${CSSVar('size12')};
+  background: ${CSSColor(ThemeColors.TEXT, TShade.PALE, 5)};
+  overflow: hidden;
 `;
 
 const AiTranslationProgressBar = styled.div`
@@ -71,16 +47,6 @@ const AiTranslationProgressBar = styled.div`
   }
 `;
 
-const AiSectionOptions = styled.div`
-  position: fixed;
-  display: flex;
-  border-radius: 0 ${CSSVar('controlPanelBorderRadius')} ${CSSVar('controlPanelBorderRadius')} 0;
-  backdrop-filter: blur(${CSSVar('blurHeavy')});
-  background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 10)};
-  z-index: 4;
-`;
-const AiSection = styled.div``;
-
 const PanelButton: typeof Button = (props) => {
   return (
     <Button
@@ -94,99 +60,75 @@ const PanelButton: typeof Button = (props) => {
 
 export function EditorControls() {
   const { t } = useTranslation('tooltips');
-  const dispatch = useAppDispatch();
-  const { integrationIsConfigured, focusedLineIndex, textSelection } = useAppSelector(
-    (state) => ({
-      integrationIsConfigured: selectIntegrationIsConfigured(state),
-      focusedLineIndex: selectFocusedLineIndex(state),
-      textSelection: selectTextSelection(state),
-    }),
-    shallowEqual
+  const [integrationIsConfigured, focusedLineIndex, textSelection, lineCount] = useAppSelectors(
+    settings.selectIntegrationIsConfigured,
+    editor.selectFocusedLineIndex,
+    editor.selectTextSelection,
+    (state) => editor.selectLines(state).length
   );
-  const { splitCursorRef } = useEditorRefs();
-  const {
-    handleCopySourceToOutput,
-    handleInsertLine,
-    handleSplitLine,
-    handleAutoMerge,
-    handleCleanup,
-    handleCopyAllSourceToOutput,
-    handleCompleteAllTranslatedLines,
-    handleToggleEditMode,
-  } = useEditorActions();
-  const currentBulkJob = useAppSelector(selectCurrentBulkJob);
-  const isBusy = useAppSelector(selectTranslationIsBusy);
-  const allLines = useAppSelector(selectLines);
-  const isSmallScreen = useAppSelector(selectIsSmallScreen);
-  const isEditMode = useAppSelector(selectIsEditMode);
-  const isAiAvailable = integrationIsConfigured && !isBusy && !isEditMode;
+  const [
+    currentBulkJob,
+    isBusy,
+    isEditMode,
+    canUndo,
+    canRedo,
+    focusedColumn,
+    tempo,
+    autoMarkLinesCompleted,
+  ] = useAppSelectors(
+    ai.selectCurrentBulkJob,
+    ai.selectIsBusy,
+    editor.selectIsEditMode,
+    editor.selectCanUndo,
+    editor.selectCanRedo,
+    editor.selectFocusedColumn,
+    projects.selectTempo,
+    settings.selectAutoMarkLinesCompleted
+  );
+  // Controls that can't be used in the current mode or without an AI integration aren't rendered
+  // at all, rather than shown disabled. A running bulk translation keeps its progress and stop
+  // button regardless.
+  const showAiControls = (integrationIsConfigured && !isEditMode) || currentBulkJob != null;
+  const isAiAvailable = !isBusy;
   const isAutoMergeAvailable = !currentBulkJob && !isBusy;
-  const isExportAvailable = !currentBulkJob && !isBusy;
-  const timeAdjustmentStep = useAppSelector(selectTimeAdjustmentStep);
-  const canUndo = useAppSelector(selectCanUndo);
-  const canRedo = useAppSelector(selectCanRedo);
-  const { handleUndoRedo } = useEditorActions();
-  const { videoDurationMs } = useVideo();
-  const videoPath = useAppSelector(selectVideoFilePath);
-  const { swapVideo } = useVideoFileSwap();
-  const earliestStartTime = allLines.length
-    ? Math.min(...allLines.map((line) => line.start_time))
-    : 0;
-  const latestEndTime = allLines.length ? Math.max(...allLines.map((line) => line.end_time)) : 0;
-  const canShiftEarlier = allLines.length > 0 && earliestStartTime > 0;
-  const canShiftLater =
-    allLines.length > 0 && (videoDurationMs == null || latestEndTime < videoDurationMs);
-  const focusedColumn = useAppSelector(selectFocusedColumn);
-  const { handleAiTranslate, handleAiTranslateBulk, handleAddToGlossary } = useEditorAIActions();
-
-  const aiSectionRef = useRef<HTMLDivElement>(null);
-  const [showAiOptions, setShowAiOptions] = useState(false);
 
   return (
     <>
       <Container tabIndex={1}>
-        <Tooltip
-          label={
-            <TooltipComplex title={t('editorControls.undo')}>
-              <TooltipKeystrokeHint keys={['Ctrl', 'Z']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            disabled={!canUndo || isBusy}
-            icon={TIcon.HISTORY_BACK}
-            onClick={() => handleUndoRedo('backward')}
-          />
-        </Tooltip>
-        <Tooltip
-          label={
-            <TooltipComplex title={t('editorControls.redo')}>
-              <TooltipKeystrokeHint keys={['Ctrl', 'Shift', 'Z']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            disabled={!canRedo || isBusy}
-            icon={TIcon.HISTORY_FORWARD}
-            onClick={() => handleUndoRedo('forward')}
-          />
-        </Tooltip>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-        <AiSection
-          ref={aiSectionRef}
-          onMouseEnter={() => setShowAiOptions(true)}
-          onMouseLeave={() => setShowAiOptions(false)}
-        >
-          <AutomatedTranslationWrapper>
-            {currentBulkJob && (
-              <AutomatedTranslationRunner
-                style={{
-                  width: `${((currentBulkJob.completed / currentBulkJob.total) * 100).toFixed(1)}%`,
-                }}
-              />
-            )}
+        <PanelSection>
+          <Tooltip
+            label={
+              <TooltipComplex title={t('editorControls.undo')}>
+                <TooltipKeystrokeHint keys={['Ctrl', 'Z']} />
+              </TooltipComplex>
+            }
+            side="right"
+          >
+            <PanelButton
+              disabled={!canUndo || isBusy}
+              icon={TIcon.HISTORY_BACK}
+              onClick={() => editor.undoRedo('backward')}
+            />
+          </Tooltip>
+          <Tooltip
+            label={
+              <TooltipComplex title={t('editorControls.redo')}>
+                <TooltipKeystrokeHint keys={['Ctrl', 'Shift', 'Z']} />
+              </TooltipComplex>
+            }
+            side="right"
+          >
+            <PanelButton
+              disabled={!canRedo || isBusy}
+              icon={TIcon.HISTORY_FORWARD}
+              onClick={() => editor.undoRedo('forward')}
+            />
+          </Tooltip>
+        </PanelSection>
+        {showAiControls && (
+          <PanelSection>
+            {/* A running bulk translation takes the place of both translate buttons: its
+                progress, with the button that stops it */}
             {currentBulkJob ? (
               <AiTranslationProgressBar
                 style={
@@ -198,297 +140,248 @@ export function EditorControls() {
                 <PanelButton
                   icon={TIcon.STOP}
                   color={ThemeColors.RED}
-                  onClick={() => dispatch(cancelAutomatedBulkTranslation())}
+                  onClick={() => ai.cancelAutomatedBulk()}
                 />
               </AiTranslationProgressBar>
             ) : (
-              <PanelButton
-                variant={TButtonVariant.TRANSPARENT_SPECIAL}
-                disabled={!isAiAvailable}
-                icon={TIcon.AI}
-              />
+              <>
+                <Tooltip
+                  side="right"
+                  label={
+                    <TooltipComplex title={t('editorControls.translateFocusedLine')}>
+                      <TooltipKeystrokeHint keys={['Alt', 'T']} />
+                    </TooltipComplex>
+                  }
+                >
+                  <PanelButton
+                    variant={TButtonVariant.TRANSPARENT_SPECIAL}
+                    disabled={!isAiAvailable || focusedLineIndex === null}
+                    icon={TIcon.AI_EDIT}
+                    onClick={() => {
+                      if (focusedLineIndex == null) return;
+                      ai.translateLine(focusedLineIndex);
+                    }}
+                  />
+                </Tooltip>
+                <Tooltip
+                  side="right"
+                  label={
+                    <TooltipComplex title={t('editorControls.translateAll')}>
+                      <TooltipKeystrokeHint keys={['Alt', 'Shift', 'T']} />
+                    </TooltipComplex>
+                  }
+                >
+                  <PanelButton
+                    variant={TButtonVariant.TRANSPARENT_SPECIAL}
+                    disabled={!isAiAvailable}
+                    onClick={ai.translateUntranslatedLines}
+                    icon={TIcon.AI_FILE}
+                  />
+                </Tooltip>
+              </>
             )}
-          </AutomatedTranslationWrapper>
-        </AiSection>
-        <Tooltip
-          side="right"
-          label={
-            <TooltipComplex title={t('editorControls.addSelectedToGlossary')}>
-              <TooltipKeystrokeHint keys={['Alt', 'G']} />
-            </TooltipComplex>
-          }
-        >
-          <PanelButton
-            icon={TIcon.GLOSSARY}
-            disabled={!integrationIsConfigured || isBusy || isEditMode || textSelection.length <= 0}
-            onClick={() => handleAddToGlossary(textSelection)}
-          />
-        </Tooltip>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-        <Tooltip
-          label={
-            <TooltipComplex
-              title={t('editorControls.shiftLinesEarlier', { step: timeAdjustmentStep })}
-            >
-              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'A']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            disabled={!canShiftEarlier || isBusy}
-            icon={TIcon.BACKWARD}
-            onClick={() => dispatch(shiftAllLinesEarlier(timeAdjustmentStep))}
-          />
-        </Tooltip>
-        <Tooltip
-          label={
-            <TooltipComplex
-              title={t('editorControls.shiftLinesLater', { step: timeAdjustmentStep })}
-            >
-              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'D']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            disabled={!canShiftLater || isBusy}
-            icon={TIcon.FORWARD}
-            onClick={() => dispatch(shiftAllLinesLater(timeAdjustmentStep))}
-          />
-        </Tooltip>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-        <Tooltip
-          label={
-            <TooltipComplex title={t('editorControls.autoMergeAdjacentLines')}>
-              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'M']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            disabled={!isAutoMergeAvailable}
-            onClick={() => void handleAutoMerge()}
-            icon={TIcon.MERGE}
-          />
-        </Tooltip>
-        <Tooltip
-          side="right"
-          label={
-            <TooltipComplex title={t('editorControls.cleanup')}>
-              <TooltipKeystrokeHint keys={['Alt', 'H']} />
-            </TooltipComplex>
-          }
-        >
-          <PanelButton
-            disabled={!isAutoMergeAvailable}
-            icon={TIcon.CLEANUP}
-            onClick={() => void handleCleanup()}
-          />
-        </Tooltip>
-        <Tooltip
-          side="right"
-          label={
-            <TooltipComplex title={t('editorControls.copyAllSourceToOutput')}>
-              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'C']} />
-            </TooltipComplex>
-          }
-        >
-          <PanelButton
-            disabled={!isAutoMergeAvailable || isEditMode}
-            icon={TIcon.DOUBLE_RIGHT}
-            onClick={() => void handleCopyAllSourceToOutput()}
-          />
-        </Tooltip>
-        <Tooltip
-          side="right"
-          label={
-            <TooltipComplex title={t('editorControls.completeAllTranslated')}>
-              <TooltipKeystrokeHint keys={['Alt', 'Shift', 'Enter']} />
-            </TooltipComplex>
-          }
-        >
-          <PanelButton
-            disabled={!isAutoMergeAvailable}
-            icon={TIcon.DOUBLE_TICK}
-            onClick={() => handleCompleteAllTranslatedLines()}
-          />
-        </Tooltip>
-        <Tooltip
-          label={
-            <TooltipComplex title={t('editorControls.insertLineBefore')}>
-              <TooltipKeystrokeHint keys={['Alt', ',']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            disabled={focusedLineIndex === null || isBusy}
-            icon={TIcon.INSERT_BEFORE}
-            onClick={() => {
-              if (focusedLineIndex !== null) handleInsertLine(focusedLineIndex, 'before');
-            }}
-          />
-        </Tooltip>
-        <Tooltip
-          label={
-            <TooltipComplex title={t('editorControls.insertLineAfter')}>
-              <TooltipKeystrokeHint keys={['Alt', '.']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            disabled={focusedLineIndex === null || isBusy}
-            icon={TIcon.INSERT_AFTER}
-            onClick={() => {
-              if (focusedLineIndex !== null) handleInsertLine(focusedLineIndex, 'after');
-            }}
-          />
-        </Tooltip>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-        <Tooltip
-          side="right"
-          label={
-            <TooltipComplex title={t('editorControls.splitLineByCursor')}>
-              <TooltipKeystrokeHint keys={['Alt', 'R']} />
-            </TooltipComplex>
-          }
-        >
-          <PanelButton
-            disabled={
-              focusedLineIndex === null ||
-              (focusedColumn !== 'output' && focusedColumn !== 'source') ||
-              isBusy
-            }
-            icon={TIcon.RAZOR}
-            onClick={() => {
-              if (focusedLineIndex !== null) {
-                handleSplitLine(focusedLineIndex, splitCursorRef.current);
-              }
-            }}
-          />
-        </Tooltip>
-        <Tooltip
-          side="right"
-          label={
-            <TooltipComplex title={t('editorControls.copySourceToOutput')}>
-              <TooltipKeystrokeHint keys={['Alt', 'C']} />
-            </TooltipComplex>
-          }
-          delay={0}
-        >
-          <PanelButton
-            disabled={focusedLineIndex === null || isBusy || isEditMode}
-            icon={TIcon.ARROW_COPY_RIGHT}
-            onClick={() => {
-              if (focusedLineIndex !== null) {
-                handleCopySourceToOutput(focusedLineIndex);
-              }
-            }}
-          />
-        </Tooltip>
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-        <Tooltip
-          label={
-            <TooltipComplex
-              title={
-                isEditMode
-                  ? t('editorControls.editModeActive')
-                  : t('editorControls.translationModeActive')
-              }
-            >
-              <TooltipKeystrokeHint keys={['Ctrl', 'M']} />
-            </TooltipComplex>
-          }
-          side="right"
-        >
-          <PanelButton
-            color={isEditMode ? ThemeColors.ACCENT2 : ThemeColors.TEXT}
-            disabled={isBusy}
-            variant={isEditMode ? TButtonVariant.PRIMARY : TButtonVariant.TRANSPARENT}
-            icon={isEditMode ? TIcon.COLUMNS_2 : TIcon.COLUMNS_3}
-            onClick={() => handleToggleEditMode()}
-          />
-        </Tooltip>
-        {isSmallScreen && !videoPath && (
-          <Tooltip
-            label={<TooltipSimple>{t('editorControls.pickVideoFile')}</TooltipSimple>}
-            side="right"
-          >
-            <PanelButton
-              color={ThemeColors.ACCENT2}
-              disabled={isBusy}
-              icon={TIcon.VIDEO_ABSENT}
-              onClick={swapVideo}
-            />
-          </Tooltip>
-        )}
-        <Hr variant={THrVariant.DIMMED} orientation={THrOrient.HORIZONTAL} />
-        <Tooltip
-          side="right"
-          label={
-            <TooltipComplex title={t('editorControls.export')}>
-              <TooltipKeystrokeHint keys={['Ctrl', 'E']} />
-            </TooltipComplex>
-          }
-        >
-          <PanelButton
-            color={ThemeColors.ACCENT1}
-            disabled={!isExportAvailable}
-            onClick={() => dispatch(openExportOverlay())}
-            icon={TIcon.EXPORT}
-          />
-        </Tooltip>
-      </Container>
-      {showAiOptions &&
-        !isBusy &&
-        !isEditMode &&
-        createPortal(
-          <AiSectionOptions
-            style={{
-              top: aiSectionRef.current?.getBoundingClientRect().top ?? 0,
-              left: aiSectionRef.current?.getBoundingClientRect().right ?? 0,
-            }}
-            onMouseEnter={() => setShowAiOptions(true)}
-            onMouseLeave={() => setShowAiOptions(false)}
-          >
             <Tooltip
-              side="top"
+              side="right"
               label={
-                <TooltipComplex title={t('editorControls.translateAll')}>
-                  <TooltipKeystrokeHint keys={['Alt', 'Shift', 'T']} />
+                <TooltipComplex title={t('editorControls.addSelectedToGlossary')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'G']} />
                 </TooltipComplex>
               }
             >
               <PanelButton
-                variant={TButtonVariant.TRANSPARENT_SPECIAL}
-                disabled={!isAiAvailable}
-                onClick={handleAiTranslateBulk}
-                icon={TIcon.AI_FILE}
+                icon={TIcon.GLOSSARY}
+                disabled={isBusy || textSelection.length <= 0}
+                onClick={() => glossaries.addEntryFromText(textSelection)}
+              />
+            </Tooltip>
+          </PanelSection>
+        )}
+        {/* Text and tempo cleanup */}
+        <PanelSection>
+          <Tooltip
+            side="right"
+            label={
+              <TooltipComplex title={t('editorControls.cleanup')}>
+                <TooltipKeystrokeHint keys={['Alt', 'H']} />
+              </TooltipComplex>
+            }
+          >
+            <PanelButton
+              disabled={!isAutoMergeAvailable}
+              icon={TIcon.CLEANUP}
+              onClick={() => void editor.cleanup()}
+            />
+          </Tooltip>
+          {tempo.enabled && (
+            <Tooltip
+              side="right"
+              label={
+                <TooltipComplex title={t('editorControls.autoFixTempo')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', 'F']} />
+                </TooltipComplex>
+              }
+            >
+              <PanelButton
+                disabled={!isAutoMergeAvailable}
+                icon={TIcon.TEMPO}
+                onClick={() => void editor.autoFixTempo()}
+              />
+            </Tooltip>
+          )}
+        </PanelSection>
+        {/* Filling the translation column (translation mode only) */}
+        {!isEditMode && (
+          <PanelSection>
+            <Tooltip
+              side="right"
+              label={
+                <TooltipComplex title={t('editorControls.copyAllSourceToOutput')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', 'C']} />
+                </TooltipComplex>
+              }
+            >
+              <PanelButton
+                disabled={!isAutoMergeAvailable}
+                icon={TIcon.DOUBLE_RIGHT}
+                onClick={() => void editor.copyAllSourceToOutput()}
               />
             </Tooltip>
             <Tooltip
-              side="top"
+              side="right"
               label={
-                <TooltipComplex title={t('editorControls.translateFocusedLine')}>
-                  <TooltipKeystrokeHint keys={['Alt', 'T']} />
+                <TooltipComplex title={t('editorControls.copySourceToOutput')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'C']} />
                 </TooltipComplex>
               }
+              delay={0}
             >
               <PanelButton
-                variant={TButtonVariant.TRANSPARENT_SPECIAL}
-                disabled={!isAiAvailable || focusedLineIndex === null}
-                icon={TIcon.AI_EDIT}
+                disabled={focusedLineIndex === null || isBusy}
+                icon={TIcon.ARROW_COPY_RIGHT}
                 onClick={() => {
-                  if (focusedLineIndex == null) return;
-                  handleAiTranslate(focusedLineIndex);
+                  if (focusedLineIndex !== null) {
+                    editor.copySourceToOutput(focusedLineIndex);
+                  }
                 }}
               />
             </Tooltip>
-          </AiSectionOptions>,
-          document.body
+            <Tooltip
+              side="right"
+              label={
+                <TooltipComplex title={t('editorControls.completeAllTranslated')}>
+                  <TooltipKeystrokeHint keys={['Alt', 'Shift', 'Enter']} />
+                </TooltipComplex>
+              }
+            >
+              <PanelButton
+                disabled={!isAutoMergeAvailable}
+                icon={TIcon.DOUBLE_TICK}
+                onClick={() => editor.completeAllTranslatedLines()}
+              />
+            </Tooltip>
+            {/* Marking follows the translation column, like its effect */}
+            <Tooltip
+              side="right"
+              label={<TooltipSimple>{t('editorControls.autoMarkLinesCompleted')}</TooltipSimple>}
+            >
+              <PanelButton
+                color={autoMarkLinesCompleted ? ThemeColors.GREEN : ThemeColors.TEXT}
+                icon={TIcon.CHECK_CIRCLE_DASHED}
+                onClick={() => settings.setAutoMarkLinesCompleted(!autoMarkLinesCompleted)}
+              />
+            </Tooltip>
+          </PanelSection>
         )}
+        {/* The focused line's structure: insert, merge, cut */}
+        <PanelSection>
+          <Tooltip
+            label={
+              <TooltipComplex title={t('editorControls.insertLineBefore')}>
+                <TooltipKeystrokeHint keys={['Alt', ',']} />
+              </TooltipComplex>
+            }
+            side="right"
+          >
+            <PanelButton
+              disabled={focusedLineIndex === null || isBusy}
+              icon={TIcon.INSERT_BEFORE}
+              onClick={() => {
+                if (focusedLineIndex !== null) editor.insertLine(focusedLineIndex, 'before');
+              }}
+            />
+          </Tooltip>
+          <Tooltip
+            side="right"
+            label={
+              <TooltipComplex title={t('editorControls.mergeWithPrevious')}>
+                <TooltipKeystrokeHint keys={['Alt', 'Shift', '⭡']} />
+              </TooltipComplex>
+            }
+          >
+            <PanelButton
+              disabled={focusedLineIndex === null || focusedLineIndex === 0 || isBusy}
+              icon={TIcon.MERGE_UP}
+              onClick={() => {
+                if (focusedLineIndex !== null) editor.mergeLines(focusedLineIndex, 'up');
+              }}
+            />
+          </Tooltip>
+          <Tooltip
+            side="right"
+            label={
+              <TooltipComplex title={t('editorControls.mergeWithNext')}>
+                <TooltipKeystrokeHint keys={['Alt', 'Shift', '🠧']} />
+              </TooltipComplex>
+            }
+          >
+            <PanelButton
+              disabled={focusedLineIndex === null || focusedLineIndex >= lineCount - 1 || isBusy}
+              icon={TIcon.MERGE_DOWN}
+              onClick={() => {
+                if (focusedLineIndex !== null) editor.mergeLines(focusedLineIndex, 'down');
+              }}
+            />
+          </Tooltip>
+          <Tooltip
+            label={
+              <TooltipComplex title={t('editorControls.insertLineAfter')}>
+                <TooltipKeystrokeHint keys={['Alt', '.']} />
+              </TooltipComplex>
+            }
+            side="right"
+          >
+            <PanelButton
+              disabled={focusedLineIndex === null || isBusy}
+              icon={TIcon.INSERT_AFTER}
+              onClick={() => {
+                if (focusedLineIndex !== null) editor.insertLine(focusedLineIndex, 'after');
+              }}
+            />
+          </Tooltip>
+          <Tooltip
+            side="right"
+            label={
+              <TooltipComplex title={t('editorControls.splitLineByCursor')}>
+                <TooltipKeystrokeHint keys={['Alt', 'R']} />
+              </TooltipComplex>
+            }
+          >
+            <PanelButton
+              disabled={
+                focusedLineIndex === null ||
+                (focusedColumn !== 'output' && focusedColumn !== 'source') ||
+                isBusy
+              }
+              icon={TIcon.RAZOR}
+              onClick={() => {
+                if (focusedLineIndex !== null) {
+                  editor.splitLine(focusedLineIndex);
+                }
+              }}
+            />
+          </Tooltip>
+        </PanelSection>
+      </Container>
     </>
   );
 }

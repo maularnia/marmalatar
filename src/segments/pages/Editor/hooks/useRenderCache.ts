@@ -10,7 +10,7 @@ export function useRenderCache<TItem, TKey, TNode>(items: TItem[], getKey: (item
         cacheRef.current.delete(key);
       }
     }
-  }, [items]);
+  }, [items, getKey]);
 
   const getCached = (key: TKey, fingerprint: string): TNode | null => {
     const cached = cacheRef.current.get(key);

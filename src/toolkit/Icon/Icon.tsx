@@ -78,6 +78,29 @@ import iconTerminal from '@src/assets/icons/icon-terminal.svg?react';
 import iconCleanup from '@src/assets/icons/icon-cleanup.svg?react';
 import iconDoubleRight from '@src/assets/icons/icon-double-right.svg?react';
 import iconDoubleTick from '@src/assets/icons/icon-double-tick.svg?react';
+import iconAudioTrack from '@src/assets/icons/icon-audio-track.svg?react';
+import iconArchive from '@src/assets/icons/icon-archive.svg?react';
+import iconRestore from '@src/assets/icons/icon-restore.svg?react';
+import iconSpellcheck from '@src/assets/icons/icon-spellcheck.svg?react';
+import iconDictionary from '@src/assets/icons/icon-dictionary.svg?react';
+import iconTempo from '@src/assets/icons/icon-tempo.svg?react';
+import iconCollideTop from '@src/assets/icons/icon-collide-top.svg?react';
+import iconCollideBottom from '@src/assets/icons/icon-collide-bottom.svg?react';
+import iconCollideBoth from '@src/assets/icons/icon-collide-both.svg?react';
+import iconTimeOk from '@src/assets/icons/icon-time-ok.svg?react';
+import iconTimeError from '@src/assets/icons/icon-time-error.svg?react';
+import iconTimeSpan from '@src/assets/icons/icon-time-span.svg?react';
+import iconTimeFix from '@src/assets/icons/icon-time-fix.svg?react';
+import iconWidth from '@src/assets/icons/icon-width.svg?react';
+import iconLineSize from '@src/assets/icons/icon-line-size.svg?react';
+import iconInterval from '@src/assets/icons/icon-interval.svg?react';
+import iconPlay from '@src/assets/icons/icon-play.svg?react';
+import iconPlaybackStop from '@src/assets/icons/icon-playback-stop.svg?react';
+import iconMoveX from '@src/assets/icons/icon-move-x.svg?react';
+import iconShow from '@src/assets/icons/icon-show.svg?react';
+import iconHide from '@src/assets/icons/icon-hide.svg?react';
+import iconCheckCircleDashed from '@src/assets/icons/icon-check-circle-dashed.svg?react';
+import iconFlag from '@src/assets/icons/icon-flag.svg?react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import { createSpecialIconGradientFilter } from './utility';
@@ -183,6 +206,29 @@ const ICON_COMPONENTS: {
   [TIcon.CLEANUP]: iconCleanup,
   [TIcon.DOUBLE_RIGHT]: iconDoubleRight,
   [TIcon.DOUBLE_TICK]: iconDoubleTick,
+  [TIcon.AUDIO_TRACK]: iconAudioTrack,
+  [TIcon.ARCHIVE]: iconArchive,
+  [TIcon.RESTORE]: iconRestore,
+  [TIcon.SPELLCHECK]: iconSpellcheck,
+  [TIcon.DICTIONARY]: iconDictionary,
+  [TIcon.TEMPO]: iconTempo,
+  [TIcon.COLLIDE_TOP]: iconCollideTop,
+  [TIcon.COLLIDE_BOTTOM]: iconCollideBottom,
+  [TIcon.COLLIDE_BOTH]: iconCollideBoth,
+  [TIcon.TIME_OK]: iconTimeOk,
+  [TIcon.TIME_ERROR]: iconTimeError,
+  [TIcon.TIME_SPAN]: iconTimeSpan,
+  [TIcon.TIME_FIX]: iconTimeFix,
+  [TIcon.WIDTH]: iconWidth,
+  [TIcon.LINE_SIZE]: iconLineSize,
+  [TIcon.INTERVAL]: iconInterval,
+  [TIcon.PLAY]: iconPlay,
+  [TIcon.PLAYBACK_STOP]: iconPlaybackStop,
+  [TIcon.MOVE_X]: iconMoveX,
+  [TIcon.SHOW]: iconShow,
+  [TIcon.HIDE]: iconHide,
+  [TIcon.CHECK_CIRCLE_DASHED]: iconCheckCircleDashed,
+  [TIcon.FLAG]: iconFlag,
 };
 
 const Wrapper = styled.div`

@@ -8,21 +8,16 @@
     "invalidUrl": "Niadziejsnaja spasyłka"
   },
   "settings": {
-    "autoMergeThresholdRequired": "Nielha pakinuć pustym",
-    "autoMergeThresholdMin": "Značeńnie maje być > 1",
     "timeAdjustmentStepRequired": "Nielha pakinuć pustym",
-    "timeAdjustmentStepMin": "Značeńnie maje być > 1"
+    "timeAdjustmentStepMin": "Značeńnie maje być > 1",
+    "tempoRequired": "Nielha pakinuć pustym",
+    "tempoMin": "Značeńnie maje być ≥ 1"
   },
   "glossaryPairForm": {
     "originalRequired": "Nielha pakinuć pustym",
     "translationRequired": "Nielha pakinuć pustym"
   },
-  "videoSelect": {
-    "fileRequired": "Nielha pakinuć pustym"
-  },
   "mainMenuListItem": {
-    "nameTooLong": "Značeńnie daŭžej za [{{maxLength}}]",
-    "nameAlreadyExists": "Taki fajł užo isnuje",
     "unreachableCommitError": "Jak vy siudy trapili? [NIEDASIAŽNAJA 01]"
   },
   "subtitleFileSelect": {
@@ -30,15 +25,6 @@
     "parseFailedFallback": "Niemahčyma pračytać fajł",
     "fileRequired": "Nielha pakinuć pustym",
     "noValidLines": "Fajł paškodžany albo pusty, niama ž čym pracavać"
-  },
-  "videoFileSelect": {
-    "fileRequired": "Nielha pakinuć pustym",
-    "pathUnresolved": "Nie atrymłasia adšukać šlach da fajła",
-    "stillProcessing": "Apracoŭka videa...",
-    "unsupportedVideoCodec": "Niemahčyma prajhrać videa. Niesumiaščalny kodek videa",
-    "audioExtractionFailed": "Nie atrymałasia apracavać aŭdyjo",
-    "unplayableConvertedAudio": "Nie atrymałasia pieraŭtvaryć aŭdyjo ŭ prajhravalny farmat",
-    "processingFailed": "Pamyłka hienieracyi artefaktaŭ. Niesumiaščalny kodek"
   },
   "import": {
     "projectTitleRequired": "Nielha pakinuć pustym",
@@ -76,22 +62,19 @@
   },
   "spellcheck": {
     "missingDictionaryAsset": "Nie znojdzieny resurs [{{suffix}}]",
-    "dictionaryLoadFailed": "Nie atrymłasia zahruzić słoŭnik [{{url}}]"
+    "dictionaryLoadFailed": "Nie atrymłasia zahruzić słoŭnik [{{url}}]",
+    "workerFailed": "Nie atrymałasia zapuścić pravierku pravapisu"
   },
   "project": {
-    "corrupted": "Paškodžany fajł prajektu",
     "invalidFile": "Nieadpaviednaje značeńnie pola [{{path}}]: {{message}}",
     "incompatibleVersion": "Hety fajł prajektu stvorany novaj versijaj prahramy i nie moža być adkryty",
     "cannotRead": "Nie atrymałasia pračytać fajł",
-    "cannotSaveWithoutName": "Nielha zachavać prajekt biez nazvy",
     "nameRequired": "Nazvu nielha pakinuć pustoj",
     "alreadyExists": "Taki fajł užo isnuje",
     "folderNotTracked": "Abiarycie pracoŭnuju papku",
-    "editorStateReadFailed": "Nie atrymałasia pračytać stan redaktara",
-    "progressPersistFailed": "Nie atrymałasia zachavać prahres pierakładu"
+    "editorStateReadFailed": "Nie atrymałasia pračytać stan redaktara"
   },
   "createNewProject": {
-    "emojiSelectionFailed": "Nie atrymałasia padabrać emodzi dla prajekta",
     "fileSaveFailed": "Nie atrymałasia zachavać fajł prajekta na dysk",
     "editorStateSaveFailed": "Nie atrymałasia zachavać stan redaktara prajekta",
     "cacheUpdateFailed": "Nie atrymałasia dadać prajekt u keš"
@@ -114,9 +97,6 @@
     "fieldNamesEmpty": "Nielha pakinuć pustym",
     "duplicateFieldName": "Pole [{{fieldName}}] užo isnuje"
   },
-  "confirmationProvider": {
-    "confirmDestroyed": "Sproba zniščyć spasyłku na ŭžo zniščanaje paviedamlennie"
-  },
   "videoPlaybackError": {
     "title": "Niemahčyma prajhrać videa",
     "message": "Fajł paškodžany, abo kodek niesumiaščalny"
@@ -126,9 +106,6 @@
   },
   "audioExtractionFailed": {
     "title": "Niemahčyma apracavać aŭdyjo. Fajł paškodžany, abo karystaje nieviadomy navucy kodek aŭdyjo"
-  },
-  "autoMergeFailed": {
-    "title": "Pamyłka aŭta-abjadnańnia"
   },
   "spellcheckUnavailable": {
     "title": "Pravierka pravapisu niedastupnaja"
@@ -142,21 +119,16 @@
   "videoFileCheckFailed": {
     "title": "Nie atrymałasia pravieryć videafajł"
   },
-  "waveformExtractionFailed": {
-    "title": "Nie atrymałasia stvaryć chvalevuju formu aŭdyjo"
-  },
-  "thumbnailGenerationFailed": {
-    "title": "Nie atrymałasia stvaryć zdymak videa"
-  },
   "projectLoadFailed": {
     "title": "Pasyłka ładavannia prajekta"
+  },
+  "folderChangeSaveFailed": {
+    "title": "Papka nie zmieniena",
+    "message": "Nie atrymałasia zachavać adkryty prajekt: {{error}}"
   },
   "noPromptTemplate": {
     "title": "Brak šabłonu zapytu",
     "message": "Kab dasłać zapyt da ŠI, prahramie treba šabłon zapytu. Stvarycie šabłon u hałoŭnym mieniu i abiarycie jaho ŭ poli šabłonu"
-  },
-  "unableToTranslateLine": {
-    "title": "Nie atrymałasia pierakłaści radok"
   },
   "aiTranslationJobFailed": {
     "title": "Pamyłka masavaha pierakładu"
@@ -178,12 +150,6 @@
   "copyOperationFailed": {
     "title": "Pamyłka kapijavańnia tekstu"
   },
-  "mergeLinesFailed": {
-    "title": "Nie atrymałasia abjadnać radki"
-  },
-  "deleteLineFailed": {
-    "title": "Nie atrymałasia vydalić radok"
-  },
   "lineTooShortToSplit": {
     "title": "Nadta karotki radok",
     "message": "nie atrymałasia razrezać"
@@ -201,5 +167,17 @@
   "cacheCleanupFailed": {
     "title": "Pamyłka ačystki keša",
     "message": "Nie atrymałasia ačyscić keš"
+  },
+  "audioTracksListFailed": {
+    "title": "Nie atrymałasia pračytać aŭdyjadarožki videa"
+  },
+  "spellcheckDictionaryUpdateFailed": {
+    "title": "Nie atrymałasia dadać słova ŭ słoŭnik"
+  },
+  "tempoAutoFixFailed": {
+    "title": "Nie atrymałasia prymianić standart tempu"
+  },
+  "healthBeaconFailed": {
+    "title": "Nie atrymałasia pravieryć stan videa"
   }
 }

@@ -8,21 +8,16 @@
     "invalidUrl": "Нядзейсная спасылка"
   },
   "settings": {
-    "autoMergeThresholdRequired": "Нельга пакінуць пустым",
-    "autoMergeThresholdMin": "Значэнне мае быць > 1",
     "timeAdjustmentStepRequired": "Нельга пакінуць пустым",
-    "timeAdjustmentStepMin": "Значэнне мае быць > 1"
+    "timeAdjustmentStepMin": "Значэнне мае быць > 1",
+    "tempoRequired": "Нельга пакінуць пустым",
+    "tempoMin": "Значэнне мае быць ≥ 1"
   },
   "glossaryPairForm": {
     "originalRequired": "Нельга пакінуць пустым",
     "translationRequired": "Нельга пакінуць пустым"
   },
-  "videoSelect": {
-    "fileRequired": "Нельга пакінуць пустым"
-  },
   "mainMenuListItem": {
-    "nameTooLong": "Значэнне даўжэй за [{{maxLength}}]",
-    "nameAlreadyExists": "Такі файл ужо існуе",
     "unreachableCommitError": "Як вы сюды трапілі? [НЕДАСЯЖНАЯ 01]"
   },
   "subtitleFileSelect": {
@@ -30,15 +25,6 @@
     "parseFailedFallback": "Немагчыма прачытаць файл",
     "fileRequired": "Нельга пакінуць пустым",
     "noValidLines": "Файл пашкоджаны альбо пусты, няма з чым працаваць"
-  },
-  "videoFileSelect": {
-    "fileRequired": "Нельга пакінуць пустым",
-    "pathUnresolved": "Не атрымлася адшукаць шлях да файла",
-    "stillProcessing": "Апрацоўка відэа...",
-    "unsupportedVideoCodec": "Немагчыма прайграць відэа. Несумяшчальны кодэк відэа",
-    "audioExtractionFailed": "Не атрымалася апрацаваць аўдыё",
-    "unplayableConvertedAudio": "Не атрымалася пераўтварыць аўдыё ў прайгравальны фармат",
-    "processingFailed": "Памылка генерацыі артэфактаў. Несумяшчальны кодэк"
   },
   "import": {
     "projectTitleRequired": "Нельга пакінуць пустым",
@@ -76,22 +62,19 @@
   },
   "spellcheck": {
     "missingDictionaryAsset": "Не знойдзены рэсурс [{{suffix}}]",
-    "dictionaryLoadFailed": "Не атрымлася загрузіць слоўнік [{{url}}]"
+    "dictionaryLoadFailed": "Не атрымлася загрузіць слоўнік [{{url}}]",
+    "workerFailed": "Не атрымалася запусціць праверку правапісу"
   },
   "project": {
-    "corrupted": "Пашкоджаны файл праекту",
     "invalidFile": "Неадпаведнае значэнне поля [{{path}}]: {{message}}",
     "incompatibleVersion": "Праект быў створаны ў навейшай версіі праграмы. Аднавіце праграму каб адчыніць.",
     "cannotRead": "Не атрымалася прачытаць файл",
-    "cannotSaveWithoutName": "Нельга захаваць праект без назвы",
     "nameRequired": "Назву нельга пакінуць пустой",
     "alreadyExists": "Такі файл ужо існуе",
     "folderNotTracked": "Абярыце працоўную папку",
-    "editorStateReadFailed": "Не атрымалася прачытаць стан рэдактара",
-    "progressPersistFailed": "Не атрымалася захаваць прагрэс перакладу"
+    "editorStateReadFailed": "Не атрымалася прачытаць стан рэдактара"
   },
   "createNewProject": {
-    "emojiSelectionFailed": "Не атрымалася падабраць эмодзі для праекта",
     "fileSaveFailed": "Не атрымалася захаваць файл праекта на дыск",
     "editorStateSaveFailed": "Не атрымалася захаваць стан рэдактара праекта",
     "cacheUpdateFailed": "Не атрымалася дадаць праект у кэш"
@@ -114,9 +97,6 @@
     "fieldNamesEmpty": "Нельга пакінуць пустым",
     "duplicateFieldName": "Поле [{{fieldName}}] ужо існуе"
   },
-  "confirmationProvider": {
-    "confirmDestroyed": "Спроба знішчыць спасылку на ўжо знішчанае паведамленне"
-  },
   "videoPlaybackError": {
     "title": "Немагчыма прайграць відэа",
     "message": "Файл пашкоджаны, або кодэк несумяшчальны"
@@ -126,9 +106,6 @@
   },
   "audioExtractionFailed": {
     "title": "Немагчыма апрацаваць аўдыё. Файл пашкоджаны, або карыстае невядомы навуцы кодэк аўдыё"
-  },
-  "autoMergeFailed": {
-    "title": "Памылка аўта-аб’яднання"
   },
   "spellcheckUnavailable": {
     "title": "Праверка правапісу недаступная"
@@ -142,21 +119,16 @@
   "videoFileCheckFailed": {
     "title": "Не атрымалася праверыць відэафайл"
   },
-  "waveformExtractionFailed": {
-    "title": "Не атрымалася стварыць хвалевую форму аўдыё"
-  },
-  "thumbnailGenerationFailed": {
-    "title": "Не атрымалася стварыць здымак відэа"
-  },
   "projectLoadFailed": {
     "title": "Памылка ладавання праекта"
+  },
+  "folderChangeSaveFailed": {
+    "title": "Папка не зменена",
+    "message": "Не атрымалася захаваць адкрыты праект: {{error}}"
   },
   "noPromptTemplate": {
     "title": "Брак шаблону запыту",
     "message": "Каб даслаць запыт да ШІ, праграме трэба шаблон запыту. Стварыце шаблон у галоўным меню і абярыце яго ў полі шаблону"
-  },
-  "unableToTranslateLine": {
-    "title": "Не атрымалася перакласці радок"
   },
   "aiTranslationJobFailed": {
     "title": "Памылка масавага перакладу"
@@ -178,12 +150,6 @@
   "copyOperationFailed": {
     "title": "Памылка капіявання тэксту"
   },
-  "mergeLinesFailed": {
-    "title": "Не атрымалася аб’яднаць радкі"
-  },
-  "deleteLineFailed": {
-    "title": "Не атрымалася выдаліць радок"
-  },
   "lineTooShortToSplit": {
     "title": "Надта кароткі радок",
     "message": "Не атрымалася разрэзаць"
@@ -201,5 +167,17 @@
   "cacheCleanupFailed": {
     "title": "Памылка ачысткі кэша",
     "message": "Не атрымалася ачысціць кэш"
+  },
+  "audioTracksListFailed": {
+    "title": "Не атрымалася прачытаць аўдыядарожкі відэа"
+  },
+  "spellcheckDictionaryUpdateFailed": {
+    "title": "Не атрымалася дадаць слова ў слоўнік"
+  },
+  "tempoAutoFixFailed": {
+    "title": "Не атрымалася прымяніць стандарт тэмпу"
+  },
+  "healthBeaconFailed": {
+    "title": "Не атрымалася праверыць стан відэа"
   }
 }

@@ -1,3 +1,4 @@
+import { TLanguage } from '@bridge/definitions/language';
 import { TColor } from './theme/definitions';
 
 export enum TThemeSelection {
@@ -6,19 +7,12 @@ export enum TThemeSelection {
   SYSTEM = 'system',
 }
 
-export enum TLanguage {
-  English = 'EN_en',
-  German = 'DE_de',
-  Spanish = 'ES_es',
-  Italian = 'IT_it',
-  Belarusian = 'BE_be',
-  Ukrainian = 'UK_uk',
-  Polish = 'PL_pl',
-}
+// Defined in the bridge, shared with the main process
+export { TLanguage };
 
 /**
  * Canonical English language names -- deliberately NOT localized. Used only where a language name
- * is sent as context to an AI backend (see aiTranslation.ts's buildContext) or embedded in
+ * is sent as context to an AI backend (see the ai slice's buildContext) or embedded in
  * exported file names/metadata (see Export.tsx), both of which must stay stable and decoupled from
  * the app's current UI locale. Anything the user actually reads (selectors, inline messages)
  * should use the localized labels from useLanguageLabels/useLanguageOptions in
@@ -49,6 +43,10 @@ export type TCharacter = {
   color: TColor;
 };
 
+// An editor line's input column. Here rather than in the editor service, so UI types and dialogs can
+// use it without importing the service.
+export type TInputColumn = 'source' | 'output' | 'character';
+
 export type TSubtitleLine = {
   line_no: number;
   start_time: number;
@@ -58,17 +56,6 @@ export type TSubtitleLine = {
   character?: string;
   completed?: boolean;
 };
-
-export enum TWaveformStatus {
-  IDLE = 'idle',
-  LOADING = 'loading',
-  SUCCESS = 'success',
-  ERROR = 'error',
-  UNSUPPORTED_VIDEO = 'unsupported_video',
-  EXTRACTING_AUDIO = 'extracting_audio',
-  AUDIO_EXTRACTION_FAILED = 'audio_extraction_failed',
-  UNPLAYABLE_CONVERTED_AUDIO = 'unplayable_converted_audio',
-}
 
 export enum TMessageType {
   ERROR = 'ERROR',

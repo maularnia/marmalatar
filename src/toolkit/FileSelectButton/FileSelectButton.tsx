@@ -85,7 +85,7 @@ export default function FileSelectButton({
     };
     if (!autoWidth) getWidth();
     return () => clearInterval(interval);
-  }, []);
+  }, [autoWidth]);
 
   return (
     <FileInputButton ref={rootRef} style={{ maxWidth: autoWidth ? autoWidth : 'none' }}>
