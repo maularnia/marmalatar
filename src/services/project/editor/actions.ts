@@ -35,7 +35,12 @@ import { confirmCleanup } from './dialogs/cleanup/cleanupConfirmation';
 import { confirmCopyAllSourceToOutput } from './dialogs/copyAllSourceToOutput/copyAllSourceToOutputConfirmation';
 import { confirmCopyOverride } from './dialogs/copyOverride/copyOverrideConfirmation';
 import type { TInputColumn, TSubtitleLine } from '@src/types';
-import { focusContentEditableToEnd, selectAllContentEditable } from '@src/utils/contentEditable';
+import {
+  focusContentEditableToEnd,
+  getCaretX,
+  selectAllContentEditable,
+  setCaretAtX,
+} from '@src/utils/contentEditable';
 import { media } from '@src/services/media';
 import { Service } from '@src/services/Service';
 import { settings } from '@src/services/settings';
@@ -161,11 +166,17 @@ const modeColumn = (): TInputColumn => (Service.select(selectIsEditMode) ? 'sour
  * in translation mode). Returns whether the input exists (is rendered). `focusLine(null)` only
  * clears the focused column (the focus left the line's inputs), keeping the focused line. */
 export function focusLine(lineIndex: null): void;
-export function focusLine(lineIndex: number, column?: TInputColumn, selectAll?: boolean): boolean;
+export function focusLine(
+  lineIndex: number,
+  column?: TInputColumn,
+  selectAll?: boolean,
+  caretEntry?: TCaretEntry
+): boolean;
 export function focusLine(
   lineIndex: number | null,
   column: TInputColumn = modeColumn(),
-  selectAll = false
+  selectAll = false,
+  caretEntry?: TCaretEntry
 ): boolean | void {
   if (lineIndex === null) {
     Service.dispatch(setFocusedColumn(null));
@@ -179,14 +190,16 @@ export function focusLine(
     // otherwise it stays on the previous row, which unmounts as it scrolls away, and focus drops
     // out of the editor (a held Ctrl+Down used to stop that way).
     setFocusedLine(lineIndex);
-    pendingFocus = { lineIndex, column, selectAll };
+    pendingFocus = { lineIndex, column, selectAll, caretEntry };
     return false;
   }
   // The newest request wins: an older one waiting for its row must not fire later
   pendingFocus = null;
   // Inputs call this from their own onFocus to sync the store: moving the caret or scrolling then
   // would undo where the user just clicked. An explicit selectAll still applies.
-  if (selectAll || !el.contains(document.activeElement)) focusInput(el, column, selectAll);
+  if (selectAll || !el.contains(document.activeElement)) {
+    focusInput(el, column, selectAll, caretEntry);
+  }
   setFocusedLine(lineIndex);
   Service.dispatch(setFocusedColumn(column));
   return true;
@@ -194,10 +207,19 @@ export function focusLine(
 
 // Moves DOM focus into a line's input: the caret at the end of a text column (or all of it
 // selected), and the input scrolled into view
-function focusInput(el: HTMLElement, column: TInputColumn, selectAll: boolean): void {
+function focusInput(
+  el: HTMLElement,
+  column: TInputColumn,
+  selectAll: boolean,
+  caretEntry?: TCaretEntry
+): void {
   if (column === 'output' || column === 'source') {
     if (selectAll) selectAllContentEditable(el);
-    else focusContentEditableToEnd(el);
+    else if (caretEntry) {
+      // Scrolled first: the caret is placed from the text's on-screen position
+      el.scrollIntoView({ block: 'nearest' });
+      setCaretAtX(el, caretEntry.x, caretEntry.line);
+    } else focusContentEditableToEnd(el);
   } else {
     el.focus();
   }
@@ -209,20 +231,25 @@ function focusInput(el: HTMLElement, column: TInputColumn, selectAll: boolean): 
 // one in the store -- which pins it, so the list mounts it -- and DOM focus follows the moment its
 // input registers (registerLineInput), not after a guessed number of frames. Any newer focus request
 // replaces it, and it's dropped if the focused line moves on before the input appears.
-let pendingFocus: { lineIndex: number; column: TInputColumn; selectAll: boolean } | null = null;
+let pendingFocus: {
+  lineIndex: number;
+  column: TInputColumn;
+  selectAll: boolean;
+  caretEntry?: TCaretEntry;
+} | null = null;
 
 function resolvePendingFocus(lineIndex: number, column: TInputColumn): void {
   if (!pendingFocus || pendingFocus.lineIndex !== lineIndex || pendingFocus.column !== column) {
     return;
   }
-  const { selectAll } = pendingFocus;
+  const { selectAll, caretEntry } = pendingFocus;
   pendingFocus = null;
   if (Service.select(selectFocusedLineIndex) !== lineIndex) return;
   // Registration happens while React commits the row: focus once that's done
   queueMicrotask(() => {
     const el = getLineInput(lineIndex, column);
     if (!el || Service.select(selectFocusedLineIndex) !== lineIndex) return;
-    focusInput(el, column, selectAll);
+    focusInput(el, column, selectAll, caretEntry);
     Service.dispatch(setFocusedColumn(column));
   });
 }
@@ -278,7 +305,17 @@ function hasSelectedTextInElement(element: HTMLElement): boolean {
   return element.contains(range.startContainer) && element.contains(range.endContainer);
 }
 
-export function navigateLine(direction: 'up' | 'down', lineIndex: number | null): void {
+// Where the caret goes in a text input entered by moving between lines: its x, on which line
+type TCaretEntry = { x: number; line: 'first' | 'last' };
+
+/** Moves to the same input of the previous/next line. `keepCaretX` (the arrow keys at an input's
+ * edge) lands the caret at the same x, on the line nearest the one left; otherwise (alt+arrows) it
+ * goes to the end, or selects everything when the output had a selection. */
+export function navigateLine(
+  direction: 'up' | 'down',
+  lineIndex: number | null,
+  { keepCaretX = false }: { keepCaretX?: boolean } = {}
+): void {
   const activeElement = (document.activeElement as HTMLElement | null) ?? document.body;
   const lineCount = lines().length;
   const focusedColumn = Service.select(selectFocusedColumn);
@@ -291,8 +328,12 @@ export function navigateLine(direction: 'up' | 'down', lineIndex: number | null)
   }
   const targetIndex = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
   if (targetIndex < 0 || targetIndex >= lineCount) return;
-  const selectAll = focusedColumn === 'output' && hasSelectedTextInElement(activeElement);
-  focusLine(targetIndex, column, selectAll);
+  const caretX = keepCaretX ? getCaretX(activeElement) : null;
+  const caretEntry: TCaretEntry | undefined =
+    caretX === null ? undefined : { x: caretX, line: direction === 'up' ? 'last' : 'first' };
+  const selectAll =
+    !caretEntry && focusedColumn === 'output' && hasSelectedTextInElement(activeElement);
+  focusLine(targetIndex, column, selectAll, caretEntry);
   media.seekToLine(targetIndex);
 }
 

@@ -8,6 +8,7 @@ import {
   type TSuggestionAnchor,
   type TSuggestionPlacement,
 } from '@ui-toolkit/TextSuggestionBlock';
+import { isCaretOnEdgeLine } from '@utils/contentEditable';
 import { getCaretOffset, setCaretOffset } from '@ui-toolkit/TinyDivEditor/caret';
 import {
   type ClipboardEvent,
@@ -32,6 +33,9 @@ type TCharacterSelectorProps = {
   onChange: (value: string[]) => void;
   onFocus?: () => void;
   disabled?: boolean;
+  /** Up/Down on the input's first/last visual line, with no suggestion list to move through: moves
+   * to the previous/next line. Returns whether there was a line to go to. */
+  onNavigate?: (direction: 'up' | 'down') => boolean;
   /** The text input: what gets focus (the editor registers it as the line's character input) */
   inputRef?: Ref<HTMLSpanElement>;
 };
@@ -132,6 +136,7 @@ export function CharacterSelector({
   onChange,
   onFocus,
   disabled = false,
+  onNavigate,
   inputRef,
 }: TCharacterSelectorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -283,7 +288,13 @@ export function CharacterSelector({
     switch (event.key) {
       case 'ArrowDown':
       case 'ArrowUp': {
-        if (!isOpen) return;
+        if (!isOpen) {
+          const direction = event.key === 'ArrowDown' ? 'down' : 'up';
+          if (!event.shiftKey && isCaretOnEdgeLine(el, direction) && onNavigate?.(direction)) {
+            event.preventDefault();
+          }
+          return;
+        }
         event.preventDefault();
         const count = suggestions.length;
         // From none, Down highlights the first suggestion and Up the last
