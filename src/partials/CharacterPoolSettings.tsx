@@ -7,11 +7,18 @@ import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
+import P, { TPVariant } from '@ui-toolkit/P';
+import Span from '@ui-toolkit/Span';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { getCaretOffset, setCaretOffset } from '@ui-toolkit/TinyDivEditor/caret';
-import { normalizeCharacterName, sanitizeCharacterName } from '@utils/characterName';
 import {
+  normalizeCharacterName,
+  sanitizeCharacterName,
+  splitCharacterName,
+} from '@utils/characterName';
+import {
+  Fragment,
   type KeyboardEvent,
   type MouseEvent,
   useEffect,
@@ -21,6 +28,11 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+
+const KEY_HINTS = [
+  { key: 'Enter', label: 'characterPool.keys.save' },
+  { key: '/', label: 'characterPool.keys.split' },
+] as const;
 
 const Pool = styled.div`
   display: flex;
@@ -111,7 +123,7 @@ function CharacterPoolTag({
     const el = editableRef.current;
     if (!el) return;
     const text = el.textContent ?? '';
-    const allowed = sanitizeCharacterName(text, true);
+    const allowed = sanitizeCharacterName(text, { allowSpaces: true, allowSlash: true });
     if (allowed !== text) {
       const caret = getCaretOffset(el) ?? text.length;
       el.textContent = allowed;
@@ -123,7 +135,27 @@ function CharacterPoolTag({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
     const el = editableRef.current;
-    if (!el || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!el) return;
+    // The slash cuts the name at the caret into two characters, at once. It's the physical key,
+    // whatever the layout: on a Cyrillic one it types a dot or a comma, so `key` can't be trusted
+    // (as with shortcuts, see getLatinKey). Nothing to cut at the text's ends, so nothing happens.
+    if (
+      event.code === 'Slash' &&
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      const text = el.textContent ?? '';
+      const start = getCaretOffset(el) ?? text.length;
+      const end = start + (window.getSelection()?.toString().length ?? 0);
+      const before = normalizeCharacterName(text.slice(0, start));
+      const after = normalizeCharacterName(text.slice(end));
+      if (before && after) void onRename(character.name, `${before}/${after}`, true);
+      return;
+    }
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     if (event.key === 'Enter') {
       event.preventDefault();
       void save(true);
@@ -226,7 +258,7 @@ export default function CharacterPoolSettings() {
 
   const rename = async (from: string, to: string, viaEnter: boolean) => {
     const changed = await editor.saveCharacterName(from, to);
-    if (changed && viaEnter && to.trim()) focusNameRef.current = to.trim();
+    if (changed && viaEnter) focusNameRef.current = splitCharacterName(to)[0] ?? null;
     return changed;
   };
   const saveAll = async () => {
@@ -260,7 +292,6 @@ export default function CharacterPoolSettings() {
       <FormsSection animated>
         <FormsSectionTitle
           icon={TIcon.PERSON}
-          subtext={t('characterPool.hint')}
           after={
             <Button
               type="button"
@@ -297,6 +328,16 @@ export default function CharacterPoolSettings() {
               />
             ))}
           </Pool>
+          {/* The keys that operate on the tags: Enter is the same on every layout, / is the key
+              where the slash sits on a Latin one */}
+          <P variant={TPVariant.TERTIARY}>
+            {KEY_HINTS.map(({ key, label }, index) => (
+              <Fragment key={key}>
+                {index > 0 && ' · '}
+                <Span bold>{key}</Span> — {t(label)}
+              </Fragment>
+            ))}
+          </P>
         </FormsSectionContent>
       </FormsSection>
     </FormsRow>

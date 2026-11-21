@@ -13,8 +13,11 @@
   "characterPool": {
     "title": "Hieroi",
     "save": "Zachavać",
-    "hint": "Źmianicie imiony i naciśnicie Enter, kab zachavać. Prabiely dazvolenyja.",
-    "deleteHint": "Naciśnicie Enter, kab vydalić"
+    "deleteHint": "Naciśnicie Enter, kab vydalić",
+    "keys": {
+      "save": "zachavać źmieny",
+      "split": "padzialić imia piersanaža ŭ miescy kursora"
+    }
   },
   "appLanguage": {
     "title": "Mova prahramy"

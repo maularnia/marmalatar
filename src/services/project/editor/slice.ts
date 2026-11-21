@@ -261,6 +261,21 @@ const editorSlice = createSlice({
             entry.name === from ? { ...entry, name: to } : entry
           );
     },
+    // Replaces a character by several in every line that has it (in its place, repeats within a
+    // line dropped). Names the pool already has keep their colour, new ones get a free one.
+    splitCharacter(state, action: PayloadAction<{ from: string; into: string[] }>) {
+      const { from, into } = action.payload;
+      if (!state.characterPool.some((entry) => entry.name === from)) return;
+      addToHistory(state);
+      for (const line of state.lines) {
+        const names = parseCharacterList(line.character);
+        if (!names.includes(from)) continue;
+        line.character = serializeCharacterList([
+          ...new Set(names.flatMap((name) => (name === from ? into : [name]))),
+        ]);
+      }
+      state.characterPool = rebuildCharacterPool(state.characterPool, current(state.lines));
+    },
     // Drops a character from the pool and from every line that has it
     removeCharacter(state, action: PayloadAction<string>) {
       const name = action.payload;
@@ -637,6 +652,7 @@ export const {
   addTranslatedLine,
   updateTranslationCharacter,
   renameCharacter,
+  splitCharacter,
   removeCharacter,
   updateTranslatedText,
   updateSourceText,

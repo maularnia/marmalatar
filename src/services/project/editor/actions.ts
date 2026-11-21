@@ -25,6 +25,7 @@ import {
   confirmMergeCharacters,
   confirmRemoveCharacter,
 } from './dialogs/characterPool/characterPoolConfirmations';
+import { splitCharacterName } from '@utils/characterName';
 import { parseCharacterList } from '@utils/characters';
 import { autoFixTiming } from '@utils/tempo';
 import { TEMPO_STANDARD_CUSTOM } from '@bridge/definitions/projectEntry';
@@ -61,6 +62,7 @@ import {
   removeCharacter,
   renameCharacter,
   selectCharacterPool,
+  splitCharacter,
   restoreHistory,
   selectFocusedColumn,
   selectFocusedLineIndex,
@@ -672,15 +674,22 @@ export function toggleEditMode(): void {
 }
 
 /** Saves the spelling typed for a character: a new name renames it in every line, an existing one
- * merges the two, an empty one removes the character from the pool and its lines. Merging and
+ * merges the two, several names (cut by a slash) replace it with all of them, merged with the
+ * ones the pool has, an empty one removes the character from the pool and its lines. Merging and
  * removing ask first. Resolves whether anything changed; the name stays as it was when the answer
  * is no. */
 export async function saveCharacterName(from: string, to: string): Promise<boolean> {
-  const name = to.trim();
-  if (name === from) return false;
   const pool = Service.select(selectCharacterPool);
   const character = pool.find((entry) => entry.name === from);
   if (!character || isBulkTranslationRunning()) return false;
+  // A slash cuts the name into several characters: each line with this one gets all of them
+  const parts = splitCharacterName(to);
+  if (parts.length > 1) {
+    Service.dispatch(splitCharacter({ from, into: parts }));
+    return true;
+  }
+  const name = parts[0] ?? '';
+  if (name === from) return false;
   if (!name) {
     const lineCount = lines().filter((line) =>
       parseCharacterList(line.character).includes(from)

@@ -13,8 +13,11 @@
   "characterPool": {
     "title": "Characters",
     "save": "Save",
-    "hint": "Edit names and hit Enter to save. Spaces are allowed.",
-    "deleteHint": "Press Enter to delete"
+    "deleteHint": "Press Enter to delete",
+    "keys": {
+      "save": "save changes",
+      "split": "split the character's name at the caret"
+    }
   },
   "appLanguage": {
     "title": "Interface language"
