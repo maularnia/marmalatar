@@ -13,6 +13,7 @@
   "characterPool": {
     "title": "Characters",
     "save": "Save",
+    "reset": "Reset",
     "deleteHint": "Press Enter to delete",
     "saveHint": "Hit Enter to save"
   },

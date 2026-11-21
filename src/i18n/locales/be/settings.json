@@ -13,6 +13,7 @@
   "characterPool": {
     "title": "Пул персанажаў",
     "save": "Захаваць",
+    "reset": "Скінуць",
     "deleteHint": "Націсніце Enter, каб выдаліць",
     "saveHint": "Націсніце Enter, каб захаваць"
   },

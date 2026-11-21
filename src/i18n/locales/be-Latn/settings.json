@@ -13,6 +13,7 @@
   "characterPool": {
     "title": "Hieroi",
     "save": "Zachavać",
+    "reset": "Skinuć",
     "deleteHint": "Naciśnicie Enter, kab vydalić",
     "saveHint": "Naciśnicie Enter, kab zachavać"
   },

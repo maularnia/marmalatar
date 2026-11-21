@@ -28,6 +28,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
+const Buttons = styled.div`
+  display: flex;
+  gap: ${CSSVar('size4')};
+`;
+
 const Pool = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -63,12 +68,18 @@ type TCharacterPoolTagProps = {
   disabled: boolean;
   /** Registers the editable and its save, for the caret to travel between tags and for the
    * section's Save button */
-  registerTag: (tag: { el: HTMLSpanElement; save: () => Promise<void> } | null) => void;
+  registerTag: (
+    tag: { el: HTMLSpanElement; save: () => Promise<void>; reset: () => void } | null
+  ) => void;
   /** Resolves whether the character was changed. An empty `to` asks to remove the character, a
    * name another character has to merge into it; both are confirmed first. */
   onRename: (from: string, to: string) => Promise<boolean>;
   /** Whether the text differs from the character's name, i.e. there's a draft to save */
   onDirtyChange: (name: string, isDirty: boolean) => void;
+  /** Enter: saves every tag with a change, not only this one */
+  onSaveAll: () => Promise<void>;
+  /** Escape: gives up every draft. Returns whether there was one to give up. */
+  onCancelAll: () => boolean;
   /** The tag taking the caret, with the colour it's drawn in, or leaving it (null) */
   onFocusChange: (name: string, color: TColor | null) => void;
   /** Left/Right at the text's edge: the caret goes on to the previous/next tag */
@@ -84,6 +95,8 @@ function CharacterPoolTag({
   registerTag,
   onRename,
   onDirtyChange,
+  onSaveAll,
+  onCancelAll,
   onFocusChange,
   onLeaveEdge,
 }: TCharacterPoolTagProps) {
@@ -110,6 +123,17 @@ function CharacterPoolTag({
   };
   const saveRef = useRef(save);
   saveRef.current = save;
+
+  // Gives up the draft: the text goes back to the character's name
+  const reset = () => {
+    const el = editableRef.current;
+    if (el) el.textContent = character.name;
+    setIsEmptied(false);
+    setIsChanged(false);
+    onDirtyChange(character.name, false);
+  };
+  const resetRef = useRef(reset);
+  resetRef.current = reset;
 
   // The Save button takes the colour of the tag being edited
   const displayColor = isEmptied ? ThemeColors.RED : character.color;
@@ -166,9 +190,17 @@ function CharacterPoolTag({
       return;
     }
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.key === 'Escape') {
+      // With nothing to cancel, Escape is left to close the overlay as usual
+      if (onCancelAll()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
     if (event.key === 'Enter') {
       event.preventDefault();
-      void save();
+      void onSaveAll();
       return;
     }
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
@@ -185,7 +217,7 @@ function CharacterPoolTag({
 
   const setRefs = (el: HTMLSpanElement | null) => {
     editableRef.current = el;
-    registerTag(el ? { el, save: () => saveRef.current() } : null);
+    registerTag(el ? { el, save: () => saveRef.current(), reset: () => resetRef.current() } : null);
   };
 
   return (
@@ -252,7 +284,9 @@ export default function CharacterPoolSettings() {
     ai.selectIsBusy
   );
   // The tags' editables and saves by character name, in pool order
-  const tagsRef = useRef(new Map<string, { el: HTMLSpanElement; save: () => Promise<void> }>());
+  const tagsRef = useRef(
+    new Map<string, { el: HTMLSpanElement; save: () => Promise<void>; reset: () => void }>()
+  );
   // After a change the tags are new elements (a renamed one is keyed by its new name): the caret
   // goes to the tag the character now has, or to the pool's last one when it's gone (merged into
   // another, removed). `name: null` is the last tag.
@@ -278,7 +312,14 @@ export default function CharacterPoolSettings() {
     if (!target) return;
     focusTargetRef.current = null;
     const name = target.name ?? pool[pool.length - 1]?.name ?? '';
+    const lastName = pool[pool.length - 1]?.name ?? '';
     focusAtEdge(tagsRef.current.get(name)?.el, 'end');
+    // The dialog that confirmed a merge or removal hands focus back to what had it before (the
+    // tag that's now gone) as it closes, which can land after this: look again next frame
+    requestAnimationFrame(() => {
+      const el = tagsRef.current.get(name)?.el ?? tagsRef.current.get(lastName)?.el;
+      if (el && document.activeElement !== el) focusAtEdge(el, 'end');
+    });
   }, [pool]);
 
   if (!isProjectOpen || pool.length === 0) return null;
@@ -294,6 +335,14 @@ export default function CharacterPoolSettings() {
     const changed = await editor.saveCharacterName(from, to);
     if (!changed) focusTargetRef.current = null;
     return changed;
+  };
+  const resetAll = () => {
+    for (const tag of tagsRef.current.values()) tag.reset();
+  };
+  const cancelAll = () => {
+    if (dirtyNames.size === 0) return false;
+    resetAll();
+    return true;
   };
   const saveAll = async () => {
     // A snapshot, one at a time: saving can merge tags away, and each may ask first
@@ -327,23 +376,34 @@ export default function CharacterPoolSettings() {
         <FormsSectionTitle
           icon={TIcon.PERSON}
           after={
-            <Button
-              type="button"
-              size={TButtonSize.SMALL}
-              variant={dirtyNames.size > 0 ? TButtonVariant.PRIMARY : TButtonVariant.SECONDARY}
-              // With changes pending: the colour of the changed tag being edited, accent otherwise
-              color={
-                dirtyNames.size === 0
-                  ? undefined
-                  : focusedTag && dirtyNames.has(focusedTag.name)
-                    ? focusedTag.color
-                    : ThemeColors.ACCENT1
-              }
-              disabled={isAiBusy}
-              onClick={saveAll}
-            >
-              {t('characterPool.save')}
-            </Button>
+            <Buttons>
+              <Button
+                type="button"
+                size={TButtonSize.SMALL}
+                variant={TButtonVariant.SECONDARY}
+                disabled={isAiBusy || dirtyNames.size === 0}
+                onClick={resetAll}
+              >
+                {t('characterPool.reset')}
+              </Button>
+              <Button
+                type="button"
+                size={TButtonSize.SMALL}
+                variant={dirtyNames.size > 0 ? TButtonVariant.PRIMARY : TButtonVariant.SECONDARY}
+                // With changes pending: the colour of the changed tag being edited, accent otherwise
+                color={
+                  dirtyNames.size === 0
+                    ? undefined
+                    : focusedTag && dirtyNames.has(focusedTag.name)
+                      ? focusedTag.color
+                      : ThemeColors.ACCENT1
+                }
+                disabled={isAiBusy}
+                onClick={saveAll}
+              >
+                {t('characterPool.save')}
+              </Button>
+            </Buttons>
           }
         >
           {t('characterPool.title')}
@@ -361,6 +421,8 @@ export default function CharacterPoolSettings() {
                 }}
                 onRename={rename}
                 onDirtyChange={setDirty}
+                onSaveAll={saveAll}
+                onCancelAll={cancelAll}
                 onFocusChange={handleFocusChange}
                 onLeaveEdge={(direction) =>
                   direction === 'previous'
