@@ -1,4 +1,5 @@
 import { media } from '@src/services/media';
+import CharacterPoolSettings from '@src/partials/CharacterPoolSettings';
 import { SpellcheckSettings } from '@src/partials/SpellcheckSettings';
 import TempoSettings from '@src/partials/TempoSettings';
 import { editor } from '@src/services/project';
@@ -77,8 +78,10 @@ export default function EditorAside() {
       </AsideVideoContainer>
       <Hr variant={THrVariant.TRANSPARENT} />
       {!isEditMode && <AiTranslationStatusPanel />}
-      {/* The same tempo (subtitle limits) section as the Settings overlay's General tab */}
+      {/* The same tempo (subtitle limits) section as the Settings overlay's Project tab */}
       <TempoSettings />
+      {/* The same characters section as the Settings overlay's Project tab */}
+      <CharacterPoolSettings />
       {/* The same spellcheck switch and dictionaries as the Settings overlay's Spellchecker tab */}
       <SpellcheckSettings />
     </Aside>

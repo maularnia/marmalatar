@@ -89,5 +89,16 @@
     "title": "Media error",
     "message": "The video or its cache was changed or deleted",
     "pickAnotherVideoButton": "Pick another video"
+  },
+  "mergeCharacters": {
+    "title": "Merge characters?",
+    "message": "All lines of <name>{{from}}</name> will be assigned to <name>{{to}}</name>, which already exists. The character <name>{{from}}</name> will be removed from the pool.",
+    "confirmButton": "Merge"
+  },
+  "removeCharacter": {
+    "title": "Remove character?",
+    "message_one": "The character will be removed from the pool and from the 1 line it is assigned to.",
+    "message_other": "The character will be removed from the pool and from all {{count}} lines it is assigned to.",
+    "confirmButton": "Remove"
   }
 }

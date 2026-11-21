@@ -49,10 +49,10 @@ const SelectWithAction = styled.div`
   }
 `;
 
-// The actor column's title stays centred, with the mode button (edit mode only) at the cell's end
+// The character column's title is left-aligned, with the mode button (edit mode only) at the cell's end
 const ActorHeader = styled.div`
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
   & > :last-child {
     justify-self: end;
@@ -111,8 +111,7 @@ export const EditorTableHeader = () => {
       </Cell>
       <Cell>
         <ActorHeader>
-          <span />
-          <span style={{ textAlign: 'center' }}>{t('tableHeader.character')}</span>
+          <span style={{ textAlign: 'left' }}>{t('tableHeader.character')}</span>
           {isEditMode ? <ModeButton isEditMode disabled={isBusy} /> : <span />}
         </ActorHeader>
       </Cell>

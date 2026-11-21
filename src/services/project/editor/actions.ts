@@ -21,6 +21,12 @@ import {
   confirmAutoFixTempo,
   type TAutoFixTempoOptions,
 } from './dialogs/autoFixTempo/autoFixTempoConfirmation';
+import {
+  confirmMergeCharacters,
+  confirmRemoveCharacter,
+} from './dialogs/characterPool/characterPoolConfirmations';
+import { splitCharacterName } from '@utils/characterName';
+import { parseCharacterList } from '@utils/characters';
 import { autoFixTiming } from '@utils/tempo';
 import { TEMPO_STANDARD_CUSTOM } from '@bridge/definitions/projectEntry';
 import { applyTempoStandard } from '@utils/tempoTemplates';
@@ -53,6 +59,10 @@ import {
   lineRemoved,
   lineSplit,
   linesMerged,
+  removeCharacter,
+  renameCharacter,
+  selectCharacterPool,
+  splitCharacter,
   restoreHistory,
   selectFocusedColumn,
   selectFocusedLineIndex,
@@ -661,4 +671,35 @@ export function toggleEditMode(): void {
   if (focusedLineIndex !== null) {
     refocusLineAfterRender(focusedLineIndex, nextMode === 'edit' ? 'source' : 'output');
   }
+}
+
+/** Saves the spelling typed for a character: a new name renames it in every line, an existing one
+ * merges the two, several names (cut by a slash) replace it with all of them, merged with the
+ * ones the pool has, an empty one removes the character from the pool and its lines. Merging and
+ * removing ask first. Resolves whether anything changed; the name stays as it was when the answer
+ * is no. */
+export async function saveCharacterName(from: string, to: string): Promise<boolean> {
+  const pool = Service.select(selectCharacterPool);
+  const character = pool.find((entry) => entry.name === from);
+  if (!character || isBulkTranslationRunning()) return false;
+  // A slash cuts the name into several characters: each line with this one gets all of them
+  const parts = splitCharacterName(to);
+  if (parts.length > 1) {
+    Service.dispatch(splitCharacter({ from, into: parts }));
+    return true;
+  }
+  const name = parts[0] ?? '';
+  if (name === from) return false;
+  if (!name) {
+    const lineCount = lines().filter((line) =>
+      parseCharacterList(line.character).includes(from)
+    ).length;
+    if (!(await confirmRemoveCharacter(from, character.color, lineCount))) return false;
+    Service.dispatch(removeCharacter(from));
+    return true;
+  }
+  const target = pool.find((entry) => entry.name === name);
+  if (target && !(await confirmMergeCharacters(from, name, target.color))) return false;
+  Service.dispatch(renameCharacter({ from, to: name }));
+  return true;
 }

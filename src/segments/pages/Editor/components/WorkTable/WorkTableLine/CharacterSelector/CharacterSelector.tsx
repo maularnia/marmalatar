@@ -22,7 +22,7 @@ import {
   useState,
 } from 'react';
 import styled from 'styled-components';
-import { sanitizeCharacterName } from './characterName';
+import { sanitizeCharacterName } from '@utils/characterName';
 import { rankCharacters } from './rankCharacters';
 
 type TCharacterSelectorProps = {

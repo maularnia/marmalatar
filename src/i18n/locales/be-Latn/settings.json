@@ -10,6 +10,13 @@
     "minIntervalFramesLabel": "Min. interval (kadraŭ)",
     "highlightOverlaps": "Padsviečvać radki, jakija pierakryvajucca"
   },
+  "characterPool": {
+    "title": "Hieroi",
+    "save": "Zachavać",
+    "reset": "Skinuć",
+    "deleteHint": "Naciśnicie Enter, kab vydalić",
+    "saveHint": "Naciśnicie Enter, kab zachavać"
+  },
   "appLanguage": {
     "title": "Mova prahramy"
   },
@@ -98,6 +105,7 @@
     "dictionaries": "Słoŭniki"
   },
   "tabs": {
+    "project": "Prajekt",
     "general": "Ahulnyja",
     "ai": "ŠI",
     "spellchecker": "Pravapis"
