@@ -11,7 +11,14 @@ import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { getCaretOffset, setCaretOffset } from '@ui-toolkit/TinyDivEditor/caret';
 import { normalizeCharacterName, sanitizeCharacterName } from '@utils/characterName';
-import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -24,6 +31,16 @@ const Pool = styled.div`
 
   &:focus-within {
     background: ${CSSVar('mainTableLineCellBgFocus')};
+  }
+
+  /* The tag being edited stands out from the rest */
+  & > * {
+    opacity: 0.8;
+    transition: opacity 0.1s ease;
+  }
+
+  & > *:focus-within {
+    opacity: 1;
   }
 `;
 
@@ -216,6 +233,25 @@ export default function CharacterPoolSettings() {
     // A snapshot, one at a time: saving can merge tags away, and each may ask first
     for (const tag of [...tagsRef.current.values()]) await tag.save();
   };
+  // A click on the empty part of the area (between or after the tags) puts the caret in the
+  // nearest tag, at its end -- mousedown, so the click doesn't drop the focus first
+  const handleAreaMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget || isAiBusy) return;
+    event.preventDefault();
+    let nearest: HTMLSpanElement | null = null;
+    let nearestDistance = Infinity;
+    for (const { el } of tagsRef.current.values()) {
+      const rect = el.getBoundingClientRect();
+      const dx = Math.max(rect.left - event.clientX, 0, event.clientX - rect.right);
+      const dy = Math.max(rect.top - event.clientY, 0, event.clientY - rect.bottom);
+      const distance = Math.hypot(dx, dy);
+      if (distance < nearestDistance) {
+        nearest = el;
+        nearestDistance = distance;
+      }
+    }
+    focusAtEdge(nearest, 'end');
+  };
   const moveCaret = (index: number, edge: 'start' | 'end') =>
     focusAtEdge(tagsRef.current.get(pool[index]?.name ?? '')?.el, edge);
 
@@ -241,7 +277,7 @@ export default function CharacterPoolSettings() {
           {t('characterPool.title')}
         </FormsSectionTitle>
         <FormsSectionContent>
-          <Pool>
+          <Pool onMouseDown={handleAreaMouseDown}>
             {pool.map((character, index) => (
               <CharacterPoolTag
                 key={character.name}
