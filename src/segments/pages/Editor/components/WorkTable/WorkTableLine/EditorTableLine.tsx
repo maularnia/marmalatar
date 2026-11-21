@@ -20,7 +20,7 @@ import classNames from 'classnames';
 import { type ClipboardEvent, use, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { CharacterSelector, CharacterSelectorHandle } from './CharacterSelector/CharacterSelector';
+import { CharacterSelector } from './CharacterSelector/CharacterSelector';
 
 type EditorTableLineProps = {
   lineNo: number;
@@ -315,12 +315,12 @@ export default function EditorTableLine({
     editor.setSplitCursor(preRange.toString().length);
   };
 
-  const characterInputRef = useRef<CharacterSelectorHandle>(null);
+  const characterInputRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     editor.registerLineInput(lineIndex, 'source', sourceInputRef.current);
     editor.registerLineInput(lineIndex, 'output', translatedInputRef.current);
-    editor.registerLineInput(lineIndex, 'character', characterInputRef.current?.inputRef ?? null);
+    editor.registerLineInput(lineIndex, 'character', characterInputRef.current);
     // Seeds the editor zone's fallback focus target with line 0's output column -- kept fresh on
     // every (re)mount of that specific row, including a full remount on project switch.
     if (lineIndex === 0) zoneRef.current = translatedInputRef.current;
@@ -401,17 +401,9 @@ export default function EditorTableLine({
             }}
           />
         </NumberLineCell>
-        <LineCell
-          style={{ cursor: 'text' }}
-          onBlur={() => editor.focusLine(null)}
-          onClick={() => {
-            if (isTranslationBusy || !characterInputRef.current?.inputRef) return;
-            characterInputRef.current.inputRef.focus();
-          }}
-        >
+        <LineCell onBlur={() => editor.focusLine(null)}>
           <CharacterSelector
-            ref={characterInputRef}
-            line_no={lineNo}
+            inputRef={characterInputRef}
             characters={characterOptions}
             onFocus={() => {
               onFocus();

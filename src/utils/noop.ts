@@ -3,4 +3,3 @@ export function providerNoop(contextName: string): () => never {
     throw new Error(`Context ${contextName} was not provided`);
   };
 }
-export const noop = () => {};

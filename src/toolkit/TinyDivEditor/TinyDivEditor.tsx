@@ -1,4 +1,3 @@
-import { usePopperPortal } from '@providers/PopperPortalProvider';
 import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
 import { getMarkCss, type SpellCheckMark } from '@ui-toolkit/Mark';
@@ -14,7 +13,6 @@ import {
   type InputEvent as ReactInputEvent,
   type Ref,
 } from 'react';
-import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { getCaretOffset, renderText, setCaretOffset } from './caret';
 import { SpellcheckOptions, TSuggestionsStatus } from './SpellcheckOptions';
@@ -99,7 +97,6 @@ export function TinyDivEditor({
 }: TTinyDivEditorProps) {
   const editableRef = useRef<HTMLDivElement>(null);
   const [activePanel, setActivePanel] = useState<TActivePanel | null>(null);
-  const popperPortal = usePopperPortal();
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeMarkIdRef = useRef<string | null>(null);
@@ -358,29 +355,24 @@ export function TinyDivEditor({
           rest.onKeyDown?.(event);
         }}
       />
-      {activePanel &&
-        popperPortal &&
-        // Portaled into the app's overlay layer: inside the editor it would be trapped in its row's
-        // stacking context (the focused row's z-index), under anything layered above that row --
-        // like the focused line's panel. Keyed by the mark so the highlight starts fresh per word.
-        createPortal(
-          <SpellcheckOptions
-            key={activePanel.mark.id}
-            status={activePanel.status}
-            suggestions={activePanel.suggestions}
-            top={activePanel.top}
-            bottom={activePanel.bottom}
-            left={activePanel.left}
-            onAddToDictionary={(target) => {
-              // The mark goes once the dictionary is updated (see useSpellchecker)
-              closeSuggestions();
-              spellchecker.addToDictionary(target, activePanel.mark.word);
-            }}
-            onApplySuggestion={(suggestion) => applySuggestion(activePanel.mark, suggestion)}
-            onDismiss={() => closeSuggestions({ keepSuppressed: true })}
-          />,
-          popperPortal
-        )}
+      {/* Keyed by the mark so the highlight starts fresh per word */}
+      {activePanel && (
+        <SpellcheckOptions
+          key={activePanel.mark.id}
+          status={activePanel.status}
+          suggestions={activePanel.suggestions}
+          top={activePanel.top}
+          bottom={activePanel.bottom}
+          left={activePanel.left}
+          onAddToDictionary={(target) => {
+            // The mark goes once the dictionary is updated (see useSpellchecker)
+            closeSuggestions();
+            spellchecker.addToDictionary(target, activePanel.mark.word);
+          }}
+          onApplySuggestion={(suggestion) => applySuggestion(activePanel.mark, suggestion)}
+          onDismiss={() => closeSuggestions({ keepSuppressed: true })}
+        />
+      )}
     </Root>
   );
 }
