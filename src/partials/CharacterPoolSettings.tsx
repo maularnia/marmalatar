@@ -7,8 +7,6 @@ import Button from '@ui-toolkit/Button/Button';
 import { TButtonSize, TButtonVariant } from '@ui-toolkit/Button/types';
 import { FormsRow, FormsSection, FormsSectionContent, FormsSectionTitle } from '@ui-toolkit/forms';
 import { TIcon } from '@ui-toolkit/Icon/icons';
-import P, { TPVariant } from '@ui-toolkit/P';
-import Span from '@ui-toolkit/Span';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import Tooltip, { TooltipSimple } from '@ui-toolkit/Tooltip';
 import { getCaretOffset, setCaretOffset } from '@ui-toolkit/TinyDivEditor/caret';
@@ -18,7 +16,6 @@ import {
   splitCharacterName,
 } from '@utils/characterName';
 import {
-  Fragment,
   type KeyboardEvent,
   type MouseEvent,
   useEffect,
@@ -28,11 +25,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-
-const KEY_HINTS = [
-  { key: 'Enter', label: 'characterPool.keys.save' },
-  { key: '/', label: 'characterPool.keys.split' },
-] as const;
 
 const Pool = styled.div`
   display: flex;
@@ -95,6 +87,9 @@ function CharacterPoolTag({
   const editableRef = useRef<HTMLSpanElement | null>(null);
   // The text is emptied: saving removes the character, which the tag shows
   const [isEmptied, setIsEmptied] = useState(false);
+  // The text differs from the name: a draft waiting to be saved
+  const [isChanged, setIsChanged] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   const save = async (viaEnter = false) => {
     const text = normalizeCharacterName(editableRef.current?.textContent ?? '');
@@ -106,6 +101,7 @@ function CharacterPoolTag({
       el.textContent = character.name;
       onDirtyChange(character.name, false);
       setIsEmptied(false);
+      setIsChanged(false);
     }
   };
   const saveRef = useRef(save);
@@ -131,6 +127,7 @@ function CharacterPoolTag({
     }
     onDirtyChange(character.name, normalizeCharacterName(allowed) !== character.name);
     setIsEmptied(normalizeCharacterName(allowed) === '');
+    setIsChanged(normalizeCharacterName(allowed) !== character.name);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
@@ -180,15 +177,22 @@ function CharacterPoolTag({
 
   return (
     <Tooltip
-      forceOpen={isEmptied}
+      // Emptied: Enter deletes. Changed, with the caret inside: Enter saves.
+      forceOpen={isEmptied || (isChanged && isFocused)}
       side="bottom"
-      label={<TooltipSimple>{t('characterPool.deleteHint')}</TooltipSimple>}
+      label={
+        <TooltipSimple>
+          {t(isEmptied ? 'characterPool.deleteHint' : 'characterPool.saveHint')}
+        </TooltipSimple>
+      }
     >
       <Tag
         // Red and bordered while saving would delete it; the colour is the character's otherwise
         color={isEmptied ? ThemeColors.RED : character.color}
         variant={isEmptied ? TTagVariant.SECONDARY : TTagVariant.PRIMARY}
         size={TTagSize.SMALL}
+        // A changed tag glows in its own colour and is never dimmed like the idle ones
+        style={isChanged ? { opacity: 1, boxShadow: '0 0 10px 1px var(--tag-color)' } : undefined}
       >
         <EditableName
           ref={setRefs}
@@ -198,7 +202,9 @@ function CharacterPoolTag({
           autoCorrect="off"
           onInput={handleInput}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
           onBlur={() => {
+            setIsFocused(false);
             // Leaving tidies the draft: double spaces and spaces at the ends go
             const el = editableRef.current;
             if (!el) return;
@@ -328,16 +334,6 @@ export default function CharacterPoolSettings() {
               />
             ))}
           </Pool>
-          {/* The keys that operate on the tags: Enter is the same on every layout, / is the key
-              where the slash sits on a Latin one */}
-          <P variant={TPVariant.TERTIARY}>
-            {KEY_HINTS.map(({ key, label }, index) => (
-              <Fragment key={key}>
-                {index > 0 && ' · '}
-                <Span bold>{key}</Span> — {t(label)}
-              </Fragment>
-            ))}
-          </P>
         </FormsSectionContent>
       </FormsSection>
     </FormsRow>

@@ -14,10 +14,7 @@
     "title": "Hieroi",
     "save": "Zachavać",
     "deleteHint": "Naciśnicie Enter, kab vydalić",
-    "keys": {
-      "save": "zachavać źmieny",
-      "split": "padzialić imia piersanaža ŭ miescy kursora"
-    }
+    "saveHint": "Naciśnicie Enter, kab zachavać"
   },
   "appLanguage": {
     "title": "Mova prahramy"

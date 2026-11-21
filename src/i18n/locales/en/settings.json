@@ -14,10 +14,7 @@
     "title": "Characters",
     "save": "Save",
     "deleteHint": "Press Enter to delete",
-    "keys": {
-      "save": "save changes",
-      "split": "split the character's name at the caret"
-    }
+    "saveHint": "Hit Enter to save"
   },
   "appLanguage": {
     "title": "Interface language"
