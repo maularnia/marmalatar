@@ -14,10 +14,11 @@ import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
 import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
+import { isCaretOnEdgeLine } from '@utils/contentEditable';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { passesTempo } from '@utils/tempo';
 import classNames from 'classnames';
-import { type ClipboardEvent, use, useEffect, useMemo, useRef } from 'react';
+import { type ClipboardEvent, type KeyboardEvent, use, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { CharacterSelector } from './CharacterSelector/CharacterSelector';
@@ -317,6 +318,24 @@ export default function EditorTableLine({
 
   const characterInputRef = useRef<HTMLSpanElement>(null);
 
+  // Up/Down on the first/last visual line of an input continue into the previous/next line's same
+  // input, so alt+up/down isn't needed. Only plain keys, and only when there's a line to go to:
+  // otherwise the browser's own caret movement stays.
+  const navigateFromEdge = (direction: 'up' | 'down') => {
+    const target = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
+    if (target < 0 || target >= editor.get.lines().length) return false;
+    editor.navigateLine(direction, lineIndex, { keepCaretX: true });
+    return true;
+  };
+  const handleEdgeNavigation = (event: KeyboardEvent<HTMLElement>) => {
+    if (isTranslationBusy || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return;
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    const direction = event.key === 'ArrowUp' ? 'up' : 'down';
+    if (!isCaretOnEdgeLine(event.currentTarget, direction)) return;
+    if (navigateFromEdge(direction)) event.preventDefault();
+  };
+
   useEffect(() => {
     editor.registerLineInput(lineIndex, 'source', sourceInputRef.current);
     editor.registerLineInput(lineIndex, 'output', translatedInputRef.current);
@@ -383,6 +402,7 @@ export default function EditorTableLine({
               updateSourceSelection();
               updateSplitCursor();
             }}
+            onKeyDown={handleEdgeNavigation}
             onKeyUp={() => {
               updateSourceSelection();
               updateSplitCursor();
@@ -404,6 +424,7 @@ export default function EditorTableLine({
         <LineCell onBlur={() => editor.focusLine(null)}>
           <CharacterSelector
             inputRef={characterInputRef}
+            onNavigate={navigateFromEdge}
             characters={characterOptions}
             onFocus={() => {
               onFocus();
@@ -445,6 +466,7 @@ export default function EditorTableLine({
               onClick={() => {
                 updateSplitCursor();
               }}
+              onKeyDown={handleEdgeNavigation}
               onKeyUp={updateSplitCursor}
               onSelect={updateSplitCursor}
               onPaste={handlePlainTextPaste}

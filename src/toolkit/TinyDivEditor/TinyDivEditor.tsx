@@ -352,6 +352,9 @@ export function TinyDivEditor({
           if (event.ctrlKey && !event.altKey && ['z', 'y'].includes(getLatinKey(event))) {
             event.preventDefault();
           }
+          // The suggestions panel owns Up/Down while it's open (SpellcheckOptions cycles its list
+          // on `document`): the caller's handlers, like moving between lines, must not act on them
+          if (activePanel && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) return;
           rest.onKeyDown?.(event);
         }}
       />
