@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Overlay from '../Overlay';
 import { AiTab } from './AiTab';
 import { GeneralTab } from './GeneralTab';
+import { ProjectTab } from './ProjectTab';
 import { SpellcheckTab } from './SpellcheckTab';
 import { TButtonSize } from '@src/toolkit/Button/types';
 
@@ -16,11 +17,15 @@ export default function SettingsOverlay() {
         <Tabs
           tabSize={TButtonSize.REGULAR}
           tabs={[
-            { id: 'general', title: t('tabs.general'), default: true },
+            { id: 'project', title: t('tabs.project'), default: true },
+            { id: 'general', title: t('tabs.general') },
             { id: 'ai', title: t('tabs.ai') },
             { id: 'spellchecker', title: t('tabs.spellchecker') },
           ]}
         >
+          <TabContent id="project">
+            <ProjectTab />
+          </TabContent>
           <TabContent id="general">
             <GeneralTab />
           </TabContent>

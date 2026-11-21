@@ -21,6 +21,11 @@ import {
   confirmAutoFixTempo,
   type TAutoFixTempoOptions,
 } from './dialogs/autoFixTempo/autoFixTempoConfirmation';
+import {
+  confirmMergeCharacters,
+  confirmRemoveCharacter,
+} from './dialogs/characterPool/characterPoolConfirmations';
+import { parseCharacterList } from '@utils/characters';
 import { autoFixTiming } from '@utils/tempo';
 import { TEMPO_STANDARD_CUSTOM } from '@bridge/definitions/projectEntry';
 import { applyTempoStandard } from '@utils/tempoTemplates';
@@ -53,6 +58,9 @@ import {
   lineRemoved,
   lineSplit,
   linesMerged,
+  removeCharacter,
+  renameCharacter,
+  selectCharacterPool,
   restoreHistory,
   selectFocusedColumn,
   selectFocusedLineIndex,
@@ -661,4 +669,28 @@ export function toggleEditMode(): void {
   if (focusedLineIndex !== null) {
     refocusLineAfterRender(focusedLineIndex, nextMode === 'edit' ? 'source' : 'output');
   }
+}
+
+/** Saves the spelling typed for a character: a new name renames it in every line, an existing one
+ * merges the two, an empty one removes the character from the pool and its lines. Merging and
+ * removing ask first. Resolves whether anything changed; the name stays as it was when the answer
+ * is no. */
+export async function saveCharacterName(from: string, to: string): Promise<boolean> {
+  const name = to.trim();
+  if (name === from) return false;
+  const pool = Service.select(selectCharacterPool);
+  const character = pool.find((entry) => entry.name === from);
+  if (!character || isBulkTranslationRunning()) return false;
+  if (!name) {
+    const lineCount = lines().filter((line) =>
+      parseCharacterList(line.character).includes(from)
+    ).length;
+    if (!(await confirmRemoveCharacter(from, character.color, lineCount))) return false;
+    Service.dispatch(removeCharacter(from));
+    return true;
+  }
+  const target = pool.find((entry) => entry.name === name);
+  if (target && !(await confirmMergeCharacters(from, name, target.color))) return false;
+  Service.dispatch(renameCharacter({ from, to: name }));
+  return true;
 }

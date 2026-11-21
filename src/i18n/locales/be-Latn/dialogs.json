@@ -89,5 +89,18 @@
     "title": "Pamyłka miedyja",
     "message": "Videa abo jaho keš byli zmienienyja ci vydalienyja",
     "pickAnotherVideoButton": "Abrać inšaje videa"
+  },
+  "mergeCharacters": {
+    "title": "Abjadnać piersanažaŭ?",
+    "message": "Usie radki <name>{{from}}</name> buduć pryznačany <name>{{to}}</name>, jaki ŭžo isnuje. Piersanaž <name>{{from}}</name> budzie vydaleny z pula.",
+    "confirmButton": "Abjadnać"
+  },
+  "removeCharacter": {
+    "title": "Vydalić piersanaža?",
+    "message_one": "Piersanaž budzie vydaleny z pula i z 1 radka, da jakoha jon pryznačany.",
+    "message_few": "Piersanaž budzie vydaleny z pula i z usich {{count}} radkoŭ, da jakich jon pryznačany.",
+    "message_many": "Piersanaž budzie vydaleny z pula i z usich {{count}} radkoŭ, da jakich jon pryznačany.",
+    "message_other": "Piersanaž budzie vydaleny z pula i z usich {{count}} radka, da jakich jon pryznačany.",
+    "confirmButton": "Vydalić"
   }
 }

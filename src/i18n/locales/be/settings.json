@@ -10,6 +10,12 @@
     "minIntervalFramesLabel": "Мін. інтэрвал (кадраў)",
     "highlightOverlaps": "Падсвечваць радкі, якія перакрываюцца"
   },
+  "characterPool": {
+    "title": "Пул персанажаў",
+    "save": "Захаваць",
+    "hint": "Змяніце імёны і націсніце Enter, каб захаваць. Прабелы дазволеныя.",
+    "deleteHint": "Націсніце Enter, каб выдаліць"
+  },
   "appLanguage": {
     "title": "Мова праграмы"
   },
@@ -98,6 +104,7 @@
     "dictionaries": "Слоўнікі"
   },
   "tabs": {
+    "project": "Праект",
     "general": "Агульныя",
     "ai": "ШІ",
     "spellchecker": "Правапіс"

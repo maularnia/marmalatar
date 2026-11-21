@@ -240,6 +240,40 @@ const editorSlice = createSlice({
         state.characterPool = rebuildCharacterPool(state.characterPool, current(state.lines));
       }
     },
+    // Changes a character's spelling in every line. Its colour stays; a name another character
+    // already has merges the two into that one. Undo restores the lines and the pool is rebuilt by
+    // name from them, so a name renamed away comes back with a freshly assigned colour.
+    renameCharacter(state, action: PayloadAction<{ from: string; to: string }>) {
+      const { from } = action.payload;
+      if (!state.characterPool.some((entry) => entry.name === from)) return;
+      const to = action.payload.to.trim();
+      if (!to || to === from) return;
+      addToHistory(state);
+      for (const line of state.lines) {
+        const names = parseCharacterList(line.character);
+        if (!names.includes(from)) continue;
+        line.character = serializeCharacterList(names.map((name) => (name === from ? to : name)));
+      }
+      const isMerge = state.characterPool.some((entry) => entry.name === to);
+      state.characterPool = isMerge
+        ? state.characterPool.filter((entry) => entry.name !== from)
+        : state.characterPool.map((entry) =>
+            entry.name === from ? { ...entry, name: to } : entry
+          );
+    },
+    // Drops a character from the pool and from every line that has it
+    removeCharacter(state, action: PayloadAction<string>) {
+      const name = action.payload;
+      if (!state.characterPool.some((entry) => entry.name === name)) return;
+      addToHistory(state);
+      for (const line of state.lines) {
+        const names = parseCharacterList(line.character);
+        if (names.includes(name)) {
+          line.character = serializeCharacterList(names.filter((entry) => entry !== name));
+        }
+      }
+      state.characterPool = state.characterPool.filter((entry) => entry.name !== name);
+    },
     updateTranslatedText(state, action: PayloadAction<{ lineIndex: number; text: string }>) {
       const line = state.lines[action.payload.lineIndex];
       if (line) {
@@ -602,6 +636,8 @@ export const {
   restoreHistory,
   addTranslatedLine,
   updateTranslationCharacter,
+  renameCharacter,
+  removeCharacter,
   updateTranslatedText,
   updateSourceText,
   setLineCompleted,

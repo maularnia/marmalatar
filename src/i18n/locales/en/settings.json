@@ -10,6 +10,12 @@
     "minIntervalFramesLabel": "Min interval (frames)",
     "highlightOverlaps": "Highlight overlapping lines"
   },
+  "characterPool": {
+    "title": "Characters",
+    "save": "Save",
+    "hint": "Edit names and hit Enter to save. Spaces are allowed.",
+    "deleteHint": "Press Enter to delete"
+  },
   "appLanguage": {
     "title": "Interface language"
   },
@@ -98,6 +104,7 @@
     "dictionaries": "Dictionaries"
   },
   "tabs": {
+    "project": "Project",
     "general": "General",
     "ai": "AI",
     "spellchecker": "Spellchecker"
