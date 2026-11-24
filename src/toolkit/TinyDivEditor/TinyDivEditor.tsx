@@ -1,16 +1,23 @@
+import { settings } from '@src/services/settings';
 import { ThemeColors } from '@src/theme/utils';
 import { TLanguage } from '@src/types';
-import { getMarkCss, type SpellCheckMark } from '@ui-toolkit/Mark';
+import { useAppSelector } from '@store/hooks';
+import { getMarkCss, getTagMarkCss, type SpellCheckMark } from '@ui-toolkit/Mark';
+import Tooltip from '@ui-toolkit/Tooltip';
+import type { TTextRange } from '@utils/findMatches';
 import { getLatinKey } from '@utils/keyboard';
-import { contentEditableHtmlToText } from '@utils/string';
+import { contentEditableHtmlToText, type TTextMark } from '@utils/string';
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type FocusEvent,
   type InputEvent as ReactInputEvent,
+  type KeyboardEvent,
+  type ReactNode,
   type Ref,
 } from 'react';
 import styled from 'styled-components';
@@ -27,6 +34,11 @@ const SPELLCHECK_DEBOUNCE_MS = 300;
 const SUGGESTIONS_SHOW_DELAY_MS = 500;
 
 const NO_MARKS: SpellCheckMark[] = [];
+const NO_CUSTOM_MARKS: TTextMark[] = [];
+const NO_ACTIVE_CUSTOM_MARK = { index: -1, anchor: null };
+
+/** A custom mark: its index in `customMarks`, its range and the text under it */
+export type TCustomMark = TTextRange & { index: number; text: string };
 
 type TTinyDivEditorProps = Omit<React.ComponentPropsWithoutRef<'div'>, 'onInput'> & {
   ref?: Ref<HTMLDivElement>;
@@ -37,6 +49,18 @@ type TTinyDivEditorProps = Omit<React.ComponentPropsWithoutRef<'div'>, 'onInput'
    * don't otherwise know spellcheck exists -- marks, requests, and cancellation are entirely owned
    * and managed internally. Defaults to `true`. */
   checkSpelling?: boolean;
+  /** The consumer's own highlights, as ranges of `value` (e.g. search matches). Drawn only while
+   * the text shown is `value`, the text they were computed for: while the user types ahead of it
+   * they're left as they are, and redrawn once the new `value` comes back with its own marks.
+   * Giving any (even an empty list) turns spellcheck off -- its marks would cover the same text. */
+  customMarks?: TTextRange[];
+  /** A keydown while the caret is inside one of `customMarks` (the focused one, highlighted), with
+   * that mark. Preventing its default also keeps it from the editor's own `onKeyDown` */
+  onTagKeyDown?: (event: KeyboardEvent<HTMLDivElement>, mark: TCustomMark) => void;
+  /** A tooltip for the custom marks: shown for the focused one (the caret inside it) while it is */
+  tagTooltip?: (mark: TCustomMark) => ReactNode;
+  /** Where the tag tooltip opens from its mark. Defaults to the top */
+  tagTooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   onInput?: (text: string) => void;
 };
 
@@ -46,6 +70,16 @@ type TTinyDivEditorProps = Omit<React.ComponentPropsWithoutRef<'div'>, 'onInput'
 // contentEditable surface moves one level deeper (EditableSurface) so the suggestions panel can be
 // a real, stable React child of Root without ever being clobbered by the `innerHTML` rewrites that
 // happen on EditableSurface alone.
+// Laid over the focused custom mark (its first line, when it wraps), as the tag tooltip's anchor:
+// the marks themselves are plain markup inside the editable, which React can't wrap
+const TagTooltipAnchor = styled.span`
+  position: absolute;
+  pointer-events: none;
+`;
+
+// The focused custom mark's box within Root, from its first line's box on screen
+type TTagAnchor = { left: number; top: number; width: number; height: number };
+
 const Root = styled.div`
   position: relative;
   flex: 1 1 auto;
@@ -55,12 +89,23 @@ const Root = styled.div`
   justify-content: stretch;
 `;
 
-const EditableSurface = styled.div`
+const EditableSurface = styled.div<{
+  $customMarkCss: ReturnType<typeof getTagMarkCss>;
+  $activeCustomMarkCss: ReturnType<typeof getTagMarkCss>;
+}>`
   width: 100%;
   min-height: 100%;
   mark[data-mark-id] {
     cursor: default;
     ${getMarkCss(ThemeColors.RED)}
+  }
+  mark[data-custom-mark] {
+    cursor: inherit;
+    ${({ $customMarkCss }) => $customMarkCss}
+  }
+  /* The one the caret is in */
+  mark[data-custom-mark][data-active] {
+    ${({ $activeCustomMarkCss }) => $activeCustomMarkCss}
   }
 `;
 
@@ -92,6 +137,10 @@ export function TinyDivEditor({
   value,
   language,
   checkSpelling = true,
+  customMarks,
+  onTagKeyDown,
+  tagTooltip,
+  tagTooltipSide = 'top',
   onInput,
   ...rest
 }: TTinyDivEditorProps) {
@@ -102,12 +151,61 @@ export function TinyDivEditor({
   const activeMarkIdRef = useRef<string | null>(null);
   const [lastSentValue, setLastSentValue] = useState('');
 
-  const spellchecker = useSpellchecker({ language, enabled: checkSpelling });
+  const spellchecker = useSpellchecker({ language, enabled: checkSpelling && !customMarks });
   const { check, cancel, suggest, markedText } = spellchecker;
   const marks = markedText?.marks ?? NO_MARKS;
   // Read by the value effect, which must not re-run (and cancel its own check) when the marks change
   const markedTextRef = useRef(markedText);
   markedTextRef.current = markedText;
+
+  // The custom marks as DOM marks, rebuilt only when their ranges change (consumers compute them
+  // inline, a new array every render)
+  // The custom mark the caret is in (focused), by index; -1 for none. Drawn as part of the marks'
+  // markup, see the selectionchange effect below
+  const [activeCustomMark, setActiveCustomMark] = useState<{
+    index: number;
+    anchor: TTagAnchor | null;
+  }>(NO_ACTIVE_CUSTOM_MARK);
+  const activeCustomMarkIndex = activeCustomMark.index;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const customMarksKey = customMarks?.map(({ start, end }) => `${start}-${end}`).join(',') ?? '';
+  const customTextMarks = useMemo<TTextMark[]>(
+    () =>
+      customMarks?.length
+        ? customMarks.map(({ start, end }, index) => ({
+            id: String(index),
+            start,
+            end,
+            kind: 'custom',
+            isActive: index === activeCustomMarkIndex,
+          }))
+        : NO_CUSTOM_MARKS,
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- the key stands for the ranges
+    [customMarksKey, activeCustomMarkIndex]
+  );
+  // Read by the effects below, which must not re-run for them
+  const customTextMarksRef = useRef(customTextMarks);
+  customTextMarksRef.current = customTextMarks;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  // Every mark that belongs to `text`: the spellcheck's, if they were computed for it, and the
+  // custom ones, if `text` is the value they were computed for
+  const getMarksFor = useCallback((text: string): TTextMark[] => {
+    const marked = markedTextRef.current;
+    const spellMarks = marked && marked.text === text ? marked.marks : NO_MARKS;
+    const custom = valueRef.current === text ? customTextMarksRef.current : NO_CUSTOM_MARKS;
+    if (custom.length === 0) return spellMarks;
+    if (spellMarks.length === 0) return custom;
+    return [...spellMarks, ...custom];
+  }, []);
+
+  const theme = useAppSelector(settings.selectCurrentThemeData);
+  const customMarkCss = getTagMarkCss(ThemeColors.ACCENT2, theme.colors[ThemeColors.ACCENT2].text);
+  const activeCustomMarkCss = getTagMarkCss(
+    ThemeColors.ACCENT1,
+    theme.colors[ThemeColors.ACCENT1].text
+  );
 
   const editableRefCallback = useCallback(
     (el: HTMLDivElement | null) => {
@@ -152,10 +250,24 @@ export function TinyDivEditor({
     const el = editableRef.current;
     if (!el) return;
     const text = contentEditableHtmlToText(el.innerHTML);
-    const nextMarks = markedText && markedText.text === text ? markedText.marks : NO_MARKS;
-    if (nextMarks.length === 0 && !el.querySelector('mark[data-mark-id]')) return;
+    const nextMarks = getMarksFor(text);
+    if (nextMarks.length === 0 && !el.querySelector('mark')) return;
     renderText(el, text, nextMarks);
-  }, [markedText]);
+  }, [markedText, getMarksFor]);
+
+  // Redraws the custom marks when they (or the value they belong to) change. Only while the shown
+  // text is that value: otherwise the user has typed ahead of it, and rewriting the DOM mid-typing
+  // is never free for the caret -- the marks follow once the typed text comes back as the value.
+  // When it already matches, renderText leaves the DOM alone.
+  useLayoutEffect(() => {
+    const el = editableRef.current;
+    if (!el || value === undefined) return;
+    const text = contentEditableHtmlToText(el.innerHTML);
+    if (text !== value) return;
+    const nextMarks = getMarksFor(text);
+    if (nextMarks.length === 0 && !el.querySelector('mark')) return;
+    renderText(el, text, nextMarks);
+  }, [customTextMarks, value, getMarksFor]);
 
   // Syncs the DOM to an externally-changed `value` (not an echo of our own onInput -- those never
   // touch this prop until the DOM already matches it). The text is always kept in sync regardless
@@ -171,11 +283,10 @@ export function TinyDivEditor({
     cancel();
     if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
     // Marks already computed for exactly this text (e.g. undo back to it) are kept
-    const marked = markedTextRef.current;
-    renderText(el, value, marked && marked.text === value ? marked.marks : NO_MARKS);
+    renderText(el, value, getMarksFor(value));
     if (document.activeElement === el) void check(value);
     // eslint-disable-next-line @eslint-react/exhaustive-deps -- lastSentValue only tells an echo from a real change; it must not re-run this
-  }, [value, check, cancel]);
+  }, [value, check, cancel, getMarksFor]);
 
   // Hides the panel. By default also clears `activeMarkIdRef`, so the caret re-entering the same
   // mark later is treated as a fresh "enter" and reopens it. Passing `keepSuppressed: true` (used
@@ -330,20 +441,78 @@ export function TinyDivEditor({
     [value, closeSuggestions, cancel, check, onInput]
   );
 
+  // Which custom mark the caret is in, followed on every caret move. Only while the editable has
+  // focus and shows `value` (the text the marks were computed for); none otherwise. The caret at
+  // either edge of a mark counts as in it.
+  useEffect(() => {
+    const findActive = (): number => {
+      const el = editableRef.current;
+      if (!el || !customMarks?.length || document.activeElement !== el) return -1;
+      if (contentEditableHtmlToText(el.innerHTML) !== valueRef.current) return -1;
+      const offset = getCaretOffset(el);
+      if (offset === null) return -1;
+      return customMarks.findIndex(({ start, end }) => offset >= start && offset <= end);
+    };
+    // Where the tag tooltip anchors: the mark as it is in the DOM now. Marking it focused only
+    // recolors it, so the box holds once it's redrawn
+    const findAnchor = (index: number): TTagAnchor | null => {
+      const markEl = editableRef.current?.querySelector(`mark[data-custom-mark="${index}"]`);
+      const root = rootRef.current;
+      const box = markEl?.getClientRects()[0];
+      if (!box || !root) return null;
+      const rootBox = root.getBoundingClientRect();
+      return {
+        left: box.left - rootBox.left,
+        top: box.top - rootBox.top,
+        width: box.width,
+        height: box.height,
+      };
+    };
+    // No sync on (re)subscribing: whatever changes the marks or the value while the editable has
+    // focus rewrites its markup, which moves the caret back -- a selectionchange of its own
+    const sync = () => {
+      const index = findActive();
+      setActiveCustomMark((previous) => {
+        if (index < 0) return previous.index < 0 ? previous : NO_ACTIVE_CUSTOM_MARK;
+        const anchor = findAnchor(index);
+        const isSame =
+          previous.index === index &&
+          previous.anchor?.left === anchor?.left &&
+          previous.anchor?.top === anchor?.top &&
+          previous.anchor?.width === anchor?.width;
+        return isSame ? previous : { index, anchor };
+      });
+    };
+    document.addEventListener('selectionchange', sync);
+    return () => document.removeEventListener('selectionchange', sync);
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- the key stands for the ranges
+  }, [customMarksKey, value]);
+
+  // The focused custom mark, as handed to `onTagKeyDown`
+  const getActiveCustomMark = (): TCustomMark | null => {
+    const range = customMarks?.[activeCustomMarkIndex];
+    if (!range || value === undefined) return null;
+    return { index: activeCustomMarkIndex, ...range, text: value.slice(range.start, range.end) };
+  };
+
+  const activeTag = getActiveCustomMark();
+
   return (
-    <Root>
+    <Root ref={rootRef}>
       <EditableSurface
         ref={editableRefCallback}
         onInput={handleInput}
         spellCheck={false}
         autoCorrect="off"
         {...rest}
+        $customMarkCss={customMarkCss}
+        $activeCustomMarkCss={activeCustomMarkCss}
         onFocus={handleFocus}
         onBlur={(event) => {
           closeSuggestions();
           rest.onBlur?.(event);
         }}
-        onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+        onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
           // Chromium runs the native undo/redo (ctrl+z, ctrl+shift+z, and ctrl+y on Linux and
           // Windows) as the keydown's default action, bound to the physical key -- so the check
           // is layout-independent too (ctrl+з is undo). Only the default is blocked, not
@@ -355,6 +524,13 @@ export function TinyDivEditor({
           // The suggestions panel owns Up/Down while it's open (SpellcheckOptions cycles its list
           // on `document`): the caller's handlers, like moving between lines, must not act on them
           if (activePanel && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) return;
+          const activeMark = onTagKeyDown ? getActiveCustomMark() : null;
+          if (activeMark) {
+            // Only a default the handler itself prevents (the undo check above may have already)
+            const wasPrevented = event.defaultPrevented;
+            onTagKeyDown?.(event, activeMark);
+            if (!wasPrevented && event.defaultPrevented) return;
+          }
           rest.onKeyDown?.(event);
         }}
       />
@@ -375,6 +551,16 @@ export function TinyDivEditor({
           onApplySuggestion={(suggestion) => applySuggestion(activePanel.mark, suggestion)}
           onDismiss={() => closeSuggestions({ keepSuppressed: true })}
         />
+      )}
+      {tagTooltip && activeTag && activeCustomMark.anchor && (
+        <Tooltip
+          key={activeTag.index}
+          forceOpen
+          side={tagTooltipSide}
+          label={tagTooltip(activeTag)}
+        >
+          <TagTooltipAnchor style={activeCustomMark.anchor} />
+        </Tooltip>
       )}
     </Root>
   );

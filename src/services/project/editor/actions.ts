@@ -216,8 +216,9 @@ export function focusLine(
 }
 
 // Moves DOM focus into a line's input: the caret at the end of a text column (or all of it
-// selected), and the input scrolled into view
-function focusInput(
+// selected), and the input scrolled into view. Also used by Find & Replace (../findReplace), whose
+// rows are the same inputs in its own registry; not on the facade.
+export function focusInput(
   el: HTMLElement,
   column: TInputColumn,
   selectAll: boolean,
@@ -316,7 +317,7 @@ function hasSelectedTextInElement(element: HTMLElement): boolean {
 }
 
 // Where the caret goes in a text input entered by moving between lines: its x, on which line
-type TCaretEntry = { x: number; line: 'first' | 'last' };
+export type TCaretEntry = { x: number; line: 'first' | 'last' };
 
 /** Moves to the same input of the previous/next line. `keepCaretX` (the arrow keys at an input's
  * edge) lands the caret at the same x, on the line nearest the one left; otherwise (alt+arrows) it

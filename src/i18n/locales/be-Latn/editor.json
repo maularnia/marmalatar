@@ -33,5 +33,13 @@
     "durationTooShort": "Radok zakarotki pa časie",
     "cpsTooHigh": "Zašmat tekstu dla praciahłasci radka",
     "duration": "Praciahłasć"
+  },
+  "findReplace": {
+    "searchLabel": "Pošuk",
+    "replaceLabel": "Zamianić na",
+    "replace": "Zamianić",
+    "replaceAll": "Zamianić usio",
+    "noResults": "Ničoha nie znojdziena",
+    "enterToReplace": "Naciśnicie <key>Enter</key>, kab zamianić\nna «<text>{{text}}</text>»"
   }
 }

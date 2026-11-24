@@ -109,9 +109,21 @@ export const EGlossaryTableHeaderLine = styled(EGlossaryTableLine)`
   position: sticky;
   top: 0;
   z-index: 2;
-  background: ${CSSVar('mainTableHeaderBg')};
-  backdrop-filter: ${CSSVar('mainTableHeaderBackdrop')};
   opacity: 1;
+  /* The table header's background and blur, on a masked layer under its cells (masking the line
+     itself would fade them too), as on the editor's floating block */
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: ${CSSVar('mainTableHeaderBg')};
+    backdrop-filter: ${CSSVar('mainTableHeaderBackdrop')};
+    mask-image: ${CSSVar('mainTableHeaderMask')};
+    pointer-events: none;
+  }
   font-weight: ${CSSVar('bold')};
 `;
 

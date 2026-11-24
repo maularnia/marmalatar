@@ -44,9 +44,24 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-type TextMark = { id: string; start: number; end: number };
+// `custom` marks are the consumer's own highlights (TinyDivEditor's `customMarks`), told apart
+// from spellcheck marks in the DOM by their attribute; their id is their index in the consumer's list
+export type TTextMark = {
+  id: string;
+  start: number;
+  end: number;
+  kind?: 'spellcheck' | 'custom';
+  // A custom mark drawn as the focused one. Written with a value: renderText compares markup with
+  // the DOM's innerHTML, which serializes a bare attribute as `data-active=""`
+  isActive?: boolean;
+};
 
-function lineToHtml(line: string, lineStart: number, marks: TextMark[]): string {
+const markAttribute = (mark: TTextMark): string =>
+  mark.kind === 'custom'
+    ? `data-custom-mark="${mark.id}"${mark.isActive ? ' data-active="true"' : ''}`
+    : `data-mark-id="${mark.id}"`;
+
+function lineToHtml(line: string, lineStart: number, marks: TTextMark[]): string {
   const lineEnd = lineStart + line.length;
   const lineMarks = marks
     .filter((m) => m.start >= lineStart && m.end <= lineEnd)
@@ -61,14 +76,17 @@ function lineToHtml(line: string, lineStart: number, marks: TextMark[]): string 
     const relStart = mark.start - lineStart;
     const relEnd = mark.end - lineStart;
     html += escapeHtml(line.slice(cursor, relStart));
-    html += `<mark data-mark-id="${mark.id}">${escapeHtml(line.slice(relStart, relEnd))}</mark>`;
+    // Overlapping marks (a misspelled word inside a custom highlight) can't nest in this flat
+    // markup: the one starting first wins
+    if (relStart < cursor) continue;
+    html += `<mark ${markAttribute(mark)}>${escapeHtml(line.slice(relStart, relEnd))}</mark>`;
     cursor = relEnd;
   }
   html += escapeHtml(line.slice(cursor));
   return html;
 }
 
-export function textToContentEditableHtml(text: string, marks: TextMark[] = []): string {
+export function textToContentEditableHtml(text: string, marks: TTextMark[] = []): string {
   let offset = 0;
   return text
     .split('\n')

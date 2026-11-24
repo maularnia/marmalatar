@@ -1,27 +1,53 @@
 import { useAppSelector, useAppSelectors } from '@store/hooks';
 import { media } from '@src/services/media';
-import { KeystrokeZoneContext } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
 import { editor } from '@src/services/project';
 import { projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import { LogoLoader } from '@src/toolkit/LogoLoader';
-import { TCharacter } from '@src/types';
+import { TCharacter, TInputColumn } from '@src/types';
 import { ai } from '@src/services/ai';
 import { settings } from '@src/services/settings';
 import Icon from '@ui-toolkit/Icon/Icon';
 import { TIcon, TIconSize } from '@ui-toolkit/Icon/icons';
 import P from '@ui-toolkit/P';
 import Tag, { TTagSize, TTagVariant } from '@ui-toolkit/Tag';
-import { TinyDivEditor } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
+import { TinyDivEditor, type TCustomMark } from '@ui-toolkit/TinyDivEditor/TinyDivEditor';
+import type { TTextRange } from '@utils/findMatches';
 import { isCaretOnEdgeLine } from '@utils/contentEditable';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { passesTempo } from '@utils/tempo';
 import classNames from 'classnames';
-import { type ClipboardEvent, type KeyboardEvent, use, useEffect, useMemo, useRef } from 'react';
+import {
+  type ClipboardEvent,
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { CharacterSelector } from './CharacterSelector/CharacterSelector';
+
+type TTextColumn = 'source' | 'output';
+
+/** What a row does with its inputs, which depends on the table showing it: the main table hands
+ * them to the editor (its registry, focus and navigation), Find & Replace to its own. The row only
+ * calls these; it never reaches either service's focus or refs itself. */
+export type TLineRowController = {
+  /** The row's inputs as they mount (`el`) and unmount (`null`) */
+  registerInput: (column: TInputColumn, el: HTMLElement | null) => void;
+  /** An input got DOM focus: sync the owner's focused line and column */
+  onInputFocus: (column: TInputColumn) => void;
+  /** Focus left the row's character cell */
+  onInputBlur: () => void;
+  /** Up/Down on an input's first/last visual line: go to the previous/next row. Returns whether
+   * there was one to go to */
+  navigateFromEdge: (direction: 'up' | 'down') => boolean;
+  /** The caret or selection moved inside a text input */
+  onSelectionChange?: (column: TTextColumn, input: HTMLElement) => void;
+};
 
 type EditorTableLineProps = {
   lineNo: number;
@@ -39,6 +65,25 @@ type EditorTableLineProps = {
   onCharacterChange: (character: string) => void;
   onOutputTextChange: (text: string) => void;
   onSourceTextChange: (text: string) => void;
+  controller: TLineRowController;
+  /** Spellcheck the text columns (when the setting has it on). Defaults to true */
+  allowSpellcheck?: boolean;
+  /** Checks the line against the project's tempo limits, showing a failure (red line number, flag,
+   * row state). Off, no check runs at all. Defaults to true */
+  checkTempo?: boolean;
+  /** Shows the character selector disabled: no focus, no edits */
+  isCharacterDisabled?: boolean;
+  /** Highlights in the text columns, as ranges of `sourceText` / `translatedText` */
+  sourceMarks?: TTextRange[];
+  outputMarks?: TTextRange[];
+  /** A tooltip for the highlight the caret is in */
+  markTooltip?: (column: TTextColumn, mark: TCustomMark) => ReactNode;
+  /** A keydown while the caret is in one of the highlights, with that highlight */
+  onMarkKeyDown?: (
+    column: TTextColumn,
+    event: KeyboardEvent<HTMLDivElement>,
+    mark: TCustomMark
+  ) => void;
 };
 
 // As wide as the project's longest line number needs (--line-number-width, set by the Editor page
@@ -206,9 +251,21 @@ export default function EditorTableLine({
   onCharacterChange,
   onOutputTextChange,
   onSourceTextChange,
+  controller,
+  allowSpellcheck = true,
+  checkTempo = true,
+  isCharacterDisabled = false,
+  sourceMarks,
+  outputMarks,
+  onMarkKeyDown,
+  markTooltip,
 }: EditorTableLineProps) {
   const { t } = useTranslation('editor');
-  const { zoneRef } = use(KeystrokeZoneContext);
+  // The register effect below reads it through a ref: it must not re-run for a new controller
+  // object (unregistering a focused input would make the editor refocus it, caret at the end).
+  // Handlers are rebuilt every render, so they use the prop itself.
+  const controllerRef = useRef(controller);
+  controllerRef.current = controller;
   const [
     videoDurationMs,
     sourceLanguage,
@@ -235,33 +292,18 @@ export default function EditorTableLine({
   // on purpose: the row then re-renders only when its flag flips, which is also what lets a row the
   // parent reuses from its render cache pick the change up.
   const hasTimingIssue = useAppSelector(
-    (state) => editor.selectTempoTimingIssues(state)[lineIndex] ?? false
+    (state) => checkTempo && (editor.selectTempoTimingIssues(state)[lineIndex] ?? false)
   );
   // Each row checks itself against the project's limits on every render, so it follows both the
   // text (once the editor commits it) and a settings change at once. The column measured is the
   // one being edited in the current mode.
   const isTempoFailed =
+    checkTempo &&
     tempo.enabled &&
     (hasTimingIssue ||
       !passesTempo(isEditMode ? sourceText : translatedText, startTime, endTime, tempo));
   // A frozen line (being translated) never shows it
   const showTempoError = isTempoFailed && !isFrozen;
-
-  const updateSourceSelection = () => {
-    const input = sourceInputRef.current;
-    if (!input) return;
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      editor.setTextSelection('');
-      return;
-    }
-    const range = selection.getRangeAt(0);
-    if (!input.contains(range.commonAncestorContainer)) {
-      editor.setTextSelection('');
-      return;
-    }
-    editor.setTextSelection(selection.toString());
-  };
 
   const selectedCharacters = useMemo(() => parseCharacterList(character), [character]);
 
@@ -296,24 +338,9 @@ export default function EditorTableLine({
     };
   }, []);
 
-  const updateSplitCursor = () => {
-    const focusedColumn = editor.get.focusedColumn();
-    const input =
-      focusedColumn === 'output'
-        ? translatedInputRef.current
-        : focusedColumn === 'source'
-          ? sourceInputRef.current
-          : null;
-
-    if (!input) return;
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    const range = selection.getRangeAt(0);
-    if (!input.contains(range.startContainer)) return;
-    const preRange = document.createRange();
-    preRange.selectNodeContents(input);
-    preRange.setEnd(range.startContainer, range.startOffset);
-    editor.setSplitCursor(preRange.toString().length);
+  const reportSelection = (column: TTextColumn) => {
+    const input = column === 'source' ? sourceInputRef.current : translatedInputRef.current;
+    if (input) controller.onSelectionChange?.(column, input);
   };
 
   const characterInputRef = useRef<HTMLSpanElement>(null);
@@ -321,34 +348,27 @@ export default function EditorTableLine({
   // Up/Down on the first/last visual line of an input continue into the previous/next line's same
   // input, so alt+up/down isn't needed. Only plain keys, and only when there's a line to go to:
   // otherwise the browser's own caret movement stays.
-  const navigateFromEdge = (direction: 'up' | 'down') => {
-    const target = direction === 'up' ? lineIndex - 1 : lineIndex + 1;
-    if (target < 0 || target >= editor.get.lines().length) return false;
-    editor.navigateLine(direction, lineIndex, { keepCaretX: true });
-    return true;
-  };
   const handleEdgeNavigation = (event: KeyboardEvent<HTMLElement>) => {
     if (isTranslationBusy || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
       return;
     if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
     const direction = event.key === 'ArrowUp' ? 'up' : 'down';
     if (!isCaretOnEdgeLine(event.currentTarget, direction)) return;
-    if (navigateFromEdge(direction)) event.preventDefault();
+    if (controller.navigateFromEdge(direction)) event.preventDefault();
   };
 
   useEffect(() => {
-    editor.registerLineInput(lineIndex, 'source', sourceInputRef.current);
-    editor.registerLineInput(lineIndex, 'output', translatedInputRef.current);
-    editor.registerLineInput(lineIndex, 'character', characterInputRef.current);
-    // Seeds the editor zone's fallback focus target with line 0's output column -- kept fresh on
-    // every (re)mount of that specific row, including a full remount on project switch.
-    if (lineIndex === 0) zoneRef.current = translatedInputRef.current;
+    // The controller this registered with is the one to unregister from
+    const rowController = controllerRef.current;
+    rowController.registerInput('source', sourceInputRef.current);
+    rowController.registerInput('output', translatedInputRef.current);
+    rowController.registerInput('character', characterInputRef.current);
     return () => {
-      editor.registerLineInput(lineIndex, 'source', null);
-      editor.registerLineInput(lineIndex, 'output', null);
-      editor.registerLineInput(lineIndex, 'character', null);
+      rowController.registerInput('source', null);
+      rowController.registerInput('output', null);
+      rowController.registerInput('character', null);
     };
-  }, [lineIndex, isEditMode, zoneRef]);
+  }, [lineIndex, lineNo, isEditMode]);
 
   return (
     <Line
@@ -386,31 +406,23 @@ export default function EditorTableLine({
             ref={sourceInputRef}
             value={sourceText}
             language={isTranslationBusy ? undefined : sourceLanguage}
-            checkSpelling={checkGrammar}
+            checkSpelling={checkGrammar && allowSpellcheck}
+            customMarks={sourceMarks}
+            onTagKeyDown={onMarkKeyDown && ((event, mark) => onMarkKeyDown('source', event, mark))}
+            tagTooltip={markTooltip && ((mark) => markTooltip('source', mark))}
             contentEditable={!isTranslationBusy}
             suppressContentEditableWarning
             data-role="source-input"
             data-line-no={lineNo}
             onFocus={() => {
               onFocus();
-              editor.focusLine(lineIndex, 'source');
+              controller.onInputFocus('source');
             }}
-            onClick={() => {
-              updateSplitCursor();
-            }}
-            onSelect={() => {
-              updateSourceSelection();
-              updateSplitCursor();
-            }}
+            onClick={() => reportSelection('source')}
+            onSelect={() => reportSelection('source')}
             onKeyDown={handleEdgeNavigation}
-            onKeyUp={() => {
-              updateSourceSelection();
-              updateSplitCursor();
-            }}
-            onMouseUp={() => {
-              updateSourceSelection();
-              updateSplitCursor();
-            }}
+            onKeyUp={() => reportSelection('source')}
+            onMouseUp={() => reportSelection('source')}
             onPaste={handlePlainTextPaste}
             onInput={(text) => {
               if (isTranslationBusy) return;
@@ -421,17 +433,17 @@ export default function EditorTableLine({
             }}
           />
         </NumberLineCell>
-        <LineCell onBlur={() => editor.focusLine(null)}>
+        <LineCell onBlur={controller.onInputBlur}>
           <CharacterSelector
             inputRef={characterInputRef}
-            onNavigate={navigateFromEdge}
+            onNavigate={controller.navigateFromEdge}
             characters={characterOptions}
             onFocus={() => {
               onFocus();
-              editor.focusLine(lineIndex, 'character');
+              controller.onInputFocus('character');
             }}
             value={selectedCharacters}
-            disabled={isTranslationBusy}
+            disabled={isTranslationBusy || isCharacterDisabled}
             onChange={(value) => {
               if (lineTextChangeTimeoutRef.current) {
                 clearTimeout(lineTextChangeTimeoutRef.current);
@@ -454,21 +466,24 @@ export default function EditorTableLine({
               ref={translatedInputRef}
               value={translatedText}
               language={isTranslationBusy ? undefined : targetLanguage}
-              checkSpelling={checkGrammar}
+              checkSpelling={checkGrammar && allowSpellcheck}
+              customMarks={outputMarks}
+              onTagKeyDown={
+                onMarkKeyDown && ((event, mark) => onMarkKeyDown('output', event, mark))
+              }
+              tagTooltip={markTooltip && ((mark) => markTooltip('output', mark))}
               contentEditable={!isTranslationBusy}
               suppressContentEditableWarning
               data-role="translation-input"
               data-line-no={lineNo}
               onFocus={() => {
                 onFocus();
-                editor.focusLine(lineIndex, 'output');
+                controller.onInputFocus('output');
               }}
-              onClick={() => {
-                updateSplitCursor();
-              }}
+              onClick={() => reportSelection('output')}
               onKeyDown={handleEdgeNavigation}
-              onKeyUp={updateSplitCursor}
-              onSelect={updateSplitCursor}
+              onKeyUp={() => reportSelection('output')}
+              onSelect={() => reportSelection('output')}
               onPaste={handlePlainTextPaste}
               onInput={(text) => {
                 if (isTranslationBusy) return;

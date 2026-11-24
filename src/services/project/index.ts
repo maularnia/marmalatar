@@ -87,6 +87,30 @@ import {
   updateTranslatedText,
   updateTranslationCharacter,
 } from './editor/slice';
+import {
+  closeFindReplace,
+  focusFindReplaceHeaderInput,
+  focusFindReplaceResult,
+  navigateFindReplaceResult,
+  openFindReplace,
+  registerFindReplaceHeaderInput,
+  registerFindReplaceResultInput,
+  replaceAllFindReplaceMatches,
+  replaceFindReplaceMatch,
+  setFindReplaceQuery,
+  switchFindReplaceColumn,
+} from './findReplace/actions';
+import {
+  selectCanFindReplaceReplaceAll,
+  selectFindReplaceFocusedColumn,
+  selectFindReplaceFocusedResultIndex,
+  selectFindReplaceQuery,
+  selectFindReplaceReplacement,
+  selectFindReplaceResultLines,
+  selectIsFindReplaceOpen,
+  selectCanFindReplaceReplace,
+  setFindReplaceReplacement,
+} from './findReplace/slice';
 
 import {
   selectArchivedProjectList,
@@ -245,5 +269,41 @@ export const editor = new Service('editor', {
     toggleCompleted,
     toggleEditMode,
     undoRedo,
+  },
+});
+
+// The Find & Replace service: the overlay over the editor's table -- its query, replacement and
+// result list, its own focus and rendered inputs, and its replace and navigation operations. It
+// edits lines through the editor's reducers (one undo history) but never touches the editor's
+// focus or input registry, so the main table stays as it was under the overlay.
+
+export { default as findReplaceReducer } from './findReplace/slice';
+
+export const findReplace = new Service('findReplace', {
+  actions: {
+    setFindReplaceReplacement,
+  },
+  selectors: {
+    selectCanFindReplaceReplaceAll,
+    selectFindReplaceFocusedColumn,
+    selectFindReplaceFocusedResultIndex,
+    selectFindReplaceQuery,
+    selectFindReplaceReplacement,
+    selectFindReplaceResultLines,
+    selectIsFindReplaceOpen,
+    selectCanFindReplaceReplace,
+  },
+  functions: {
+    closeFindReplace,
+    focusFindReplaceHeaderInput,
+    focusFindReplaceResult,
+    navigateFindReplaceResult,
+    openFindReplace,
+    registerFindReplaceHeaderInput,
+    registerFindReplaceResultInput,
+    replaceAllFindReplaceMatches,
+    replaceFindReplaceMatch,
+    setFindReplaceQuery,
+    switchFindReplaceColumn,
   },
 });

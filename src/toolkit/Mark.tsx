@@ -46,3 +46,12 @@ export const getMarkCss = (color: TColor) => {
       ${CSSColor(color, TShade.DEFAULT, 0)};
   `;
 };
+
+// A highlight drawn like a primary Tag of `color` (its background, the theme's text colour for it),
+// for marks the user acts on rather than reads past -- e.g. search matches
+export const getTagMarkCss = (color: TColor, textColor: TColor) => css`
+  color: ${CSSColor(textColor, TShade.DEFAULT, 100)};
+  background: ${CSSColor(color, TShade.DEFAULT, 95)};
+  border-radius: ${CSSVar('markBorderRadius')};
+  box-decoration-break: clone;
+`;

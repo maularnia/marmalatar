@@ -1,4 +1,4 @@
-import { projects } from '@src/services/project';
+import { findReplace, projects } from '@src/services/project';
 import { normalizeKeyboardEvent } from '@utils/keyboard';
 import { providerNoop } from '@utils/noop';
 import { useMemoizedObject } from '@src/utils/useMemoizedObject';
@@ -219,6 +219,7 @@ function closeOverlays(): void {
   settings.close();
   settings.closeExport();
   projects.closeArchive();
+  findReplace.close();
 }
 
 function GlobalKeystrokeRegistry({ children }: PropsWithChildren) {

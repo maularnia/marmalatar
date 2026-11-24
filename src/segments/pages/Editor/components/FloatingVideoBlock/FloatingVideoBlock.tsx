@@ -1,6 +1,6 @@
 import { media } from '@src/services/media';
 import { settings } from '@src/services/settings';
-import { editor } from '@src/services/project';
+import { editor, findReplace } from '@src/services/project';
 import { TScreenSize } from '@src/theme/types';
 import { useAppSelectors } from '@store/hooks';
 import { RefObject, useEffect, useRef } from 'react';
@@ -10,8 +10,7 @@ import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import type { VirtualizedListHandle } from '../VirtualizedList/VirtualizedList';
 import Waveform from '../Waveform/Waveform';
 import { EditorTableHeader } from '../WorkTable/EditorTableHeader';
-import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
-import { TShade } from '@src/theme/definitions';
+import { CSSVar } from '@src/theme/utils';
 
 const VideoBlock = styled.div`
   position: sticky;
@@ -25,23 +24,23 @@ const VideoBlock = styled.div`
 
   /* One background and blur for the whole floating stack (player on small screens, waveform,
      table header) instead of one per part. They live on a layer under the content, masked so that
-     both the theme background (half strength) and the blur hold down to 90% of the block, then
-     fade out over the last 10% -- a backdrop-filter can't be graded itself, and masking the block
-     would fade its content too. Isolation keeps the layer's negative z-index inside the block. */
+     both fade out towards the bottom -- a backdrop-filter can't be graded itself, and masking the
+     block would fade its content too. Isolation keeps the layer's negative z-index inside the
+     block. */
   isolation: isolate;
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: ${CSSColor(ThemeColors.BG, TShade.DEFAULT, 50)};
-    backdrop-filter: blur(${CSSVar('blurExtreme')});
-    mask-image: linear-gradient(to bottom, black 0%, black 90%, transparent 100%);
+    background: ${CSSVar('mainTableHeaderBg')};
+    backdrop-filter: ${CSSVar('mainTableHeaderBackdrop')};
+    mask-image: ${CSSVar('mainTableHeaderMaskWithVideo')};
     pointer-events: none;
   }
-  /* Larger screens hold only the table header here: a longer fade, from 75% down */
+  /* Larger screens hold only the table header here */
   &.isLargeScreen::before {
-    mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+    mask-image: ${CSSVar('mainTableHeaderMask')};
   }
 `;
 
@@ -75,6 +74,7 @@ export default function FloatingVideoBlock({
     videoFilePath,
     timelineDurationMs,
     waveformPeaks,
+    isFindReplaceOpen,
   ] = useAppSelectors(
     settings.selectIsSmallScreen,
     media.selectActiveLineIndex,
@@ -83,7 +83,8 @@ export default function FloatingVideoBlock({
     editor.selectIsVideoCollapsed,
     media.selectVideoFilePath,
     editor.selectTimelineDurationMs,
-    media.selectWaveformPeaks
+    media.selectWaveformPeaks,
+    findReplace.selectIsOpen
   );
   const isLargeScreen = screenSize !== TScreenSize.SMALL;
   // Without a video the player shows only its control bar, as if collapsed
@@ -238,9 +239,13 @@ export default function FloatingVideoBlock({
           />
         </>
       )}
-      <OverflowContainer>
-        <EditorTableHeader />
-      </OverflowContainer>
+      {/* Not rendered at all under Find & Replace, which shows its own read-only copy: hiding it
+          alone left it reachable (its selects still took clicks through the overlay) */}
+      {!isFindReplaceOpen && (
+        <OverflowContainer>
+          <EditorTableHeader />
+        </OverflowContainer>
+      )}
     </VideoBlock>
   );
 }

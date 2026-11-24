@@ -69,8 +69,12 @@ const Root = styled.div`
     background: ${CSSVar('mainTableLineCellBgFocus')};
   }
 
+  /* Disabled: plain, see-through and out of reach -- no focus, no hover, every tag in the text
+     colour. Clicks go through to the cell beneath, whose owner may handle them */
   &.isDisabled {
     cursor: default;
+    opacity: 0.6;
+    pointer-events: none;
   }
 `;
 
@@ -366,7 +370,7 @@ export function CharacterSelector({
         <CharacterTag
           key={name}
           style={{ order: index < insertIndex ? index : index + 1 }}
-          color={colorByName.get(name) ?? ThemeColors.ACCENT1}
+          color={disabled ? ThemeColors.TEXT : (colorByName.get(name) ?? ThemeColors.ACCENT1)}
           variant={TTagVariant.PRIMARY}
           size={TTagSize.SMALL}
           onMouseDown={(event) => {
@@ -382,6 +386,7 @@ export function CharacterSelector({
         <Input
           ref={setEditableRef}
           contentEditable={disabled ? false : 'plaintext-only'}
+          tabIndex={disabled ? -1 : undefined}
           suppressContentEditableWarning
           spellCheck={false}
           autoCorrect="off"

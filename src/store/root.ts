@@ -1,7 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import { settingsReducer } from '@src/services/settings';
 import { projectReducer } from '@src/services/project';
-import { editorReducer } from '@src/services/project';
+import { editorReducer, findReplaceReducer } from '@src/services/project';
 import { promptReducer } from '@src/services/prompt';
 import { folderReducer } from '@src/services/folder';
 import { glossaryReducer } from '@src/services/glossary';
@@ -16,6 +16,7 @@ export const rootReducer = combineReducers({
   settings: settingsReducer,
   project: projectReducer,
   editor: editorReducer,
+  findReplace: findReplaceReducer,
   prompt: promptReducer,
   folder: folderReducer,
   glossary: glossaryReducer,

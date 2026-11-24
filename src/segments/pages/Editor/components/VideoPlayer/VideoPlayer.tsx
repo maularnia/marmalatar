@@ -255,6 +255,7 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     audioTrackCount,
     audioTrack,
     theme,
+    isEditMode,
   ] = useAppSelectors(
     editor.selectLines,
     media.selectActiveLineIndex,
@@ -265,7 +266,8 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
     editor.selectIsVideoCollapsed,
     media.selectAudioTrackCount,
     media.selectAudioTrack,
-    settings.selectCurrentThemeData
+    settings.selectCurrentThemeData,
+    editor.selectIsEditMode
   );
   // The top panel's text, key hints and buttons take the theme's panel color (its text color),
   // readable on the panel's own theme-background gradient
@@ -283,10 +285,12 @@ export default function VideoPlayer({ onPlaybackPause, onPlaybackResume }: Video
   const [isPlaying, setIsPlaying] = useState(() => !(media.getVideoElement()?.paused ?? true));
 
   const activeLine = activeLineIndex != null ? lines[activeLineIndex] : null;
-  const activeLineWordArray = (
-    (activeLine?.output?.trim() || activeLine?.input?.trim()) ??
-    ''
-  ).split('\n');
+  // The text being worked on: the source while editing it, otherwise the translation, falling
+  // back to the source until there is one
+  const activeLineText = isEditMode
+    ? activeLine?.input?.trim()
+    : activeLine?.output?.trim() || activeLine?.input?.trim();
+  const activeLineWordArray = (activeLineText ?? '').split('\n');
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
     const video = media.getVideoElement();

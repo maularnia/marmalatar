@@ -1,6 +1,7 @@
 import { media } from '@src/services/media';
 import { settings } from '@src/services/settings';
-import { editor, projects } from '@src/services/project';
+import { KeystrokeZoneContext } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
+import { editor, findReplace, projects } from '@src/services/project';
 import { TShade } from '@src/theme/definitions';
 import { CSSColor, CSSVar, ThemeColors } from '@src/theme/utils';
 import P from '@src/toolkit/P';
@@ -13,6 +14,7 @@ import classNames from 'classnames';
 import {
   CSSProperties,
   type ReactElement,
+  use,
   useCallback,
   useLayoutEffect,
   useMemo,
@@ -26,6 +28,8 @@ import VirtualizedList, {
   VirtualizedListHandle,
 } from './components/VirtualizedList/VirtualizedList';
 import EditorTableLine from './components/WorkTable/WorkTableLine/EditorTableLine';
+import { makeEditorRowController } from './components/WorkTable/WorkTableLine/editorRowController';
+import { FindReplaceOverlay } from './components/FindReplace/FindReplaceOverlay';
 import { FocusedLinePanel } from './components/WorkTable/WorkTableLine/FocusedLinePanel';
 import { type TLineRowState, useLineFingerprint } from './hooks/useLineFingerprint';
 import { useMergeCandidateLines } from './hooks/useMergeCandidateLines';
@@ -74,6 +78,10 @@ const EditorArea = styled.main`
   /* Small screens: the table takes the full width it's given (no cap), as on large screens it
      grows into free space (EditorLayout.tsx) */
 `;
+
+// While Find & Replace is open the table stays mounted under it -- rows, refs, focused line and
+// the small screens' video all kept -- but out of sight and out of the tab order
+const HIDDEN_STYLE: CSSProperties = { visibility: 'hidden' };
 
 const Root = styled.div`
   position: relative;
@@ -142,6 +150,7 @@ export default function Editor() {
     characterOptions,
     tempo,
     timingIssues,
+    isFindReplaceOpen,
   ] = useAppSelectors(
     editor.selectFocusedLineIndex,
     settings.selectIsSmallScreen,
@@ -151,8 +160,10 @@ export default function Editor() {
     editor.selectFrozenLineNumbers,
     editor.selectCharacterPool,
     projects.selectTempo,
-    editor.selectTempoTimingIssues
+    editor.selectTempoTimingIssues,
+    findReplace.selectIsOpen
   );
+  const { zoneRef } = use(KeystrokeZoneContext);
   const focusedItemIndex = focusedLineIndex ?? -1;
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -257,6 +268,7 @@ export default function Editor() {
         key={lineIndex}
         {...row}
         onMeasure={onMeasure}
+        controller={makeEditorRowController(lineIndex, zoneRef)}
         characterOptions={characterOptions}
         onFocus={() => {
           media.seekToLine(lineIndex);
@@ -289,6 +301,7 @@ export default function Editor() {
           {
             '--current-grid-template': columnTemplate,
             '--line-number-width': lineNumberWidth(translationLines.length),
+            ...(isFindReplaceOpen ? HIDDEN_STYLE : undefined),
           } as CSSProperties
         }
       >
@@ -331,6 +344,12 @@ export default function Editor() {
           <ExportButton />
         </Root>
       </EditorArea>
+      {isFindReplaceOpen && (
+        <FindReplaceOverlay
+          columnTemplate={columnTemplate}
+          lineNumberWidth={lineNumberWidth(translationLines.length)}
+        />
+      )}
       <NavigationHint>
         {t('editorTable.navigationHintPrefix')}
         {navigationHintKeystroke}

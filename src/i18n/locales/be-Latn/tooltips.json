@@ -20,7 +20,8 @@
     "copyAllSourceToOutput": "Skapijavać\n usie radki krynicy\nŭ pierakład",
     "completeAllTranslated": "Paznačyć usie\n radki z pierakładam\njak hatovyja",
     "autoFixTempo": "Aŭta-temp",
-    "autoMarkLinesCompleted": "Aŭtamatyčna adznačać radki\nz pierakładam jak \"Hatovyja\""
+    "autoMarkLinesCompleted": "Aŭtamatyčna adznačać radki\nz pierakładam jak \"Hatovyja\"",
+    "findReplace": "Pošuk i zamiena"
   },
   "workTableLine": {
     "markLineComplete": "Adznačyć radok jak \"Hatovy\"",

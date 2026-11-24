@@ -1,5 +1,4 @@
-import type { SpellCheckMark } from '@ui-toolkit/Mark';
-import { textToContentEditableHtml } from '@utils/string';
+import { textToContentEditableHtml, type TTextMark } from '@utils/string';
 
 // DOM helpers for the editable surface: the caret as a character offset into its text, and the
 // one place its innerHTML is written. No React in here.
@@ -48,7 +47,7 @@ export function setCaretOffset(root: HTMLElement, offset: number): void {
 // Renders `text` with `marks` into the editable. Skips the write when the markup already matches
 // (a rewrite resets the selection and is never free), and otherwise keeps the caret where it was
 // if the editable is focused -- browsers drop it to the start on an innerHTML write.
-export function renderText(el: HTMLElement, text: string, marks: SpellCheckMark[] = []): void {
+export function renderText(el: HTMLElement, text: string, marks: TTextMark[] = []): void {
   const nextHtml = textToContentEditableHtml(text, marks);
   if (el.innerHTML === nextHtml) return;
   const isFocused = document.activeElement === el;

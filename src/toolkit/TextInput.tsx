@@ -23,6 +23,9 @@ type TextInputProps = Omit<HTMLProps<HTMLInputElement>, 'children' | 'placeholde
   PropsWithChildren<{
     icon?: TIcon;
     label?: string;
+    /** Static hint shown, semi-transparent, while the input is empty. Not shown when there's a
+     * label (`children`), which already sits in the empty input's place */
+    placeholder?: string;
     errors?: ReactNode[];
     valid?: boolean;
     wrapperProps?: Omit<HTMLAttributes<HTMLLabelElement>, 'children' | 'htmlFor'>;
@@ -83,6 +86,10 @@ const Input = styled.input<{ $iconic?: boolean }>`
   height: ${CSSVar('inputHeightRegular')};
   padding: var(--input-padding);
   outline: none;
+  &::placeholder {
+    color: inherit;
+    opacity: ${CSSVar('opacity-50')};
+  }
   &:focus,
   &:focus-visible {
     outline: none;
@@ -100,7 +107,6 @@ const Field = styled.span<{ $color: TColor; $theme: TTheme }>`
   position: relative;
   align-items: center;
   width: 100%;
-  margin: ${CSSVar('size2')} 0 0;
   height: ${CSSVar('inputHeightRegular')};
   border-radius: ${CSSVar('inputBorderRadius')};
   opacity: ${CSSVar('inputOpacity')};
@@ -290,6 +296,7 @@ export default function TextInput({
   value,
   defaultValue,
   className,
+  placeholder,
   ...props
 }: TextInputProps) {
   const hasErrors = Boolean(errors?.length);
@@ -329,6 +336,7 @@ export default function TextInput({
           }}
           {...(value !== undefined ? { value } : { defaultValue })}
           {...props}
+          placeholder={children ? undefined : placeholder}
           type={type}
           disabled={disabled}
           onChange={(e) => {

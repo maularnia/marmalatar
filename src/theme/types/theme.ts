@@ -159,8 +159,14 @@ export type TThemeMessageChapter = TThemeVarsChapter<{
 export type TThemeTableChapter = TThemeVarsChapter<{
   mainTableBackdrop: string;
   mainTableBgColor: string;
-  mainTableHeaderBackdrop: string;
+  // What floats above rows scrolling under it: the editor's floating block (the table header, plus
+  // the video and waveform on small screens), Find & Replace's and the glossary's table headers. A
+  // layer under the content: its background, backdrop filter, and the mask fading both out at the
+  // bottom -- the header alone, or the taller stack with the video
   mainTableHeaderBg: string;
+  mainTableHeaderBackdrop: string;
+  mainTableHeaderMask: string;
+  mainTableHeaderMaskWithVideo: string;
   mainTableHeaderColor: string;
   mainTableLineOpacity: string;
   mainTableLineOpacityCompleted: string;

@@ -317,8 +317,10 @@ export const variables: TThemeExporter = () => {
   const mainTable: TThemeTableChapter = {
     ...new ThemeVariable('mainTableBackdrop', 'none').register(),
     ...new ThemeVariable('mainTableBgColor', CSSColor(TColorSystem.BG, TShade.DEFAULT, 5)).register(),
-    ...new ThemeVariable('mainTableHeaderBackdrop', `blur(${CSSVar('blurHeavy')})`).register(),
-    ...new ThemeVariable('mainTableHeaderBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 10)).register(),
+    ...new ThemeVariable('mainTableHeaderBackdrop', `blur(${CSSVar('blurExtreme')})`).register(),
+    ...new ThemeVariable('mainTableHeaderBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 50)).register(),
+    ...new ThemeVariable('mainTableHeaderMask', 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)').register(),
+    ...new ThemeVariable('mainTableHeaderMaskWithVideo', 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)').register(),
     ...new ThemeVariable('mainTableHeaderColor', CSSColor(TColorSystem.TEXT, TShade.DEFAULT, 80)).register(),
     ...new ThemeVariable('mainTableLineBgFrozen', CSSColor(TColorCustom.ALICEBLUE, TShade.DARK, 20)).register(),
     ...new ThemeVariable('mainTableFocusBackdropBg', CSSColor(TColorSystem.BG, TShade.DEFAULT, 20)).register(),

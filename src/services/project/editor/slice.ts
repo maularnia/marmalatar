@@ -4,6 +4,7 @@ import { TCharacter, TInputColumn, TSubtitleLine } from '@src/types';
 import { parseCharacterList, serializeCharacterList } from '@utils/characters';
 import { cleanupEntries, TEntryCleanupOptions } from '@utils/data/entryCleanup';
 import { autoFixTiming, findTimingIssues } from '@utils/tempo';
+import { replaceMatches } from '@utils/findMatches';
 import type { TProjectTempo } from '@bridge/definitions/projectEntry';
 import { folder } from '@src/services/folder';
 import { selectProjectTempo } from '../slice';
@@ -577,6 +578,31 @@ const editorSlice = createSlice({
         }
       });
     },
+    // Find & Replace's "replace all": every occurrence of the query in the given lines' columns,
+    // as one undo step. Lines are picked by number, as the search lists them.
+    textReplacedInLines(
+      state,
+      action: PayloadAction<{
+        lineNos: number[];
+        query: string;
+        replacement: string;
+        columns: ('source' | 'output')[];
+      }>
+    ) {
+      const { query, replacement, columns } = action.payload;
+      if (!query) return;
+      const lineNos = new Set(action.payload.lineNos);
+      addToHistory(state);
+      for (const line of state.lines) {
+        if (!lineNos.has(line.line_no)) continue;
+        if (columns.includes('source')) {
+          line.input = replaceMatches(line.input, query, replacement);
+        }
+        if (columns.includes('output') && line.output) {
+          line.output = replaceMatches(line.output, query, replacement);
+        }
+      }
+    },
     allTranslatedLinesCompleted(state) {
       addToHistory(state);
       state.lines.forEach((line) => {
@@ -670,6 +696,7 @@ export const {
   tempoAutoFixed,
   allSourceCopiedToOutput,
   allTranslatedLinesCompleted,
+  textReplacedInLines,
   // Character pool
   setCharacterPool,
   // Device preferences

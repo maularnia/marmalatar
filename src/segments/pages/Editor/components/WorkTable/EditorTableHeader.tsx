@@ -88,7 +88,13 @@ function ModeButton({ isEditMode, disabled }: { isEditMode: boolean; disabled: b
   );
 }
 
-export const EditorTableHeader = () => {
+type TEditorTableHeaderProps = {
+  /** Shows the languages without letting them (or the mode) change: the selects are disabled and
+   * there's no mode button. For views over the table that aren't the table itself (Find & Replace) */
+  readOnly?: boolean;
+};
+
+export const EditorTableHeader = ({ readOnly = false }: TEditorTableHeaderProps) => {
   const { t } = useTranslation('editor');
   const languageOptions = useLanguageOptions();
   const [sourceLanguage, targetLanguage, isEditMode, isBusy] = useAppSelectors(
@@ -102,6 +108,7 @@ export const EditorTableHeader = () => {
       <Cell>
         <Select
           value={sourceLanguage ?? TLanguage.English}
+          disabled={readOnly}
           onChange={([value]) => {
             projects.setSourceLanguage(value as TLanguage);
             glossaries.reconcileSelectionWithDirection();
@@ -112,7 +119,7 @@ export const EditorTableHeader = () => {
       <Cell>
         <ActorHeader>
           <span style={{ textAlign: 'left' }}>{t('tableHeader.character')}</span>
-          {isEditMode ? <ModeButton isEditMode disabled={isBusy} /> : <span />}
+          {isEditMode && !readOnly ? <ModeButton isEditMode disabled={isBusy} /> : <span />}
         </ActorHeader>
       </Cell>
       {!isEditMode && (
@@ -120,13 +127,14 @@ export const EditorTableHeader = () => {
           <SelectWithAction>
             <Select
               value={targetLanguage ?? TLanguage.Belarusian}
+              disabled={readOnly}
               onChange={([value]) => {
                 projects.setTargetLanguage(value as TLanguage);
                 glossaries.reconcileSelectionWithDirection();
               }}
               options={languageOptions}
             />
-            <ModeButton isEditMode={false} disabled={isBusy} />
+            {!readOnly && <ModeButton isEditMode={false} disabled={isBusy} />}
           </SelectWithAction>
         </Cell>
       )}

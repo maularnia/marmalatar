@@ -33,5 +33,13 @@
     "durationTooShort": "Радок закароткі па часе",
     "cpsTooHigh": "Зашмат тэксту для працягласці радка",
     "duration": "Працягласць"
+  },
+  "findReplace": {
+    "searchLabel": "Пошук",
+    "replaceLabel": "Замяніць на",
+    "replace": "Замяніць",
+    "replaceAll": "Замяніць усё",
+    "noResults": "Нічога не знойдзена",
+    "enterToReplace": "Націсніце <key>Enter</key>, каб замяніць\nна «<text>{{text}}</text>»"
   }
 }

@@ -49,6 +49,10 @@ import iconTranslate from '@src/assets/icons/icon-translate.svg?react';
 import iconLogo from '@src/assets/icons/icon-logo.svg?react';
 import iconStep from '@src/assets/icons/icon-step.svg?react';
 import iconSpacing from '@src/assets/icons/icon-spacing.svg?react';
+import iconSearch from '@src/assets/icons/icon-search.svg?react';
+import iconReplace from '@src/assets/icons/icon-replace.svg?react';
+import iconReplaceOne from '@src/assets/icons/icon-replace-one.svg?react';
+import iconReplaceAll from '@src/assets/icons/icon-replace-all.svg?react';
 import iconArrowToggleDown from '@src/assets/icons/icon-arrow-toggle-down.svg?react';
 import iconArrowToggleUp from '@src/assets/icons/icon-arrow-toggle-up.svg?react';
 import iconLanguage from '@src/assets/icons/icon-language.svg?react';
@@ -177,6 +181,10 @@ const ICON_COMPONENTS: {
   [TIcon.LOGO]: iconLogo,
   [TIcon.STEP]: iconStep,
   [TIcon.SPACING]: iconSpacing,
+  [TIcon.SEARCH]: iconSearch,
+  [TIcon.REPLACE]: iconReplace,
+  [TIcon.REPLACE_ONE]: iconReplaceOne,
+  [TIcon.REPLACE_ALL]: iconReplaceAll,
   [TIcon.ARROW_TOGGLE_DOWN]: iconArrowToggleDown,
   [TIcon.ARROW_TOGGLE_UP]: iconArrowToggleUp,
   [TIcon.LANGUAGE]: iconLanguage,

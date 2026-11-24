@@ -1,7 +1,7 @@
 import KeystrokeZone, {
   KeystrokeZoneContext,
 } from '@src/layout/components/KeystrokeZone/KeystrokeZone';
-import { editor } from '@src/services/project';
+import { editor, findReplace } from '@src/services/project';
 import { focusContentEditableToEnd } from '@src/utils/contentEditable';
 import { ai } from '@src/services/ai';
 import { glossaries } from '@src/services/glossary';
@@ -325,6 +325,26 @@ const myShortcuts = {
     group: 'Workspace',
     type: ShortcutType.REGULAR,
   },
+  openFind: {
+    keyCombo: 'ctrl+f',
+    name: 'Find',
+    description: 'Opens Find & Replace over the table, with focus in the search field',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Workspace',
+    type: ShortcutType.REGULAR,
+  },
+  openReplace: {
+    keyCombo: 'ctrl+r',
+    name: 'Replace',
+    description: 'Opens Find & Replace with replacing on, with focus in the replacement field',
+    scope: ShortcutScope.GLOBAL,
+    priority: 100,
+    status: ShortcutStatus.ENABLED,
+    group: 'Workspace',
+    type: ShortcutType.REGULAR,
+  },
   toggleEditMode: {
     keyCombo: 'ctrl+m',
     name: 'Toggle edit mode',
@@ -462,6 +482,18 @@ function EditorShortcuts() {
     });
   };
 
+  // Shortcuts acting on the main table's focused line, or on the table as a whole: off while Find
+  // & Replace covers it. The table isn't visible then, and the overlay keeps its own focus.
+  const useTableKeystroke = (
+    keystroke: Parameters<typeof useAppKeystroke>[0],
+    action: (event: KeyboardEvent) => void
+  ) => {
+    useGuardedKeystroke(keystroke, (event) => {
+      if (findReplace.get.isOpen()) return;
+      action(event);
+    });
+  };
+
   // ctrl+2's real target: prefer the already-focused line (with editor.focusLine's
   // richer cursor/scroll treatment) and only fall back to the zone's own ref (row 0's output
   // column, seeded by EditorTableLine, or whatever was last focused) when nothing was focused yet.
@@ -492,83 +524,83 @@ function EditorShortcuts() {
     return focusedLineIndex ?? (translationLines.length > 0 ? 0 : null);
   };
 
-  useGuardedKeystroke('splitLine', (event) => {
+  useTableKeystroke('splitLine', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     void editor.splitLine(lineIndex);
   });
 
-  useGuardedKeystroke('copySourceToOutput', () => {
+  useTableKeystroke('copySourceToOutput', () => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     void editor.copySourceToOutput(lineIndex);
   });
 
-  useGuardedKeystroke('aiTranslation', (event) => {
+  useTableKeystroke('aiTranslation', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     void ai.translateLine(lineIndex);
   });
 
-  useGuardedKeystroke('adjustStartTimeLeft', (event) => {
+  useTableKeystroke('adjustStartTimeLeft', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     editor.adjustStartTime(lineIndex, 'earlier');
   });
 
-  useGuardedKeystroke('adjustStartTimeRight', (event) => {
+  useTableKeystroke('adjustStartTimeRight', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     editor.adjustStartTime(lineIndex, 'later');
   });
 
-  useGuardedKeystroke('adjustEndTimeLeft', (event) => {
+  useTableKeystroke('adjustEndTimeLeft', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     editor.adjustEndTime(lineIndex, 'earlier');
   });
 
-  useGuardedKeystroke('adjustEndTimeRight', (event) => {
+  useTableKeystroke('adjustEndTimeRight', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     editor.adjustEndTime(lineIndex, 'later');
   });
 
-  useGuardedKeystroke('adjustEntryTimeLeft', (event) => {
+  useTableKeystroke('adjustEntryTimeLeft', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     editor.adjustEntryTime(lineIndex, 'earlier');
   });
 
-  useGuardedKeystroke('adjustEntryTimeRight', (event) => {
+  useTableKeystroke('adjustEntryTimeRight', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     editor.adjustEntryTime(lineIndex, 'later');
   });
 
-  useGuardedKeystroke('mergeToTop', (event) => {
+  useTableKeystroke('mergeToTop', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     void editor.mergeLines(lineIndex, 'up');
   });
 
-  useGuardedKeystroke('mergeToBottom', (event) => {
+  useTableKeystroke('mergeToBottom', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
     void editor.mergeLines(lineIndex, 'down');
   });
 
-  useGuardedKeystroke('toggleComplete', (event) => {
+  useTableKeystroke('toggleComplete', (event) => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     event.preventDefault();
@@ -582,10 +614,15 @@ function EditorShortcuts() {
     void editor.removeLine(lineIndex);
   };
 
-  useGuardedKeystroke('deleteLine', handleDeleteLineKeystroke);
-  useGuardedKeystroke('deleteLineDelete', handleDeleteLineKeystroke);
+  useTableKeystroke('deleteLine', handleDeleteLineKeystroke);
+  useTableKeystroke('deleteLineDelete', handleDeleteLineKeystroke);
 
   useGuardedKeystroke('focusCharacterSelector', () => {
+    // Find & Replace moves between source and output only, across the character column
+    if (findReplace.get.isOpen()) {
+      findReplace.switchColumn('left');
+      return;
+    }
     const lineIndex = getKeystrokeLineIndex();
     const focusedColumn = editor.get.focusedColumn();
     if (focusedColumn === 'source') return;
@@ -594,6 +631,10 @@ function EditorShortcuts() {
   });
 
   useGuardedKeystroke('focusTranslationInput', () => {
+    if (findReplace.get.isOpen()) {
+      findReplace.switchColumn('right');
+      return;
+    }
     const lineIndex = getKeystrokeLineIndex();
     const focusedColumn = editor.get.focusedColumn();
     const target = focusedColumn === 'source' ? 'character' : 'output';
@@ -601,11 +642,19 @@ function EditorShortcuts() {
   });
 
   useGuardedKeystroke('moveToPreviousLine', () => {
+    if (findReplace.get.isOpen()) {
+      findReplace.navigateResult('up');
+      return;
+    }
     const lineIndex = getKeystrokeLineIndex();
     editor.navigateLine('up', lineIndex);
   });
 
   useGuardedKeystroke('moveToNextLine', () => {
+    if (findReplace.get.isOpen()) {
+      findReplace.navigateResult('down');
+      return;
+    }
     const lineIndex = getKeystrokeLineIndex();
     editor.navigateLine('down', lineIndex);
   });
@@ -618,11 +667,11 @@ function EditorShortcuts() {
     editor.undoRedo('forward');
   });
 
-  useGuardedKeystroke('playbackToggle', () => {
+  useTableKeystroke('playbackToggle', () => {
     editor.playFocusedLine();
   });
 
-  useGuardedKeystroke('addToGlossary', (event) => {
+  useTableKeystroke('addToGlossary', (event) => {
     event.preventDefault();
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
@@ -630,56 +679,66 @@ function EditorShortcuts() {
     if (selectedText) void glossaries.addEntryFromText(selectedText);
   });
 
-  useGuardedKeystroke('insertLineBefore', () => {
+  useTableKeystroke('insertLineBefore', () => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     editor.insertLine(lineIndex, 'before');
   });
 
-  useGuardedKeystroke('insertLineAfter', () => {
+  useTableKeystroke('insertLineAfter', () => {
     const lineIndex = getKeystrokeLineIndex();
     if (lineIndex == null) return;
     editor.insertLine(lineIndex, 'after');
   });
 
-  useGuardedKeystroke('shiftAllLinesEarlier', (event) => {
+  useTableKeystroke('shiftAllLinesEarlier', (event) => {
     event.preventDefault();
     editor.shiftAllLines('earlier');
   });
 
-  useGuardedKeystroke('shiftAllLinesLater', (event) => {
+  useTableKeystroke('shiftAllLinesLater', (event) => {
     event.preventDefault();
     editor.shiftAllLines('later');
   });
 
-  useGuardedKeystroke('aiTranslationBulk', (event) => {
+  useTableKeystroke('aiTranslationBulk', (event) => {
     event.preventDefault();
     ai.translateUntranslatedLines();
   });
 
-  useGuardedKeystroke('cleanup', (event) => {
+  useTableKeystroke('cleanup', (event) => {
     event.preventDefault();
     void editor.cleanup();
   });
 
-  useGuardedKeystroke('autoFixTempo', (event) => {
+  useTableKeystroke('autoFixTempo', (event) => {
     event.preventDefault();
     void editor.autoFixTempo();
   });
 
-  useGuardedKeystroke('copyAllSourceToOutput', (event) => {
+  useTableKeystroke('copyAllSourceToOutput', (event) => {
     event.preventDefault();
     void editor.copyAllSourceToOutput();
   });
 
-  useGuardedKeystroke('completeAllTranslatedLines', (event) => {
+  useTableKeystroke('completeAllTranslatedLines', (event) => {
     event.preventDefault();
     editor.completeAllTranslatedLines();
   });
 
-  useGuardedKeystroke('toggleEditMode', (event) => {
+  useTableKeystroke('toggleEditMode', (event) => {
     event.preventDefault();
     editor.toggleEditMode();
+  });
+
+  useGuardedKeystroke('openFind', (event) => {
+    event.preventDefault();
+    findReplace.open({ replace: false });
+  });
+
+  useGuardedKeystroke('openReplace', (event) => {
+    event.preventDefault();
+    findReplace.open({ replace: true });
   });
 
   return null;

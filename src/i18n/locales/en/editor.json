@@ -33,5 +33,13 @@
     "durationTooShort": "Line duration is too short",
     "cpsTooHigh": "Too much text for line duration",
     "duration": "Duration"
+  },
+  "findReplace": {
+    "searchLabel": "Find",
+    "replaceLabel": "Replace with",
+    "replace": "Replace",
+    "replaceAll": "Replace all",
+    "noResults": "Nothing found",
+    "enterToReplace": "Press <key>Enter</key> to replace\nwith “<text>{{text}}</text>”"
   }
 }
